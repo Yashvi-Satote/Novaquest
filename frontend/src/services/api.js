@@ -1,5 +1,5 @@
 /**
- * API Service for Space Hardware Explorer
+ * API Service for Space in Time
  * Handles communication with Flask REST backend
  */
 

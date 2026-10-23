@@ -4,9 +4,7 @@ import {
   ChevronLeft, 
   ChevronRight, 
   ExternalLink, 
-  Layers, 
-  Calendar, 
-  Info 
+  Calendar 
 } from 'lucide-react';
 
 export default function ImageModal({ 
