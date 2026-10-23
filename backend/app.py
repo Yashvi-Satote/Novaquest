@@ -330,12 +330,12 @@ def search_hardware():
     """Keyword search across all fields, delegating to the unified query builder."""
     return get_hardware_list()
 
-@app.route("/api/hardware/<int:hardware_id>", methods=["GET"])
-def get_hardware_detail(hardware_id):
-    """Returns complete details of a single hardware item."""
+@app.route("/api/hardware/<identifier>", methods=["GET"])
+def get_hardware_detail(identifier):
+    """Returns complete details of a single hardware item by ID or slug."""
     db = SessionLocal()
     try:
-        hw = db.query(Hardware).options(
+        query = db.query(Hardware).options(
             joinedload(Hardware.mission),
             joinedload(Hardware.operator),
             joinedload(Hardware.mission_agency),
@@ -344,32 +344,48 @@ def get_hardware_detail(hardware_id):
             joinedload(Hardware.keywords),
             joinedload(Hardware.images),
             joinedload(Hardware.sources)
-        ).filter(Hardware.id == hardware_id).first()
+        )
+        
+        if str(identifier).isdigit():
+            hw = query.filter(Hardware.id == int(identifier)).first()
+        else:
+            hw = query.filter(Hardware.slug == identifier).first()
 
         if not hw:
-            return jsonify({"error": f"Hardware item with ID {hardware_id} not found"}), 404
+            return jsonify({"error": f"Hardware item '{identifier}' not found"}), 404
 
         return jsonify(hw.to_dict(full=True)), 200
 
     except Exception as e:
-        logger.error(f"Error fetching hardware detail for ID {hardware_id}: {e}")
+        logger.error(f"Error fetching hardware detail for '{identifier}': {e}")
         return jsonify({"error": str(e)}), 500
     finally:
         db.close()
 
-@app.route("/api/hardware/<int:hardware_id>/images", methods=["GET"])
-def get_hardware_images(hardware_id):
-    """Returns up to 10 images and related visualizations for a hardware item with attribution."""
+@app.route("/api/hardware/<identifier>/images", methods=["GET"])
+def get_hardware_images(identifier):
+    """Returns up to 10 images and related visualizations for a hardware item by ID or slug."""
     db = SessionLocal()
     try:
-        images = db.query(HardwareImage).filter(HardwareImage.hardware_id == hardware_id).limit(10).all()
+        hw_id = None
+        if str(identifier).isdigit():
+            hw_id = int(identifier)
+        else:
+            hw = db.query(Hardware.id).filter(Hardware.slug == identifier).first()
+            if hw:
+                hw_id = hw[0]
+
+        if not hw_id:
+            return jsonify({"error": f"Hardware item '{identifier}' not found"}), 404
+
+        images = db.query(HardwareImage).filter(HardwareImage.hardware_id == hw_id).limit(10).all()
         return jsonify({
-            "hardware_id": hardware_id,
+            "hardware_id": hw_id,
             "count": len(images),
             "images": [img.to_dict() for img in images]
         }), 200
     except Exception as e:
-        logger.error(f"Error fetching images for hardware {hardware_id}: {e}")
+        logger.error(f"Error fetching images for hardware '{identifier}': {e}")
         return jsonify({"error": str(e)}), 500
     finally:
         db.close()
