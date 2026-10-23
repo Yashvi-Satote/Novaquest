@@ -47,9 +47,9 @@ export async function fetchHardware(params = {}) {
   return await res.json();
 }
 
-export async function fetchHardwareDetail(id) {
-  const res = await fetch(`${API_BASE}/hardware/${id}`);
-  if (!res.ok) throw new Error(`Failed to fetch hardware detail for ID ${id}: ${res.statusText}`);
+export async function fetchHardwareDetail(idOrSlug) {
+  const res = await fetch(`${API_BASE}/hardware/${encodeURIComponent(idOrSlug)}`);
+  if (!res.ok) throw new Error(`Failed to fetch hardware detail for "${idOrSlug}": ${res.statusText}`);
   return await res.json();
 }
 

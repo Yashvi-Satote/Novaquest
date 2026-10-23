@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { 
   ChevronDown, 
   ChevronRight, 
@@ -283,16 +284,16 @@ export default function Sidebar({
                                             {/* Direct Hardware Records */}
                                             <div className="pl-2.5 space-y-0.5">
                                               {org.hardware.map(hw => (
-                                                <button
+                                                <Link
                                                   key={hw.id}
-                                                  type="button"
-                                                  onClick={() => onSelectHardware(hw.id)}
+                                                  to={`/hardware/${hw.slug || hw.id}`}
+                                                  onClick={() => onSelectHardware && onSelectHardware(hw)}
                                                   className="w-full text-left truncate px-2 py-0.5 text-[10px] text-slate-500 dark:text-slate-400 hover:text-cyan-600 dark:hover:text-cyan-300 hover:bg-slate-100 dark:hover:bg-slate-800/40 rounded transition-colors flex items-center gap-1.5"
                                                   title={`Open ${hw.name}`}
                                                 >
                                                   <Cpu className="w-2.5 h-2.5 text-cyan-600 dark:text-cyan-400/60 shrink-0" />
                                                   <span className="truncate">{hw.name}</span>
-                                                </button>
+                                                </Link>
                                               ))}
                                             </div>
                                           </div>
