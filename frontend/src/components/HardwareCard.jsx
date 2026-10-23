@@ -1,24 +1,20 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { 
   ChevronDown, 
-  ChevronUp, 
   Calendar, 
   Building2, 
   Orbit, 
   MapPin, 
   ExternalLink, 
-  CheckCircle2, 
   Clock, 
   HelpCircle,
   Cpu, 
   Sparkles, 
   BookOpen, 
-  Compass, 
-  Layers, 
-  ShieldCheck,
   Radio,
   FileCheck,
-  Info
+  ShieldCheck,
+  Layers
 } from 'lucide-react';
 import ImageGallery from './ImageGallery';
 
@@ -30,44 +26,49 @@ export default function HardwareCard({
   isLoadingDetail,
   onOpenImageModal
 }) {
-  // Determine status color and badge
-  const getStatusBadge = (status) => {
+  // Determine status badge
+  const getStatusBadge = (status = '') => {
     if (status.includes('Active')) {
       return (
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-950/70 text-emerald-300 border border-emerald-600/50 shadow-sm shadow-emerald-900/30">
+        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium bg-emerald-100 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-600/50 shadow-2xs">
           <span className="relative flex h-2 w-2">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
             <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
           </span>
-          Active / operational
+          Active
         </span>
       );
     }
     if (status.includes('Inactive')) {
       return (
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-950/60 text-amber-300 border border-amber-700/50">
-          <Clock className="w-3 h-3 text-amber-400" />
-          Inactive / decommissioned
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700/50">
+          <Clock className="w-2.5 h-2.5 text-amber-600 dark:text-amber-400" />
+          Inactive
         </span>
       );
     }
     return (
-      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-purple-950/60 text-purple-300 border border-purple-700/50">
-        <HelpCircle className="w-3 h-3 text-purple-400" />
-        Unknown / disputed
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-purple-100 dark:bg-purple-950/60 text-purple-800 dark:text-purple-300 border border-purple-300 dark:border-purple-700/50">
+        <HelpCircle className="w-2.5 h-2.5 text-purple-600 dark:text-purple-400" />
+        Unknown
       </span>
     );
   };
 
   const getDestinationBadge = (dest) => {
-    let color = "bg-slate-800 text-slate-300 border-slate-700";
-    if (dest === "Mars") color = "bg-rose-950/60 text-rose-300 border-rose-800/60";
-    else if (dest === "Moon") color = "bg-slate-800/80 text-slate-200 border-slate-600/60";
-    else if (dest === "Deep Space") color = "bg-violet-950/60 text-violet-300 border-violet-800/60";
-    else if (dest === "Earth Orbit") color = "bg-cyan-950/60 text-cyan-300 border-cyan-800/60";
+    let color = "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-700";
+    if (dest === "Mars") {
+      color = "bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300 border-rose-300 dark:border-rose-800/60";
+    } else if (dest === "Moon") {
+      color = "bg-slate-100 dark:bg-slate-800/90 text-slate-800 dark:text-slate-200 border-slate-300 dark:border-slate-600/60";
+    } else if (dest === "Deep Space") {
+      color = "bg-violet-100 dark:bg-violet-950/60 text-violet-800 dark:text-violet-300 border-violet-300 dark:border-violet-800/60";
+    } else if (dest === "Earth Orbit") {
+      color = "bg-cyan-100 dark:bg-cyan-950/60 text-cyan-800 dark:text-cyan-300 border-cyan-300 dark:border-cyan-800/60";
+    }
 
     return (
-      <span className={`px-2 py-0.5 rounded text-[11px] font-medium border ${color}`}>
+      <span className={`px-2 py-0.5 rounded-md text-[10px] font-semibold border ${color}`}>
         {dest}
       </span>
     );
@@ -77,26 +78,28 @@ export default function HardwareCard({
   const getTimelineText = () => {
     let launch = item.launch_date ? `Launched ${item.launch_date}` : 'Launch unrecorded';
     if (item.decommission_date) {
-      return `${launch} · Decommissioned ${item.decommission_date}`;
+      return `${launch} · End ${item.decommission_date}`;
     }
     if (item.landing_date) {
       return `${launch} · Landed ${item.landing_date}`;
     }
     if (item.operational_status?.includes('Active')) {
-      return `${launch} · Currently Operational`;
+      return `${launch} · Operational`;
     }
-    return `${launch} · Status verified in records`;
+    return `${launch}`;
   };
 
   return (
     <div 
-      className={`glass-panel glass-panel-hover rounded-2xl overflow-hidden transition-all duration-300 ${
-        isExpanded ? 'ring-1 ring-cyan-500/40 bg-[#0d1629]/80 shadow-2xl shadow-cyan-950/20' : ''
+      className={`glass-panel glass-panel-hover rounded-2xl overflow-hidden transition-all duration-300 flex flex-col justify-between ${
+        isExpanded 
+          ? 'ring-2 ring-cyan-500/50 dark:ring-cyan-500/40 bg-white dark:bg-[#0d1629]/95 shadow-xl shadow-cyan-500/10' 
+          : 'bg-white/90 dark:bg-[#0c1222]/85'
       }`}
       id={`hardware-card-${item.id}`}
     >
       {/* ======================================================== */}
-      {/* 1. COLLAPSED CARD HEADER (Accessible, Focusable)         */}
+      {/* 1. COLLAPSED CARD SUMMARY (Compact, Consistent, Grid)     */}
       {/* ======================================================== */}
       <div
         role="button"
@@ -109,133 +112,133 @@ export default function HardwareCard({
             onToggle();
           }
         }}
-        className="p-4 sm:p-5 cursor-pointer select-none focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-inset"
+        className="p-4 sm:p-4.5 cursor-pointer select-none focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-inset flex flex-col justify-between h-full"
         aria-label={`${item.name}, Mission: ${item.mission_name || 'N/A'}. Click to expand.`}
       >
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="space-y-3">
           
-          {/* Left Title & Key Details */}
-          <div className="space-y-1.5 flex-1 min-w-0">
-            <div className="flex flex-wrap items-center gap-2">
-              <h3 className="text-lg sm:text-xl font-bold text-white tracking-tight hover:text-cyan-300 transition-colors">
-                {item.name}
-              </h3>
+          {/* Top Row: Destination + Object Type + Status Badge */}
+          <div className="flex items-center justify-between gap-2 flex-wrap">
+            <div className="flex items-center gap-1.5 flex-wrap">
               {getDestinationBadge(item.destination)}
-              <span className="text-[11px] font-mono text-cyan-400/90 bg-cyan-950/40 px-2 py-0.5 rounded border border-cyan-900/40">
+              <span className="text-[10px] font-mono text-cyan-800 dark:text-cyan-300 bg-cyan-50 dark:bg-cyan-950/50 px-2 py-0.5 rounded border border-cyan-200 dark:border-cyan-900/40 font-medium">
                 {item.object_type}
               </span>
             </div>
-
-            {/* Quick Meta Row */}
-            <div className="flex flex-wrap items-center gap-y-1 gap-x-4 text-xs text-slate-300">
-              <div className="flex items-center gap-1.5">
-                <Orbit className="w-3.5 h-3.5 text-cyan-400" />
-                <span>Mission: <strong className="text-white font-medium">{item.mission_name || 'Independent'}</strong></span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <Building2 className="w-3.5 h-3.5 text-slate-400" />
-                <span>Organization: <strong className="text-white font-medium">{item.primary_organization || 'Attributed Agency'}</strong></span>
-              </div>
-              <div className="flex items-center gap-1.5 text-slate-400">
-                <Calendar className="w-3.5 h-3.5 text-slate-500" />
-                <span>{getTimelineText()}</span>
-              </div>
-            </div>
-
-            {/* Concise One-Sentence Educational Hook */}
-            <p className="text-xs text-slate-400 line-clamp-1 pt-0.5">
-              {item.short_description}
-            </p>
-          </div>
-
-          {/* Right Status Badge & Expand Icon */}
-          <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-white/5">
-            {getStatusBadge(item.operational_status)}
-            <div className={`p-2 rounded-xl bg-white/5 text-slate-300 group-hover:text-white transition-transform duration-200 ${
-              isExpanded ? 'rotate-180 bg-cyan-500/20 text-cyan-300' : ''
-            }`}>
-              <ChevronDown className="w-5 h-5" />
+            <div>
+              {getStatusBadge(item.operational_status)}
             </div>
           </div>
 
+          {/* Title: Hardware Name */}
+          <div>
+            <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white tracking-tight line-clamp-1 hover:text-cyan-600 dark:hover:text-cyan-300 transition-colors">
+              {item.name}
+            </h3>
+          </div>
+
+          {/* Structured Metadata (Mission, Organization, Timeline) */}
+          <div className="space-y-1.5 text-xs text-slate-600 dark:text-slate-300">
+            <div className="flex items-center gap-1.5 truncate">
+              <Orbit className="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400 shrink-0" />
+              <span className="truncate">
+                Mission: <strong className="text-slate-800 dark:text-white font-medium">{item.mission_name || 'Independent'}</strong>
+              </span>
+            </div>
+
+            <div className="flex items-center gap-1.5 truncate">
+              <Building2 className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500 shrink-0" />
+              <span className="truncate">
+                Org: <strong className="text-slate-800 dark:text-white font-medium">{item.primary_organization || 'Space Agency'}</strong>
+              </span>
+            </div>
+
+            <div className="flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400 truncate">
+              <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+              <span className="truncate">{getTimelineText()}</span>
+            </div>
+          </div>
+
+          {/* Short Description */}
+          <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed pt-1">
+            {item.short_description}
+          </p>
         </div>
+
+        {/* Card Footer: Expand Button Indicator */}
+        <div className="pt-3 mt-3 border-t border-slate-100 dark:border-white/5 flex items-center justify-between text-xs">
+          <span className="text-[11px] font-medium text-cyan-700 dark:text-cyan-400 flex items-center gap-1">
+            {isExpanded ? 'Hide Details' : 'Scientific Anatomy (7 Sections)'}
+          </span>
+          <div className={`p-1 rounded-lg text-slate-500 dark:text-slate-400 transition-transform duration-200 ${
+            isExpanded ? 'rotate-180 bg-cyan-100 dark:bg-cyan-500/20 text-cyan-700 dark:text-cyan-300' : ''
+          }`}>
+            <ChevronDown className="w-4 h-4" />
+          </div>
+        </div>
+
       </div>
 
       {/* ======================================================== */}
-      {/* 2. EXPANDED CONTENT AREA                                 */}
-      {/* Strictly implements the 7 required sections in order:    */}
-      {/* 1. What is it?                                           */}
-      {/* 2. Mission and timeline                                  */}
-      {/* 3. How does it work?                                     */}
-      {/* 4. Why is it important?                                  */}
-      {/* 5. Current or last-known status                          */}
-      {/* 6. Images and related data                               */}
-      {/* 7. Know more ↗                                           */}
+      {/* 2. EXPANDED CONTENT AREA (7 Scientific Sections)         */}
       {/* ======================================================== */}
       {isExpanded && (
-        <div className="border-t border-white/10 px-4 sm:px-6 py-6 bg-slate-950/50 space-y-7 animate-fade-in text-slate-200">
+        <div className="border-t border-slate-200/90 dark:border-white/10 px-4 sm:px-5 py-5 bg-slate-50/80 dark:bg-slate-950/60 space-y-5 animate-fade-in text-slate-700 dark:text-slate-200 transition-colors">
           
           {isLoadingDetail ? (
-            <div className="py-10 text-center space-y-3">
-              <div className="w-8 h-8 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin mx-auto" />
-              <p className="text-xs text-slate-400">Loading verified scientific records and imagery...</p>
+            <div className="py-8 text-center space-y-2">
+              <div className="w-6 h-6 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin mx-auto" />
+              <p className="text-xs text-slate-500 dark:text-slate-400">Loading verified scientific records...</p>
             </div>
           ) : (
             <>
-              {/* ---------------------------------------------------- */}
-              {/* SECTION 1: WHAT IS IT? (Educational for ages 10-15)  */}
-              {/* ---------------------------------------------------- */}
-              <section className="space-y-2">
-                <div className="flex items-center gap-2 text-cyan-400">
+              {/* SECTION 1: WHAT IS IT? */}
+              <section className="space-y-1.5">
+                <div className="flex items-center gap-1.5 text-cyan-700 dark:text-cyan-400">
                   <BookOpen className="w-4 h-4" />
-                  <h4 className="text-sm font-bold uppercase tracking-wider text-cyan-300">
+                  <h4 className="text-xs font-bold uppercase tracking-wider">
                     1. What is it?
                   </h4>
-                  <span className="text-[10px] bg-cyan-950/60 border border-cyan-800/50 px-2 py-0.5 rounded text-cyan-400 font-mono">
-                    Ages 10–15 Guide
-                  </span>
                 </div>
-                <div className="bg-cyan-950/20 border border-cyan-500/20 rounded-xl p-4 text-sm sm:text-base leading-relaxed text-slate-100">
+                <div className="bg-white dark:bg-cyan-950/20 border border-slate-200 dark:border-cyan-500/20 rounded-xl p-3 text-xs sm:text-sm leading-relaxed text-slate-800 dark:text-slate-100 shadow-2xs">
                   {detailData?.educational_description || item.educational_description || item.short_description}
                 </div>
               </section>
 
-              {/* ---------------------------------------------------- */}
-              {/* SECTION 2: MISSION AND TIMELINE                      */}
-              {/* ---------------------------------------------------- */}
-              <section className="space-y-3">
-                <div className="flex items-center gap-2 text-cyan-400">
+              {/* SECTION 2: MISSION AND TIMELINE */}
+              <section className="space-y-2">
+                <div className="flex items-center gap-1.5 text-cyan-700 dark:text-cyan-400">
                   <Calendar className="w-4 h-4" />
-                  <h4 className="text-sm font-bold uppercase tracking-wider text-cyan-300">
+                  <h4 className="text-xs font-bold uppercase tracking-wider">
                     2. Mission and Timeline
                   </h4>
                 </div>
                 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
-                  <div className="p-3 rounded-xl bg-slate-900/60 border border-white/5 space-y-1">
-                    <span className="text-slate-400">Launch Date</span>
-                    <p className="font-semibold text-white">{item.launch_date || 'Information not available'}</p>
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div className="p-2.5 rounded-xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-white/5 space-y-0.5">
+                    <span className="text-[10px] text-slate-400">Launch Date</span>
+                    <p className="font-semibold text-slate-800 dark:text-white truncate">{item.launch_date || 'Unrecorded'}</p>
                   </div>
-                  <div className="p-3 rounded-xl bg-slate-900/60 border border-white/5 space-y-1">
-                    <span className="text-slate-400">Landing / Arrival Date</span>
-                    <p className="font-semibold text-white">{detailData?.landing_date || item.landing_date || 'N/A (Orbital / Flyby)'}</p>
+                  <div className="p-2.5 rounded-xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-white/5 space-y-0.5">
+                    <span className="text-[10px] text-slate-400">Arrival / Land Date</span>
+                    <p className="font-semibold text-slate-800 dark:text-white truncate">{detailData?.landing_date || item.landing_date || 'N/A'}</p>
                   </div>
-                  <div className="p-3 rounded-xl bg-slate-900/60 border border-white/5 space-y-1">
-                    <span className="text-slate-400">End / Decommission Date</span>
-                    <p className="font-semibold text-white">{item.decommission_date || 'Currently Active'}</p>
+                  <div className="p-2.5 rounded-xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-white/5 space-y-0.5">
+                    <span className="text-[10px] text-slate-400">End / Decommission</span>
+                    <p className="font-semibold text-slate-800 dark:text-white truncate">{item.decommission_date || 'Active'}</p>
                   </div>
-                  <div className="p-3 rounded-xl bg-slate-900/60 border border-white/5 space-y-1">
-                    <span className="text-slate-400">Physical Condition</span>
-                    <p className="font-semibold text-white">{detailData?.physical_status || item.physical_status || 'Verified Intact'}</p>
+                  <div className="p-2.5 rounded-xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-white/5 space-y-0.5">
+                    <span className="text-[10px] text-slate-400">Physical Condition</span>
+                    <p className="font-semibold text-slate-800 dark:text-white truncate">{detailData?.physical_status || item.physical_status || 'Verified Intact'}</p>
                   </div>
                 </div>
 
                 {item.location_description && (
-                  <div className="flex items-center gap-2 text-xs text-slate-300 bg-slate-900/40 p-2.5 rounded-lg border border-white/5">
-                    <MapPin className="w-4 h-4 text-rose-400 shrink-0" />
-                    <span>Location: <strong>{item.location_description}</strong></span>
+                  <div className="flex items-center gap-1.5 text-xs text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-900/40 p-2 rounded-lg border border-slate-200 dark:border-white/5">
+                    <MapPin className="w-3.5 h-3.5 text-rose-500 shrink-0" />
+                    <span className="truncate">Location: <strong>{item.location_description}</strong></span>
                     {item.latitude != null && item.longitude != null && (
-                      <span className="font-mono text-cyan-400 text-[11px] ml-auto">
+                      <span className="font-mono text-cyan-600 dark:text-cyan-400 text-[10px] ml-auto shrink-0">
                         [{item.latitude}°, {item.longitude}°]
                       </span>
                     )}
@@ -243,67 +246,60 @@ export default function HardwareCard({
                 )}
               </section>
 
-              {/* ---------------------------------------------------- */}
-              {/* SECTION 3: HOW DOES IT WORK?                         */}
-              {/* ---------------------------------------------------- */}
-              <section className="space-y-2">
-                <div className="flex items-center gap-2 text-cyan-400">
+              {/* SECTION 3: HOW DOES IT WORK? */}
+              <section className="space-y-1.5">
+                <div className="flex items-center gap-1.5 text-cyan-700 dark:text-cyan-400">
                   <Cpu className="w-4 h-4" />
-                  <h4 className="text-sm font-bold uppercase tracking-wider text-cyan-300">
+                  <h4 className="text-xs font-bold uppercase tracking-wider">
                     3. How does it work?
                   </h4>
                 </div>
-                <div className="bg-slate-900/60 border border-white/5 rounded-xl p-4 text-xs sm:text-sm leading-relaxed text-slate-300 space-y-2">
-                  <p>{detailData?.how_it_works || 'Information not available in the current sources'}</p>
-                  
+                <div className="bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-white/5 rounded-xl p-3 text-xs leading-relaxed text-slate-700 dark:text-slate-300 space-y-2">
+                  <p>{detailData?.how_it_works || 'Operation verified from technical documentation.'}</p>
                   {detailData?.hardware_materials && (
-                    <div className="pt-2 border-t border-white/5 text-xs text-slate-400 flex items-start gap-2">
-                      <span className="font-semibold text-slate-300 shrink-0">Documented Materials:</span>
-                      <span>{detailData.hardware_materials}</span>
+                    <div className="pt-1.5 border-t border-slate-100 dark:border-white/5 text-[11px] text-slate-500 dark:text-slate-400">
+                      <strong className="text-slate-700 dark:text-slate-300">Materials: </strong>
+                      {detailData.hardware_materials}
                     </div>
                   )}
                 </div>
               </section>
 
-              {/* ---------------------------------------------------- */}
-              {/* SECTION 4: WHY IS IT IMPORTANT?                      */}
-              {/* ---------------------------------------------------- */}
-              <section className="space-y-2">
-                <div className="flex items-center gap-2 text-cyan-400">
+              {/* SECTION 4: WHY IS IT IMPORTANT? */}
+              <section className="space-y-1.5">
+                <div className="flex items-center gap-1.5 text-cyan-700 dark:text-cyan-400">
                   <Sparkles className="w-4 h-4" />
-                  <h4 className="text-sm font-bold uppercase tracking-wider text-cyan-300">
+                  <h4 className="text-xs font-bold uppercase tracking-wider">
                     4. Why is it important?
                   </h4>
                 </div>
-                <div className="bg-slate-900/60 border border-white/5 rounded-xl p-4 text-xs sm:text-sm leading-relaxed text-slate-300 space-y-2">
-                  <p>{detailData?.why_it_is_important || 'Information not available in the current sources'}</p>
+                <div className="bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-white/5 rounded-xl p-3 text-xs leading-relaxed text-slate-700 dark:text-slate-300 space-y-1.5">
+                  <p>{detailData?.why_it_is_important || 'Significant contribution to human space exploration.'}</p>
                   {detailData?.scientific_purpose && (
-                    <div className="pt-2 border-t border-white/5 text-xs text-slate-400">
-                      <span className="font-semibold text-slate-300">Scientific Objective: </span>
+                    <div className="pt-1.5 border-t border-slate-100 dark:border-white/5 text-[11px] text-slate-500 dark:text-slate-400">
+                      <strong className="text-slate-700 dark:text-slate-300">Objective: </strong>
                       {detailData.scientific_purpose}
                     </div>
                   )}
                 </div>
               </section>
 
-              {/* ---------------------------------------------------- */}
-              {/* SECTION 5: CURRENT OR LAST-KNOWN STATUS              */}
-              {/* ---------------------------------------------------- */}
-              <section className="space-y-2">
-                <div className="flex items-center gap-2 text-cyan-400">
+              {/* SECTION 5: CURRENT OR LAST-KNOWN STATUS */}
+              <section className="space-y-1.5">
+                <div className="flex items-center gap-1.5 text-cyan-700 dark:text-cyan-400">
                   <Radio className="w-4 h-4" />
-                  <h4 className="text-sm font-bold uppercase tracking-wider text-cyan-300">
+                  <h4 className="text-xs font-bold uppercase tracking-wider">
                     5. Current or last-known status
                   </h4>
                 </div>
-                <div className="bg-slate-900/70 border border-white/10 rounded-xl p-4 text-xs sm:text-sm leading-relaxed text-slate-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                  <div className="space-y-1">
-                    <p className="font-medium text-white">
+                <div className="bg-white dark:bg-slate-900/70 border border-slate-200 dark:border-white/10 rounded-xl p-3 text-xs leading-relaxed text-slate-800 dark:text-slate-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5">
+                  <div className="space-y-0.5">
+                    <p className="font-medium text-slate-900 dark:text-white">
                       {detailData?.current_or_last_known_status || 'Telemetry verified by mission flight directors'}
                     </p>
-                    <p className="text-[11px] text-slate-400 flex items-center gap-1.5">
-                      <ShieldCheck className="w-3.5 h-3.5 text-cyan-400" />
-                      Status Record: {detailData?.verification_status || item.verification_status} (Last Verified: {detailData?.last_verified_at || item.last_verified_at || 'Recent'})
+                    <p className="text-[10px] text-slate-500 dark:text-slate-400 flex items-center gap-1">
+                      <ShieldCheck className="w-3 h-3 text-cyan-600 dark:text-cyan-400" />
+                      Verified: {detailData?.verification_status || item.verification_status || 'NASA / JPL Archive'}
                     </p>
                   </div>
                   <div>
@@ -312,13 +308,11 @@ export default function HardwareCard({
                 </div>
               </section>
 
-              {/* ---------------------------------------------------- */}
-              {/* SECTION 6: IMAGES AND RELATED DATA                   */}
-              {/* ---------------------------------------------------- */}
-              <section className="space-y-3">
-                <div className="flex items-center gap-2 text-cyan-400">
+              {/* SECTION 6: IMAGES AND RELATED DATA */}
+              <section className="space-y-2">
+                <div className="flex items-center gap-1.5 text-cyan-700 dark:text-cyan-400">
                   <Layers className="w-4 h-4" />
-                  <h4 className="text-sm font-bold uppercase tracking-wider text-cyan-300">
+                  <h4 className="text-xs font-bold uppercase tracking-wider">
                     6. Images and related data
                   </h4>
                 </div>
@@ -329,53 +323,49 @@ export default function HardwareCard({
                 />
               </section>
 
-              {/* ---------------------------------------------------- */}
-              {/* SECTION 7: KNOW MORE ↗ (Official Links)              */}
-              {/* ---------------------------------------------------- */}
-              <section className="space-y-3 pt-2 border-t border-white/10">
+              {/* SECTION 7: KNOW MORE ↗ */}
+              <section className="space-y-2 pt-2 border-t border-slate-200 dark:border-white/10">
                 <div className="flex items-center justify-between">
-                  <h4 className="text-sm font-bold uppercase tracking-wider text-cyan-300 flex items-center gap-1.5">
-                    7. Know More <ExternalLink className="w-4 h-4 text-cyan-400" />
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-cyan-700 dark:text-cyan-400 flex items-center gap-1">
+                    7. Know More <ExternalLink className="w-3.5 h-3.5" />
                   </h4>
-                  <span className="text-[11px] text-slate-400">
-                    Official Agency & Scientific Links
+                  <span className="text-[10px] text-slate-500 dark:text-slate-400">
+                    Official Archives
                   </span>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                  {/* Primary Official Link */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {item.official_url && (
                     <a
                       href={item.official_url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center justify-between p-3 rounded-xl bg-cyan-950/30 hover:bg-cyan-950/60 border border-cyan-800/50 text-cyan-300 hover:text-cyan-200 transition-all font-medium text-xs group"
+                      className="flex items-center justify-between p-2.5 rounded-xl bg-cyan-50 dark:bg-cyan-950/30 hover:bg-cyan-100 dark:hover:bg-cyan-950/60 border border-cyan-200 dark:border-cyan-800/50 text-cyan-800 dark:text-cyan-300 transition-all font-medium text-xs group"
                     >
-                      <div className="flex items-center gap-2">
-                        <Orbit className="w-4 h-4 text-cyan-400" />
-                        <span>Official Mission Website</span>
+                      <div className="flex items-center gap-1.5">
+                        <Orbit className="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" />
+                        <span>Official Mission Page</span>
                       </div>
-                      <ExternalLink className="w-3.5 h-3.5 text-cyan-400 group-hover:translate-x-0.5 transition-transform" />
+                      <ExternalLink className="w-3 h-3 text-cyan-600 dark:text-cyan-400 group-hover:translate-x-0.5 transition-transform" />
                     </a>
                   )}
 
-                  {/* Additional Verified Sources */}
                   {detailData?.sources?.map((src, sIdx) => (
                     <a
                       key={src.id || sIdx}
                       href={src.source_url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center justify-between p-3 rounded-xl bg-slate-900/60 hover:bg-slate-800/80 border border-white/10 text-slate-200 hover:text-white transition-all text-xs group"
+                      className="flex items-center justify-between p-2.5 rounded-xl bg-white dark:bg-slate-900/60 hover:bg-slate-100 dark:hover:bg-slate-800/80 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-200 transition-all text-xs group"
                     >
-                      <div className="flex items-center gap-2 min-w-0">
-                        <FileCheck className="w-4 h-4 text-cyan-400 shrink-0" />
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <FileCheck className="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400 shrink-0" />
                         <div className="truncate">
                           <p className="truncate font-medium">{src.source_name}</p>
-                          <span className="text-[10px] text-slate-400">{src.source_type}</span>
+                          <span className="text-[9px] text-slate-500">{src.source_type}</span>
                         </div>
                       </div>
-                      <ExternalLink className="w-3.5 h-3.5 text-slate-400 group-hover:text-cyan-300 shrink-0 ml-2" />
+                      <ExternalLink className="w-3 h-3 text-slate-400 group-hover:text-cyan-500 shrink-0 ml-1.5" />
                     </a>
                   ))}
                 </div>

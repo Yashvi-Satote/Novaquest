@@ -1,13 +1,13 @@
-# Space Hardware Explorer
+# Space in Time
 
-> **NASA Space Apps Challenge — Educational Space Exploration Web Application**  
-> Component 1: Searchable, interactive catalogue of human-made hardware in space.
+> **Searchable, Interactive Space Hardware Catalogue**  
+> Comprehensive catalogue of human-made hardware sent into space.
 
 ---
 
 ## Overview
 
-The **Space Hardware Explorer** is a searchable, interactive educational web application designed for school students (ages 10–15), educators, and space enthusiasts. It catalogues human-made hardware sent into space, including satellites, spacecraft, landers, rovers, deep-space probes, rocket bodies, and surface equipment left on the Moon and Mars.
+**Space in Time** is a searchable, interactive space hardware application that catalogues human-made hardware sent into space, including satellites, spacecraft, landers, rovers, deep-space probes, rocket bodies, and surface equipment left on the Moon and Mars.
 
 The catalogue is backed by verified data derived from official archives including **NASA NSSDCA**, **NASA Jet Propulsion Laboratory (JPL)**, the **NASA Planetary Data System (PDS)**, **CelesTrak SATCAT**, and **Space-Track**.
 

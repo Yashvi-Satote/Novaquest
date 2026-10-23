@@ -1,12 +1,10 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 import FilterBar from './components/FilterBar';
 import HardwareCard from './components/HardwareCard';
 import ImageModal from './components/ImageModal';
-import DatabaseStatusModal from './components/DatabaseStatusModal';
 import { 
-  fetchHealth, 
   fetchFilters, 
   fetchHardware, 
   fetchHardwareDetail 
@@ -18,20 +16,39 @@ import {
   RotateCcw, 
   ChevronLeft, 
   ChevronRight, 
-  Sparkles,
-  Layers,
   Compass
 } from 'lucide-react';
 
 export default function App() {
-  // Backend & Database Health
-  const [health, setHealth] = useState({
-    status: 'checking',
-    database: 'unknown',
-    postgres_active: false,
-    database_message: 'Connecting to database...',
-    hardware_records_count: 0
+  // Theme State (Dark / Light with localStorage persistence)
+  const [theme, setTheme] = useState(() => {
+    try {
+      const savedTheme = localStorage.getItem('space_in_time_theme');
+      if (savedTheme) return savedTheme;
+      return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+    } catch {
+      return 'dark';
+    }
   });
+
+  // Apply theme to <html> element and persist
+  useEffect(() => {
+    const root = document.documentElement;
+    if (theme === 'dark') {
+      root.classList.add('dark');
+    } else {
+      root.classList.remove('dark');
+    }
+    try {
+      localStorage.setItem('space_in_time_theme', theme);
+    } catch (e) {
+      console.warn('Failed to persist theme to localStorage:', e);
+    }
+  }, [theme]);
+
+  const handleToggleTheme = () => {
+    setTheme(prev => (prev === 'dark' ? 'light' : 'dark'));
+  };
 
   // Hierarchy Tree for Sidebar
   const [hierarchy, setHierarchy] = useState([]);
@@ -62,9 +79,8 @@ export default function App() {
   const [hardwareDetails, setHardwareDetails] = useState({});
   const [loadingDetails, setLoadingDetails] = useState({});
 
-  // Mobile Drawer & Modals
+  // Mobile Drawer & Lightbox Modals
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [dbModalOpen, setDbModalOpen] = useState(false);
   const [lightboxState, setLightboxState] = useState({
     isOpen: false,
     images: [],
@@ -80,15 +96,11 @@ export default function App() {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  // Initial Load: Health & Sidebar Hierarchy
+  // Initial Load: Sidebar Hierarchy
   useEffect(() => {
     async function initAppData() {
       try {
-        const [healthRes, filtersRes] = await Promise.all([
-          fetchHealth(),
-          fetchFilters()
-        ]);
-        setHealth(healthRes);
+        const filtersRes = await fetchFilters();
         setHierarchy(filtersRes.hierarchy || []);
         setFilterOptions(filtersRes.filter_options || {});
       } catch (err) {
@@ -163,7 +175,6 @@ export default function App() {
       ...newFilters
     }));
     setCurrentPage(1);
-    // Close mobile drawer if open
     setMobileMenuOpen(false);
   };
 
@@ -191,9 +202,7 @@ export default function App() {
   // Select hardware directly from sidebar tree
   const handleSelectHardwareFromSidebar = async (id) => {
     setMobileMenuOpen(false);
-    // Expand this card
     handleToggleCard(id);
-    // Scroll to card
     setTimeout(() => {
       const el = document.getElementById(`hardware-card-${id}`);
       if (el) {
@@ -224,21 +233,20 @@ export default function App() {
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') {
         if (mobileMenuOpen) setMobileMenuOpen(false);
-        if (dbModalOpen) setDbModalOpen(false);
         if (lightboxState.isOpen) handleCloseLightbox();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [mobileMenuOpen, dbModalOpen, lightboxState.isOpen]);
+  }, [mobileMenuOpen, lightboxState.isOpen]);
 
   return (
-    <div className="min-h-screen bg-[#070b14] space-bg flex flex-col font-sans text-slate-100">
+    <div className={`min-h-screen ${theme === 'dark' ? 'dark' : ''} bg-slate-50 dark:bg-[#070b14] space-bg flex flex-col font-sans text-slate-800 dark:text-slate-100 transition-colors duration-200`}>
       
-      {/* 1. Global Header */}
+      {/* 1. Global Header (Flush full-width) */}
       <Header
-        health={health}
-        onOpenDbModal={() => setDbModalOpen(true)}
+        theme={theme}
+        onToggleTheme={handleToggleTheme}
         mobileMenuOpen={mobileMenuOpen}
         setMobileMenuOpen={setMobileMenuOpen}
         searchQuery={searchQuery}
@@ -246,11 +254,11 @@ export default function App() {
         totalResults={totalResults}
       />
 
-      {/* 2. Main Content Container */}
-      <div className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col lg:flex-row gap-6">
+      {/* 2. Main Layout Area (Sidebar flush against absolute left edge + full-width main content) */}
+      <div className="flex-1 w-full flex flex-col lg:flex-row min-h-0">
         
-        {/* Desktop Sidebar (Left Area) */}
-        <div className="hidden lg:block shrink-0 sticky top-20 h-[calc(100vh-6.5rem)]">
+        {/* Desktop Sidebar: Flush against the absolute left edge of the screen */}
+        <div className="hidden lg:block w-72 xl:w-80 shrink-0 sticky top-14 h-[calc(100vh-3.5rem)] border-r border-slate-200/90 dark:border-white/10 z-20">
           <Sidebar
             hierarchy={hierarchy}
             activeFilters={activeFilters}
@@ -260,28 +268,28 @@ export default function App() {
           />
         </div>
 
-        {/* Mobile Slide-Out Drawer */}
+        {/* Mobile Slide-Out Drawer (Flush left) */}
         {mobileMenuOpen && (
           <div 
-            className="fixed inset-0 z-40 lg:hidden bg-black/80 backdrop-blur-sm transition-opacity"
+            className="fixed inset-0 z-40 lg:hidden bg-black/60 dark:bg-black/80 backdrop-blur-xs transition-opacity"
             onClick={() => setMobileMenuOpen(false)}
             aria-hidden="true"
           >
             <div 
-              className="absolute left-0 top-0 bottom-0 w-80 max-w-[85vw] bg-[#0c1222] border-r border-white/10 p-4 shadow-2xl flex flex-col animate-slide-right"
+              className="absolute left-0 top-0 bottom-0 w-80 max-w-[85vw] bg-white dark:bg-[#0c1222] border-r border-slate-200 dark:border-white/10 p-3 sm:p-4 shadow-2xl flex flex-col animate-slide-right"
               onClick={(e) => e.stopPropagation()}
               role="dialog"
               aria-modal="true"
               aria-label="Navigation Drawer"
             >
-              <div className="flex items-center justify-between pb-3 border-b border-white/10 mb-3">
-                <span className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-                  <Compass className="w-4 h-4 text-cyan-400" /> Navigation
+              <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-white/10 mb-3">
+                <span className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
+                  <Compass className="w-4 h-4 text-cyan-600 dark:text-cyan-400" /> Navigation
                 </span>
                 <button
                   type="button"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="p-1.5 rounded-lg text-slate-400 hover:text-white"
+                  className="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
                   aria-label="Close navigation drawer"
                 >
                   <X className="w-5 h-5" />
@@ -301,8 +309,8 @@ export default function App() {
           </div>
         )}
 
-        {/* Main Content Area (Center / Right) */}
-        <main className="flex-1 min-w-0 space-y-6">
+        {/* Main Content Area (Expands to use all remaining horizontal width) */}
+        <main className="flex-1 min-w-0 px-4 sm:px-6 lg:px-8 py-5 space-y-5">
           
           {/* Search, Pills, Active Filters & Sorting */}
           <FilterBar
@@ -320,62 +328,64 @@ export default function App() {
 
           {/* Error Banner */}
           {fetchError && (
-            <div className="p-4 rounded-2xl bg-rose-950/40 border border-rose-800/60 text-rose-200 text-xs sm:text-sm flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" />
+            <div className="p-4 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 text-rose-800 dark:text-rose-200 text-xs sm:text-sm flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-rose-500 dark:text-rose-400 shrink-0 mt-0.5" />
               <div className="flex-1">
-                <strong className="text-white">Connection Alert:</strong> {fetchError}
-                <p className="mt-1 text-rose-300">
-                  Ensure the Flask backend is running on port 5000 (<code className="bg-rose-900/60 px-1 py-0.5 rounded">python backend/app.py</code>).
+                <strong className="text-rose-900 dark:text-white">Connection Alert:</strong> {fetchError}
+                <p className="mt-1 text-rose-700 dark:text-rose-300">
+                  Ensure the Flask backend is running on port 5000 (<code className="bg-rose-100 dark:bg-rose-900/60 px-1 py-0.5 rounded">python backend/app.py</code>).
                 </p>
               </div>
               <button
                 type="button"
                 onClick={loadHardware}
-                className="px-3 py-1 bg-rose-900 hover:bg-rose-800 text-white rounded-lg text-xs font-semibold cursor-pointer"
+                className="px-3 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-semibold cursor-pointer shadow-xs"
               >
                 Retry
               </button>
             </div>
           )}
 
-          {/* Hardware Cards List */}
+          {/* Hardware Cards: Responsive Grid (3 per row large screens, 2 per row medium, 1 on mobile) */}
           {isLoading ? (
-            <div className="space-y-4">
-              {[1, 2, 3, 4].map(n => (
-                <div key={n} className="glass-panel rounded-2xl p-5 space-y-3 animate-pulse">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4.5 sm:gap-5">
+              {[1, 2, 3, 4, 5, 6].map(n => (
+                <div key={n} className="glass-panel rounded-2xl p-5 space-y-3.5 animate-pulse bg-white/70 dark:bg-slate-900/40 border border-slate-200 dark:border-white/5">
                   <div className="flex items-center justify-between">
-                    <div className="h-6 w-1/3 bg-slate-800 rounded-lg" />
-                    <div className="h-6 w-24 bg-slate-800 rounded-full" />
+                    <div className="h-4 w-1/3 bg-slate-200 dark:bg-slate-800 rounded" />
+                    <div className="h-5 w-20 bg-slate-200 dark:bg-slate-800 rounded-full" />
                   </div>
-                  <div className="h-4 w-1/2 bg-slate-800/60 rounded" />
-                  <div className="h-3 w-3/4 bg-slate-800/40 rounded" />
+                  <div className="h-6 w-3/4 bg-slate-200 dark:bg-slate-800 rounded-lg" />
+                  <div className="h-4 w-1/2 bg-slate-200/80 dark:bg-slate-800/60 rounded" />
+                  <div className="h-3 w-full bg-slate-200/60 dark:bg-slate-800/40 rounded" />
+                  <div className="h-3 w-2/3 bg-slate-200/60 dark:bg-slate-800/40 rounded" />
                 </div>
               ))}
             </div>
           ) : hardwareItems.length === 0 ? (
             /* Empty State */
-            <div className="glass-panel rounded-2xl p-10 text-center space-y-4 max-w-lg mx-auto my-8">
-              <div className="w-14 h-14 rounded-2xl bg-slate-800/80 border border-white/10 flex items-center justify-center mx-auto text-slate-400">
-                <Search className="w-7 h-7 text-cyan-400" />
+            <div className="glass-panel rounded-2xl p-8 sm:p-12 text-center space-y-4 max-w-lg mx-auto my-8 border border-slate-200 dark:border-white/10 bg-white/80 dark:bg-slate-900/40">
+              <div className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-white/10 flex items-center justify-center mx-auto text-slate-400">
+                <Search className="w-6 h-6 text-cyan-600 dark:text-cyan-400" />
               </div>
               <div className="space-y-1">
-                <h3 className="text-lg font-bold text-white">No hardware objects found</h3>
-                <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">
-                  We couldn't find any hardware matching your current search or sidebar filters. Try broader keywords or reset your filters.
+                <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">No hardware objects found</h3>
+                <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
+                  We couldn't find any space hardware matching your current search or sidebar filters. Try broader keywords or reset your filters.
                 </p>
               </div>
               <button
                 type="button"
                 onClick={handleResetFilters}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold shadow-lg shadow-cyan-600/20 transition-all cursor-pointer"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold shadow-md shadow-cyan-600/20 transition-all cursor-pointer"
               >
                 <RotateCcw className="w-3.5 h-3.5" />
                 Reset All Filters
               </button>
             </div>
           ) : (
-            /* Results Cards */
-            <div className="space-y-4">
+            /* Responsive Grid: 3 cards/row on larger screens (xl:grid-cols-3), 2 cards/row on medium screens (md:grid-cols-2), 1 card/row on mobile */
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4.5 sm:gap-5 items-start">
               {hardwareItems.map(item => (
                 <HardwareCard
                   key={item.id}
@@ -392,25 +402,25 @@ export default function App() {
 
           {/* Pagination Controls */}
           {totalPages > 1 && (
-            <div className="flex items-center justify-between pt-6 border-t border-white/10 text-xs">
+            <div className="flex items-center justify-between pt-5 border-t border-slate-200 dark:border-white/10 text-xs">
               <button
                 type="button"
                 disabled={currentPage <= 1}
                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-900 border border-white/10 text-slate-300 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-2xs"
               >
                 <ChevronLeft className="w-4 h-4" /> Previous
               </button>
 
-              <span className="text-slate-400 font-mono">
-                Page <strong className="text-white">{currentPage}</strong> of <strong className="text-white">{totalPages}</strong>
+              <span className="text-slate-500 dark:text-slate-400 font-mono">
+                Page <strong className="text-slate-900 dark:text-white">{currentPage}</strong> of <strong className="text-slate-900 dark:text-white">{totalPages}</strong>
               </span>
 
               <button
                 type="button"
                 disabled={currentPage >= totalPages}
                 onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-900 border border-white/10 text-slate-300 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-2xs"
               >
                 Next <ChevronRight className="w-4 h-4" />
               </button>
@@ -421,43 +431,32 @@ export default function App() {
 
       </div>
 
-      {/* 3. Global Footer */}
-      <footer className="mt-auto border-t border-white/10 bg-[#060a12]/90 py-6 px-4 text-center text-xs text-slate-400">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
+      {/* 3. Global Footer (Clean, full-width) */}
+      <footer className="mt-auto border-t border-slate-200/90 dark:border-white/10 bg-white/80 dark:bg-[#060a12]/90 py-4 px-4 sm:px-6 lg:px-8 text-xs text-slate-500 dark:text-slate-400 transition-colors">
+        <div className="w-full flex flex-col sm:flex-row items-center justify-between gap-2.5">
           <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-cyan-400" />
-            <span>NASA Space Apps Challenge • Component 1: Space Hardware Explorer</span>
+            <span className="w-2 h-2 rounded-full bg-cyan-500 dark:bg-cyan-400" />
+            <span className="font-medium text-slate-700 dark:text-slate-300">Space in Time</span>
+            <span>•</span>
+            <span>Human-Made Hardware Across the Cosmos</span>
           </div>
-          <div className="flex items-center gap-4 text-[11px] text-slate-400">
+          <div className="flex items-center gap-3 text-[11px] text-slate-400 dark:text-slate-500">
             <span>NASA PDS & NSSDCA Records</span>
             <span>•</span>
             <span>JPL Deep Space Archives</span>
             <span>•</span>
-            <button 
-              type="button" 
-              onClick={() => setDbModalOpen(true)}
-              className="text-cyan-400 hover:underline"
-            >
-              PostgreSQL Engine Info
-            </button>
+            <span>CelesTrak SATCAT</span>
           </div>
         </div>
       </footer>
 
-      {/* 4. Modals */}
+      {/* 4. Lightbox Modal */}
       {lightboxState.isOpen && (
         <ImageModal
           images={lightboxState.images}
           currentIndex={lightboxState.currentIndex}
           onClose={handleCloseLightbox}
           onNavigate={handleNavigateLightbox}
-        />
-      )}
-
-      {dbModalOpen && (
-        <DatabaseStatusModal
-          health={health}
-          onClose={() => setDbModalOpen(false)}
         />
       )}
 
