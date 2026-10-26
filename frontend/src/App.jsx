@@ -13,7 +13,7 @@ function NotFoundPage({ theme, onToggleTheme }) {
             <Rocket className="w-5 h-5 text-white transform -rotate-45" />
           </div>
           <div>
-            <span className="text-base font-bold text-slate-900 dark:text-white">Space in Time</span>
+            <span className="text-base font-bold text-slate-900 dark:text-white">Novaquest</span>
             <p className="text-[10px] text-slate-500 dark:text-slate-400">Catalogue Explorer</p>
           </div>
         </Link>
@@ -59,7 +59,8 @@ export default function App() {
   // Theme State (Dark / Light with localStorage persistence)
   const [theme, setTheme] = useState(() => {
     try {
-      const savedTheme = localStorage.getItem('space_in_time_theme');
+      const savedTheme = localStorage.getItem('novaquest_theme')
+        || localStorage.getItem('space_in_time_theme');
       if (savedTheme) return savedTheme;
       return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
     } catch {
@@ -76,7 +77,7 @@ export default function App() {
       root.classList.remove('dark');
     }
     try {
-      localStorage.setItem('space_in_time_theme', theme);
+      localStorage.setItem('novaquest_theme', theme);
     } catch (e) {
       console.warn('Failed to persist theme to localStorage:', e);
     }

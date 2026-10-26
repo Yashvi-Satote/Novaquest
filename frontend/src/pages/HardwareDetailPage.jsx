@@ -125,8 +125,9 @@ export default function HardwareDetailPage({ theme, onToggleTheme }) {
     );
   };
 
-  // Determine official website URL
-  const officialUrl = hardware?.official_url || (hardware?.sources && hardware.sources.length > 0 ? hardware.sources[0].source_url : null);
+  // Only expose verified, non-empty external links to the UI.
+  const verifiedSources = (hardware?.sources || []).filter((src) => Boolean(src?.source_url));
+  const officialUrl = hardware?.official_url || verifiedSources[0]?.source_url || null;
 
   return (
     <div className={`min-h-screen ${theme === 'dark' ? 'dark' : ''} bg-slate-50 dark:bg-[#070b14] space-bg flex flex-col font-sans text-slate-800 dark:text-slate-100 transition-colors duration-200`}>
@@ -222,7 +223,7 @@ export default function HardwareDetailPage({ theme, onToggleTheme }) {
                 className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs sm:text-sm font-semibold shadow-md shadow-cyan-600/20 transition-all"
               >
                 <ArrowLeft className="w-4 h-4" />
-                Return to Space in Time Explorer
+                Return to Novaquest Explorer
               </Link>
             </div>
           </div>
@@ -432,7 +433,7 @@ export default function HardwareDetailPage({ theme, onToggleTheme }) {
                     )}
 
                     {/* Secondary verified sources */}
-                    {hardware.sources?.map((src, sIdx) => (
+                    {verifiedSources.map((src, sIdx) => (
                       <a
                         key={src.id || sIdx}
                         href={src.source_url}
@@ -617,7 +618,7 @@ export default function HardwareDetailPage({ theme, onToggleTheme }) {
         <div className="w-full flex flex-col sm:flex-row items-center justify-between gap-2.5 max-w-7xl mx-auto">
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-cyan-500 dark:bg-cyan-400" />
-            <span className="font-medium text-slate-700 dark:text-slate-300">Space in Time</span>
+            <span className="font-medium text-slate-700 dark:text-slate-300">Novaquest</span>
             <span>•</span>
             <span>Human-Made Hardware Across the Cosmos</span>
           </div>

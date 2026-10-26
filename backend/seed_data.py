@@ -82,14 +82,14 @@ def seed_database():
                 "slug": "hughes-aircraft",
                 "organization_type": "Aerospace Manufacturer",
                 "country": "United States",
-                "official_url": "https://www.boeing.com/history/companies/hughes.page"
+                "official_url": ""
             },
             {
                 "name": "Martin Marietta",
                 "slug": "martin-marietta",
                 "organization_type": "Aerospace Manufacturer",
                 "country": "United States",
-                "official_url": "https://www.lockheedmartin.com/en-us/who-we-are/history/heritage-companies.html"
+                "official_url": ""
             },
             {
                 "name": "Yuzhnoye Design Office",
@@ -138,7 +138,7 @@ def seed_database():
                 "mission_end_date": "2018-06-10",
                 "mission_status": "Completed",
                 "description": "NASA twin rover mission (Spirit and Opportunity) seeking past water activity and habitability across Martian geology.",
-                "official_url": "https://science.nasa.gov/mission/mer"
+                "official_url": "https://science.nasa.gov/mission/mars-exploration-rovers-spirit-and-opportunity/"
             },
             {
                 "name": "Phoenix",
@@ -230,7 +230,7 @@ def seed_database():
                 "mission_end_date": None,
                 "mission_status": "Active",
                 "description": "The first mission in human history to achieve a soft landing on the lunar far side inside Von Kármán crater.",
-                "official_url": "https://www.cnsa.gov.cn/english/n6465652/n6465653/c6804892/content.html"
+                "official_url": ""
             },
 
             # DEEP SPACE MISSIONS
@@ -606,7 +606,7 @@ def seed_database():
                 "scientific_purpose": "Search for geological clues to water history, characterize mineral distributions across craters, and analyze rock interiors with abrasion tools.",
                 "current_or_last_known_status": "Inactive / decommissioned. Intact on the slopes of Perseverance Valley in Endeavour Crater after final contact June 10, 2018.",
                 "hardware_materials": "Aluminum honeycombed composite structure, titanium rocker arms, silicon solar panels with Pyrex protective glass.",
-                "official_url": "https://science.nasa.gov/mission/mer",
+                "official_url": "https://science.nasa.gov/mission/mars-exploration-rovers-spirit-and-opportunity/",
                 "verification_status": "Verified from NASA MER Archive",
                 "last_verified_at": "2026-09-25",
                 "aliases": [
@@ -662,7 +662,7 @@ def seed_database():
                 "scientific_purpose": "Investigate Gusev Crater's geology, seek evidence of past aqueous activity, and study volcanic rocks in the Columbia Hills.",
                 "current_or_last_known_status": "Inactive / decommissioned. Intact at Troy in Gusev Crater after becoming stuck in soft sand in 2009; last communication March 22, 2010.",
                 "hardware_materials": "Aluminum chassis, titanium rocker components, silicon solar cells, aerogel insulation.",
-                "official_url": "https://science.nasa.gov/mission/mer",
+                "official_url": "https://science.nasa.gov/mission/mars-exploration-rovers-spirit-and-opportunity/",
                 "verification_status": "Verified from NASA MER Records",
                 "last_verified_at": "2026-09-20",
                 "aliases": [
@@ -860,7 +860,7 @@ def seed_database():
                 "sources": [
                     {
                         "source_name": "NASA Lunar Roving Vehicle Operations Handbook",
-                        "source_url": "https://www.nasa.gov/centers/marshall/history/lrv.html",
+                        "source_url": "https://www.nasa.gov/history/alsj/a17/a17ovrvlm.html",
                         "source_type": "Technical Documentation",
                         "evidence_notes": "Official engineering manual and technical schematics.",
                         "last_checked_at": "2026-10-10"
@@ -970,7 +970,7 @@ def seed_database():
                 "sources": [
                     {
                         "source_name": "NASA Apollo 12 Surveyor III Analysis",
-                        "source_url": "https://curator.jsc.nasa.gov/lunar/surveyor.cfm",
+                        "source_url": "https://www.nasa.gov/mission/apollo-12/",
                         "source_type": "Science Data Archive",
                         "evidence_notes": "Scientific examination report on retrieved Surveyor 3 components returned by Apollo 12.",
                         "last_checked_at": "2026-10-10"

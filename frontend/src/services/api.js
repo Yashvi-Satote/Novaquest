@@ -1,5 +1,5 @@
 /**
- * API Service for Space in Time
+ * API Service for Novaquest
  * Handles communication with Flask REST backend
  */
 
