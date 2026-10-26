@@ -1,5 +1,5 @@
 """
-Database expansion for Space in Time.
+Database expansion for Novaquest.
 Adds 35+ new accurately documented human-made space hardware records.
 Run: python backend/expand_db.py
 """
@@ -39,8 +39,9 @@ def upsert_mission(db, mm, slug, name, dest, launch, end, status, desc, url):
     return m
 
 
-def insert_hw(db, org_map, mm, seen, h):
-    if h["slug"] in seen:
+def insert_hw(db, org_map, mm, seen, seen_names, h):
+    if h["slug"] in seen or h["name"] in seen_names:
+        print(f"  SKIP (already present): {h['slug']}")
         return False
     mission = mm.get(h["mission_slug"])
     if not mission:
@@ -76,6 +77,7 @@ def insert_hw(db, org_map, mm, seen, h):
     )
     db.add(hw); db.flush()
     seen.add(h["slug"])
+    seen_names.add(h["name"])
 
     for a in h.get("aliases", []):
         db.add(HardwareAlias(hardware_id=hw.id,
@@ -101,7 +103,7 @@ def insert_hw(db, org_map, mm, seen, h):
 
 
 def expand_database():
-    print("Expanding Space in Time database...")
+    print("Expanding Novaquest database...")
     Base.metadata.create_all(bind=engine)
     db = SessionLocal()
     try:
@@ -109,6 +111,7 @@ def expand_database():
         org_map = {o.slug: o for o in db.query(Organization).all()}
         mm = {m.slug: m for m in db.query(Mission).all()}
         seen = {h.slug for h in db.query(Hardware).all()}
+        seen_names = {h.name for h in db.query(Hardware).all()}
         print(f"Current records: {len(seen)} hardware, {len(mm)} missions, {len(org_map)} orgs")
 
         # ── NEW ORGANIZATIONS ──────────────────────────────────────────────
@@ -132,7 +135,7 @@ def expand_database():
             ("mars-exploration-rover-a", "Mars Exploration Rover A (Spirit)", "Mars",
              "2003-06-10", "2011-05-25", "Completed",
              "NASA Spirit rover explored Gusev Crater for over six years.",
-             "https://science.nasa.gov/mission/mer"),
+             "https://science.nasa.gov/mission/mars-exploration-rovers-spirit-and-opportunity/"),
             ("mars-science-laboratory", "Mars Science Laboratory (Curiosity)", "Mars",
              "2011-11-26", None, "Active",
              "NASA nuclear-powered rover exploring Gale Crater.",
@@ -295,13 +298,13 @@ def expand_database():
                 "scientific_purpose": "Investigate geology and mineralogy of Gusev Crater, search for past liquid water evidence, characterize soil and atmosphere.",
                 "current_or_last_known_status": "Stationary at 'Troy' in Gusev Crater where it became embedded in soft sulfate-rich soil in May 2009. Last good contact: March 22, 2010.",
                 "hardware_materials": "Aluminum/titanium composite, solar panels, multi-layer insulation, magnesium wheels with titanium cleats.",
-                "official_url": "https://science.nasa.gov/mission/mer",
+                "official_url": "https://science.nasa.gov/mission/mars-exploration-rovers-spirit-and-opportunity/",
                 "verification_status": "Verified from NASA MER Mission Records",
                 "last_verified_at": "2026-10-01",
                 "aliases": [{"alias": "MER-A", "alias_type": "Catalog ID"}, {"alias": "Mars Exploration Rover A", "alias_type": "Alternate Name"}],
                 "keywords": ["mars", "rover", "gusev crater", "water evidence", "nasa", "2004"],
                 "images": [{"title": "Spirit at Gusev Crater", "image_url": "https://images-assets.nasa.gov/image/PIA05117/PIA05117~orig.jpg", "source_url": "https://photojournal.jpl.nasa.gov/catalog/PIA05117", "attribution": "NASA/JPL-Caltech", "publication_date": "2004-01-25"}],
-                "sources": [{"source_name": "NASA MER Mission", "source_url": "https://science.nasa.gov/mission/mer", "source_type": "Official Mission Website", "last_checked_at": "2026-10-01"}],
+                "sources": [{"source_name": "NASA MER Mission", "source_url": "https://science.nasa.gov/mission/mars-exploration-rovers-spirit-and-opportunity/", "source_type": "Official Mission Website", "last_checked_at": "2026-10-01"}],
             },
             {
                 "name": "Curiosity Rover",
@@ -950,13 +953,13 @@ def expand_database():
                 "scientific_purpose": "Directly measure and image Titan's atmosphere and surface during parachute descent; characterize atmospheric chemistry and surface properties.",
                 "current_or_last_known_status": "Stationary on Titan's surface. Transmitted data for about 70 minutes on surface before batteries died. Now covered in ethane drizzle and methane frost.",
                 "hardware_materials": "Aluminum alloy sphere, ablative carbon heat shield, silica fiber parachute, lithium primary batteries.",
-                "official_url": "https://www.esa.int/Science_Exploration/Space_Science/Cassini-Huygens/Huygens_probe",
+                "official_url": "https://science.nasa.gov/mission/cassini/huygens-probe/",
                 "verification_status": "Verified from ESA Huygens Mission records",
                 "last_verified_at": "2026-09-15",
                 "aliases": [{"alias": "Huygens Probe", "alias_type": "Alternate Name"}, {"alias": "ESA Titan Lander", "alias_type": "Alternate Name"}],
                 "keywords": ["deep space", "titan", "saturn", "lander", "esa", "atmosphere", "methane", "outer solar system", "2005"],
                 "images": [{"title": "Huygens View of Titan's Surface", "image_url": "https://images-assets.nasa.gov/image/PIA07232/PIA07232~orig.jpg", "source_url": "https://photojournal.jpl.nasa.gov/catalog/PIA07232", "attribution": "ESA/NASA/JPL/University of Arizona", "publication_date": "2005-01-15"}],
-                "sources": [{"source_name": "ESA Huygens Probe", "source_url": "https://www.esa.int/Science_Exploration/Space_Science/Cassini-Huygens/Huygens_probe", "source_type": "Official Mission Website", "last_checked_at": "2026-09-15"}],
+                "sources": [{"source_name": "ESA Huygens Probe", "source_url": "https://science.nasa.gov/mission/cassini/huygens-probe/", "source_type": "Official Mission Website", "last_checked_at": "2026-09-15"}],
             },
             {
                 "name": "Dawn Spacecraft",
@@ -1236,7 +1239,7 @@ def expand_database():
                 "last_verified_at": "2026-10-01",
                 "aliases": [{"alias": "CXO", "alias_type": "Acronym"}, {"alias": "Advanced X-ray Astrophysics Facility", "alias_type": "Former Name"}],
                 "keywords": ["earth orbit", "telescope", "x-ray", "black holes", "supernovae", "nasa", "active", "1999"],
-                "images": [{"title": "Chandra X-ray Image of Cassiopeia A", "image_url": "https://chandra.harvard.edu/graphics/resources/posters/cas_a.jpg", "source_url": "https://chandra.harvard.edu/photo/2017/casa/", "attribution": "NASA/CXC/SAO", "publication_date": "2017-01-05"}],
+                "images": [],
                 "sources": [{"source_name": "NASA Chandra X-ray Observatory", "source_url": "https://chandra.harvard.edu", "source_type": "Official Mission Website", "last_checked_at": "2026-10-01"}],
             },
             {
@@ -1304,7 +1307,7 @@ def expand_database():
             {
                 "name": "International Space Station",
                 "slug": "international-space-station",
-                "mission_slug": "iss",
+                "mission_slug": "international-space-station",
                 "manufacturer_slug": "boeing",
                 "operator_slug": "nasa",
                 "mission_agency_slug": "nasa",
@@ -1453,7 +1456,7 @@ def expand_database():
                 "last_verified_at": "2026-10-01",
                 "aliases": [{"alias": "EOS AM-1", "alias_type": "Former Name"}, {"alias": "MODIS Satellite", "alias_type": "Alternate Name"}],
                 "keywords": ["earth orbit", "satellite", "climate", "earth observation", "modis", "nasa", "active", "1999"],
-                "images": [{"title": "Terra MODIS Global Image", "image_url": "https://eoimages.gsfc.nasa.gov/images/imagerecords/79000/79765/global_vegetation_npp.2003.jpg", "source_url": "https://terra.nasa.gov/gallery", "attribution": "NASA/GSFC/MODIS Land Rapid Response Team", "publication_date": "2010-04-01"}],
+                "images": [],
                 "sources": [{"source_name": "NASA Terra Mission", "source_url": "https://terra.nasa.gov", "source_type": "Official Mission Website", "last_checked_at": "2026-10-01"}],
             },
         ]
@@ -1461,7 +1464,7 @@ def expand_database():
         added = 0
         skipped = 0
         for h in records:
-            result = insert_hw(db, org_map, mm, seen, h)
+            result = insert_hw(db, org_map, mm, seen, seen_names, h)
             if result:
                 print(f"  + {h['name']}")
                 added += 1
@@ -1470,7 +1473,7 @@ def expand_database():
 
         db.commit()
         total = db.query(Hardware).count()
-        print(f"\n✅ Done! Added: {added} | Skipped: {skipped} | Total now: {total}")
+        print(f"\n[OK] Done! Added: {added} | Skipped: {skipped} | Total now: {total}")
 
     except Exception as e:
         db.rollback()

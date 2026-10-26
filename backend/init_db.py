@@ -8,10 +8,11 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from database import engine, SessionLocal, Base, get_db_status
 from models import Organization, Mission, Hardware, HardwareAlias, HardwareKeyword, HardwareImage, HardwareSource
 from seed_data import seed_database
+from expand_db import expand_database
 
 def init_db():
     print("=" * 60)
-    print("Space Hardware Explorer - Database Initialization")
+    print("Novaquest - Database Initialization")
     print("=" * 60)
     
     status = get_db_status()
@@ -26,6 +27,9 @@ def init_db():
     
     print("Ingesting verified seed dataset...")
     seed_database()
+
+    print("Ingesting extended hardware dataset...")
+    expand_database()
     
     # Verify counts
     db = SessionLocal()

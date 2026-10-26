@@ -335,7 +335,7 @@ export default function ExplorerPage({ theme, onToggleTheme }) {
         <div className="w-full flex flex-col sm:flex-row items-center justify-between gap-2.5">
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-cyan-500 dark:bg-cyan-400" />
-            <span className="font-medium text-slate-700 dark:text-slate-300">Space in Time</span>
+            <span className="font-medium text-slate-700 dark:text-slate-300">Novaquest</span>
             <span>•</span>
             <span>Human-Made Hardware Across the Cosmos</span>
           </div>

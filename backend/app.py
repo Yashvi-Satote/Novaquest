@@ -22,6 +22,25 @@ app = Flask(__name__)
 cors_origin = os.getenv("CORS_ORIGIN", "*")
 CORS(app, origins=[cors_origin, "http://localhost:5173", "http://127.0.0.1:5173"], supports_credentials=True)
 
+
+def bootstrap_database():
+    """Create tables and ensure the full verified dataset is present.
+
+    Both ingestion steps are idempotent, so this safely upgrades databases
+    that were created before the extended dataset was wired in.
+    """
+    from seed_data import seed_database
+    from expand_db import expand_database
+
+    try:
+        seed_database()
+        expand_database()
+    except Exception as e:
+        logger.error(f"Database bootstrap failed: {e}")
+
+
+bootstrap_database()
+
 @app.route("/api/health", methods=["GET"])
 def health_check():
     """Health check endpoint reporting backend and database status."""
