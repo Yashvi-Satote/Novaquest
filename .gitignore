@@ -52,3 +52,18 @@ pnpm-debug.log*
 .idea/
 .DS_Store
 Thumbs.db
+
+
+
+# Runtime logs
+*.log
+*.err
+
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Environment secrets
+.env
+.env.*
+!.env.example
