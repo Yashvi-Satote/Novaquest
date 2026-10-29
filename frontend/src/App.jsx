@@ -1,34 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { Routes, Route, Link } from 'react-router-dom';
+import { Routes, Route, Link, Navigate } from 'react-router-dom';
+import Header from './components/Header';
 import ExplorerPage from './pages/ExplorerPage';
 import HardwareDetailPage from './pages/HardwareDetailPage';
 import SolarSystemPage from './pages/SolarSystemPage';
-import { Rocket, ArrowLeft, AlertCircle } from 'lucide-react';
+import PlaceholderPage from './pages/PlaceholderPage';
+import { ArrowLeft, AlertCircle } from 'lucide-react';
 
 function NotFoundPage({ theme, onToggleTheme }) {
   return (
     <div className={`min-h-screen ${theme === 'dark' ? 'dark' : ''} bg-slate-50 dark:bg-[#070b14] space-bg flex flex-col font-sans text-slate-800 dark:text-slate-100 transition-colors duration-200`}>
-      <header className="w-full bg-white/80 dark:bg-[#070b14]/90 backdrop-blur-md border-b border-slate-200/90 dark:border-white/10 px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-cyan-600 via-blue-600 to-indigo-600 flex items-center justify-center shadow-md shadow-cyan-500/20">
-            <Rocket className="w-5 h-5 text-white transform -rotate-45" />
-          </div>
-          <div>
-            <span className="text-base font-bold text-slate-900 dark:text-white">Novaquest</span>
-            <p className="text-[10px] text-slate-500 dark:text-slate-400">Catalogue Explorer</p>
-          </div>
-        </Link>
-        {onToggleTheme && (
-          <button
-            type="button"
-            onClick={onToggleTheme}
-            className="p-2 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-100/80 dark:bg-slate-800/80 text-slate-700 dark:text-slate-200 cursor-pointer"
-            aria-label="Toggle theme"
-          >
-            {theme === 'dark' ? '☀️' : '🌙'}
-          </button>
-        )}
-      </header>
+      <Header theme={theme} onToggleTheme={onToggleTheme} />
 
       <main className="flex-1 flex items-center justify-center p-6">
         <div className="glass-panel rounded-2xl p-8 sm:p-12 text-center space-y-5 max-w-md w-full border border-slate-200 dark:border-white/10 bg-white/80 dark:bg-slate-900/60 shadow-xl">
@@ -43,11 +25,11 @@ function NotFoundPage({ theme, onToggleTheme }) {
           </div>
           <div className="pt-2">
             <Link
-              to="/"
+              to="/novabase"
               className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs sm:text-sm font-semibold shadow-md shadow-cyan-600/20 transition-all"
             >
               <ArrowLeft className="w-4 h-4" />
-              Return to Explorer
+              Return to Novabase
             </Link>
           </div>
         </div>
@@ -90,22 +72,13 @@ export default function App() {
 
   return (
     <Routes>
-      <Route 
-        path="/" 
-        element={<ExplorerPage theme={theme} onToggleTheme={handleToggleTheme} />} 
-      />
-      <Route 
-        path="/solar-system" 
-        element={<SolarSystemPage theme={theme} onToggleTheme={handleToggleTheme} />} 
-      />
-      <Route 
-        path="/hardware/:slug" 
-        element={<HardwareDetailPage theme={theme} onToggleTheme={handleToggleTheme} />} 
-      />
-      <Route 
-        path="*" 
-        element={<NotFoundPage theme={theme} onToggleTheme={handleToggleTheme} />} 
-      />
+      <Route path="/" element={<PlaceholderPage title="NovaQuest" theme={theme} onToggleTheme={handleToggleTheme} />} />
+      <Route path="/novamap" element={<SolarSystemPage theme={theme} onToggleTheme={handleToggleTheme} />} />
+      <Route path="/solar-system" element={<Navigate to="/novamap" replace />} />
+      <Route path="/novabase" element={<ExplorerPage theme={theme} onToggleTheme={handleToggleTheme} />} />
+      <Route path="/settings" element={<PlaceholderPage title="Settings" theme={theme} onToggleTheme={handleToggleTheme} />} />
+      <Route path="/hardware/:slug" element={<HardwareDetailPage theme={theme} onToggleTheme={handleToggleTheme} />} />
+      <Route path="*" element={<NotFoundPage theme={theme} onToggleTheme={handleToggleTheme} />} />
     </Routes>
   );
 }
