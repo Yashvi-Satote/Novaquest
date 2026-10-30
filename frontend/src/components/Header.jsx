@@ -18,7 +18,7 @@ export default function Header({
 }) {
   const isDark = theme === 'dark';
   const { pathname } = useLocation();
-  const isNovaMap = pathname.startsWith('/novamap') || pathname.startsWith('/solar-system');
+  const isNovaMap = pathname.startsWith('/novamap') || pathname.startsWith('/solar-system') || pathname.startsWith('/spacecraft/');
   const isNovabase = pathname.startsWith('/novabase') || pathname.startsWith('/hardware/');
 
   const navClass = (isActive, prominent = false) => (
