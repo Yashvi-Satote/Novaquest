@@ -9,18 +9,37 @@ import { SolarEngine } from './SolarEngine';
 const SolarCanvas = forwardRef(function SolarCanvas({
   isPlaying = true,
   speed = 1.0,
+  simulationDate,
+  lightingMode = 'natural',
+  cameraMode = 'orbit',
+  layerVisibility = { orbits: true, trajectories: true, markers: true },
   onSelectPlanet,
   onSelectSpacecraft,
-  onHoverItem
+  onHoverItem,
+  onModeChange,
+  onDateChange
 }, ref) {
   const containerRef = useRef(null);
   const engineRef = useRef(null);
 
-  // Expose imperative engine methods to parent (e.g. camera fly-to, scale, reset)
+  // Expose imperative engine methods to parent
   useImperativeHandle(ref, () => ({
     focusPlanet: (planetId) => {
       if (engineRef.current) {
         engineRef.current.focusPlanet(planetId);
+      }
+    },
+    focusMoon: (moonId) => {
+      if (engineRef.current) {
+        engineRef.current.focusMoon(moonId);
+      }
+    },
+    focusCelestialBody: (id) => {
+      if (!engineRef.current) return;
+      if (engineRef.current.planetBodies.has(id)) {
+        engineRef.current.focusPlanet(id);
+      } else {
+        engineRef.current.focusMoon(id);
       }
     },
     focusSpacecraft: (slug) => {
@@ -33,9 +52,49 @@ const SolarCanvas = forwardRef(function SolarCanvas({
         engineRef.current.focusScale(scaleKey);
       }
     },
+    enterVoyagerLocalMode: () => {
+      if (engineRef.current) {
+        engineRef.current.enterVoyagerLocalMode();
+      }
+    },
+    exitVoyagerLocalMode: () => {
+      if (engineRef.current) {
+        engineRef.current.exitVoyagerLocalMode();
+      }
+    },
+    enterSurfaceMode: (slug) => {
+      if (engineRef.current) {
+        engineRef.current.enterSurfaceMode(slug);
+      }
+    },
+    exitSurfaceMode: () => {
+      if (engineRef.current) {
+        engineRef.current.exitSurfaceMode();
+      }
+    },
     resetView: () => {
       if (engineRef.current) {
         engineRef.current.resetView();
+      }
+    },
+    setSimulationDate: (date) => {
+      if (engineRef.current) {
+        engineRef.current.setSimulationDate(date);
+      }
+    },
+    setLightingMode: (mode) => {
+      if (engineRef.current) {
+        engineRef.current.setLightingMode(mode);
+      }
+    },
+    setCameraMode: (mode) => {
+      if (engineRef.current) {
+        engineRef.current.setCameraMode(mode);
+      }
+    },
+    setLayerVisibility: (layer, visible) => {
+      if (engineRef.current) {
+        engineRef.current.setLayerVisibility(layer, visible);
       }
     }
   }), []);
@@ -43,20 +102,16 @@ const SolarCanvas = forwardRef(function SolarCanvas({
   const onSelectPlanetRef = useRef(onSelectPlanet);
   const onSelectCraftRef = useRef(onSelectSpacecraft);
   const onHoverRef = useRef(onHoverItem);
+  const onModeChangeRef = useRef(onModeChange);
+  const onDateChangeRef = useRef(onDateChange);
 
-  useEffect(() => {
-    onSelectPlanetRef.current = onSelectPlanet;
-  }, [onSelectPlanet]);
+  useEffect(() => { onModeChangeRef.current = onModeChange; }, [onModeChange]);
+  useEffect(() => { onSelectPlanetRef.current = onSelectPlanet; }, [onSelectPlanet]);
+  useEffect(() => { onSelectCraftRef.current = onSelectSpacecraft; }, [onSelectSpacecraft]);
+  useEffect(() => { onHoverRef.current = onHoverItem; }, [onHoverItem]);
+  useEffect(() => { onDateChangeRef.current = onDateChange; }, [onDateChange]);
 
-  useEffect(() => {
-    onSelectCraftRef.current = onSelectSpacecraft;
-  }, [onSelectSpacecraft]);
-
-  useEffect(() => {
-    onHoverRef.current = onHoverItem;
-  }, [onHoverItem]);
-
-  // Update simulation controls when React props change
+  // Prop synchronizations
   useEffect(() => {
     if (engineRef.current) {
       engineRef.current.setPlayPause(isPlaying);
@@ -69,7 +124,44 @@ const SolarCanvas = forwardRef(function SolarCanvas({
     }
   }, [speed]);
 
-  // Main lifecycle effect (with React Strict Mode protection)
+  useEffect(() => {
+    if (engineRef.current && simulationDate) {
+      const currentEngTime = engineRef.current.simulationDate?.getTime() || 0;
+      const targetTime = simulationDate.getTime();
+      if (Math.abs(currentEngTime - targetTime) > 3000) {
+        engineRef.current.setSimulationDate(simulationDate);
+      }
+    }
+  }, [simulationDate]);
+
+  useEffect(() => {
+    if (engineRef.current && lightingMode) {
+      engineRef.current.setLightingMode(lightingMode);
+    }
+  }, [lightingMode]);
+
+  useEffect(() => {
+    if (engineRef.current && cameraMode) {
+      engineRef.current.setCameraMode(cameraMode);
+    }
+  }, [cameraMode]);
+
+  const prevLayerRef = useRef(layerVisibility);
+  useEffect(() => {
+    if (!engineRef.current || !layerVisibility) return;
+    if (layerVisibility.orbits !== prevLayerRef.current?.orbits) {
+      engineRef.current.setLayerVisibility('orbits', layerVisibility.orbits);
+    }
+    if (layerVisibility.trajectories !== prevLayerRef.current?.trajectories) {
+      engineRef.current.setLayerVisibility('trajectories', layerVisibility.trajectories);
+    }
+    if (layerVisibility.markers !== prevLayerRef.current?.markers) {
+      engineRef.current.setLayerVisibility('markers', layerVisibility.markers);
+    }
+    prevLayerRef.current = layerVisibility;
+  }, [layerVisibility]);
+
+  // Main lifecycle effect
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -82,14 +174,16 @@ const SolarCanvas = forwardRef(function SolarCanvas({
     const engine = new SolarEngine(container, {
       onSelectPlanet: (id) => onSelectPlanetRef.current && onSelectPlanetRef.current(id),
       onSelectSpacecraft: (slug) => onSelectCraftRef.current && onSelectCraftRef.current(slug),
-      onHoverItem: (info) => onHoverRef.current && onHoverRef.current(info)
+      onHoverItem: (info) => onHoverRef.current && onHoverRef.current(info),
+      onModeChange: (data) => onModeChangeRef.current && onModeChangeRef.current(data),
+      onDateChange: (date) => onDateChangeRef.current && onDateChangeRef.current(date)
     });
     engineRef.current = engine;
 
     const resizeObserver = new ResizeObserver((entries) => {
       for (const entry of entries) {
         const { width, height } = entry.contentRect;
-        if (width > 0 && height > 0) {
+        if (width > 0 && height > 0 && !engine.isDisposed) {
           engine.resize(width, height);
         }
       }
@@ -107,9 +201,9 @@ const SolarCanvas = forwardRef(function SolarCanvas({
   }, []);
 
   return (
-    <div 
-      ref={containerRef} 
-      className="relative w-full h-full min-h-[500px] overflow-hidden select-none bg-[#02040a]"
+    <div
+      ref={containerRef}
+      className="w-full h-full relative cursor-grab active:cursor-grabbing outline-none"
       style={{ touchAction: 'none' }}
     />
   );

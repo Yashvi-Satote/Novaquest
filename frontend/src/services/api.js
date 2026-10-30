@@ -58,3 +58,11 @@ export async function fetchHardwareImages(id) {
   if (!res.ok) throw new Error(`Failed to fetch images for ID ${id}: ${res.statusText}`);
   return await res.json();
 }
+
+export async function fetchMissions(params = {}) {
+  const query = new URLSearchParams();
+  if (params.destination && params.destination !== 'All') query.set('destination', params.destination);
+  const res = await fetch(`${API_BASE}/missions?${query.toString()}`);
+  if (!res.ok) throw new Error(`Failed to fetch missions: ${res.statusText}`);
+  return await res.json();
+}
