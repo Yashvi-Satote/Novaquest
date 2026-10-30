@@ -3,6 +3,7 @@ import { Routes, Route, Link, Navigate } from 'react-router-dom';
 import Header from './components/Header';
 import ExplorerPage from './pages/ExplorerPage';
 import HardwareDetailPage from './pages/HardwareDetailPage';
+import SpacecraftDetailPage from './pages/SpacecraftDetailPage';
 import SolarSystemPage from './pages/SolarSystemPage';
 import PlaceholderPage from './pages/PlaceholderPage';
 import { ArrowLeft, AlertCircle } from 'lucide-react';
@@ -77,6 +78,7 @@ export default function App() {
       <Route path="/solar-system" element={<Navigate to="/novamap" replace />} />
       <Route path="/novabase" element={<ExplorerPage theme={theme} onToggleTheme={handleToggleTheme} />} />
       <Route path="/settings" element={<PlaceholderPage title="Settings" theme={theme} onToggleTheme={handleToggleTheme} />} />
+      <Route path="/spacecraft/:slug" element={<SpacecraftDetailPage theme={theme} onToggleTheme={handleToggleTheme} />} />
       <Route path="/hardware/:slug" element={<HardwareDetailPage theme={theme} onToggleTheme={handleToggleTheme} />} />
       <Route path="*" element={<NotFoundPage theme={theme} onToggleTheme={handleToggleTheme} />} />
     </Routes>
