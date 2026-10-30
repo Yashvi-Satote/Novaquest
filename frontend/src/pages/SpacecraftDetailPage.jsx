@@ -286,11 +286,11 @@ export default function SpacecraftDetailPage({ theme, onToggleTheme }) {
             <button
               type="button"
               id="back-to-solar-system"
-              onClick={() => navigate('/solar-system')}
+              onClick={() => navigate('/novamap')}
               className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-900/85 hover:bg-slate-800 text-white text-xs font-semibold backdrop-blur-md border border-cyan-500/30 shadow-lg shadow-black/50 transition-all cursor-pointer active:scale-98"
             >
               <ArrowLeft className="w-4 h-4 text-cyan-400" />
-              <span>Back to Solar System</span>
+              <span>Back to NovaMap</span>
             </button>
           </div>
 
@@ -438,14 +438,14 @@ export default function SpacecraftDetailPage({ theme, onToggleTheme }) {
             </div>
           </div>
 
-          {/* Action: Return & View Trajectory in Solar System */}
+          {/* Action: Return & View Trajectory in NovaMap */}
           <button
             type="button"
-            onClick={() => navigate('/solar-system')}
+            onClick={() => navigate('/novamap')}
             className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-cyan-600 via-blue-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 text-white font-semibold text-xs transition-all shadow-md shadow-cyan-600/30 border border-cyan-400/40 cursor-pointer active:scale-98"
           >
             <Orbit className="w-4 h-4 text-cyan-200" />
-            <span>View Flight Trajectory in Solar System</span>
+            <span>View Flight Trajectory in NovaMap</span>
           </button>
 
           {/* Tabs Navigation */}
