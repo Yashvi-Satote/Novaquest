@@ -4,6 +4,9 @@ import Header from './components/Header';
 import ExplorerPage from './pages/ExplorerPage';
 import HardwareDetailPage from './pages/HardwareDetailPage';
 import SolarSystemPage from './pages/SolarSystemPage';
+import MainMenuPage from './pages/MainMenuPage';
+import GameArenaPage from './pages/GameArenaPage';
+import ProloguePage from './pages/ProloguePage';
 import PlaceholderPage from './pages/PlaceholderPage';
 import { ArrowLeft, AlertCircle } from 'lucide-react';
 
@@ -72,11 +75,13 @@ export default function App() {
 
   return (
     <Routes>
-      <Route path="/" element={<PlaceholderPage title="NovaQuest" theme={theme} onToggleTheme={handleToggleTheme} />} />
+      <Route path="/" element={<MainMenuPage theme={theme} onToggleTheme={handleToggleTheme} />} />
+      <Route path="/prologue" element={<ProloguePage />} />
+      <Route path="/play" element={<GameArenaPage theme={theme} onToggleTheme={handleToggleTheme} />} />
       <Route path="/novamap" element={<SolarSystemPage theme={theme} onToggleTheme={handleToggleTheme} />} />
       <Route path="/solar-system" element={<Navigate to="/novamap" replace />} />
       <Route path="/novabase" element={<ExplorerPage theme={theme} onToggleTheme={handleToggleTheme} />} />
-      <Route path="/settings" element={<PlaceholderPage title="Settings" theme={theme} onToggleTheme={handleToggleTheme} />} />
+      <Route path="/settings" element={<MainMenuPage theme={theme} onToggleTheme={handleToggleTheme} initialOpenSettings={true} />} />
       <Route path="/hardware/:slug" element={<HardwareDetailPage theme={theme} onToggleTheme={handleToggleTheme} />} />
       <Route path="*" element={<NotFoundPage theme={theme} onToggleTheme={handleToggleTheme} />} />
     </Routes>
