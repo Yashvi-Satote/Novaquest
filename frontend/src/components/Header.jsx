@@ -22,7 +22,7 @@ export default function Header({
   const isCatalogue = !isSolarSystem;
 
   return (
-    <header className="sticky top-0 z-30 w-full bg-white/85 dark:bg-[#070b14]/90 backdrop-blur-md border-b border-slate-200/90 dark:border-white/10 px-4 sm:px-6 lg:px-8 py-3 transition-colors duration-200">
+    <header className="sticky top-0 z-30 w-full bg-white/85 dark:bg-[#08051a]/95 backdrop-blur-md border-b border-slate-200/90 dark:border-purple-500/20 px-4 sm:px-6 lg:px-8 py-3 transition-colors duration-200">
       <div className="w-full flex items-center justify-between gap-4">
         
         {/* Left: Mobile Menu Toggle & Brand */}
@@ -30,7 +30,7 @@ export default function Header({
           <button
             type="button"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="lg:hidden p-2 rounded-xl bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 transition-colors"
+            className="lg:hidden p-2 rounded-xl bg-slate-100 dark:bg-purple-950/50 text-slate-600 dark:text-purple-200 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-purple-900/50 focus:outline-none focus:ring-2 focus:ring-cyan-500 transition-colors"
             aria-label="Toggle Navigation Drawer"
             id="mobile-drawer-toggle"
           >
@@ -38,14 +38,14 @@ export default function Header({
           </button>
 
           <Link to="/" className="flex items-center gap-3 group">
-            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-cyan-600 via-blue-600 to-indigo-600 flex items-center justify-center shadow-md shadow-cyan-500/20 ring-1 ring-cyan-400/30 group-hover:scale-105 transition-transform">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-cyan-600 via-blue-600 to-violet-600 flex items-center justify-center shadow-md shadow-violet-900/40 ring-1 ring-cyan-400/30 group-hover:scale-105 transition-transform">
               <Rocket className="w-5 h-5 text-white transform -rotate-45" />
             </div>
             <div>
               <h1 className="text-lg sm:text-xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
                 Novaquest
               </h1>
-              <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 font-medium">
+              <p className="text-[11px] sm:text-xs text-slate-500 dark:text-purple-300/60 font-medium">
                 Human-Made Hardware Across the Cosmos
               </p>
             </div>
@@ -53,13 +53,13 @@ export default function Header({
         </div>
 
         {/* Center: Navigation Switcher (Catalogue vs 3D Solar System) */}
-        <nav className="flex items-center bg-slate-100 dark:bg-slate-800/80 p-1 rounded-xl border border-slate-200 dark:border-white/10">
+        <nav className="flex items-center bg-slate-100 dark:bg-purple-950/40 p-1 rounded-xl border border-slate-200 dark:border-purple-500/20">
           <Link
             to="/"
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
               isCatalogue
-                ? 'bg-white dark:bg-slate-900 text-cyan-600 dark:text-cyan-400 shadow-sm font-semibold'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                ? 'bg-white dark:bg-[#0e0a28] text-cyan-600 dark:text-cyan-300 shadow-sm font-semibold'
+                : 'text-slate-600 dark:text-purple-300/70 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
             <Layers className="w-3.5 h-3.5" />
@@ -69,12 +69,12 @@ export default function Header({
             to="/solar-system"
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
               isSolarSystem
-                ? 'bg-cyan-600 text-white shadow-sm shadow-cyan-600/30 font-semibold'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-sm shadow-purple-950/60 font-semibold'
+                : 'text-slate-600 dark:text-purple-300/70 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
             <Orbit className="w-3.5 h-3.5" />
-            <span>3D Solar System</span>
+            <span>3D Mission Explorer</span>
           </Link>
         </nav>
 
@@ -83,7 +83,7 @@ export default function Header({
           <button
             type="button"
             onClick={onToggleTheme}
-            className="relative flex items-center gap-2 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-100/80 hover:bg-slate-200/80 dark:bg-slate-800/80 dark:hover:bg-slate-700/80 text-slate-700 dark:text-slate-200 transition-all duration-200 cursor-pointer shadow-sm focus:outline-none focus:ring-2 focus:ring-cyan-500"
+            className="relative flex items-center gap-2 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-purple-500/20 bg-slate-100/80 hover:bg-slate-200/80 dark:bg-purple-950/40 dark:hover:bg-purple-900/50 text-slate-700 dark:text-purple-200 transition-all duration-200 cursor-pointer shadow-sm focus:outline-none focus:ring-2 focus:ring-cyan-500"
             aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
             title={isDark ? "Switch to light mode" : "Switch to dark mode"}
             id="theme-toggle-btn"

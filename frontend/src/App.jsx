@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Routes, Route, Link } from 'react-router-dom';
 import ExplorerPage from './pages/ExplorerPage';
 import HardwareDetailPage from './pages/HardwareDetailPage';
+import SpacecraftDetailPage from './pages/SpacecraftDetailPage';
 import SolarSystemPage from './pages/SolarSystemPage';
 import { Rocket, ArrowLeft, AlertCircle } from 'lucide-react';
 
@@ -97,6 +98,10 @@ export default function App() {
       <Route 
         path="/solar-system" 
         element={<SolarSystemPage theme={theme} onToggleTheme={handleToggleTheme} />} 
+      />
+      <Route 
+        path="/spacecraft/:slug" 
+        element={<SpacecraftDetailPage theme={theme} onToggleTheme={handleToggleTheme} />} 
       />
       <Route 
         path="/hardware/:slug" 
