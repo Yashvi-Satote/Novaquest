@@ -2,6 +2,7 @@ import os
 import logging
 from dotenv import load_dotenv
 from sqlalchemy import create_engine, text
+from sqlalchemy.engine import URL
 from sqlalchemy.orm import declarative_base, sessionmaker
 
 # Load environment variables
@@ -13,6 +14,16 @@ Base = declarative_base()
 
 # Configure database URL with fallback handling
 DATABASE_URL = os.getenv("DATABASE_URL", "").strip()
+BACKEND_DIR = os.path.dirname(os.path.abspath(__file__))
+configured_sqlite_path = os.getenv("SQLITE_DATABASE_PATH", "").strip()
+if configured_sqlite_path:
+    SQLITE_DATABASE_PATH = (
+        configured_sqlite_path
+        if os.path.isabs(configured_sqlite_path) or configured_sqlite_path == ":memory:"
+        else os.path.join(BACKEND_DIR, configured_sqlite_path)
+    )
+else:
+    SQLITE_DATABASE_PATH = os.path.join(BACKEND_DIR, "space_hardware.db")
 
 db_info = {
     "engine_type": "unknown",
@@ -23,8 +34,6 @@ db_info = {
 }
 
 def create_db_engine():
-    global DATABASE_URL
-    
     # Check if PostgreSQL URL is provided
     if DATABASE_URL and (DATABASE_URL.startswith("postgresql://") or DATABASE_URL.startswith("postgres://")):
         # SQLAlchemy requires postgresql://
@@ -54,11 +63,27 @@ def create_db_engine():
             logger.warning(f"Failed to connect to PostgreSQL ({e}). Falling back to SQLite for local development.")
             db_info["error"] = str(e)
     
+    if DATABASE_URL.startswith(("sqlite:", "sqlite+")):
+        sqlite_engine = create_engine(
+            DATABASE_URL,
+            connect_args={"check_same_thread": False},
+        )
+        with sqlite_engine.connect() as conn:
+            conn.execute(text("SELECT 1"))
+
+        db_info["engine_type"] = "sqlite"
+        db_info["is_postgres"] = False
+        db_info["connected"] = True
+        db_info["message"] = "Connected to the configured SQLite database."
+        logger.info("Connected to configured SQLite database URL.")
+        return sqlite_engine
+
     # Fallback to local SQLite development database
     # Transparently declare this so the app never pretends PostgreSQL is connected when it is not
-    db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "space_hardware.db")
-    sqlite_url = f"sqlite:///{db_path}"
-    
+    if SQLITE_DATABASE_PATH != ":memory:":
+        os.makedirs(os.path.dirname(SQLITE_DATABASE_PATH), exist_ok=True)
+    sqlite_url = URL.create("sqlite", database=SQLITE_DATABASE_PATH)
+
     sqlite_engine = create_engine(
         sqlite_url,
         connect_args={"check_same_thread": False}
@@ -77,12 +102,9 @@ def create_db_engine():
             "To connect to PostgreSQL, verify DATABASE_URL and ensure PostgreSQL is running."
         )
     else:
-        db_info["message"] = (
-            "Active: Local SQLite development database. "
-            "To connect to PostgreSQL, configure DATABASE_URL in .env and run init_db.py."
-        )
+        db_info["message"] = f"Active: SQLite database at {SQLITE_DATABASE_PATH}."
     
-    logger.info(f"Initialized SQLite database at {db_path}")
+    logger.info(f"Initialized SQLite database at {SQLITE_DATABASE_PATH}")
     return sqlite_engine
 
 engine = create_db_engine()

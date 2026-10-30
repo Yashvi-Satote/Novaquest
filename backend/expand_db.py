@@ -8,6 +8,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from database import engine, SessionLocal, Base
 from models import (Organization, Mission, Hardware,
                     HardwareAlias, HardwareKeyword, HardwareImage, HardwareSource)
+from mission_hierarchy import apply_mission_classifications, ensure_mission_hierarchy_schema
 
 
 def upsert_org(db, org_map, slug, name, org_type, country, url):
@@ -105,6 +106,7 @@ def insert_hw(db, org_map, mm, seen, seen_names, h):
 def expand_database():
     print("Expanding Novaquest database...")
     Base.metadata.create_all(bind=engine)
+    ensure_mission_hierarchy_schema(engine)
     db = SessionLocal()
     try:
         # Build lookup maps from existing DB records
@@ -1472,6 +1474,7 @@ def expand_database():
                 skipped += 1
 
         db.commit()
+        apply_mission_classifications(db)
         total = db.query(Hardware).count()
         print(f"\n[OK] Done! Added: {added} | Skipped: {skipped} | Total now: {total}")
 

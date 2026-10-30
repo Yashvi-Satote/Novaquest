@@ -4,13 +4,18 @@ import logging
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from sqlalchemy import or_, and_, desc, asc, func
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import joinedload, selectinload
 
 # Ensure backend folder is in path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from database import SessionLocal, get_db_status
+from database import SessionLocal, engine, get_db_status
 from models import Mission, Organization, Hardware, HardwareAlias, HardwareKeyword, HardwareImage, HardwareSource
+from mission_hierarchy import (
+    DESTINATION_ORDER,
+    apply_mission_classifications,
+    ensure_mission_hierarchy_schema,
+)
 
 # Setup logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
@@ -34,7 +39,13 @@ def bootstrap_database():
 
     try:
         seed_database()
+        ensure_mission_hierarchy_schema(engine)
         expand_database()
+        db = SessionLocal()
+        try:
+            apply_mission_classifications(db)
+        finally:
+            db.close()
     except Exception as e:
         logger.error(f"Database bootstrap failed: {e}")
 
@@ -67,136 +78,105 @@ def health_check():
 
 @app.route("/api/filters", methods=["GET"])
 def get_filters():
-    """
-    Returns dynamic categories, missions, statuses, organizations, and counts.
-    Builds the hierarchical tree:
-    Mission Category (Mars, Moon, Deep Space, Earth Orbit) -> Mission -> Status -> Organization -> Hardware
-    """
+    """Return a destination -> programme -> mission hierarchy from mission records."""
     db = SessionLocal()
     try:
-        # Canonical order: Mars, Moon, Deep Space, then any others (e.g. Earth Orbit)
-        canonical_destinations = ["Mars", "Moon", "Deep Space", "Earth Orbit"]
-        
-        # Fetch all hardware with joined relations
-        hardware_records = db.query(Hardware).options(
-            joinedload(Hardware.mission),
-            joinedload(Hardware.operator),
-            joinedload(Hardware.mission_agency),
-            joinedload(Hardware.manufacturer)
+        missions = db.query(Mission).options(
+            selectinload(Mission.hardware_items).joinedload(Hardware.operator),
+            selectinload(Mission.hardware_items).joinedload(Hardware.mission_agency),
+            selectinload(Mission.hardware_items).joinedload(Hardware.manufacturer),
         ).all()
 
-        # Build hierarchical tree
-        tree = {}
-        for dest in canonical_destinations:
-            tree[dest] = {
-                "category": dest,
-                "total_count": 0,
-                "missions": {}
-            }
-
-        # Available flat filter options for chips/dropdowns
+        destinations = {}
         all_object_types = set()
         all_statuses = set()
         all_org_names = set()
+        for mission in missions:
+            destination = mission.destination or "Other / Multiple Destinations"
+            programme = mission.programme or "Standalone Missions"
+            destination_node = destinations.setdefault(destination, {})
+            programme_node = destination_node.setdefault(programme, [])
+            hardware_items = []
 
-        for hw in hardware_records:
-            dest = hw.destination
-            if dest not in tree:
-                tree[dest] = {
-                    "category": dest,
-                    "total_count": 0,
-                    "missions": {}
-                }
-            
-            tree[dest]["total_count"] += 1
-            all_object_types.add(hw.object_type)
-            all_statuses.add(hw.operational_status)
+            for hardware in mission.hardware_items:
+                organizations = sorted({
+                    organization.name
+                    for organization in (
+                        hardware.operator,
+                        hardware.mission_agency,
+                        hardware.manufacturer,
+                    )
+                    if organization
+                })
+                organization = (
+                    hardware.operator.name if hardware.operator else
+                    (hardware.mission_agency.name if hardware.mission_agency else
+                     (hardware.manufacturer.name if hardware.manufacturer else "Unassigned"))
+                )
+                all_object_types.add(hardware.object_type)
+                all_statuses.add(hardware.operational_status)
+                all_org_names.add(organization)
+                all_org_names.update(organizations)
+                hardware_items.append({
+                    "id": hardware.id,
+                    "name": hardware.name,
+                    "slug": hardware.slug,
+                    "operational_status": hardware.operational_status,
+                    "verification_status": hardware.verification_status,
+                    "primary_organization": organization,
+                    "organizations": organizations,
+                })
 
-            # Determine primary org name
-            org_name = (
-                hw.operator.name if hw.operator else
-                (hw.mission_agency.name if hw.mission_agency else
-                (hw.manufacturer.name if hw.manufacturer else "Unassigned"))
-            )
-            all_org_names.add(org_name)
-
-            mission_name = hw.mission.name if hw.mission else "Independent / Unassigned"
-            mission_id = hw.mission_id if hw.mission else None
-
-            # Mission level
-            if mission_name not in tree[dest]["missions"]:
-                tree[dest]["missions"][mission_name] = {
-                    "id": mission_id,
-                    "name": mission_name,
-                    "count": 0,
-                    "statuses": {}
-                }
-            tree[dest]["missions"][mission_name]["count"] += 1
-
-            # Status level
-            status_group = hw.operational_status
-            if status_group not in tree[dest]["missions"][mission_name]["statuses"]:
-                tree[dest]["missions"][mission_name]["statuses"][status_group] = {
-                    "status": status_group,
-                    "count": 0,
-                    "organizations": {}
-                }
-            tree[dest]["missions"][mission_name]["statuses"][status_group]["count"] += 1
-
-            # Organization level
-            if org_name not in tree[dest]["missions"][mission_name]["statuses"][status_group]["organizations"]:
-                tree[dest]["missions"][mission_name]["statuses"][status_group]["organizations"][org_name] = {
-                    "name": org_name,
-                    "count": 0,
-                    "hardware": []
-                }
-            tree[dest]["missions"][mission_name]["statuses"][status_group]["organizations"][org_name]["count"] += 1
-            tree[dest]["missions"][mission_name]["statuses"][status_group]["organizations"][org_name]["hardware"].append({
-                "id": hw.id,
-                "name": hw.name,
-                "slug": hw.slug
+            hardware_items.sort(key=lambda item: (item["name"].casefold(), item["id"]))
+            programme_node.append({
+                "id": mission.id,
+                "name": mission.name,
+                "launch_date": mission.launch_date,
+                "mission_status": mission.mission_status,
+                "classification_status": mission.classification_status or "Provisional",
+                "hardware_count": len(hardware_items),
+                "hardware": hardware_items,
             })
 
-        # Format hierarchy into list conforming to canonical ordering
+        def mission_sort_key(mission):
+            return (mission["launch_date"] or "9999", mission["name"].casefold())
+
         hierarchy = []
-        for dest in canonical_destinations:
-            if dest in tree and tree[dest]["total_count"] > 0:
-                cat_data = tree[dest]
-                # Convert missions dict to sorted list
-                missions_list = []
-                for m_name in sorted(cat_data["missions"].keys()):
-                    m_data = cat_data["missions"][m_name]
-                    # Convert statuses to sorted list
-                    statuses_list = []
-                    for s_name in sorted(m_data["statuses"].keys()):
-                        s_data = m_data["statuses"][s_name]
-                        # Convert organizations to sorted list
-                        orgs_list = []
-                        for o_name in sorted(s_data["organizations"].keys()):
-                            o_data = s_data["organizations"][o_name]
-                            orgs_list.append(o_data)
-                        statuses_list.append({
-                            "status": s_name,
-                            "count": s_data["count"],
-                            "organizations": orgs_list
-                        })
-                    missions_list.append({
-                        "id": m_data["id"],
-                        "name": m_name,
-                        "count": m_data["count"],
-                        "statuses": statuses_list
-                    })
-                
-                hierarchy.append({
-                    "category": dest,
-                    "count": cat_data["total_count"],
-                    "missions": missions_list
+        for destination in sorted(
+            destinations,
+            key=lambda name: (
+                DESTINATION_ORDER.index(name) if name in DESTINATION_ORDER else len(DESTINATION_ORDER),
+                name.casefold(),
+            ),
+        ):
+            programme_nodes = []
+            for programme, programme_missions in destinations[destination].items():
+                programme_missions.sort(key=mission_sort_key)
+                programme_nodes.append({
+                    "name": programme,
+                    "count": len(programme_missions),
+                    "missions": programme_missions,
+                    "first_launch_date": min(
+                        (mission["launch_date"] or "9999" for mission in programme_missions),
+                        default="9999",
+                    ),
                 })
+            programme_nodes.sort(
+                key=lambda node: (node["first_launch_date"], node["name"].casefold())
+            )
+            for programme in programme_nodes:
+                programme.pop("first_launch_date")
+            mission_count = sum(programme["count"] for programme in programme_nodes)
+            hierarchy.append({
+                "destination": destination,
+                "count": mission_count,
+                "programmes": programme_nodes,
+            })
 
         return jsonify({
             "hierarchy": hierarchy,
             "filter_options": {
-                "destinations": [h["category"] for h in hierarchy],
+                "destinations": [item["destination"] for item in hierarchy],
                 "statuses": sorted(list(all_statuses)),
                 "object_types": sorted(list(all_object_types)),
                 "organizations": sorted(list(all_org_names))
@@ -239,6 +219,8 @@ def build_hardware_query(db, params):
                     Hardware.hardware_materials.ilike(search_pattern),
                     Hardware.location_description.ilike(search_pattern),
                     Hardware.mission.has(Mission.name.ilike(search_pattern)),
+                    Hardware.mission.has(Mission.programme.ilike(search_pattern)),
+                    Hardware.mission.has(Mission.destination.ilike(search_pattern)),
                     Hardware.manufacturer.has(Organization.name.ilike(search_pattern)),
                     Hardware.operator.has(Organization.name.ilike(search_pattern)),
                     Hardware.mission_agency.has(Organization.name.ilike(search_pattern)),
@@ -250,7 +232,15 @@ def build_hardware_query(db, params):
     # 2. Destination filter
     destination = params.get("destination", "").strip()
     if destination and destination.lower() != "all":
-        query = query.filter(Hardware.destination.ilike(destination))
+        query = query.filter(or_(
+            Hardware.mission.has(Mission.destination.ilike(destination)),
+            Hardware.destination.ilike(destination),
+            Hardware.mission.has(Mission.destination_category.ilike(destination)),
+        ))
+
+    programme = params.get("programme", "").strip()
+    if programme and programme.lower() != "all":
+        query = query.filter(Hardware.mission.has(Mission.programme.ilike(programme)))
 
     # 3. Mission filter
     mission_id = params.get("mission_id")
@@ -417,7 +407,10 @@ def get_missions():
         destination = request.args.get("destination")
         query = db.query(Mission).options(joinedload(Mission.hardware_items))
         if destination:
-            query = query.filter(Mission.destination_category.ilike(destination))
+            query = query.filter(or_(
+                Mission.destination.ilike(destination),
+                Mission.destination_category.ilike(destination),
+            ))
         
         missions = query.all()
         return jsonify({

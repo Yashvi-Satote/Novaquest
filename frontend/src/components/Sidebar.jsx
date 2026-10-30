@@ -1,97 +1,119 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { 
-  ChevronDown, 
-  ChevronRight, 
-  RotateCcw, 
-  Orbit, 
-  Globe2, 
-  Moon, 
-  Compass, 
-  Building2, 
-  Cpu, 
-  CheckCircle, 
-  Clock, 
+import {
+  Building2,
+  CheckCircle,
+  ChevronDown,
+  ChevronRight,
+  Clock,
+  Compass,
+  Cpu,
+  Globe2,
   HelpCircle,
+  Moon,
+  Orbit,
+  RotateCcw,
+  Satellite,
   SlidersHorizontal,
-  Satellite
 } from 'lucide-react';
 
-export default function Sidebar({ 
-  hierarchy = [], 
-  activeFilters, 
-  onFilterChange, 
+const matchesText = (value, query) => (value || '').toLocaleLowerCase().includes(query);
+
+export default function Sidebar({
+  hierarchy = [],
+  activeFilters,
+  searchQuery = '',
+  onFilterChange,
   onResetFilters,
-  onSelectHardware
+  onSelectHardware,
 }) {
-  // Expanded state for categories (Mars, Moon, Deep Space, etc.)
-  const [expandedCategories, setExpandedCategories] = useState({
-    Mars: true,
-    Moon: true,
-    'Deep Space': true,
-    'Earth Orbit': false
-  });
+  const [expandedDestinations, setExpandedDestinations] = useState({});
+  const [expandedProgrammes, setExpandedProgrammes] = useState({});
+  const [expandedMissions, setExpandedMissions] = useState({});
+  const query = searchQuery.trim().toLocaleLowerCase();
 
-  // Expanded state for missions (allow multiple missions expanded independently)
-  const [expandedMissions, setExpandedMissions] = useState({
-    'Mars 2020': true,
-    'Voyager': true,
-    'Apollo 11': true
-  });
-
-  // Expanded state for status groups
-  const [expandedStatuses, setExpandedStatuses] = useState({});
-
-  const toggleCategory = (cat) => {
-    setExpandedCategories(prev => ({ ...prev, [cat]: !prev[cat] }));
-  };
-
-  const toggleMission = (mName) => {
-    setExpandedMissions(prev => ({ ...prev, [mName]: !prev[mName] }));
-  };
-
-  const toggleStatus = (key) => {
-    setExpandedStatuses(prev => ({ ...prev, [key]: !prev[key] }));
-  };
-
-  const getCategoryIcon = (category) => {
-    switch (category) {
-      case 'Mars':
-        return <Globe2 className="w-4 h-4 text-rose-500 dark:text-rose-400" />;
-      case 'Moon':
-        return <Moon className="w-4 h-4 text-slate-500 dark:text-slate-300" />;
-      case 'Deep Space':
-        return <Compass className="w-4 h-4 text-violet-500 dark:text-violet-400" />;
-      case 'Earth Orbit':
-        return <Satellite className="w-4 h-4 text-cyan-600 dark:text-cyan-400" />;
-      default:
-        return <Orbit className="w-4 h-4 text-cyan-600 dark:text-cyan-400" />;
-    }
-  };
-
-  const getStatusIcon = (status) => {
-    if (status.includes('Active')) {
-      return <CheckCircle className="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400" />;
-    }
-    if (status.includes('Inactive')) {
-      return <Clock className="w-3.5 h-3.5 text-amber-500 dark:text-amber-400/80" />;
-    }
-    return <HelpCircle className="w-3.5 h-3.5 text-purple-500 dark:text-purple-400" />;
-  };
-
-  // Calculate active filter count for reset button badge
   const activeCount = [
     activeFilters.destination && activeFilters.destination !== 'All',
+    activeFilters.programme && activeFilters.programme !== 'All',
     activeFilters.mission && activeFilters.mission !== 'All',
     activeFilters.status && activeFilters.status !== 'All',
     activeFilters.organization && activeFilters.organization !== 'All',
     activeFilters.object_type && activeFilters.object_type !== 'All',
   ].filter(Boolean).length;
 
+  const getDestinationIcon = (destination) => {
+    if (destination === 'Moon') {
+      return <Moon className="w-4 h-4 text-slate-500 dark:text-slate-300 shrink-0" />;
+    }
+    if (destination === 'Mars' || destination === 'Venus' || destination === 'Mercury') {
+      return <Globe2 className="w-4 h-4 text-rose-500 dark:text-rose-400 shrink-0" />;
+    }
+    if (destination === 'Earth Orbit') {
+      return <Satellite className="w-4 h-4 text-cyan-600 dark:text-cyan-400 shrink-0" />;
+    }
+    return <Compass className="w-4 h-4 text-violet-500 dark:text-violet-400 shrink-0" />;
+  };
+
+  const toggle = (setter, key) => {
+    setter((previous) => ({ ...previous, [key]: !previous[key] }));
+  };
+
+  const selectDestination = (destination) => {
+    const selected = activeFilters.destination === destination
+      && activeFilters.programme === 'All'
+      && activeFilters.mission === 'All';
+    onFilterChange({
+      destination: selected ? 'All' : destination,
+      programme: 'All',
+      mission: 'All',
+    });
+  };
+
+  const selectProgramme = (destination, programme) => {
+    const selected = activeFilters.destination === destination
+      && activeFilters.programme === programme
+      && activeFilters.mission === 'All';
+    onFilterChange({
+      destination,
+      programme: selected ? 'All' : programme,
+      mission: 'All',
+    });
+  };
+
+  const selectMission = (destination, programme, mission) => {
+    const selected = activeFilters.mission === mission.name;
+    onFilterChange({
+      destination,
+      programme,
+      mission: selected ? 'All' : mission.name,
+    });
+  };
+
+  const selectStatus = (destination, programme, mission, status) => {
+    const selected = activeFilters.status === status
+      && activeFilters.mission === mission.name;
+    onFilterChange({
+      destination,
+      programme,
+      mission: mission.name,
+      status: selected ? 'All' : status,
+      organization: 'All',
+    });
+  };
+
+  const selectOrganization = (destination, programme, mission, organization) => {
+    const selected = activeFilters.organization === organization
+      && activeFilters.mission === mission.name;
+    onFilterChange({
+      destination,
+      programme,
+      mission: mission.name,
+      organization: selected ? 'All' : organization,
+    });
+  };
+
   return (
     <aside className="w-full h-full bg-white/70 dark:bg-[#0c1222]/90 backdrop-blur-md border-r border-slate-200/90 dark:border-white/10 p-3 sm:p-4 flex flex-col overflow-hidden transition-colors duration-200">
-      
-      {/* Sidebar Header & Reset Button */}
       <div className="flex items-center justify-between pb-3 border-b border-slate-200/90 dark:border-white/10 mb-2.5">
         <div className="flex items-center gap-2">
           <SlidersHorizontal className="w-4 h-4 text-cyan-600 dark:text-cyan-400" />
@@ -105,7 +127,6 @@ export default function Sidebar({
             onClick={onResetFilters}
             className="flex items-center gap-1.5 text-xs text-cyan-700 dark:text-cyan-400 hover:text-cyan-800 dark:hover:text-cyan-300 bg-cyan-50 dark:bg-cyan-950/70 border border-cyan-200 dark:border-cyan-800/60 px-2 py-1 rounded-lg transition-all cursor-pointer font-medium shadow-xs"
             title="Reset all active filters"
-            id="reset-sidebar-filters-btn"
           >
             <RotateCcw className="w-3 h-3" />
             Reset ({activeCount})
@@ -114,217 +135,256 @@ export default function Sidebar({
       </div>
 
       <div className="text-[11px] text-slate-500 dark:text-slate-400 mb-2 px-1">
-        Explore destination → mission → status → company:
+        Explore destination → programme → mission:
       </div>
 
-      {/* Independently Scrollable Tree Area */}
-      <div className="flex-1 overflow-y-auto pr-1 space-y-2 text-sm custom-scrollbar">
-        {hierarchy.map(cat => {
-          const isCatSelected = activeFilters.destination === cat.category;
-          const isCatOpen = expandedCategories[cat.category] ?? true;
+      <div className="flex-1 overflow-y-auto pr-1 space-y-1.5 text-sm custom-scrollbar">
+        {hierarchy.map((destinationNode) => {
+          const destination = destinationNode.destination;
+          const destinationMatches = query && matchesText(destination, query);
+          const isDestinationActive = activeFilters.destination === destination;
+          const isDestinationSelected = activeFilters.destination === destination
+            && activeFilters.programme === 'All'
+            && activeFilters.mission === 'All';
+          const destinationKey = destination;
+
+          const visibleProgrammes = destinationNode.programmes.map((programmeNode) => {
+            const programmeMatches = query && matchesText(programmeNode.name, query);
+            const visibleMissions = programmeNode.missions.filter((mission) => {
+              if (!query || destinationMatches || programmeMatches) return true;
+              return matchesText(mission.name, query)
+                || mission.hardware.some((hardware) => (
+                  matchesText(hardware.name, query)
+                  || matchesText(hardware.primary_organization, query)
+                  || (hardware.organizations || []).some((organization) => matchesText(organization, query))
+                  || matchesText(hardware.operational_status, query)
+                ));
+            });
+            const missionMatches = query && visibleMissions.some((mission) => (
+              matchesText(mission.name, query)
+              || mission.hardware.some((hardware) => (
+                matchesText(hardware.name, query)
+                || matchesText(hardware.primary_organization, query)
+                || (hardware.organizations || []).some((organization) => matchesText(organization, query))
+                || matchesText(hardware.operational_status, query)
+              ))
+            ));
+            return { ...programmeNode, programmeMatches, missionMatches, visibleMissions };
+          }).filter((programmeNode) => programmeNode.visibleMissions.length > 0);
+
+          if (query && visibleProgrammes.length === 0) return null;
+          const destinationOpen = expandedDestinations[destinationKey]
+            || isDestinationActive
+            || Boolean(destinationMatches)
+            || visibleProgrammes.some((programme) => (
+              programme.programmeMatches || programme.missionMatches
+            ));
 
           return (
-            <div key={cat.category} className="rounded-xl border border-slate-200/80 dark:border-white/5 bg-white/80 dark:bg-slate-900/40 overflow-hidden shadow-xs">
-              
-              {/* Category Header (Mars, Moon, Deep Space) */}
-              <div 
-                className={`flex items-center justify-between px-3 py-2.5 transition-colors cursor-pointer select-none ${
-                  isCatSelected 
-                    ? 'bg-cyan-100/70 dark:bg-cyan-500/15 border-l-4 border-l-cyan-600 dark:border-l-cyan-400 text-slate-900 dark:text-white font-medium' 
-                    : 'hover:bg-slate-100/80 dark:hover:bg-slate-800/50 text-slate-700 dark:text-slate-200'
-                }`}
-                onClick={() => {
-                  onFilterChange({ destination: isCatSelected ? 'All' : cat.category });
-                }}
-              >
-                <div className="flex items-center gap-2">
-                  <button 
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      toggleCategory(cat.category);
-                    }}
-                    className="p-1 -ml-1 text-slate-400 hover:text-slate-700 dark:hover:text-white rounded"
-                    aria-label={`Toggle ${cat.category}`}
-                  >
-                    {isCatOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-                  </button>
-                  {getCategoryIcon(cat.category)}
-                  <span className="font-semibold tracking-wide text-xs sm:text-sm">
-                    {cat.category}
-                  </span>
-                </div>
-                <span className="text-[11px] px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-mono border border-slate-200 dark:border-slate-700/60">
-                  {cat.count}
+            <section
+              key={destination}
+              className="rounded-xl border border-slate-200/80 dark:border-white/5 bg-white/80 dark:bg-slate-900/40 overflow-hidden shadow-xs"
+            >
+              <div className={`flex items-center gap-1.5 px-2.5 py-2 transition-colors ${
+                isDestinationActive
+                  ? 'bg-cyan-100/70 dark:bg-cyan-500/15 border-l-4 border-l-cyan-600 dark:border-l-cyan-400'
+                  : 'hover:bg-slate-100/80 dark:hover:bg-slate-800/50'
+              }`}>
+                <button
+                  type="button"
+                  onClick={() => toggle(setExpandedDestinations, destinationKey)}
+                  className="p-1 text-slate-400 hover:text-slate-700 dark:hover:text-white rounded"
+                  aria-label={`${destinationOpen ? 'Collapse' : 'Expand'} ${destination}`}
+                  aria-expanded={Boolean(destinationOpen)}
+                >
+                  {destinationOpen
+                    ? <ChevronDown className="w-4 h-4" />
+                    : <ChevronRight className="w-4 h-4" />}
+                </button>
+                {getDestinationIcon(destination)}
+                <button
+                  type="button"
+                  onClick={() => selectDestination(destination)}
+                  title={destination}
+                  className="flex-1 min-w-0 text-left truncate font-semibold tracking-wide text-xs sm:text-sm text-slate-800 dark:text-slate-100"
+                  aria-pressed={Boolean(isDestinationSelected)}
+                >
+                  {destination}
+                </button>
+                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-mono border border-slate-200 dark:border-slate-700/60">
+                  {destinationNode.count}
                 </span>
               </div>
 
-              {/* Sub-tree: Missions */}
-              {isCatOpen && (
-                <div className="pl-3 sm:pl-4 pr-2 pb-2 pt-1 space-y-1.5 border-t border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-black/20">
-                  {cat.missions.map(mission => {
-                    const isMissionSelected = activeFilters.mission === mission.name;
-                    const isMissionOpen = expandedMissions[mission.name] ?? false;
+              {destinationOpen && (
+                <div className="pl-3 sm:pl-4 pr-2 pb-2 pt-1 space-y-1 border-t border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-black/20">
+                  {visibleProgrammes.map((programmeNode) => {
+                    const programme = programmeNode.name;
+                    const programmeKey = `${destination}::${programme}`;
+                    const isProgrammeSelected = activeFilters.destination === destination
+                      && activeFilters.programme === programme
+                      && activeFilters.mission === 'All';
+                    const programmeOpen = expandedProgrammes[programmeKey]
+                      || isProgrammeSelected
+                      || Boolean(programmeNode.programmeMatches)
+                      || Boolean(programmeNode.missionMatches)
+                      || Boolean(destinationMatches);
 
                     return (
-                      <div key={mission.name} className="rounded-lg overflow-hidden">
-                        
-                        {/* Mission Item */}
-                        <div 
-                          className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg transition-colors cursor-pointer text-xs ${
-                            isMissionSelected
-                              ? 'bg-cyan-100 dark:bg-cyan-500/20 text-cyan-900 dark:text-cyan-200 font-semibold border border-cyan-300 dark:border-cyan-500/30'
-                              : 'text-slate-600 dark:text-slate-300 hover:bg-slate-200/60 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-white'
-                          }`}
-                          onClick={() => {
-                            onFilterChange({ 
-                              destination: cat.category,
-                              mission: isMissionSelected ? 'All' : mission.name 
-                            });
-                          }}
-                        >
-                          <div className="flex items-center gap-1.5 truncate">
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                toggleMission(mission.name);
-                              }}
-                              className="p-0.5 text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-200"
-                              aria-label={`Toggle ${mission.name}`}
-                            >
-                              {isMissionOpen ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
-                            </button>
-                            <Orbit className="w-3 h-3 text-cyan-600 dark:text-cyan-400/80 shrink-0" />
-                            <span className="truncate">{mission.name}</span>
-                          </div>
+                      <div key={programmeKey} className="rounded-lg">
+                        <div className={`flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs transition-colors ${
+                          isProgrammeSelected
+                            ? 'bg-cyan-100 dark:bg-cyan-500/20 text-cyan-900 dark:text-cyan-200 font-semibold'
+                            : 'text-slate-600 dark:text-slate-300 hover:bg-slate-200/60 dark:hover:bg-slate-800/60'
+                        }`}>
+                          <button
+                            type="button"
+                            onClick={() => toggle(setExpandedProgrammes, programmeKey)}
+                            className="p-0.5 text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-200"
+                            aria-label={`${programmeOpen ? 'Collapse' : 'Expand'} ${programme}`}
+                            aria-expanded={Boolean(programmeOpen)}
+                          >
+                            {programmeOpen
+                              ? <ChevronDown className="w-3.5 h-3.5" />
+                              : <ChevronRight className="w-3.5 h-3.5" />}
+                          </button>
+                          <Orbit className="w-3 h-3 text-cyan-600 dark:text-cyan-400/80 shrink-0" />
+                          <button
+                            type="button"
+                            onClick={() => selectProgramme(destination, programme)}
+                            title={programme}
+                            className="flex-1 min-w-0 text-left truncate"
+                            aria-pressed={Boolean(isProgrammeSelected)}
+                          >
+                            {programme}
+                          </button>
                           <span className="text-[10px] text-slate-500 dark:text-slate-400 font-mono ml-1">
-                            ({mission.count})
+                            {programmeNode.count}
                           </span>
                         </div>
 
-                        {/* Sub-tree: Status Groups */}
-                        {isMissionOpen && (
-                          <div className="pl-4 pr-1 py-1 space-y-1 border-l border-slate-200 dark:border-white/10 ml-2 mt-0.5">
-                            {mission.statuses.map(st => {
-                              const isStatusSelected = isMissionSelected && activeFilters.status === st.status;
-                              const statusKey = `${mission.name}-${st.status}`;
-                              const isStatusOpen = expandedStatuses[statusKey] ?? true;
+                        {programmeOpen && (
+                          <div className="ml-3 pl-2 py-1 space-y-0.5 border-l border-slate-200 dark:border-white/10">
+                            {programmeNode.visibleMissions.map((mission) => {
+                              const isMissionSelected = activeFilters.mission === mission.name;
+                              const missionExpanded = expandedMissions[mission.id] || false;
+                              const isProvisional = mission.classification_status !== 'Verified';
 
                               return (
-                                <div key={st.status} className="space-y-1">
-                                  
-                                  {/* Status Item */}
-                                  <div 
-                                    className={`flex items-center justify-between px-2 py-1 rounded transition-colors cursor-pointer text-[11px] ${
-                                      isStatusSelected
-                                        ? 'bg-indigo-100 dark:bg-indigo-500/25 text-indigo-900 dark:text-indigo-200 font-medium border border-indigo-300 dark:border-indigo-500/30'
-                                        : 'text-slate-500 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-slate-200'
-                                    }`}
-                                    onClick={() => {
-                                      onFilterChange({
-                                        destination: cat.category,
-                                        mission: mission.name,
-                                        status: isStatusSelected ? 'All' : st.status
-                                      });
-                                    }}
-                                  >
-                                    <div className="flex items-center gap-1.5 truncate">
-                                      <button
-                                        type="button"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          toggleStatus(statusKey);
-                                        }}
-                                        className="p-0.5 text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-200"
-                                      >
-                                        {isStatusOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
-                                      </button>
-                                      {getStatusIcon(st.status)}
-                                      <span className="truncate">{st.status}</span>
-                                    </div>
-                                    <span className="text-[10px] text-slate-500 font-mono">
-                                      {st.count}
-                                    </span>
+                                <div key={mission.id} className="rounded-md">
+                                  <div className={`flex items-center gap-1 rounded-md px-1.5 py-1 ${
+                                    isMissionSelected
+                                      ? 'bg-cyan-100 dark:bg-cyan-500/20 text-cyan-900 dark:text-cyan-200'
+                                      : 'text-slate-600 dark:text-slate-300 hover:bg-slate-200/60 dark:hover:bg-slate-800/60'
+                                  }`}>
+                                    <button
+                                      type="button"
+                                      disabled={!mission.hardware_count}
+                                      onClick={() => toggle(setExpandedMissions, mission.id)}
+                                      className="p-0.5 text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 disabled:opacity-30 disabled:cursor-default"
+                                      aria-label={`${missionExpanded ? 'Collapse' : 'Expand'} hardware for ${mission.name}`}
+                                      aria-expanded={Boolean(missionExpanded)}
+                                      title={mission.hardware_count ? `${mission.hardware_count} hardware record${mission.hardware_count === 1 ? '' : 's'}` : 'No hardware records'}
+                                    >
+                                      {missionExpanded
+                                        ? <ChevronDown className="w-3 h-3" />
+                                        : <ChevronRight className="w-3 h-3" />}
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => selectMission(destination, programme, mission)}
+                                      title={mission.name}
+                                      className="flex-1 min-w-0 text-left truncate text-[11px]"
+                                      aria-pressed={Boolean(isMissionSelected)}
+                                    >
+                                      {mission.name}
+                                    </button>
+                                    {isProvisional
+                                      ? <HelpCircle className="w-3 h-3 text-amber-500 shrink-0" title="Provisional classification" />
+                                      : <CheckCircle className="w-3 h-3 text-emerald-500 shrink-0" title="Verified classification" />}
+                                    {mission.launch_date && (
+                                      <span className="text-[9px] text-slate-400 dark:text-slate-500 font-mono shrink-0">
+                                        {mission.launch_date.slice(0, 4)}
+                                      </span>
+                                    )}
                                   </div>
 
-                                  {/* Sub-tree: Organizations & Hardware Items */}
-                                  {isStatusOpen && (
-                                    <div className="pl-3.5 space-y-1 border-l border-slate-200 dark:border-white/5 ml-2">
-                                      {st.organizations.map(org => {
-                                        const isOrgSelected = isStatusSelected && activeFilters.organization === org.name;
+                                  {missionExpanded && mission.hardware.length > 0 && (
+                                    <div className="ml-4 pl-2 py-1 space-y-1 border-l border-slate-200/80 dark:border-white/5">
+                                      {mission.hardware.map((hardware) => {
+                                        const status = hardware.operational_status || 'Unknown';
+                                        const isVerified = (hardware.verification_status || '')
+                                          .toLocaleLowerCase().includes('verified');
+                                        const statusIcon = status.includes('Active')
+                                          ? <CheckCircle className="w-3 h-3 text-emerald-500 shrink-0" />
+                                          : status.includes('Inactive')
+                                            ? <Clock className="w-3 h-3 text-amber-500 shrink-0" />
+                                            : <HelpCircle className="w-3 h-3 text-purple-500 shrink-0" />;
 
                                         return (
-                                          <div key={org.name} className="space-y-0.5">
-                                            {/* Organization node */}
-                                            <div 
-                                              className={`flex items-center justify-between px-2 py-0.5 rounded cursor-pointer text-[11px] transition-colors ${
-                                                isOrgSelected
-                                                  ? 'text-cyan-700 dark:text-cyan-300 font-semibold bg-cyan-100/60 dark:bg-cyan-950/50'
-                                                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
-                                              }`}
-                                              onClick={() => {
-                                                onFilterChange({
-                                                  destination: cat.category,
-                                                  mission: mission.name,
-                                                  status: st.status,
-                                                  organization: isOrgSelected ? 'All' : org.name
-                                                });
-                                              }}
+                                          <div key={hardware.id} className="rounded px-1 py-0.5">
+                                            <Link
+                                              to={`/hardware/${hardware.slug || hardware.id}`}
+                                              onClick={() => onSelectHardware && onSelectHardware(hardware)}
+                                              title={`Open ${hardware.name}`}
+                                              className="flex items-center gap-1.5 text-[10px] text-slate-500 dark:text-slate-400 hover:text-cyan-600 dark:hover:text-cyan-300"
                                             >
-                                              <div className="flex items-center gap-1.5 truncate">
-                                                <Building2 className="w-3 h-3 text-slate-400 shrink-0" />
-                                                <span className="truncate">{org.name}</span>
-                                              </div>
-                                              <span className="text-[10px] text-slate-400 dark:text-slate-500 font-mono">
-                                                ({org.count})
-                                              </span>
-                                            </div>
-
-                                            {/* Direct Hardware Records */}
-                                            <div className="pl-2.5 space-y-0.5">
-                                              {org.hardware.map(hw => (
-                                                <Link
-                                                  key={hw.id}
-                                                  to={`/hardware/${hw.slug || hw.id}`}
-                                                  onClick={() => onSelectHardware && onSelectHardware(hw)}
-                                                  className="w-full text-left truncate px-2 py-0.5 text-[10px] text-slate-500 dark:text-slate-400 hover:text-cyan-600 dark:hover:text-cyan-300 hover:bg-slate-100 dark:hover:bg-slate-800/40 rounded transition-colors flex items-center gap-1.5"
-                                                  title={`Open ${hw.name}`}
-                                                >
-                                                  <Cpu className="w-2.5 h-2.5 text-cyan-600 dark:text-cyan-400/60 shrink-0" />
-                                                  <span className="truncate">{hw.name}</span>
-                                                </Link>
-                                              ))}
+                                              <Cpu className="w-2.5 h-2.5 text-cyan-600 dark:text-cyan-400/60 shrink-0" />
+                                              <span className="truncate">{hardware.name}</span>
+                                              {isVerified
+                                                ? <CheckCircle className="w-2.5 h-2.5 text-emerald-500 shrink-0" title={hardware.verification_status} />
+                                                : <HelpCircle className="w-2.5 h-2.5 text-amber-500 shrink-0" title={hardware.verification_status || 'Verification status unavailable'} />}
+                                            </Link>
+                                            <div className="flex items-center gap-1.5 pl-4 mt-0.5">
+                                              <button
+                                                type="button"
+                                                onClick={() => selectStatus(destination, programme, mission, status)}
+                                                className="flex items-center gap-1 truncate text-[9px] text-slate-400 hover:text-cyan-600 dark:hover:text-cyan-300"
+                                                title={`Filter by ${status}`}
+                                              >
+                                                {statusIcon}
+                                                <span className="truncate">{status}</span>
+                                              </button>
+                                              <span className="text-slate-300 dark:text-slate-700">·</span>
+                                              <button
+                                                type="button"
+                                                onClick={() => selectOrganization(
+                                                  destination,
+                                                  programme,
+                                                  mission,
+                                                  hardware.primary_organization,
+                                                )}
+                                                className="flex items-center gap-1 min-w-0 truncate text-[9px] text-slate-400 hover:text-cyan-600 dark:hover:text-cyan-300"
+                                                title={`Filter by ${hardware.primary_organization}`}
+                                              >
+                                                <Building2 className="w-2.5 h-2.5 shrink-0" />
+                                                <span className="truncate">{hardware.primary_organization}</span>
+                                              </button>
                                             </div>
                                           </div>
                                         );
                                       })}
                                     </div>
                                   )}
-
                                 </div>
                               );
                             })}
                           </div>
                         )}
-
                       </div>
                     );
                   })}
                 </div>
               )}
-
-            </div>
+            </section>
           );
         })}
       </div>
 
-      {/* Clear Quick Tip Footer */}
       <div className="pt-2.5 border-t border-slate-200/90 dark:border-white/10 mt-2 text-[11px] text-slate-500 dark:text-slate-400 flex items-center justify-between">
-        <span>Click node to filter</span>
+        <span>Click a node to filter</span>
         <span className="text-cyan-600 dark:text-cyan-400 font-mono font-medium">Verified Archives</span>
       </div>
-
     </aside>
   );
 }

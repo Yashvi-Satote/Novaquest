@@ -9,6 +9,7 @@ from database import engine, SessionLocal, Base, get_db_status
 from models import Organization, Mission, Hardware, HardwareAlias, HardwareKeyword, HardwareImage, HardwareSource
 from seed_data import seed_database
 from expand_db import expand_database
+from mission_hierarchy import apply_mission_classifications, ensure_mission_hierarchy_schema
 
 def init_db():
     print("=" * 60)
@@ -23,6 +24,7 @@ def init_db():
     
     print("Creating tables if they do not exist...")
     Base.metadata.create_all(bind=engine)
+    ensure_mission_hierarchy_schema(engine)
     print("Tables created successfully.")
     
     print("Ingesting verified seed dataset...")
@@ -30,6 +32,12 @@ def init_db():
 
     print("Ingesting extended hardware dataset...")
     expand_database()
+
+    db = SessionLocal()
+    try:
+        apply_mission_classifications(db)
+    finally:
+        db.close()
     
     # Verify counts
     db = SessionLocal()

@@ -13,10 +13,12 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from database import engine, SessionLocal, Base
 from models import Organization, Mission, Hardware, HardwareAlias, HardwareKeyword, HardwareImage, HardwareSource
+from mission_hierarchy import apply_mission_classifications, ensure_mission_hierarchy_schema
 
 def seed_database():
     print("Initializing database tables...")
     Base.metadata.create_all(bind=engine)
+    ensure_mission_hierarchy_schema(engine)
     
     db = SessionLocal()
     try:
@@ -24,6 +26,7 @@ def seed_database():
         existing_count = db.query(Hardware).count()
         if existing_count > 0:
             print(f"Database already contains {existing_count} hardware records. Skipping seed.")
+            apply_mission_classifications(db)
             return
 
         print("Seeding Organizations...")
@@ -1460,6 +1463,7 @@ def seed_database():
                 db.add(src)
 
         db.commit()
+        apply_mission_classifications(db)
         print(f"Successfully seeded {len(hardware_list)} hardware records into the database!")
 
     except Exception as e:

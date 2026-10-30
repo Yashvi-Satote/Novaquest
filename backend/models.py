@@ -34,7 +34,10 @@ class Mission(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(255), nullable=False, unique=True, index=True)
     slug = Column(String(255), nullable=False, unique=True, index=True)
-    destination_category = Column(String(100), nullable=False, index=True) # Mars, Moon, Deep Space, Earth Orbit
+    destination_category = Column(String(100), nullable=False, index=True) # Legacy broad category retained for API compatibility
+    destination = Column(String(100), nullable=True, index=True)
+    programme = Column(String(255), nullable=True, index=True)
+    classification_status = Column(String(50), nullable=True)
     launch_date = Column(String(50), nullable=True)
     mission_end_date = Column(String(50), nullable=True)
     mission_status = Column(String(100), nullable=False, default="Active") # Active, Completed, Extended, Decommissioned
@@ -51,6 +54,9 @@ class Mission(Base):
             "name": self.name,
             "slug": self.slug,
             "destination_category": self.destination_category,
+            "destination": self.destination,
+            "programme": self.programme,
+            "classification_status": self.classification_status,
             "launch_date": self.launch_date,
             "mission_end_date": self.mission_end_date,
             "mission_status": self.mission_status,
@@ -133,6 +139,8 @@ class Hardware(Base):
             "mission_id": self.mission_id,
             "mission_name": self.mission.name if self.mission else None,
             "destination_category": self.mission.destination_category if self.mission else self.destination,
+            "mission_destination": self.mission.destination if self.mission else None,
+            "mission_programme": self.mission.programme if self.mission else None,
             "destination": self.destination,
             "object_type": self.object_type,
             "operational_status": self.operational_status,

@@ -11,6 +11,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from database import engine, SessionLocal, Base
 from models import Organization, Mission, Hardware, HardwareAlias, HardwareKeyword, HardwareImage, HardwareSource
+from mission_hierarchy import apply_mission_classifications, ensure_mission_hierarchy_schema
 
 
 CATALOGUE = [
@@ -167,6 +168,7 @@ def ingest():
     print("Novaquest - Full 250-Mission Catalogue Ingestion")
     print("=" * 60)
     Base.metadata.create_all(bind=engine)
+    ensure_mission_hierarchy_schema(engine)
     db = SessionLocal()
     try:
         org_map = {o.slug: o for o in db.query(Organization).all()}
@@ -252,6 +254,7 @@ def ingest():
             added_hw += 1
 
         db.commit()
+        apply_mission_classifications(db)
         print(f"Processed: {processed}")
         print(f"Matched existing: {matched}")
         print(f"Added new hardware entries: {added_hw}")

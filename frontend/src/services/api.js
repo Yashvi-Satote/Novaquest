@@ -34,6 +34,7 @@ export async function fetchHardware(params = {}) {
   
   if (params.q) query.set('q', params.q);
   if (params.destination && params.destination !== 'All') query.set('destination', params.destination);
+  if (params.programme && params.programme !== 'All') query.set('programme', params.programme);
   if (params.mission) query.set('mission', params.mission);
   if (params.status && params.status !== 'All') query.set('status', params.status);
   if (params.organization && params.organization !== 'All') query.set('organization', params.organization);

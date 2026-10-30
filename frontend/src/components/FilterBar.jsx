@@ -12,17 +12,21 @@ export default function FilterBar({
   onClearSearch,
   totalResults, 
   activeFilters, 
+  destinations = [],
   onFilterChange, 
   onRemoveFilter,
   sortOption, 
   onSortChange
 }) {
-  const quickDestinations = ['All', 'Mars', 'Moon', 'Deep Space', 'Earth Orbit'];
+  const quickDestinations = ['All', ...destinations];
 
   // Identify non-empty filters
   const activeChips = [];
   if (activeFilters.destination && activeFilters.destination !== 'All') {
     activeChips.push({ key: 'destination', label: `Destination: ${activeFilters.destination}` });
+  }
+  if (activeFilters.programme && activeFilters.programme !== 'All') {
+    activeChips.push({ key: 'programme', label: `Programme: ${activeFilters.programme}` });
   }
   if (activeFilters.mission && activeFilters.mission !== 'All') {
     activeChips.push({ key: 'mission', label: `Mission: ${activeFilters.mission}` });
@@ -79,7 +83,11 @@ export default function FilterBar({
               <button
                 key={dest}
                 type="button"
-                onClick={() => onFilterChange({ destination: dest })}
+                onClick={() => onFilterChange({
+                  destination: dest,
+                  programme: 'All',
+                  mission: 'All'
+                })}
                 className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all shrink-0 cursor-pointer border ${
                   isSelected
                     ? 'bg-cyan-100 dark:bg-cyan-500/20 text-cyan-900 dark:text-cyan-300 border-cyan-300 dark:border-cyan-500/40 shadow-xs'

@@ -26,6 +26,7 @@ export default function ExplorerPage({ theme, onToggleTheme }) {
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const [activeFilters, setActiveFilters] = useState({
     destination: 'All',
+    programme: 'All',
     mission: 'All',
     status: 'All',
     organization: 'All',
@@ -74,6 +75,7 @@ export default function ExplorerPage({ theme, onToggleTheme }) {
       const data = await fetchHardware({
         q: debouncedQuery,
         destination: activeFilters.destination,
+        programme: activeFilters.programme,
         mission: activeFilters.mission,
         status: activeFilters.status,
         organization: activeFilters.organization,
@@ -109,16 +111,23 @@ export default function ExplorerPage({ theme, onToggleTheme }) {
   };
 
   const handleRemoveFilter = (filterKey) => {
-    setActiveFilters(prev => ({
-      ...prev,
-      [filterKey]: 'All'
-    }));
+    setActiveFilters((prev) => {
+      const next = { ...prev, [filterKey]: 'All' };
+      if (filterKey === 'destination') {
+        next.programme = 'All';
+        next.mission = 'All';
+      } else if (filterKey === 'programme') {
+        next.mission = 'All';
+      }
+      return next;
+    });
     setCurrentPage(1);
   };
 
   const handleResetFilters = () => {
     setActiveFilters({
       destination: 'All',
+      programme: 'All',
       mission: 'All',
       status: 'All',
       organization: 'All',
@@ -166,6 +175,7 @@ export default function ExplorerPage({ theme, onToggleTheme }) {
           <Sidebar
             hierarchy={hierarchy}
             activeFilters={activeFilters}
+            searchQuery={searchQuery}
             onFilterChange={handleFilterChange}
             onResetFilters={handleResetFilters}
             onSelectHardware={handleSelectHardwareFromSidebar}
@@ -204,6 +214,7 @@ export default function ExplorerPage({ theme, onToggleTheme }) {
                 <Sidebar
                   hierarchy={hierarchy}
                   activeFilters={activeFilters}
+                  searchQuery={searchQuery}
                   onFilterChange={handleFilterChange}
                   onResetFilters={handleResetFilters}
                   onSelectHardware={handleSelectHardwareFromSidebar}
@@ -223,6 +234,7 @@ export default function ExplorerPage({ theme, onToggleTheme }) {
             onClearSearch={() => setSearchQuery('')}
             totalResults={totalResults}
             activeFilters={activeFilters}
+            destinations={hierarchy.map((item) => item.destination)}
             onFilterChange={handleFilterChange}
             onRemoveFilter={handleRemoveFilter}
             sortOption={sortOption}

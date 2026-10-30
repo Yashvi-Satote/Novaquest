@@ -31,6 +31,8 @@ Novaquest brings these stories into focus, encouraging curiosity about the past 
 
 Novaquest is developed using web technologies and data-driven features to deliver an interactive learning experience.
 
+The NovaBase mission sidebar is generated from mission records as destination → programme → mission. Mission rows retain the legacy `destination_category` field for compatibility and use `destination`, `programme`, and `classification_status` for hierarchy placement. Known catalogue entries have curated classifications; records without a confident match are kept visible under a provisional destination and **Standalone Missions**. The API adds these columns when upgrading an existing database.
+
 ## 🚀 Explore Novaquest
 
 Discover the missions. Uncover the stories. Continue the quest.

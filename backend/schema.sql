@@ -35,7 +35,10 @@ CREATE TABLE missions (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL UNIQUE,
     slug VARCHAR(255) NOT NULL UNIQUE,
-    destination_category VARCHAR(100) NOT NULL, -- 'Mars', 'Moon', 'Deep Space', 'Earth Orbit'
+    destination_category VARCHAR(100) NOT NULL, -- Legacy broad category retained for API compatibility
+    destination VARCHAR(100),
+    programme VARCHAR(255),
+    classification_status VARCHAR(50),
     launch_date VARCHAR(50),
     mission_end_date VARCHAR(50),
     mission_status VARCHAR(100) NOT NULL DEFAULT 'Active',
@@ -46,6 +49,8 @@ CREATE TABLE missions (
 
 CREATE INDEX idx_missions_slug ON missions(slug);
 CREATE INDEX idx_missions_destination ON missions(destination_category);
+CREATE INDEX idx_missions_hierarchy_destination ON missions(destination);
+CREATE INDEX idx_missions_hierarchy_programme ON missions(programme);
 CREATE INDEX idx_missions_status ON missions(mission_status);
 
 -- 3. Hardware Objects
