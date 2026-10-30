@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Routes, Route, Link, Navigate } from 'react-router-dom';
-import Header from './components/Header';
-import ExplorerPage from './pages/ExplorerPage';
-import HardwareDetailPage from './pages/HardwareDetailPage';
-import SolarSystemPage from './pages/SolarSystemPage';
-import PlaceholderPage from './pages/PlaceholderPage';
+import ExplorerPage from './NovaBase/pages/ExplorerPage';
+import HardwareDetailPage from './NovaBase/pages/HardwareDetailPage';
+import SolarSystemPage from './NovaMap/pages/SolarSystemPage';
+import Header from './shared/components/Header';
+import PlaceholderPage from './shared/components/PlaceholderPage';
 import { ArrowLeft, AlertCircle } from 'lucide-react';
 
 function NotFoundPage({ theme, onToggleTheme }) {

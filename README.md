@@ -31,6 +31,12 @@ Novaquest brings these stories into focus, encouraging curiosity about the past 
 
 Novaquest is developed using web technologies and data-driven features to deliver an interactive learning experience.
 
+## Architecture
+
+The application is organized by product module. `frontend/src/NovaBase` contains the searchable mission and hardware catalogue, `frontend/src/NovaMap` contains the 3D solar-system experience, and `frontend/src/shared` contains the application header and shared pages. Backend catalogue routes, models, and ingestion services live under `backend/NovaBase`; database connections, initialization, schema, and environment settings live under `backend/shared`.
+
+NovaQuest and NovaUser currently have no implemented gameplay, account, or authentication features; their existing home and settings pages remain shared placeholders. No new behavior or API endpoints were introduced during this organization.
+
 The NovaBase mission sidebar is generated from mission records as destination → programme → mission. Mission rows retain the legacy `destination_category` field for compatibility and use `destination`, `programme`, and `classification_status` for hierarchy placement. Known catalogue entries have curated classifications; records without a confident match are kept visible under a provisional destination and **Standalone Missions**. The API adds these columns when upgrading an existing database.
 
 ## 🚀 Explore Novaquest
