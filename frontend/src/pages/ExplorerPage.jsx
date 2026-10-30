@@ -59,7 +59,6 @@ export default function ExplorerPage({ theme, onToggleTheme }) {
       try {
         const filtersRes = await fetchFilters();
         setHierarchy(filtersRes.hierarchy || []);
-        setFilterOptions(filtersRes.filter_options || {});
       } catch (err) {
         console.error('Initialization error:', err);
       }

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { fetchHardwareDetail } from '../services/api';
+import Header from '../components/Header';
 import ImageGallery from '../components/ImageGallery';
 import ImageModal from '../components/ImageModal';
 import { 
@@ -22,7 +23,6 @@ import {
   FileCheck, 
   AlertCircle,
   Tag,
-  Rocket
 } from 'lucide-react';
 
 export default function HardwareDetailPage({ theme, onToggleTheme }) {
@@ -132,28 +132,25 @@ export default function HardwareDetailPage({ theme, onToggleTheme }) {
   return (
     <div className={`min-h-screen ${theme === 'dark' ? 'dark' : ''} bg-slate-50 dark:bg-[#070b14] space-bg flex flex-col font-sans text-slate-800 dark:text-slate-100 transition-colors duration-200`}>
       
-      {/* 1. Detail Page Top Bar */}
-      <header className="sticky top-0 z-30 w-full bg-white/85 dark:bg-[#070b14]/90 backdrop-blur-md border-b border-slate-200/90 dark:border-white/10 px-4 sm:px-6 lg:px-8 py-3 transition-colors">
-        <div className="w-full flex items-center justify-between gap-4">
-          
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={() => navigate('/')}
-              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800/80 dark:hover:bg-slate-700/80 text-slate-700 dark:text-slate-200 text-xs sm:text-sm font-semibold transition-all border border-slate-200 dark:border-white/10 shadow-xs cursor-pointer focus:outline-none focus:ring-2 focus:ring-cyan-500"
-              id="back-to-explorer-btn"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              <span>Back to Explorer</span>
-            </button>
+      <Header theme={theme} onToggleTheme={onToggleTheme} />
 
-            <div className="hidden sm:flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 font-medium">
-              <span>/</span>
-              <span className="truncate max-w-[200px] md:max-w-xs">{hardware?.name || slug}</span>
-            </div>
+      <main className="flex-1 w-full px-4 sm:px-6 lg:px-8 py-6 max-w-7xl mx-auto">
+        <div className="mb-6 flex items-center justify-between gap-4">
+          <button
+            type="button"
+            onClick={() => navigate('/novabase')}
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800/80 dark:hover:bg-slate-700/80 text-slate-700 dark:text-slate-200 text-xs sm:text-sm font-semibold transition-all border border-slate-200 dark:border-white/10 shadow-xs cursor-pointer focus:outline-none focus:ring-2 focus:ring-cyan-500"
+            id="back-to-explorer-btn"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span>Back to Novabase</span>
+          </button>
+
+          <div className="hidden sm:flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 font-medium">
+            <span>/</span>
+            <span className="truncate max-w-[200px] md:max-w-xs">{hardware?.name || slug}</span>
           </div>
 
-          {/* Right Controls */}
           <div className="flex items-center gap-3">
             {officialUrl ? (
               <a
@@ -168,25 +165,9 @@ export default function HardwareDetailPage({ theme, onToggleTheme }) {
                 <ExternalLink className="w-3 h-3" />
               </a>
             ) : null}
-
-            {onToggleTheme && (
-              <button
-                type="button"
-                onClick={onToggleTheme}
-                className="p-2 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-100/80 hover:bg-slate-200 dark:bg-slate-800/80 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-colors cursor-pointer"
-                aria-label="Toggle theme"
-              >
-                {theme === 'dark' ? <span className="text-xs">☀️</span> : <span className="text-xs">🌙</span>}
-              </button>
-            )}
           </div>
-
         </div>
-      </header>
 
-      {/* 2. Content Container */}
-      <main className="flex-1 w-full px-4 sm:px-6 lg:px-8 py-6 max-w-7xl mx-auto">
-        
         {/* Loading State */}
         {isLoading && (
           <div className="space-y-6 animate-pulse">
@@ -219,11 +200,11 @@ export default function HardwareDetailPage({ theme, onToggleTheme }) {
             </div>
             <div className="pt-2">
               <Link
-                to="/"
+                to="/novabase"
                 className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs sm:text-sm font-semibold shadow-md shadow-cyan-600/20 transition-all"
               >
                 <ArrowLeft className="w-4 h-4" />
-                Return to Novaquest Explorer
+                Return to Novabase
               </Link>
             </div>
           </div>
