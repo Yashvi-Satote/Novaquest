@@ -53,6 +53,8 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
   const mountRef = useRef(null);
   const nearInteractableRef = useRef(null);
   const isMissionEchoCompletedRef = useRef(false);
+  const triggerSparksRef = useRef(null);
+  const triggerScannerBeamRef = useRef(null);
 
   // HUD & Game State
   const [isLocked, setIsLocked] = useState(false);
@@ -87,6 +89,7 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
   const triggerScannerPulse = () => {
     audio.playScannerPing();
     setScanPulseActive(true);
+    triggerScannerBeamRef.current?.();
     setTimeout(() => setScanPulseActive(false), 2400);
   };
 
@@ -95,6 +98,9 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
       audio.playInteract();
       const id = nearInteractableRef.current.id;
       if (id === 'poi_scanning_panel' || id === 'poi_mission_echo_console' || id === 'poi_descent_simulation') {
+        if (triggerSparksRef.current && nearInteractableRef.current.position) {
+          triggerSparksRef.current(nearInteractableRef.current.position);
+        }
         setIsMissionEchoOpen(true);
       } else if (id === 'poi_extraction_pallet' && isMissionEchoCompletedRef.current) {
         setShowChapter1Completion(true);
@@ -248,34 +254,37 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
     renderer.setSize(width, height);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.shadowMap.type = THREE.PCFShadowMap; // Sharp shadow edges (authentic vacuum shadows, no atmospheric blur)
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.25;
+    renderer.toneMappingExposure = 1.35; // High dynamic range
     container.appendChild(renderer.domElement);
 
-    // 4. LOW-ANGLE HARSH LUNAR SUNLIGHT & EARTHSHINE
-    // Directional sunlight at ~18 degrees elevation casting long inky-black shadows
-    const sunLight = new THREE.DirectionalLight(0xfffef5, 4.2);
-    sunLight.position.set(240, 75, -180);
+    // 4. LOW-ANGLE HARSH LUNAR SUNLIGHT & EARTHSHINE (VACUUM EXPOSURE)
+    // One strong directional light representing the Sun at low elevation (~14.4 deg) casting long, sharp, inky shadows
+    const sunLight = new THREE.DirectionalLight(0xfffef2, 5.5);
+    sunLight.position.set(290, 72, -180);
     sunLight.castShadow = true;
-    sunLight.shadow.mapSize.width = 2048;
-    sunLight.shadow.mapSize.height = 2048;
+    sunLight.shadow.mapSize.width = 4096;
+    sunLight.shadow.mapSize.height = 4096;
     sunLight.shadow.camera.near = 10;
-    sunLight.shadow.camera.far = 650;
-    const shadowSize = 220;
+    sunLight.shadow.camera.far = 700;
+    const shadowSize = 240;
     sunLight.shadow.camera.left = -shadowSize;
     sunLight.shadow.camera.right = shadowSize;
     sunLight.shadow.camera.top = shadowSize;
     sunLight.shadow.camera.bottom = -shadowSize;
-    sunLight.shadow.bias = -0.0004;
+    sunLight.shadow.bias = -0.0003;
+    sunLight.shadow.radius = 1; // Sharp shadow edges
     scene.add(sunLight);
 
-    // Subtle Earthshine ambient fill (cool bluish-grey, 0.28 intensity so shadowed areas have realistic vacuum contrast)
-    const earthshineLight = new THREE.DirectionalLight(0x38bdf8, 0.35);
-    earthshineLight.position.set(-180, 110, -220);
+    // Stark high-contrast vacuum lighting: Zero atmosphere to scatter sunlight.
+    // Earthshine is the only subtle indirect fill light on shadow-facing terrain (cool blue-grey)
+    const earthshineLight = new THREE.DirectionalLight(0x38bdf8, 0.14);
+    earthshineLight.position.set(-260, 125, -340);
     scene.add(earthshineLight);
 
-    const faintAmbient = new THREE.AmbientLight(0x181c24, 0.22);
+    // Near-zero ambient light (0.04) ensuring deep, inky vacuum shadows with extreme contrast
+    const faintAmbient = new THREE.AmbientLight(0x04060a, 0.04);
     scene.add(faintAmbient);
 
     // 5. CELESTIAL ENVIRONMENT: BLACK SKY, SPARSE STARS & DISTANT SUBTLE EARTH
@@ -730,7 +739,8 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
       roughness: 0.16,
       metalness: 0.8
     });
-    const matGlassOptic = new THREE.MeshStandardMaterial({ color: 0x38bdf8, emissive: 0x0284c7, emissiveIntensity: 0.5, roughness: 0.08 });
+    // Cold scientific materials (Surveyor 1 has zero artificial lights and no emissive glow)
+    const matGlassOptic = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.94, roughness: 0.08 });
     const matRocketNozzle = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.95, roughness: 0.35 });
 
     // A. Authentic Open Triangular Tubular Lattice Space Frame (NASA Surveyor Specification)
@@ -1347,17 +1357,13 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
     roofDish.castShadow = true;
     transportVehicleGroup.add(roofDish);
 
-    // Spinning LIDAR Dome Sensor Unit
+    // Spinning LIDAR Dome Sensor Unit (Passive optical sensor, no colored glow)
     const lidarDome = new THREE.Mesh(
       new THREE.CylinderGeometry(0.16, 0.18, 0.25, 16),
       new THREE.MeshStandardMaterial({ color: 0x0f172a, metalness: 0.9, roughness: 0.2 })
     );
     lidarDome.position.set(0.8, 3.48, 0);
     transportVehicleGroup.add(lidarDome);
-
-    const lidarLight = new THREE.PointLight(0x10b981, 1.8, 8);
-    lidarLight.position.set(0.8, 3.65, 0);
-    transportVehicleGroup.add(lidarLight);
 
     // 8. Advanced Planetary Non-Pneumatic Titanium Tweel Wheels with Spiral Springs
     const wheelMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.95, roughness: 0.28 });
@@ -1415,32 +1421,45 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
       transportVehicleGroup.add(tweelGroup);
     }
 
-    // 9. Forward High-Intensity 8-LED Floodlight Lightbar
+    // 9. Transport Vehicle Artificial Lighting — Strictly Small White Navigation Lights
     const lightbarHousing = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.18, 0.25), matRocketNozzle);
     lightbarHousing.position.set(3.38, 2.95, 0);
     transportVehicleGroup.add(lightbarHousing);
 
     for (let lx = -1.0; lx <= 1.0; lx += 0.28) {
-      const ledLens = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.05, 12), new THREE.MeshBasicMaterial({ color: 0xffffff }));
+      const ledLens = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.04, 12), new THREE.MeshBasicMaterial({ color: 0xffffff }));
       ledLens.rotation.z = Math.PI / 2;
       ledLens.position.set(3.48, 2.95, lx);
       transportVehicleGroup.add(ledLens);
     }
 
-    // Dual Forward Casting Spotlight Beams
+    // Dual Forward Small White Navigation Headlights
     for (const sideZ of [-0.9, 0.9]) {
-      const headlightBeam = new THREE.SpotLight(0xfffaed, 5.5, 75, Math.PI / 4.5, 0.4, 1.2);
-      headlightBeam.position.set(3.5, 2.95, sideZ);
-      headlightBeam.target.position.set(35.0, -1.0, sideZ * 1.5);
-      headlightBeam.castShadow = true;
-      transportVehicleGroup.add(headlightBeam);
-      transportVehicleGroup.add(headlightBeam.target);
+      const navHeadlight = new THREE.SpotLight(0xffffff, 2.0, 24, Math.PI / 5, 0.35, 1.4);
+      navHeadlight.position.set(3.5, 2.95, sideZ);
+      navHeadlight.target.position.set(24.0, -0.5, sideZ * 1.2);
+      navHeadlight.castShadow = true;
+      transportVehicleGroup.add(navHeadlight);
+      transportVehicleGroup.add(navHeadlight.target);
     }
 
-    // Vehicle Top Amber Hazard Strobe Beacon
-    const vehBeacon = new THREE.PointLight(0xf59e0b, 2.8, 28);
-    vehBeacon.position.set(0.6, 3.65, 0);
-    transportVehicleGroup.add(vehBeacon);
+    // Small White LED Navigation Marker Beacons at Cabin Corners
+    const navLedMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+    const navLedOffsets = [
+      [ 3.42, 2.95,  1.12],
+      [ 3.42, 2.95, -1.12],
+      [-2.85, 3.10,  1.12],
+      [-2.85, 3.10, -1.12]
+    ];
+    for (const [nx, ny, nz] of navLedOffsets) {
+      const ledMarker = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 0.04, 8), navLedMat);
+      ledMarker.position.set(nx, ny, nz);
+      transportVehicleGroup.add(ledMarker);
+
+      const navMarkerGlow = new THREE.PointLight(0xffffff, 0.65, 4.5);
+      navMarkerGlow.position.set(nx, ny, nz);
+      transportVehicleGroup.add(navMarkerGlow);
+    }
 
     landingZoneGroup.add(transportVehicleGroup);
 
@@ -2283,10 +2302,9 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
     }
     alienStructureGroup.add(floatingShardGroup);
 
-    // F. Pulsing Alien Illumination Source
-    const alienGlowLight = new THREE.PointLight(0x06b6d4, 4.8, 34);
+    // F. Faint Pulsing Alien Illumination Source
+    const alienGlowLight = new THREE.PointLight(0x00d2ff, 1.8, 20);
     alienGlowLight.position.set(0, 3.8, 2.8);
-    alienGlowLight.castShadow = true;
     alienStructureGroup.add(alienGlowLight);
 
     // G. Levitating Luminescent Particle Nebula
@@ -2630,8 +2648,8 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
       beaconDome.position.y = 3.88;
       gGroup.add(beaconDome);
 
-      // Amber Strobe PointLight
-      const strobeLight = new THREE.PointLight(0xf59e0b, 2.6, 12);
+      // Small Amber Warning Light
+      const strobeLight = new THREE.PointLight(0xf59e0b, 1.2, 7);
       strobeLight.position.y = 3.95;
       gGroup.add(strobeLight);
 
@@ -3099,38 +3117,140 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
 
     scene.add(cavernGroup);
 
-    // 14. ELECTROSTATIC TERMINATOR DUST MOTES (PHOTOELECTRIC LEVITATION PHENOMENON)
-    const dustCount = 450;
+    // 14. DYNAMIC BALLISTIC REGOLITH MOVEMENT DUST (NO ATMOSPHERIC FLOATING)
+    // Particles strictly triggered by astronaut locomotion, vehicle tires, or impacts
+    // Following vacuum ballistics in lunar gravity (g = 1.62 m/s^2) and settling immediately
+    const MAX_DUST = 72;
     const dustGeo = new THREE.BufferGeometry();
-    const dustPositions = new Float32Array(dustCount * 3);
-    const dustVelocities = [];
+    const dustPositions = new Float32Array(MAX_DUST * 3);
+    const dustVelocities = new Float32Array(MAX_DUST * 3);
+    const dustLifetimes = new Float32Array(MAX_DUST);
+    const dustMaxLife = new Float32Array(MAX_DUST);
+    let nextDustIndex = 0;
 
-    for (let i = 0; i < dustCount; i++) {
-      const ang = Math.random() * Math.PI * 2;
-      const r = 2.0 + Math.random() * 36;
-      dustPositions[i * 3] = Math.cos(ang) * r;
-      dustPositions[i * 3 + 1] = 0.3 + Math.random() * 2.8;
-      dustPositions[i * 3 + 2] = Math.sin(ang) * r;
-
-      dustVelocities.push({
-        baseY: dustPositions[i * 3 + 1],
-        phase: Math.random() * Math.PI * 2,
-        speed: 0.9 + Math.random() * 1.5
-      });
+    for (let i = 0; i < MAX_DUST; i++) {
+      dustPositions[i * 3] = 0;
+      dustPositions[i * 3 + 1] = -999;
+      dustPositions[i * 3 + 2] = 0;
+      dustLifetimes[i] = 999;
+      dustMaxLife[i] = 0.65;
     }
     dustGeo.setAttribute('position', new THREE.BufferAttribute(dustPositions, 3));
 
     const dustMat = new THREE.PointsMaterial({
       map: dustParticleTex,
-      size: 0.38,
-      color: 0xfef08a, // Warm golden dust illuminated by low-angle morning sunlight
+      size: 0.24,
+      color: 0x9ca3af, // Lunar regolith dust grey
       transparent: true,
-      opacity: 0.65,
-      blending: THREE.AdditiveBlending,
+      opacity: 0.8,
       depthWrite: false
     });
     const dustParticles = new THREE.Points(dustGeo, dustMat);
     scene.add(dustParticles);
+
+    const spawnMovementDust = (cx, cz, count = 8, intensity = 1.0) => {
+      const cy = getTerrainHeight(cx, cz) + 0.03;
+      for (let k = 0; k < count; k++) {
+        const idx = (nextDustIndex + k) % MAX_DUST;
+        const spreadAng = Math.random() * Math.PI * 2;
+        const spreadDist = Math.random() * 0.16;
+
+        dustPositions[idx * 3] = cx + Math.cos(spreadAng) * spreadDist;
+        dustPositions[idx * 3 + 1] = cy;
+        dustPositions[idx * 3 + 2] = cz + Math.sin(spreadAng) * spreadDist;
+
+        // Ballistic velocity: upward kick + small lateral scatter
+        dustVelocities[idx * 3] = (Math.random() - 0.5) * 0.45 * intensity;
+        dustVelocities[idx * 3 + 1] = (0.55 + Math.random() * 0.65) * intensity;
+        dustVelocities[idx * 3 + 2] = (Math.random() - 0.5) * 0.45 * intensity;
+
+        dustLifetimes[idx] = 0;
+        dustMaxLife[idx] = 0.45 + Math.random() * 0.3;
+      }
+      nextDustIndex = (nextDustIndex + count) % MAX_DUST;
+    };
+
+    // 15. 3D SURFACE SCANNER BEAM (LASER FAN TRAVELING OVER TERRAIN)
+    // Dynamic fan ribbon that sweeps across lunar terrain in front of the astronaut
+    const scanBeamSegments = 24;
+    const scanBeamGeo = new THREE.BufferGeometry();
+    const scanBeamPositions = new Float32Array((scanBeamSegments + 1) * 2 * 3);
+    const scanBeamIndices = [];
+    for (let i = 0; i < scanBeamSegments; i++) {
+      const a = i * 2;
+      const b = i * 2 + 1;
+      const c = (i + 1) * 2;
+      const d = (i + 1) * 2 + 1;
+      scanBeamIndices.push(a, b, c);
+      scanBeamIndices.push(c, b, d);
+    }
+    scanBeamGeo.setAttribute('position', new THREE.BufferAttribute(scanBeamPositions, 3));
+    scanBeamGeo.setIndex(scanBeamIndices);
+
+    const scanBeamMat = new THREE.MeshBasicMaterial({
+      color: 0x00f0ff,
+      side: THREE.DoubleSide,
+      transparent: true,
+      opacity: 0.0,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false
+    });
+    const scanBeamMesh = new THREE.Mesh(scanBeamGeo, scanBeamMat);
+    scanBeamMesh.visible = false;
+    scene.add(scanBeamMesh);
+
+    let scanBeamProgress = 0;
+    triggerScannerBeamRef.current = () => {
+      scanBeamProgress = 0.01;
+      scanBeamMesh.visible = true;
+    };
+
+    // 16. ELECTRICAL SPARK DISCHARGE SYSTEM (TRANSIENT INTERACTION SPARKS)
+    const MAX_SPARKS = 36;
+    const sparkGeo = new THREE.BufferGeometry();
+    const sparkPositions = new Float32Array(MAX_SPARKS * 3);
+    const sparkVelocities = new Float32Array(MAX_SPARKS * 3);
+    const sparkLifetimes = new Float32Array(MAX_SPARKS);
+    for (let s = 0; s < MAX_SPARKS; s++) {
+      sparkPositions[s * 3 + 1] = -999;
+      sparkLifetimes[s] = 999;
+    }
+    sparkGeo.setAttribute('position', new THREE.BufferAttribute(sparkPositions, 3));
+
+    const sparkMat = new THREE.PointsMaterial({
+      map: dustParticleTex,
+      size: 0.22,
+      color: 0x38bdf8,
+      blending: THREE.AdditiveBlending,
+      transparent: true,
+      opacity: 0.95,
+      depthWrite: false
+    });
+    const sparkParticles = new THREE.Points(sparkGeo, sparkMat);
+    scene.add(sparkParticles);
+
+    triggerSparksRef.current = (pos) => {
+      audio.playGlitchBurst();
+      const px = pos.x || 0;
+      const py = pos.y || 1.8;
+      const pz = pos.z || 0;
+
+      for (let s = 0; s < MAX_SPARKS; s++) {
+        sparkPositions[s * 3] = px + (Math.random() - 0.5) * 0.25;
+        sparkPositions[s * 3 + 1] = py + (Math.random() - 0.5) * 0.25;
+        sparkPositions[s * 3 + 2] = pz + (Math.random() - 0.5) * 0.25;
+
+        const ang = Math.random() * Math.PI * 2;
+        const elev = (Math.random() - 0.5) * Math.PI;
+        const spd = 2.4 + Math.random() * 3.8;
+
+        sparkVelocities[s * 3] = Math.cos(elev) * Math.cos(ang) * spd;
+        sparkVelocities[s * 3 + 1] = Math.sin(elev) * spd;
+        sparkVelocities[s * 3 + 2] = Math.cos(elev) * Math.sin(ang) * spd;
+
+        sparkLifetimes[s] = 0;
+      }
+    };
 
     // 15. SUBTERRANEAN PRECURSOR RESONANT ENERGY SPORES
     const sporeCount = 300;
@@ -3725,6 +3845,9 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
             bootprintGroup.add(printMesh);
             bootprints.push(printMesh);
 
+            // Disturbed lunar regolith dust puff (vacuum ballistic physics, no air drag)
+            spawnMovementDust(printX, printZ, 8, keys.shift ? 1.3 : 0.9);
+
             if (bootprints.length > maxBootprints) {
               const old = bootprints.shift();
               bootprintGroup.remove(old);
@@ -3774,6 +3897,9 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
           playerVelocityY = 0;
           isGrounded = true;
           audio.playFootstepLunar();
+          if (!underground) {
+            spawnMovementDust(playerPos.x, playerPos.z, 14, 1.4);
+          }
         }
       } else {
         // Smooth terrain adherence
@@ -3811,19 +3937,85 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
         }
       }
 
-      // Electrostatically levitating terminator dust motes
-      if (!underground && dustParticles) {
-        dustParticles.visible = true;
-        dustParticles.position.x = playerPos.x;
-        dustParticles.position.z = playerPos.z;
-        const dPos = dustGeo.attributes.position;
-        for (let i = 0; i < dustCount; i++) {
-          const vel = dustVelocities[i];
-          dPos.setY(i, vel.baseY + Math.sin(time * vel.speed + vel.phase) * 0.45);
+      // Dynamic ballistic regolith dust physics (Lunar gravity g = 1.62 m/s^2, zero drag)
+      let hasActiveDust = false;
+      const dPos = dustGeo.attributes.position;
+      for (let i = 0; i < MAX_DUST; i++) {
+        if (dustLifetimes[i] < dustMaxLife[i]) {
+          hasActiveDust = true;
+          dustLifetimes[i] += delta;
+
+          // Lunar vacuum ballistics
+          dustVelocities[i * 3 + 1] -= 1.62 * delta;
+          const nx = dustPositions[i * 3] + dustVelocities[i * 3] * delta;
+          const ny = dustPositions[i * 3 + 1] + dustVelocities[i * 3 + 1] * delta;
+          const nz = dustPositions[i * 3 + 2] + dustVelocities[i * 3 + 2] * delta;
+
+          const groundY = getTerrainHeight(nx, nz);
+          if (ny <= groundY && dustVelocities[i * 3 + 1] < 0) {
+            dustPositions[i * 3 + 1] = -999;
+            dustLifetimes[i] = 999;
+          } else {
+            dustPositions[i * 3] = nx;
+            dustPositions[i * 3 + 1] = ny;
+            dustPositions[i * 3 + 2] = nz;
+          }
         }
+      }
+      if (hasActiveDust) {
         dPos.needsUpdate = true;
-      } else if (dustParticles) {
-        dustParticles.visible = false;
+      }
+
+      // Animate 3D Scanner Surface Beam Travelling Across Terrain
+      if (scanPulseActive && scanBeamMesh) {
+        scanBeamProgress = Math.min(1.0, scanBeamProgress + delta * 0.42);
+        scanBeamMesh.visible = true;
+        scanBeamMat.opacity = Math.sin(scanBeamProgress * Math.PI) * 0.82;
+
+        const currentRadius = Math.max(1.5, scanBeamProgress * 38);
+        const innerRadius = Math.max(0.5, currentRadius - 1.8);
+        const fovAngle = Math.PI / 3; // 60 degree scan fan
+        const baseAngle = -yaw - Math.PI / 2;
+
+        const posAttr = scanBeamGeo.attributes.position;
+        let ptr = 0;
+        for (let i = 0; i <= scanBeamSegments; i++) {
+          const t = (i / scanBeamSegments) - 0.5;
+          const ang = baseAngle + t * fovAngle;
+
+          const ox = playerPos.x + Math.cos(ang) * currentRadius;
+          const oz = playerPos.z + Math.sin(ang) * currentRadius;
+          const oy = getTerrainHeight(ox, oz) + 0.05;
+          posAttr.setXYZ(ptr++, ox, oy, oz);
+
+          const ix = playerPos.x + Math.cos(ang) * innerRadius;
+          const iz = playerPos.z + Math.sin(ang) * innerRadius;
+          const iy = getTerrainHeight(ix, iz) + 0.05;
+          posAttr.setXYZ(ptr++, ix, iy, iz);
+        }
+        posAttr.needsUpdate = true;
+      } else if (scanBeamMesh && scanBeamMesh.visible) {
+        scanBeamProgress = 0;
+        scanBeamMesh.visible = false;
+        scanBeamMat.opacity = 0;
+      }
+
+      // Animate Electrical Sparks
+      let hasActiveSparks = false;
+      const spkPos = sparkGeo.attributes.position;
+      for (let s = 0; s < MAX_SPARKS; s++) {
+        if (sparkLifetimes[s] < 0.85) {
+          hasActiveSparks = true;
+          sparkLifetimes[s] += delta;
+          sparkPositions[s * 3] += (sparkVelocities[s * 3] + (Math.random() - 0.5) * 1.8) * delta;
+          sparkPositions[s * 3 + 1] += (sparkVelocities[s * 3 + 1] - 1.62 * delta) * delta;
+          sparkPositions[s * 3 + 2] += (sparkVelocities[s * 3 + 2] + (Math.random() - 0.5) * 1.8) * delta;
+        } else {
+          sparkPositions[s * 3 + 1] = -999;
+        }
+      }
+      if (hasActiveSparks) {
+        spkPos.needsUpdate = true;
       }
 
       // Precursor cavern energy spores floating upward
@@ -3865,16 +4057,17 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
 
       // Dynamic Zone 4 & 6 state responsiveness (lighting & conduit)
       if (isMissionEchoCompletedRef.current) {
-        if (alienGlowLight) alienGlowLight.intensity = 0.4;
+        if (alienGlowLight) alienGlowLight.intensity = 0.35;
         if (energyBeam) energyBeam.visible = false;
         if (conduitMat) {
           conduitMat.emissiveIntensity = 0.04;
           conduitMat.color.setHex(0x0a0c10);
         }
-        if (qStatusLed) qStatusLed.intensity = 3.2;
+        if (qStatusLed) qStatusLed.intensity = 2.4;
       } else {
-        if (alienGlowLight) alienGlowLight.intensity = 3.8 + Math.sin(time * 3.5) * 1.2;
-        if (conduitMat) conduitMat.emissiveIntensity = 0.5 + Math.sin(time * 4.0) * 0.25;
+        // Faint blue/cyan pulses for the alien structure
+        if (alienGlowLight) alienGlowLight.intensity = 1.2 + Math.sin(time * 1.5) * 0.5;
+        if (conduitMat) conduitMat.emissiveIntensity = 0.45 + Math.sin(time * 3.0) * 0.2;
       }
 
       // Throttled HUD Telemetry Updates (5 Hz updates instead of 60 FPS state flooding)
@@ -4018,9 +4211,16 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
       carbonFiberMap.dispose();
       scannerScreenMap.dispose();
       spacesuitFabricMap.dispose();
+      scanBeamGeo.dispose();
+      scanBeamMat.dispose();
       dustGeo.dispose();
+      dustMat.dispose();
+      sparkGeo.dispose();
+      sparkMat.dispose();
       sporeGeo.dispose();
       bootprintGeo.dispose();
+      triggerSparksRef.current = null;
+      triggerScannerBeamRef.current = null;
       renderer.dispose();
     };
   }, []);
@@ -4225,6 +4425,40 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
         </div>
 
       </div>
+
+      {/* SUBTLE SCANLINE & CHROMATIC ABERRATION SCREEN DISTORTION NEAR ANOMALOUS SIGNAL */}
+      {anomalousSignal > 0 && (
+        <div 
+          className="absolute inset-0 pointer-events-none z-10 transition-opacity duration-300 overflow-hidden"
+          style={{ opacity: Math.min(0.65, (anomalousSignal / 100) * 0.75) }}
+        >
+          {/* Subtle horizontal scanline raster */}
+          <div className="absolute inset-0 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.35)_50%)] bg-[length:100%_4px]" />
+          
+          {/* Static grain & edge aberration glow */}
+          <div 
+            className="absolute inset-0"
+            style={{
+              boxShadow: `inset 0 0 ${Math.round(anomalousSignal * 1.4)}px rgba(168, 85, 247, ${anomalousSignal * 0.0035})`
+            }}
+          />
+
+          {/* Glitch jitter line when signal is high */}
+          {anomalousSignal > 40 && (
+            <div 
+              className="absolute w-full h-[2px] bg-cyan-400/50 blur-[1px] animate-pulse"
+              style={{
+                top: `${(Math.sin(Date.now() * 0.004) * 0.5 + 0.5) * 100}%`
+              }}
+            />
+          )}
+
+          {/* Subtle electromagnetic static indicator */}
+          <div className="absolute top-1/2 left-6 -translate-y-1/2 text-[9px] font-mono tracking-widest text-purple-300/60 uppercase">
+            [EM RESONANCE · 432.06 MHz · SENSOR JITTER]
+          </div>
+        </div>
+      )}
 
       {/* SCANNER ACTIVE RADAR RING EFFECT OVERLAY */}
       {scanPulseActive && (
