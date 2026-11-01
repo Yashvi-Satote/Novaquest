@@ -18,6 +18,16 @@ import {
 } from 'lucide-react';
 import { audio } from '../../game/audioManager';
 import InvestigationModal from './InvestigationModal';
+import { 
+  createLunarRegolithTexture,
+  createLunarBumpTexture,
+  createLunarRoughnessTexture,
+  createBasaltRockTexture,
+  createGoldFoilTexture,
+  createSolarPanelTexture,
+  createAlienGlyphTexture,
+  createRoverTrackTexture
+} from '../../game/lunarTextures';
 
 /**
  * LunarMapChapter1 — Historic Surveyor 1 Landing Site & Subterranean Anomaly
@@ -193,10 +203,20 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
     earthGroup.add(earthAtmosphere);
     scene.add(earthGroup);
 
-    // 6. PROCEDURAL 500m x 500m LUNAR TERRAIN & CRATER WALL NATURAL BOUNDARIES
-    // Plane: 500 x 500 metres, 140x140 resolution
+    // 6. PROCEDURAL PBR TEXTURES (GENERATED IN-MEMORY WITHOUT EXTERNAL ASSETS)
+    const regolithMap = createLunarRegolithTexture(1024, 1024);
+    const regolithBumpMap = createLunarBumpTexture(512, 512);
+    const regolithRoughnessMap = createLunarRoughnessTexture(512, 512);
+    const basaltRockMap = createBasaltRockTexture(512, 512);
+    const goldFoilMap = createGoldFoilTexture(512, 512);
+    const solarPanelMap = createSolarPanelTexture(512, 512);
+    const alienGlyphMap = createAlienGlyphTexture(512, 512);
+    const roverTrackMap = createRoverTrackTexture(256, 512);
+
+    // 7. MEDIUM-POLY 500m x 500m LUNAR TERRAIN & NATURAL BOUNDARY CRATER WALLS
+    // 200x200 resolution = 40,000 vertices, 80,000 faces (crisp medium-poly terrain)
     const TERRAIN_SIZE = 500;
-    const terrainGeo = new THREE.PlaneGeometry(TERRAIN_SIZE, TERRAIN_SIZE, 140, 140);
+    const terrainGeo = new THREE.PlaneGeometry(TERRAIN_SIZE, TERRAIN_SIZE, 200, 200);
     terrainGeo.rotateX(-Math.PI / 2);
 
     // Procedural terrain height generation with crater formulas & outer boundary mountain walls
@@ -209,6 +229,17 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
       { x: 120, z: 90, radius: 40, depth: 5.0, rimHeight: 2.4 } // East crater
     ];
 
+    // Secondary micro-craters scattered across the landscape
+    const microCraters = [
+      { x: 25, z: 20, radius: 6, depth: 1.2, rim: 0.35 },
+      { x: -30, z: -25, radius: 9, depth: 1.8, rim: 0.5 },
+      { x: -15, z: 45, radius: 7, depth: 1.4, rim: 0.4 },
+      { x: 45, z: -15, radius: 8, depth: 1.6, rim: 0.45 },
+      { x: -60, z: -60, radius: 11, depth: 2.2, rim: 0.6 },
+      { x: 90, z: 30, radius: 10, depth: 2.0, rim: 0.55 },
+      { x: -40, z: 110, radius: 12, depth: 2.4, rim: 0.7 }
+    ];
+
     const getTerrainHeight = (x, z) => {
       const distFromCenter = Math.hypot(x, z);
 
@@ -216,22 +247,33 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
       let h = Math.sin(x * 0.02) * Math.cos(z * 0.02) * 2.2
             + Math.sin(x * 0.045 + 1.2) * Math.sin(z * 0.045) * 1.1;
 
-      // Crater impacts
+      // Major crater impacts
       for (const c of craterCenters) {
         const d = Math.hypot(x - c.x, z - c.z);
         if (d < c.radius) {
-          // Inner bowl
           const norm = d / c.radius;
           h -= Math.cos(norm * (Math.PI / 2)) * c.depth;
         } else if (d < c.radius * 1.5) {
-          // Raised ejecta rim
           const rimDist = d - c.radius;
           const rimNorm = rimDist / (c.radius * 0.5);
           h += Math.sin(rimNorm * Math.PI) * c.rimHeight;
         }
       }
 
-      // NATURAL BOUNDARIES: Beyond r > 160m, terrain rises steeply into impassable crater walls (25-45m high)
+      // Micro-craters
+      for (const mc of microCraters) {
+        const d = Math.hypot(x - mc.x, z - mc.z);
+        if (d < mc.radius) {
+          const norm = d / mc.radius;
+          h -= Math.cos(norm * (Math.PI / 2)) * mc.depth;
+        } else if (d < mc.radius * 1.4) {
+          const rimDist = d - mc.radius;
+          const rimNorm = rimDist / (mc.radius * 0.4);
+          h += Math.sin(rimNorm * Math.PI) * mc.rim;
+        }
+      }
+
+      // NATURAL BOUNDARIES: Beyond r > 150m, terrain ascends into impassable crater walls (25-45m high)
       if (distFromCenter > 150) {
         const boundaryDist = distFromCenter - 150;
         const wallFactor = Math.min(1.0, boundaryDist / 90);
@@ -242,66 +284,250 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
       return h;
     };
 
+    // Evaluate medium-poly vertices and compute geological elevation coloring
+    const colors = new Float32Array(posAttr.count * 3);
     for (let i = 0; i < posAttr.count; i++) {
       const vx = posAttr.getX(i);
       const vz = posAttr.getZ(i);
-      posAttr.setY(i, getTerrainHeight(vx, vz));
+      const vy = getTerrainHeight(vx, vz);
+      posAttr.setY(i, vy);
+
+      // Vertex color gradient: darker mare basalt in basins, lighter ejecta dust on rims
+      const normHeight = Math.max(0, Math.min(1, (vy + 8) / 38));
+      const col = new THREE.Color().setHSL(0.62, 0.04, 0.24 + normHeight * 0.18);
+      colors[i * 3] = col.r;
+      colors[i * 3 + 1] = col.g;
+      colors[i * 3 + 2] = col.b;
     }
+    terrainGeo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
     terrainGeo.computeVertexNormals();
 
+    // Medium-Poly Textured Terrain Material
     const terrainMat = new THREE.MeshStandardMaterial({
-      color: 0x42454e,
-      roughness: 0.96,
-      metalness: 0.04,
-      flatShading: false
+      map: regolithMap,
+      bumpMap: regolithBumpMap,
+      bumpScale: 0.22,
+      roughnessMap: regolithRoughnessMap,
+      roughness: 0.94,
+      metalness: 0.06,
+      vertexColors: true
     });
     const terrainMesh = new THREE.Mesh(terrainGeo, terrainMat);
     terrainMesh.receiveShadow = true;
     terrainMesh.castShadow = true;
     scene.add(terrainMesh);
 
-    // 7. BASALT ROCK BOULDERS & IMPACT EJECTA
-    const rockGeoA = new THREE.DodecahedronGeometry(1.6, 1);
-    const rockMat = new THREE.MeshStandardMaterial({ color: 0x33363f, roughness: 0.98, metalness: 0.05 });
-    const rockClusterGroup = new THREE.Group();
+    // 8. ROVER TIRE TRACKS & ASTRONAUT TRAIL DECALS (Medium-Poly Mesh Ribbons)
+    const createTrackRibbon = (points, width = 1.6) => {
+      const curve = new THREE.CatmullRomCurve3(points);
+      const sampled = curve.getPoints(80);
+      const ribbonGeo = new THREE.BufferGeometry();
+      const numVerts = (sampled.length - 1) * 6;
+      const positions = new Float32Array(numVerts * 3);
+      const uvs = new Float32Array(numVerts * 2);
 
-    // Scatter 65 natural boulders across the landscape
-    for (let i = 0; i < 65; i++) {
+      let pIdx = 0;
+      let uvIdx = 0;
+
+      for (let i = 0; i < sampled.length - 1; i++) {
+        const p1 = sampled[i];
+        const p2 = sampled[i + 1];
+
+        const dir = new THREE.Vector3().subVectors(p2, p1).normalize();
+        const normal = new THREE.Vector3(0, 1, 0);
+        const side = new THREE.Vector3().crossVectors(dir, normal).normalize().multiplyScalar(width * 0.5);
+
+        const y1 = getTerrainHeight(p1.x, p1.z) + 0.035;
+        const y2 = getTerrainHeight(p2.x, p2.z) + 0.035;
+
+        const v0 = new THREE.Vector3(p1.x - side.x, y1, p1.z - side.z);
+        const v1 = new THREE.Vector3(p1.x + side.x, y1, p1.z + side.z);
+        const v2 = new THREE.Vector3(p2.x - side.x, y2, p2.z - side.z);
+        const v3 = new THREE.Vector3(p2.x + side.x, y2, p2.z + side.z);
+
+        // Quad 1: v0, v1, v2
+        positions[pIdx++] = v0.x; positions[pIdx++] = v0.y; positions[pIdx++] = v0.z;
+        positions[pIdx++] = v1.x; positions[pIdx++] = v1.y; positions[pIdx++] = v1.z;
+        positions[pIdx++] = v2.x; positions[pIdx++] = v2.y; positions[pIdx++] = v2.z;
+
+        // Quad 2: v1, v3, v2
+        positions[pIdx++] = v1.x; positions[pIdx++] = v1.y; positions[pIdx++] = v1.z;
+        positions[pIdx++] = v3.x; positions[pIdx++] = v3.y; positions[pIdx++] = v3.z;
+        positions[pIdx++] = v2.x; positions[pIdx++] = v2.y; positions[pIdx++] = v2.z;
+
+        const uLen = (i / sampled.length) * 16;
+        uvs[uvIdx++] = 0; uvs[uvIdx++] = uLen;
+        uvs[uvIdx++] = 1; uvs[uvIdx++] = uLen;
+        uvs[uvIdx++] = 0; uvs[uvIdx++] = uLen + 0.2;
+        uvs[uvIdx++] = 1; uvs[uvIdx++] = uLen;
+        uvs[uvIdx++] = 1; uvs[uvIdx++] = uLen + 0.2;
+        uvs[uvIdx++] = 0; uvs[uvIdx++] = uLen + 0.2;
+      }
+
+      ribbonGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+      ribbonGeo.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
+      ribbonGeo.computeVertexNormals();
+
+      const trackMat = new THREE.MeshStandardMaterial({
+        map: roverTrackMap,
+        transparent: true,
+        opacity: 0.82,
+        roughness: 0.98,
+        depthWrite: false,
+        polygonOffset: true,
+        polygonOffsetFactor: -1.0,
+        polygonOffsetUnits: -1.0
+      });
+      return new THREE.Mesh(ribbonGeo, trackMat);
+    };
+
+    // Track 1: Artemis Recovery Pod (55, 40) -> Surveyor 1 (0, 0)
+    const trackPointsA = [
+      new THREE.Vector3(52, 0, 38),
+      new THREE.Vector3(40, 0, 28),
+      new THREE.Vector3(26, 0, 16),
+      new THREE.Vector3(12, 0, 6),
+      new THREE.Vector3(2, 0, 0)
+    ];
+    scene.add(createTrackRibbon(trackPointsA, 1.5));
+
+    // Track 2: Surveyor 1 (0, 0) -> Precursor Anomaly Fissure (-95, -110)
+    const trackPointsB = [
+      new THREE.Vector3(-4, 0, -2),
+      new THREE.Vector3(-22, 0, -18),
+      new THREE.Vector3(-48, 0, -42),
+      new THREE.Vector3(-72, 0, -78),
+      new THREE.Vector3(-90, 0, -102)
+    ];
+    scene.add(createTrackRibbon(trackPointsB, 1.4));
+
+    // 9. MEDIUM-POLY BASALT ROCK BOULDERS & FRACTURED SCREE
+    // Medium-poly procedural sculpted rock generator (perturbs icosahedron vertices with angular cleavage)
+    const createMediumPolyRockGeo = (radius, detail = 2, roughnessScale = 0.25) => {
+      const geo = new THREE.IcosahedronGeometry(radius, detail);
+      const p = geo.attributes.position;
+      for (let i = 0; i < p.count; i++) {
+        const vx = p.getX(i);
+        const vy = p.getY(i);
+        const vz = p.getZ(i);
+        const len = Math.hypot(vx, vy, vz);
+
+        // Angular facets & fracture noise
+        const n = Math.sin(vx * 2.8) * Math.cos(vy * 2.8) * Math.sin(vz * 2.8);
+        const flattenBottom = Math.max(0, -vy) * 0.22;
+        const scale = 1.0 + (n * roughnessScale) - flattenBottom;
+
+        p.setXYZ(i, (vx / len) * radius * scale, (vy / len) * radius * scale, (vz / len) * radius * scale);
+      }
+      geo.computeVertexNormals();
+      return geo;
+    };
+
+    const rockMat = new THREE.MeshStandardMaterial({
+      map: basaltRockMap,
+      bumpMap: basaltRockMap,
+      bumpScale: 0.16,
+      roughness: 0.94,
+      metalness: 0.08
+    });
+
+    const boulderGroup = new THREE.Group();
+    const rockGeoA = createMediumPolyRockGeo(1.8, 2, 0.28);
+    const rockGeoB = createMediumPolyRockGeo(2.6, 2, 0.32);
+    const rockGeoC = createMediumPolyRockGeo(1.1, 1, 0.22);
+
+    // Scatter 75 medium-poly boulders across plains and crater rims
+    for (let i = 0; i < 75; i++) {
       const angle = Math.random() * Math.PI * 2;
-      const dist = 15 + Math.random() * 180;
+      const dist = 14 + Math.random() * 185;
       const rx = Math.cos(angle) * dist;
       const rz = Math.sin(angle) * dist;
       const ry = getTerrainHeight(rx, rz);
 
-      const scale = 0.5 + Math.random() * 2.2;
-      const rock = new THREE.Mesh(rockGeoA, rockMat);
-      rock.position.set(rx, ry + scale * 0.4, rz);
-      rock.scale.set(scale * (0.8 + Math.random() * 0.4), scale * 0.7, scale * (0.8 + Math.random() * 0.4));
+      const geoChoice = i % 3 === 0 ? rockGeoB : (i % 2 === 0 ? rockGeoA : rockGeoC);
+      const rock = new THREE.Mesh(geoChoice, rockMat);
+      const scale = 0.6 + Math.random() * 1.8;
+      rock.scale.set(scale * (0.85 + Math.random() * 0.3), scale * (0.7 + Math.random() * 0.4), scale * (0.85 + Math.random() * 0.3));
+      rock.position.set(rx, ry + scale * 0.3, rz);
       rock.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI);
       rock.castShadow = true;
       rock.receiveShadow = true;
-      rockClusterGroup.add(rock);
+      boulderGroup.add(rock);
     }
-    scene.add(rockClusterGroup);
 
-    // 8. ACCURATE 3D HISTORIC SURVEYOR 1 LANDER (CENTERPIECE AT X:0, Z:0)
+    // Concentrated scree cluster around the fissure entrance
+    for (let f = 0; f < 18; f++) {
+      const fx = -95 + (Math.random() - 0.5) * 22;
+      const fz = -110 + (Math.random() - 0.5) * 24;
+      const fy = getTerrainHeight(fx, fz);
+      const scree = new THREE.Mesh(rockGeoC, rockMat);
+      const sScale = 0.4 + Math.random() * 0.9;
+      scree.scale.set(sScale, sScale * 0.7, sScale);
+      scree.position.set(fx, fy + sScale * 0.2, fz);
+      scree.rotation.set(Math.random() * 3, Math.random() * 3, Math.random() * 3);
+      scree.castShadow = true;
+      boulderGroup.add(scree);
+    }
+    scene.add(boulderGroup);
+
+    // 10. ACCURATE MEDIUM-POLY HISTORIC SURVEYOR 1 LANDER (CENTERPIECE AT X:0, Z:0)
     const surveyorGroup = new THREE.Group();
     const surveyorTerrainY = getTerrainHeight(0, 0);
     surveyorGroup.position.set(0, surveyorTerrainY, 0);
 
-    // Materials
-    const matAluminum = new THREE.MeshStandardMaterial({ color: 0xd4d4d8, metalness: 0.85, roughness: 0.25 });
-    const matGoldFoil = new THREE.MeshStandardMaterial({ color: 0xf59e0b, emissive: 0xb45309, emissiveIntensity: 0.2, metalness: 0.9, roughness: 0.3 });
-    const matSolarPanel = new THREE.MeshStandardMaterial({ color: 0x0f172a, metalness: 0.7, roughness: 0.2 });
-    const matGlassOptic = new THREE.MeshStandardMaterial({ color: 0x38bdf8, emissive: 0x0284c7, emissiveIntensity: 0.4, roughness: 0.1 });
+    // Medium-poly PBR materials
+    const matAluminum = new THREE.MeshStandardMaterial({ color: 0xd4d4d8, metalness: 0.88, roughness: 0.24 });
+    const matGoldFoil = new THREE.MeshStandardMaterial({
+      map: goldFoilMap,
+      bumpMap: goldFoilMap,
+      bumpScale: 0.12,
+      metalness: 0.92,
+      roughness: 0.32,
+      color: 0xf59e0b
+    });
+    const matSolarPanel = new THREE.MeshStandardMaterial({
+      map: solarPanelMap,
+      roughness: 0.16,
+      metalness: 0.8
+    });
+    const matGlassOptic = new THREE.MeshStandardMaterial({ color: 0x38bdf8, emissive: 0x0284c7, emissiveIntensity: 0.5, roughness: 0.08 });
+    const matRocketNozzle = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.95, roughness: 0.35 });
 
-    // A. Triangular Tubular Space Frame Body
-    const frameBody = new THREE.Mesh(new THREE.CylinderGeometry(1.6, 2.4, 2.0, 3), matAluminum);
+    // A. Triangular Tubular Space Frame Body (Medium-Poly 16-sided cylinder)
+    const frameBody = new THREE.Mesh(new THREE.CylinderGeometry(1.6, 2.4, 2.0, 16), matAluminum);
     frameBody.position.y = 2.1;
     frameBody.castShadow = true;
     surveyorGroup.add(frameBody);
 
-    // B. Gold MLI Thermal Insulation Equipment Compartments
+    // Internal structural cross struts
+    for (let s = 0; s < 3; s++) {
+      const sAng = (s * Math.PI * 2) / 3;
+      const crossStrut = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 3.2, 12), matAluminum);
+      crossStrut.position.set(Math.cos(sAng) * 1.2, 2.1, Math.sin(sAng) * 1.2);
+      crossStrut.rotation.z = 0.5;
+      crossStrut.rotation.y = sAng;
+      surveyorGroup.add(crossStrut);
+    }
+
+    // B. Vernier Propulsion Rocket Engine Bell Nozzles (3 inverted thrusters facing down)
+    for (let v = 0; v < 3; v++) {
+      const vAng = (v * Math.PI * 2) / 3 + 0.5;
+      const vernier = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.28, 0.42, 16), matRocketNozzle);
+      vernier.position.set(Math.cos(vAng) * 1.4, 1.0, Math.sin(vAng) * 1.4);
+      vernier.castShadow = true;
+      surveyorGroup.add(vernier);
+    }
+
+    // C. Helium Pressurization Spherical Tanks (3 titanium spheres)
+    for (let t = 0; t < 3; t++) {
+      const tAng = (t * Math.PI * 2) / 3 - 0.5;
+      const tank = new THREE.Mesh(new THREE.SphereGeometry(0.32, 16, 16), matAluminum);
+      tank.position.set(Math.cos(tAng) * 1.5, 2.2, Math.sin(tAng) * 1.5);
+      tank.castShadow = true;
+      surveyorGroup.add(tank);
+    }
+
+    // D. Gold MLI Thermal Insulation Equipment Compartments (A & B)
     const compA = new THREE.Mesh(new THREE.BoxGeometry(1.3, 0.9, 0.9), matGoldFoil);
     compA.position.set(0.7, 1.8, 0.3);
     compA.castShadow = true;
@@ -312,125 +538,179 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
     compB.castShadow = true;
     surveyorGroup.add(compB);
 
-    // C. 3 Articulated Tripod Landing Legs with Crushable Honeycomb Footpads
+    // E. 3 Articulated Tripod Landing Legs with Honeycomb Footpads
     for (let i = 0; i < 3; i++) {
       const legAngle = (i * Math.PI * 2) / 3;
       const legGroup = new THREE.Group();
       legGroup.rotation.y = legAngle;
 
-      // Strut
-      const strut = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 3.8, 12), matAluminum);
+      // Primary strut
+      const strut = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 3.8, 16), matAluminum);
       strut.position.set(0, 1.1, 2.2);
       strut.rotation.x = 0.65;
       strut.castShadow = true;
       legGroup.add(strut);
 
-      // Hydraulic shock absorber
-      const shock = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 1.8, 12), matAluminum);
+      // Hydraulic shock absorber cylinder
+      const shock = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.13, 1.8, 16), matAluminum);
       shock.position.set(0, 1.5, 1.6);
       shock.rotation.x = 0.4;
       legGroup.add(shock);
 
       // Circular crushable aluminum honeycomb footpad embedded in soil
-      const footpad = new THREE.Mesh(new THREE.CylinderGeometry(0.65, 0.65, 0.18, 24), matAluminum);
-      footpad.position.set(0, 0.1, 3.6);
+      const footpad = new THREE.Mesh(new THREE.CylinderGeometry(0.68, 0.72, 0.22, 24), matAluminum);
+      footpad.position.set(0, 0.11, 3.6);
       footpad.castShadow = true;
       legGroup.add(footpad);
 
       surveyorGroup.add(legGroup);
     }
 
-    // Footpad 2 Soil Trench / Compression depression in lunar soil
-    const trenchGeo = new THREE.CylinderGeometry(1.2, 1.6, 0.12, 16);
-    const trenchMat = new THREE.MeshStandardMaterial({ color: 0x22242a, roughness: 0.99 });
+    // Footpad 2 Soil Trench / Compression depression in lunar regolith
+    const trenchGeo = new THREE.CylinderGeometry(1.2, 1.7, 0.14, 24);
+    const trenchMat = new THREE.MeshStandardMaterial({
+      map: regolithMap,
+      color: 0x22242a,
+      roughness: 0.99
+    });
     const footpadTrench = new THREE.Mesh(trenchGeo, trenchMat);
-    footpadTrench.position.set(Math.cos((2 * Math.PI) / 3) * 3.6, 0.02, Math.sin((2 * Math.PI) / 3) * 3.6);
+    footpadTrench.position.set(Math.cos((2 * Math.PI) / 3) * 3.6, 0.03, Math.sin((2 * Math.PI) / 3) * 3.6);
     surveyorGroup.add(footpadTrench);
 
-    // D. Central Mast Assembly
-    const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 3.4, 12), matAluminum);
+    // F. Central Mast Assembly
+    const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 3.4, 16), matAluminum);
     mast.position.y = 4.2;
     mast.castShadow = true;
     surveyorGroup.add(mast);
 
-    // E. Planar Solar Array Panel angled towards the low morning sun
-    const solarPanel = new THREE.Mesh(new THREE.BoxGeometry(1.9, 0.08, 1.2), matSolarPanel);
+    // G. Planar Solar Array Panel angled towards the low morning sun
+    const solarPanel = new THREE.Mesh(new THREE.BoxGeometry(2.1, 0.08, 1.3), matSolarPanel);
     solarPanel.position.set(0, 5.8, 0.2);
     solarPanel.rotation.x = -0.32;
     solarPanel.rotation.y = 0.45;
     solarPanel.castShadow = true;
     surveyorGroup.add(solarPanel);
 
-    // F. Steerable Vidicon TV Camera Turret with Motorized Mirror Housing
-    const cameraTurret = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.24, 0.9, 16), matAluminum);
+    // H. Steerable Vidicon TV Camera Turret with Motorized Mirror Housing
+    const cameraTurret = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.26, 0.95, 20), matAluminum);
     cameraTurret.position.set(0.65, 3.2, -0.65);
     cameraTurret.castShadow = true;
     surveyorGroup.add(cameraTurret);
 
-    const cameraMirror = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.45, 0.1), matGlassOptic);
-    cameraMirror.position.set(0.65, 3.75, -0.65);
+    const cameraMirror = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.48, 0.1), matGlassOptic);
+    cameraMirror.position.set(0.65, 3.78, -0.65);
     cameraMirror.rotation.x = -0.55;
     surveyorGroup.add(cameraMirror);
 
-    // G. Two Omnidirectional Antennas extending outward
+    // I. Two Omnidirectional Antennas extending outward
     for (let dir of [-1, 1]) {
-      const antennaArm = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 2.2, 8), matAluminum);
+      const antennaArm = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 2.2, 12), matAluminum);
       antennaArm.position.set(dir * 1.8, 2.4, 0);
       antennaArm.rotation.z = dir * 1.1;
       antennaArm.castShadow = true;
       surveyorGroup.add(antennaArm);
 
-      const antennaCone = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.35, 12), matGoldFoil);
+      const antennaCone = new THREE.Mesh(new THREE.ConeGeometry(0.22, 0.38, 16), matGoldFoil);
       antennaCone.position.set(dir * 2.8, 2.9, 0);
       surveyorGroup.add(antennaCone);
     }
 
     // Historical NASA Heritage Site Floor Marker Ring
-    const heritageRingGeo = new THREE.RingGeometry(5.5, 5.8, 48);
-    const heritageRingMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8, side: THREE.DoubleSide, transparent: true, opacity: 0.6 });
+    const heritageRingGeo = new THREE.RingGeometry(5.5, 5.8, 64);
+    const heritageRingMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8, side: THREE.DoubleSide, transparent: true, opacity: 0.65 });
     const heritageRing = new THREE.Mesh(heritageRingGeo, heritageRingMat);
     heritageRing.rotation.x = -Math.PI / 2;
-    heritageRing.position.y = 0.05;
+    heritageRing.position.y = 0.06;
     surveyorGroup.add(heritageRing);
 
     scene.add(surveyorGroup);
 
-    // 9. ARTEMIS / AEGIS 2126 FORWARD RECOVERY POD & TELEMETRY HUB (X: 55, Z: 40)
+    // 11. ARTEMIS / AEGIS 2126 FORWARD RECOVERY POD & UNCREWED EXPLORATION CART (X: 55, Z: 40)
     const podGroup = new THREE.Group();
     const podTerrainY = getTerrainHeight(55, 40);
     podGroup.position.set(55, podTerrainY, 40);
 
-    // Modern faceted titanium exploration capsule
+    // Modern faceted titanium exploration capsule (Medium-Poly 12-sided)
     const podBody = new THREE.Mesh(
-      new THREE.CylinderGeometry(2.8, 3.6, 3.2, 8),
-      new THREE.MeshStandardMaterial({ color: 0x334155, metalness: 0.9, roughness: 0.25 })
+      new THREE.CylinderGeometry(2.9, 3.8, 3.4, 12),
+      new THREE.MeshStandardMaterial({ color: 0x334155, metalness: 0.92, roughness: 0.22 })
     );
-    podBody.position.y = 1.6;
+    podBody.position.y = 1.7;
     podBody.castShadow = true;
     podGroup.add(podBody);
 
+    // Observation cupola dome with golden solar-protective sheen
+    const cupola = new THREE.Mesh(
+      new THREE.SphereGeometry(1.3, 24, 16, 0, Math.PI * 2, 0, Math.PI / 2),
+      new THREE.MeshStandardMaterial({ color: 0xf59e0b, metalness: 0.95, roughness: 0.1, transparent: true, opacity: 0.85 })
+    );
+    cupola.position.set(0, 3.4, 0);
+    podGroup.add(cupola);
+
     // Telemetry antenna dish
     const dish = new THREE.Mesh(
-      new THREE.SphereGeometry(1.2, 16, 16, 0, Math.PI * 2, 0, Math.PI / 2),
-      new THREE.MeshStandardMaterial({ color: 0x06b6d4, metalness: 0.9, roughness: 0.2 })
+      new THREE.SphereGeometry(1.3, 24, 24, 0, Math.PI * 2, 0, Math.PI / 2),
+      new THREE.MeshStandardMaterial({ color: 0x06b6d4, metalness: 0.9, roughness: 0.18 })
     );
-    dish.position.set(0, 3.8, 0);
+    dish.position.set(0, 4.4, 0);
     dish.rotation.x = -0.6;
     dish.castShadow = true;
     podGroup.add(dish);
 
     // Pulsing Cyan Beacon Light
-    const podBeacon = new THREE.PointLight(0x06b6d4, 3.0, 30);
-    podBeacon.position.set(0, 4.8, 0);
+    const podBeacon = new THREE.PointLight(0x06b6d4, 3.5, 35);
+    podBeacon.position.set(0, 5.2, 0);
     podGroup.add(podBeacon);
+
+    // Uncrewed Autonomous Exploration Cart / Rover parked by the pod
+    const roverGroup = new THREE.Group();
+    roverGroup.position.set(5.2, 0.45, -2.5);
+    roverGroup.rotation.y = -0.4;
+
+    const roverChassis = new THREE.Mesh(
+      new THREE.BoxGeometry(2.2, 0.45, 1.4),
+      new THREE.MeshStandardMaterial({ color: 0x475569, metalness: 0.85, roughness: 0.3 })
+    );
+    roverChassis.position.y = 0.55;
+    roverChassis.castShadow = true;
+    roverGroup.add(roverChassis);
+
+    // 4 Wire-Mesh Wheels
+    const wheelMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.9, roughness: 0.4 });
+    const wheelPositions = [
+      [-1.1, 0.35, -0.85],
+      [1.1, 0.35, -0.85],
+      [-1.1, 0.35, 0.85],
+      [1.1, 0.35, 0.85]
+    ];
+    for (const [wx, wy, wz] of wheelPositions) {
+      const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.38, 0.28, 16), wheelMat);
+      wheel.rotation.z = Math.PI / 2;
+      wheel.position.set(wx, wy, wz);
+      wheel.castShadow = true;
+      roverGroup.add(wheel);
+    }
+
+    // Robotic sample collection arm
+    const armBase = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.9, 12), matAluminum);
+    armBase.position.set(0.9, 0.95, 0.4);
+    armBase.rotation.z = -0.6;
+    roverGroup.add(armBase);
+
+    // Mini sensor mast
+    const sensorMast = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.8, 12), matAluminum);
+    sensorMast.position.set(-0.8, 1.1, -0.4);
+    roverGroup.add(sensorMast);
+
+    podGroup.add(roverGroup);
 
     // Recovery Equipment Cases & Sample Storage
     for (let c = 0; c < 3; c++) {
       const boxCase = new THREE.Mesh(
         new THREE.BoxGeometry(1.2, 0.7, 0.8),
-        new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.4 })
+        new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.35, metalness: 0.2 })
       );
-      boxCase.position.set(4.2 + c * 0.9, 0.35, -1.5 + c * 0.6);
+      boxCase.position.set(7.4 + c * 0.9, 0.35, -0.2 + c * 0.6);
       boxCase.rotation.y = c * 0.3;
       boxCase.castShadow = true;
       podGroup.add(boxCase);
@@ -438,28 +718,32 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
 
     scene.add(podGroup);
 
-    // 10. SUBTERRANEAN ANOMALOUS FISSURE & PRECURSOR CAVERN (X: -95, Z: -110)
+    // 12. SUBTERRANEAN ANOMALOUS FISSURE & PRECURSOR CAVERN (X: -95, Z: -110)
     // Fissure Opening on the surface
     const fissureGroup = new THREE.Group();
     const fissureTerrainY = getTerrainHeight(-95, -110);
     fissureGroup.position.set(-95, fissureTerrainY, -110);
 
-    // Jagged chasm rim
-    const fissureChasmGeo = new THREE.BoxGeometry(14, 8, 26);
-    const fissureChasmMat = new THREE.MeshStandardMaterial({ color: 0x0f1118, roughness: 0.95 });
+    // Jagged chasm rim with tiered basalt shelves
+    const fissureChasmGeo = new THREE.BoxGeometry(15, 8.5, 28);
+    const fissureChasmMat = new THREE.MeshStandardMaterial({
+      map: basaltRockMap,
+      color: 0x0f1118,
+      roughness: 0.96
+    });
     const fissureChasm = new THREE.Mesh(fissureChasmGeo, fissureChasmMat);
-    fissureChasm.position.y = -3.8;
+    fissureChasm.position.y = -4.0;
     fissureGroup.add(fissureChasm);
 
     // Anomalous electromagnetic shimmer effect (pulsing rings)
     const anomalyRings = [];
     for (let r = 0; r < 3; r++) {
-      const anomRingGeo = new THREE.RingGeometry(3 + r * 2.5, 3.4 + r * 2.5, 32);
+      const anomRingGeo = new THREE.RingGeometry(3 + r * 2.5, 3.4 + r * 2.5, 48);
       const anomRingMat = new THREE.MeshBasicMaterial({
         color: 0x818cf8,
         side: THREE.DoubleSide,
         transparent: true,
-        opacity: 0.65
+        opacity: 0.7
       });
       const aRing = new THREE.Mesh(anomRingGeo, anomRingMat);
       aRing.rotation.x = -Math.PI / 2;
@@ -469,56 +753,87 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
     }
 
     // Fissure beacon tripod
-    const fissureBeacon = new THREE.PointLight(0xa855f7, 4.0, 40);
+    const fissureBeacon = new THREE.PointLight(0xa855f7, 4.5, 45);
     fissureBeacon.position.set(0, 1.5, 0);
     fissureGroup.add(fissureBeacon);
 
     scene.add(fissureGroup);
 
-    // 11. HIDDEN UNDERGROUND ALIEN PRECURSOR CAVERN (Located beneath at Y: -45)
+    // 13. HIDDEN UNDERGROUND ALIEN PRECURSOR CAVERN (Located beneath at Y: -45)
     const cavernGroup = new THREE.Group();
     const CAVERN_Y = -45;
     cavernGroup.position.set(-95, CAVERN_Y, -110);
 
-    // Cavern floor & ceiling (Obsidian Basalt)
-    const cavernFloorGeo = new THREE.CylinderGeometry(28, 32, 2, 24);
-    const cavernMat = new THREE.MeshStandardMaterial({ color: 0x090a10, roughness: 0.3, metalness: 0.8 });
-    const cavernFloor = new THREE.Mesh(cavernFloorGeo, cavernMat);
+    // Cavern floor & ceiling (Obsidian Basalt with alien glyph circuits)
+    const cavernFloorGeo = new THREE.CylinderGeometry(28, 32, 2, 32);
+    const cavernFloorMat = new THREE.MeshStandardMaterial({
+      map: alienGlyphMap,
+      color: 0x111322,
+      roughness: 0.25,
+      metalness: 0.85
+    });
+    const cavernFloor = new THREE.Mesh(cavernFloorGeo, cavernFloorMat);
     cavernFloor.position.y = -1;
+    cavernFloor.receiveShadow = true;
     cavernGroup.add(cavernFloor);
 
-    const cavernCeil = new THREE.Mesh(cavernFloorGeo, cavernMat);
+    const cavernCeil = new THREE.Mesh(cavernFloorGeo, cavernFloorMat);
     cavernCeil.position.y = 18;
     cavernGroup.add(cavernCeil);
 
-    // Hexagonal Basalt Columns around perimeter
-    for (let i = 0; i < 16; i++) {
-      const colAngle = (i * Math.PI * 2) / 16;
+    // Hexagonal Basalt Columns around perimeter (Medium-Poly with stratified facets)
+    for (let i = 0; i < 18; i++) {
+      const colAngle = (i * Math.PI * 2) / 18;
       const colDist = 24 + (i % 2) * 3;
-      const colHeight = 16 + Math.sin(i) * 3;
+      const colHeight = 16 + Math.sin(i * 1.5) * 3.5;
       const column = new THREE.Mesh(
-        new THREE.CylinderGeometry(1.4, 1.6, colHeight, 6),
-        new THREE.MeshStandardMaterial({ color: 0x11131f, roughness: 0.4, metalness: 0.7 })
+        new THREE.CylinderGeometry(1.4, 1.7, colHeight, 6),
+        new THREE.MeshStandardMaterial({
+          map: basaltRockMap,
+          color: 0x0f111f,
+          roughness: 0.38,
+          metalness: 0.75
+        })
       );
       column.position.set(Math.cos(colAngle) * colDist, colHeight / 2, Math.sin(colAngle) * colDist);
+      column.castShadow = true;
       cavernGroup.add(column);
     }
 
-    // Central Floating Alien Precursor Monolith
-    const monolithGeo = new THREE.BoxGeometry(2.4, 8.5, 1.6);
+    // Central Floating Alien Precursor Monolith (Medium-Poly chamfered obsidian block)
+    const monolithGeo = new THREE.BoxGeometry(2.4, 8.5, 1.6, 2, 4, 2);
     const monolithMat = new THREE.MeshStandardMaterial({
-      color: 0x020617,
+      map: alienGlyphMap,
+      color: 0x0a0c1a,
       emissive: 0x6366f1,
-      emissiveIntensity: 0.45,
-      roughness: 0.15,
+      emissiveIntensity: 0.55,
+      roughness: 0.12,
       metalness: 0.95
     });
     const monolith = new THREE.Mesh(monolithGeo, monolithMat);
     monolith.position.set(0, 5.5, 0);
+    monolith.castShadow = true;
     cavernGroup.add(monolith);
 
-    // Monolith glowing geometric energy rings
-    const monolithLight = new THREE.PointLight(0xa855f7, 5.0, 35);
+    // Orbiting crystalline glyph satellite fragments
+    const satelliteGroup = new THREE.Group();
+    for (let s = 0; s < 4; s++) {
+      const sAng = (s * Math.PI * 2) / 4;
+      const shardGeo = new THREE.OctahedronGeometry(0.38, 0);
+      const shardMat = new THREE.MeshStandardMaterial({
+        color: 0x38bdf8,
+        emissive: 0x06b6d4,
+        emissiveIntensity: 0.8,
+        roughness: 0.1
+      });
+      const shard = new THREE.Mesh(shardGeo, shardMat);
+      shard.position.set(Math.cos(sAng) * 2.8, 5.5 + Math.sin(s * 2) * 0.8, Math.sin(sAng) * 2.8);
+      satelliteGroup.add(shard);
+    }
+    cavernGroup.add(satelliteGroup);
+
+    // Monolith glowing geometric energy light
+    const monolithLight = new THREE.PointLight(0xa855f7, 5.5, 40);
     monolithLight.position.set(0, 5.5, 0);
     cavernGroup.add(monolithLight);
 
@@ -769,7 +1084,8 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
       // Monolith levitation bobbing & harmonic emission
       monolith.position.y = 5.5 + Math.sin(time * 1.8) * 0.35;
       monolith.rotation.y += delta * 0.15;
-      monolithLight.intensity = 4.0 + Math.sin(time * 3.5) * 1.2;
+      monolithLight.intensity = 4.5 + Math.sin(time * 3.5) * 1.2;
+      satelliteGroup.rotation.y += delta * 0.45;
 
       // Calculate forward and right vectors from camera yaw
       const forwardX = -Math.sin(yaw);
@@ -936,6 +1252,14 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
       if (renderer.domElement && container.contains(renderer.domElement)) {
         container.removeChild(renderer.domElement);
       }
+      regolithMap.dispose();
+      regolithBumpMap.dispose();
+      regolithRoughnessMap.dispose();
+      basaltRockMap.dispose();
+      goldFoilMap.dispose();
+      solarPanelMap.dispose();
+      alienGlyphMap.dispose();
+      roverTrackMap.dispose();
       renderer.dispose();
     };
   }, []);
