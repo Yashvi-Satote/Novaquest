@@ -14,6 +14,11 @@ import * as THREE from 'three';
 
 /**
  * Creates high-detail Lunar Regolith Diffuse / Albedo Map
+ * Grounded in Apollo and Surveyor photography:
+ * - Base colour: Dusty grey
+ * - Surface variation: Dark grey mare basalt patches and lighter anorthositic dust
+ * - Small impact marks with subtle ejecta halos
+ * - Very low reflectivity / high matte powdery regolith appearance
  */
 export function createLunarRegolithTexture(width = 1024, height = 1024) {
   const canvas = document.createElement('canvas');
@@ -21,11 +26,10 @@ export function createLunarRegolithTexture(width = 1024, height = 1024) {
   canvas.height = height;
   const ctx = canvas.getContext('2d');
 
-  // Base Lunar Mare Basalt tone (#43464f to #353840)
-  ctx.fillStyle = '#3c3f47';
+  // Base dusty grey lunar regolith
+  ctx.fillStyle = '#484b54';
   ctx.fillRect(0, 0, width, height);
 
-  // Multi-frequency noise layer
   const imgData = ctx.getImageData(0, 0, width, height);
   const data = imgData.data;
 
@@ -33,44 +37,45 @@ export function createLunarRegolithTexture(width = 1024, height = 1024) {
     for (let x = 0; x < width; x++) {
       const idx = (y * width + x) * 4;
 
-      // Pseudo Perlin noise approximation using sine harmonics
-      const n1 = Math.sin(x * 0.035) * Math.cos(y * 0.035);
-      const n2 = Math.sin(x * 0.12 + 1.4) * Math.sin(y * 0.12 + 0.8);
-      const n3 = (Math.random() - 0.5) * 35; // Fine grain regolith dust
+      // Multi-scale procedural harmonics for regolith patchiness & dust mottling
+      const mareDarkPatch = Math.sin(x * 0.008) * Math.cos(y * 0.008) * 16.0;
+      const anorthositeRay = Math.sin(x * 0.024 + 1.2) * Math.sin(y * 0.022 + 0.6) * 12.0;
+      const fineDustMottle = Math.sin(x * 0.08) * Math.cos(y * 0.075) * 7.0;
+      const regolithGranules = (Math.random() - 0.5) * 28.0;
 
-      const val = 62 + n1 * 14 + n2 * 8 + n3;
-      const clamped = Math.max(35, Math.min(105, val));
+      const baseTone = 74 + mareDarkPatch + anorthositeRay + fineDustMottle + regolithGranules;
+      const clamped = Math.max(42, Math.min(115, baseTone));
 
-      // Titanium-rich slightly warmer/cooler tonal variation
       data[idx] = clamped;                     // R
-      data[idx + 1] = clamped * 0.98;         // G (subtle cool lunar cast)
-      data[idx + 2] = clamped * 1.02;         // B
+      data[idx + 1] = clamped * 0.99;         // G (dusty neutral)
+      data[idx + 2] = clamped * 1.01;         // B
       data[idx + 3] = 255;
     }
   }
   ctx.putImageData(imgData, 0, 0);
 
-  // Add micro-impact crater pits with dark center & bright rim highlights
-  const numMicroPits = 120;
+  // Micro-impact crater marks with ejecta rays & crisp rims
+  const numMicroPits = 150;
   for (let i = 0; i < numMicroPits; i++) {
     const cx = Math.random() * width;
     const cy = Math.random() * height;
-    const r = 2 + Math.random() * 8;
+    const r = 1.8 + Math.random() * 7.5;
 
-    // Outer bright ejecta halo
-    const halo = ctx.createRadialGradient(cx, cy, r * 0.5, cx, cy, r * 2.2);
-    halo.addColorStop(0, 'rgba(150, 155, 165, 0.45)');
-    halo.addColorStop(1, 'rgba(150, 155, 165, 0.0)');
+    // Outer lighter dust halo / ejecta spray
+    const halo = ctx.createRadialGradient(cx, cy, r * 0.4, cx, cy, r * 2.4);
+    halo.addColorStop(0, 'rgba(165, 170, 180, 0.55)');
+    halo.addColorStop(0.5, 'rgba(140, 145, 155, 0.25)');
+    halo.addColorStop(1, 'rgba(140, 145, 155, 0.0)');
     ctx.fillStyle = halo;
     ctx.beginPath();
-    ctx.arc(cx, cy, r * 2.2, 0, Math.PI * 2);
+    ctx.arc(cx, cy, r * 2.4, 0, Math.PI * 2);
     ctx.fill();
 
-    // Dark crater bowl
-    const pit = ctx.createRadialGradient(cx - r * 0.25, cy - r * 0.25, 0, cx, cy, r);
-    pit.addColorStop(0, 'rgba(18, 20, 24, 0.85)');
-    pit.addColorStop(0.8, 'rgba(35, 38, 44, 0.6)');
-    pit.addColorStop(1, 'rgba(140, 145, 155, 0.4)');
+    // Darker bowl shadow
+    const pit = ctx.createRadialGradient(cx - r * 0.2, cy - r * 0.2, 0, cx, cy, r);
+    pit.addColorStop(0, 'rgba(20, 22, 26, 0.9)');
+    pit.addColorStop(0.75, 'rgba(38, 41, 48, 0.65)');
+    pit.addColorStop(1, 'rgba(150, 155, 165, 0.4)');
     ctx.fillStyle = pit;
     ctx.beginPath();
     ctx.arc(cx, cy, r, 0, Math.PI * 2);
@@ -86,6 +91,7 @@ export function createLunarRegolithTexture(width = 1024, height = 1024) {
 
 /**
  * Creates Lunar Regolith Bump / Normal Map for low-angle solar shadows
+ * Fine granular surface with micro-pebble displacement for crisp shadows
  */
 export function createLunarBumpTexture(width = 512, height = 512) {
   const canvas = document.createElement('canvas');
@@ -102,9 +108,10 @@ export function createLunarBumpTexture(width = 512, height = 512) {
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
       const idx = (y * width + x) * 4;
-      const grain = (Math.random() - 0.5) * 60;
-      const ripple = Math.sin(x * 0.1) * Math.cos(y * 0.1) * 25;
-      const b = Math.max(0, Math.min(255, 128 + ripple + grain));
+      const grain = (Math.random() - 0.5) * 55;
+      const microPebble = Math.sin(x * 0.25) * Math.cos(y * 0.25) * 18;
+      const swell = Math.sin(x * 0.04) * Math.cos(y * 0.04) * 20;
+      const b = Math.max(0, Math.min(255, 128 + microPebble + swell + grain));
       data[idx] = b;
       data[idx + 1] = b;
       data[idx + 2] = b;
@@ -121,7 +128,8 @@ export function createLunarBumpTexture(width = 512, height = 512) {
 }
 
 /**
- * Creates Lunar Roughness Map (powdery dust with scattered glassy spherules)
+ * Creates Lunar Roughness Map
+ * High roughness (0.97 - 0.99) everywhere with virtually zero specular reflection
  */
 export function createLunarRoughnessTexture(width = 512, height = 512) {
   const canvas = document.createElement('canvas');
@@ -129,15 +137,16 @@ export function createLunarRoughnessTexture(width = 512, height = 512) {
   canvas.height = height;
   const ctx = canvas.getContext('2d');
 
-  ctx.fillStyle = '#eaeaea'; // High roughness (matte regolith)
+  // Ultra-high roughness (#f5f5f5 = 96% matte powdery regolith)
+  ctx.fillStyle = '#f5f5f5';
   ctx.fillRect(0, 0, width, height);
 
-  // Scatter semi-reflective metallic chondrules / glass beads
-  for (let i = 0; i < 200; i++) {
+  // Occasional scattered micro-impact glassy agglutinate flecks
+  for (let i = 0; i < 90; i++) {
     const cx = Math.random() * width;
     const cy = Math.random() * height;
-    const r = 1 + Math.random() * 3;
-    ctx.fillStyle = '#777777'; // lower roughness = glossy specular flecks
+    const r = 1 + Math.random() * 2;
+    ctx.fillStyle = '#b0b0b0';
     ctx.beginPath();
     ctx.arc(cx, cy, r, 0, Math.PI * 2);
     ctx.fill();

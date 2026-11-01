@@ -159,9 +159,9 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
     const faintAmbient = new THREE.AmbientLight(0x181c24, 0.22);
     scene.add(faintAmbient);
 
-    // 5. CELESTIAL ENVIRONMENT: STARS & DISTANT EARTH IN BLACK SKY
-    // 3,500 non-twinkling stars across the deep black sky
-    const starCount = 3500;
+    // 5. CELESTIAL ENVIRONMENT: BLACK SKY, SPARSE STARS & DISTANT SUBTLE EARTH
+    // Under harsh unfiltered lunar sunlight, only a few pinpoint non-twinkling stars are visible
+    const starCount = 650;
     const starGeo = new THREE.BufferGeometry();
     const starPositions = new Float32Array(starCount * 3);
     const starColors = new Float32Array(starCount * 3);
@@ -174,51 +174,51 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
       const r = 900 + Math.random() * 50;
 
       starPositions[i] = r * Math.sin(phi) * Math.cos(theta);
-      starPositions[i + 1] = Math.abs(r * Math.cos(phi)) + 10; // Keep in upper hemisphere
+      starPositions[i + 1] = Math.abs(r * Math.cos(phi)) + 12; // Keep in upper hemisphere
       starPositions[i + 2] = r * Math.sin(phi) * Math.sin(theta);
 
-      const isBright = Math.random() > 0.85;
-      starColors[i] = isBright ? 1.0 : 0.75 + Math.random() * 0.25;
-      starColors[i + 1] = isBright ? 1.0 : 0.75 + Math.random() * 0.25;
+      const isBright = Math.random() > 0.88;
+      starColors[i] = isBright ? 0.95 : 0.65 + Math.random() * 0.2;
+      starColors[i + 1] = isBright ? 0.95 : 0.65 + Math.random() * 0.2;
       starColors[i + 2] = 1.0;
     }
     starGeo.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
     starGeo.setAttribute('color', new THREE.BufferAttribute(starColors, 3));
-    const starMat = new THREE.PointsMaterial({ size: 0.9, vertexColors: true });
+    const starMat = new THREE.PointsMaterial({ size: 0.85, vertexColors: true });
     const starfield = new THREE.Points(starGeo, starMat);
     scene.add(starfield);
 
-    // Distant Earth hanging in the western sky (Oceanus Procellarum viewpoint)
+    // Distant Earth hanging subtly in the western sky (small blue-white marble, not dominating)
     const earthGroup = new THREE.Group();
-    earthGroup.position.set(-240, 140, -320);
+    earthGroup.position.set(-260, 125, -340);
 
-    const earthSphereGeo = new THREE.SphereGeometry(18, 48, 48);
+    const earthSphereGeo = new THREE.SphereGeometry(6.5, 48, 48);
     const earthMat = new THREE.MeshStandardMaterial({
-      color: 0x1d4ed8,
-      emissive: 0x0c2552,
-      roughness: 0.45,
-      metalness: 0.2
+      color: 0x2563eb,
+      emissive: 0x081f44,
+      roughness: 0.55,
+      metalness: 0.05
     });
     const earthSphere = new THREE.Mesh(earthSphereGeo, earthMat);
     earthGroup.add(earthSphere);
 
     // Swirling white clouds layer
-    const cloudsGeo = new THREE.SphereGeometry(18.25, 48, 48);
+    const cloudsGeo = new THREE.SphereGeometry(6.62, 48, 48);
     const cloudsMat = new THREE.MeshStandardMaterial({
       color: 0xffffff,
       transparent: true,
-      opacity: 0.45,
-      roughness: 0.8
+      opacity: 0.42,
+      roughness: 0.85
     });
     const earthClouds = new THREE.Mesh(cloudsGeo, cloudsMat);
     earthGroup.add(earthClouds);
 
-    // Delicate blue atmospheric haze glow ring around Earth
-    const earthAtmosphereGeo = new THREE.SphereGeometry(19.2, 32, 32);
+    // Delicate subtle blue atmospheric haze glow ring around Earth
+    const earthAtmosphereGeo = new THREE.SphereGeometry(6.95, 32, 32);
     const earthAtmosphereMat = new THREE.MeshBasicMaterial({
       color: 0x38bdf8,
       transparent: true,
-      opacity: 0.28,
+      opacity: 0.22,
       side: THREE.BackSide
     });
     const earthAtmosphere = new THREE.Mesh(earthAtmosphereGeo, earthAtmosphereMat);
@@ -261,79 +261,128 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
     const terrainGeo = new THREE.PlaneGeometry(TERRAIN_SIZE, TERRAIN_SIZE, 200, 200);
     terrainGeo.rotateX(-Math.PI / 2);
 
-    // Procedural terrain height generation with crater formulas & outer boundary mountain walls
-    const posAttr = terrainGeo.attributes.position;
-    const craterCenters = [
-      { x: 0, z: 0, radius: 45, depth: 3.2, rimHeight: 1.4 }, // Zone 2: Surveyor 1 basin depression
-      { x: -75, z: -50, radius: 34, depth: 7.2, rimHeight: 2.6 }, // Zone 3: Crater Investigation Area
-      { x: 75, z: -65, radius: 26, depth: 4.5, rimHeight: 2.0 }, // South-East impact crater
-      { x: -95, z: -110, radius: 22, depth: 6.2, rimHeight: 3.0 }, // Anomaly fissure basin
-      { x: 120, z: 90, radius: 38, depth: 5.0, rimHeight: 2.2 } // East crater
+    // THREE DISTINCT CRATER SIZES & IRREGULAR NON-CIRCULAR RIMS
+    // 1. Medium Craters: 15–25 metres wide (used for investigation & major landmarks)
+    const mediumCraters = [
+      { x: 0, z: 0, radius: 11.0, depth: 2.4, rimHeight: 0.95, seed: 1.25 }, // Zone 2: Surveyor 1 Landing Basin (22m wide)
+      { x: -75, z: -50, radius: 12.0, depth: 5.2, rimHeight: 1.85, seed: 3.72 }, // Zone 3: Crater Investigation Area (24m wide)
+      { x: 55, z: -45, radius: 9.5, depth: 3.2, rimHeight: 1.15, seed: 2.14 }, // South-East Mare Impact (19m wide)
+      { x: -45, z: 55, radius: 10.2, depth: 3.6, rimHeight: 1.35, seed: 4.51 }, // West Ridge Depression (20.4m wide)
+      { x: 80, z: 75, radius: 8.8, depth: 2.8, rimHeight: 1.05, seed: 5.83 }, // North-East Impact (17.6m wide)
+      { x: -95, z: -105, radius: 11.2, depth: 4.4, rimHeight: 1.55, seed: 0.92 } // Anomaly Fissure Basin (22.4m wide)
     ];
 
-    // Secondary micro-craters scattered across the landscape
-    const microCraters = [
-      { x: 25, z: 20, radius: 6, depth: 1.2, rim: 0.35 },
-      { x: -30, z: -25, radius: 9, depth: 1.8, rim: 0.5 },
-      { x: -15, z: 45, radius: 7, depth: 1.4, rim: 0.4 },
-      { x: 45, z: -15, radius: 8, depth: 1.6, rim: 0.45 },
-      { x: -60, z: -60, radius: 11, depth: 2.2, rim: 0.6 },
-      { x: 90, z: 30, radius: 10, depth: 2.0, rim: 0.55 },
-      { x: -40, z: 110, radius: 12, depth: 2.4, rim: 0.7 }
+    // 2. Small Craters: 2–5 metres wide (mostly decorative pockmarks scattered across the terrain)
+    const smallCraters = [
+      { x: 22, z: 18, radius: 1.6, depth: 0.45, rimHeight: 0.16, seed: 0.3 },
+      { x: -28, z: -22, radius: 2.2, depth: 0.72, rimHeight: 0.24, seed: 1.1 },
+      { x: 38, z: 42, radius: 1.9, depth: 0.58, rimHeight: 0.20, seed: 2.4 },
+      { x: -52, z: 14, radius: 2.4, depth: 0.82, rimHeight: 0.28, seed: 3.6 },
+      { x: 68, z: 18, radius: 1.8, depth: 0.52, rimHeight: 0.18, seed: 4.9 },
+      { x: 12, z: -34, radius: 2.1, depth: 0.68, rimHeight: 0.22, seed: 5.2 },
+      { x: -16, z: -46, radius: 1.5, depth: 0.42, rimHeight: 0.14, seed: 6.1 },
+      { x: 44, z: -72, radius: 2.3, depth: 0.78, rimHeight: 0.26, seed: 1.7 },
+      { x: -62, z: -76, radius: 2.0, depth: 0.64, rimHeight: 0.21, seed: 2.8 },
+      { x: -98, z: -48, radius: 1.7, depth: 0.48, rimHeight: 0.17, seed: 3.9 },
+      { x: 92, z: -18, radius: 2.2, depth: 0.70, rimHeight: 0.23, seed: 4.2 },
+      { x: -36, z: 82, radius: 2.5, depth: 0.85, rimHeight: 0.29, seed: 5.5 },
+      { x: 16, z: 62, radius: 1.4, depth: 0.38, rimHeight: 0.13, seed: 6.4 },
+      { x: -84, z: -24, radius: 2.1, depth: 0.66, rimHeight: 0.22, seed: 0.8 },
+      { x: 58, z: 52, radius: 1.8, depth: 0.54, rimHeight: 0.18, seed: 1.9 },
+      { x: -8, z: 28, radius: 1.3, depth: 0.35, rimHeight: 0.12, seed: 2.7 },
+      { x: -104, z: -78, radius: 2.3, depth: 0.75, rimHeight: 0.25, seed: 3.4 },
+      { x: 32, z: -48, radius: 1.6, depth: 0.46, rimHeight: 0.15, seed: 4.7 },
+      { x: -68, z: 36, radius: 2.2, depth: 0.69, rimHeight: 0.23, seed: 5.1 },
+      { x: 84, z: 38, radius: 1.9, depth: 0.56, rimHeight: 0.19, seed: 6.3 },
+      { x: -38, z: -12, radius: 1.5, depth: 0.40, rimHeight: 0.14, seed: 0.6 },
+      { x: 6, z: -68, radius: 2.4, depth: 0.80, rimHeight: 0.27, seed: 1.5 },
+      { x: -112, z: -38, radius: 1.8, depth: 0.50, rimHeight: 0.17, seed: 2.6 },
+      { x: 26, z: 86, radius: 2.0, depth: 0.62, rimHeight: 0.21, seed: 3.8 }
     ];
+
+    // 3. Distant Craters & Massifs: Large silhouettes along the map boundary (r > 150m)
+    const distantMassifs = [
+      { x: 0, z: -210, radius: 68, rimHeight: 28, seed: 1.7 },
+      { x: -190, z: -140, radius: 76, rimHeight: 33, seed: 2.9 },
+      { x: -160, z: 180, radius: 72, rimHeight: 27, seed: 4.1 },
+      { x: 170, z: 170, radius: 82, rimHeight: 31, seed: 5.3 },
+      { x: 210, z: -60, radius: 66, rimHeight: 29, seed: 3.4 }
+    ];
+
+    // Helper to evaluate irregular (non-circular) crater rim perturbation
+    const applyCrater = (x, z, c, currentHeight) => {
+      const dx = x - c.x;
+      const dz = z - c.z;
+      const d = Math.hypot(dx, dz);
+      // Angular harmonic perturbation ensures non-circular, scalloped crater rims
+      const angle = Math.atan2(dz, dx);
+      const rimPerturb = 1.0
+        + 0.14 * Math.sin(3 * angle + c.seed)
+        + 0.08 * Math.cos(5 * angle + 1.6 * c.seed)
+        + 0.04 * Math.sin(7 * angle);
+      const effRadius = c.radius * rimPerturb;
+
+      if (d < effRadius) {
+        const norm = d / effRadius;
+        return currentHeight - Math.cos(norm * (Math.PI / 2)) * c.depth;
+      } else if (d < effRadius * 1.52) {
+        const rimDist = d - effRadius;
+        const rimNorm = rimDist / (effRadius * 0.52);
+        // Asymmetric raised ejecta crest
+        const rimAsymmetry = 1.0 + 0.24 * Math.sin(4 * angle + c.seed);
+        return currentHeight + Math.sin(rimNorm * Math.PI) * c.rimHeight * rimAsymmetry;
+      }
+      return currentHeight;
+    };
 
     const getTerrainHeight = (x, z) => {
       const distFromCenter = Math.hypot(x, z);
 
-      // Base gentle rolling maria swells
-      let h = Math.sin(x * 0.02) * Math.cos(z * 0.02) * 2.2
-            + Math.sin(x * 0.045 + 1.2) * Math.sin(z * 0.045) * 1.1;
+      // Multi-scale undulating lunar regolith (avoids smooth flat ground everywhere)
+      let h = Math.sin(x * 0.016) * Math.cos(z * 0.015) * 2.8
+            + Math.sin(x * 0.038 + 1.1) * Math.cos(z * 0.036 + 0.5) * 1.45
+            + Math.sin(x * 0.082 + 0.4) * Math.sin(z * 0.078 + 0.9) * 0.68
+            + Math.cos(x * 0.16) * Math.sin(z * 0.15 + 1.2) * 0.28;
 
-      // Major crater impacts
-      for (const c of craterCenters) {
-        const d = Math.hypot(x - c.x, z - c.z);
-        if (d < c.radius) {
-          const norm = d / c.radius;
-          h -= Math.cos(norm * (Math.PI / 2)) * c.depth;
-        } else if (d < c.radius * 1.5) {
-          const rimDist = d - c.radius;
-          const rimNorm = rimDist / (c.radius * 0.5);
-          h += Math.sin(rimNorm * Math.PI) * c.rimHeight;
+      // 1. Medium crater impacts (Surveyor 1 basin, Zone 3 crater, etc.)
+      for (const mc of mediumCraters) {
+        h = applyCrater(x, z, mc, h);
+      }
+
+      // 2. Small decorative impact craters (2–5m pockmarks)
+      for (const sc of smallCraters) {
+        h = applyCrater(x, z, sc, h);
+      }
+
+      // 3. Distant boundary crater silhouettes (r > 150m)
+      for (const dm of distantMassifs) {
+        const dx = x - dm.x;
+        const dz = z - dm.z;
+        const d = Math.hypot(dx, dz);
+        const angle = Math.atan2(dz, dx);
+        const effR = dm.radius * (1.0 + 0.12 * Math.sin(3 * angle + dm.seed));
+        if (d < effR * 1.45 && d > effR * 0.6) {
+          const rimDist = Math.abs(d - effR);
+          const factor = Math.max(0, 1.0 - rimDist / (effR * 0.45));
+          h += Math.sin(factor * (Math.PI / 2)) * dm.rimHeight * (1.0 + 0.2 * Math.cos(4 * angle));
         }
       }
 
-      // Micro-craters
-      for (const mc of microCraters) {
-        const d = Math.hypot(x - mc.x, z - mc.z);
-        if (d < mc.radius) {
-          const norm = d / mc.radius;
-          h -= Math.cos(norm * (Math.PI / 2)) * mc.depth;
-        } else if (d < mc.radius * 1.4) {
-          const rimDist = d - mc.radius;
-          const rimNorm = rimDist / (mc.radius * 0.4);
-          h += Math.sin(rimNorm * Math.PI) * mc.rim;
-        }
-      }
-
-      // Zone 1 Landing Flat Area (Ensures flat, slightly uneven ground for the transport vehicle)
-      const distLanding = Math.hypot(x - 105, z - 65);
-      if (distLanding < 32) {
-        const flatFactor = Math.min(1.0, distLanding / 32);
-        h *= (0.2 + 0.8 * flatFactor);
-      }
-
-      // NATURAL BOUNDARIES: Beyond r > 150m, terrain ascends into impassable crater walls (25-45m high)
+      // NATURAL BOUNDARIES: Beyond r > 150m, terrain rises into impassable mountain massifs (25-45m high)
       if (distFromCenter > 150) {
         const boundaryDist = distFromCenter - 150;
         const wallFactor = Math.min(1.0, boundaryDist / 90);
-        const wallRidgeNoise = Math.sin(x * 0.08) * Math.cos(z * 0.08) * 6.0;
-        h += Math.pow(wallFactor, 1.8) * 38.0 + wallRidgeNoise;
+        // Jagged rocky silhouette ridges against pitch black sky
+        const jaggedRidge = Math.sin(x * 0.055) * Math.cos(z * 0.052) * 7.5
+                          + Math.sin(x * 0.12 + 1.5) * Math.sin(z * 0.11 + 0.7) * 3.5;
+        h += Math.pow(wallFactor, 1.85) * 42.0 + jaggedRidge;
       }
 
       return h;
     };
 
     // Evaluate medium-poly vertices and compute geological elevation coloring
+    const posAttr = terrainGeo.attributes.position;
     const colors = new Float32Array(posAttr.count * 3);
     for (let i = 0; i < posAttr.count; i++) {
       const vx = posAttr.getX(i);
@@ -343,7 +392,7 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
 
       // Vertex color gradient: darker mare basalt in basins, lighter ejecta dust on rims
       const normHeight = Math.max(0, Math.min(1, (vy + 8) / 38));
-      const col = new THREE.Color().setHSL(0.62, 0.04, 0.24 + normHeight * 0.18);
+      const col = new THREE.Color().setHSL(0.62, 0.03, 0.23 + normHeight * 0.19);
       colors[i * 3] = col.r;
       colors[i * 3 + 1] = col.g;
       colors[i * 3 + 2] = col.b;
@@ -351,14 +400,14 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
     terrainGeo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
     terrainGeo.computeVertexNormals();
 
-    // Medium-Poly Textured Terrain Material
+    // Medium-Poly Textured Terrain Material (Authentic Dusty Grey Lunar Regolith)
     const terrainMat = new THREE.MeshStandardMaterial({
       map: regolithMap,
       bumpMap: regolithBumpMap,
-      bumpScale: 0.22,
+      bumpScale: 0.28,
       roughnessMap: regolithRoughnessMap,
-      roughness: 0.94,
-      metalness: 0.06,
+      roughness: 0.98,
+      metalness: 0.01,
       vertexColors: true
     });
     const terrainMesh = new THREE.Mesh(terrainGeo, terrainMat);
@@ -460,9 +509,9 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
     ];
     scene.add(createTrackRibbon(trackPointsC, 1.5));
 
-    // 9. MEDIUM-POLY BASALT ROCK BOULDERS & FRACTURED SCREE
-    // Medium-poly procedural sculpted rock generator (perturbs icosahedron vertices with angular cleavage)
-    const createMediumPolyRockGeo = (radius, detail = 2, roughnessScale = 0.25) => {
+    // 9. MEDIUM-POLY BASALT ROCKS: LARGE BOULDERS NEAR CRATER RIMS & SMALL ANGULAR EJECTA STONES
+    // Procedural sculpted rock generator (perturbs icosahedron vertices with angular cleavage)
+    const createMediumPolyRockGeo = (radius, detail = 2, roughnessScale = 0.28) => {
       const geo = new THREE.IcosahedronGeometry(radius, detail);
       const p = geo.attributes.position;
       for (let i = 0; i < p.count; i++) {
@@ -485,44 +534,68 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
     const rockMat = new THREE.MeshStandardMaterial({
       map: basaltRockMap,
       bumpMap: basaltRockMap,
-      bumpScale: 0.16,
-      roughness: 0.94,
-      metalness: 0.08
+      bumpScale: 0.22,
+      roughness: 0.96,
+      metalness: 0.02,
+      color: 0x6e717b
     });
 
     const boulderGroup = new THREE.Group();
-    const rockGeoA = createMediumPolyRockGeo(1.8, 2, 0.28);
-    const rockGeoB = createMediumPolyRockGeo(2.6, 2, 0.32);
-    const rockGeoC = createMediumPolyRockGeo(1.1, 1, 0.22);
+    const rockGeoLarge = createMediumPolyRockGeo(1.8, 2, 0.30);
+    const rockGeoMedium = createMediumPolyRockGeo(1.0, 1, 0.24);
+    const rockGeoSmallStone = createMediumPolyRockGeo(0.28, 1, 0.20); // Small angular ejecta stone
+    const rockGeoC = rockGeoSmallStone; // Backward compatibility alias
 
-    // Scatter 75 medium-poly boulders across plains and crater rims
-    for (let i = 0; i < 75; i++) {
-      const angle = Math.random() * Math.PI * 2;
-      const dist = 14 + Math.random() * 185;
-      const rx = Math.cos(angle) * dist;
-      const rz = Math.sin(angle) * dist;
-      const ry = getTerrainHeight(rx, rz);
+    // 1. Larger boulders placed along the irregular rims of Medium Craters
+    for (const mc of mediumCraters) {
+      const numRimRocks = 8 + Math.floor(Math.random() * 5);
+      for (let j = 0; j < numRimRocks; j++) {
+        const angle = (j / numRimRocks) * Math.PI * 2 + (Math.random() - 0.5) * 0.5;
+        const rimPerturb = 1.0 + 0.14 * Math.sin(3 * angle + mc.seed);
+        const dist = mc.radius * rimPerturb * (0.95 + Math.random() * 0.32);
+        const rx = mc.x + Math.cos(angle) * dist;
+        const rz = mc.z + Math.sin(angle) * dist;
+        const ry = getTerrainHeight(rx, rz);
 
-      const geoChoice = i % 3 === 0 ? rockGeoB : (i % 2 === 0 ? rockGeoA : rockGeoC);
-      const rock = new THREE.Mesh(geoChoice, rockMat);
-      const scale = 0.6 + Math.random() * 1.8;
-      rock.scale.set(scale * (0.85 + Math.random() * 0.3), scale * (0.7 + Math.random() * 0.4), scale * (0.85 + Math.random() * 0.3));
-      rock.position.set(rx, ry + scale * 0.3, rz);
-      rock.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI);
-      rock.castShadow = true;
-      rock.receiveShadow = true;
-      boulderGroup.add(rock);
+        const geoChoice = j % 2 === 0 ? rockGeoLarge : rockGeoMedium;
+        const rock = new THREE.Mesh(geoChoice, rockMat);
+        const scale = 0.8 + Math.random() * 1.4;
+        rock.scale.set(scale * (0.9 + Math.random() * 0.2), scale * (0.75 + Math.random() * 0.35), scale * (0.9 + Math.random() * 0.2));
+        rock.position.set(rx, ry + scale * 0.28, rz);
+        rock.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI);
+        rock.castShadow = true;
+        rock.receiveShadow = true;
+        boulderGroup.add(rock);
+      }
     }
 
-    // Concentrated scree cluster around the fissure entrance
+    // 2. Small angular ejecta stones (0.15m–0.45m) scattered across the terrain
+    for (let s = 0; s < 130; s++) {
+      const angle = Math.random() * Math.PI * 2;
+      const dist = 8 + Math.random() * 155;
+      const sx = Math.cos(angle) * dist;
+      const sz = Math.sin(angle) * dist;
+      const sy = getTerrainHeight(sx, sz);
+
+      const stone = new THREE.Mesh(rockGeoSmallStone, rockMat);
+      const sScale = 0.55 + Math.random() * 0.95;
+      stone.scale.set(sScale, sScale * (0.7 + Math.random() * 0.4), sScale);
+      stone.position.set(sx, sy + sScale * 0.12, sz);
+      stone.rotation.set(Math.random() * 3, Math.random() * 3, Math.random() * 3);
+      stone.castShadow = true;
+      stone.receiveShadow = true;
+      boulderGroup.add(stone);
+    }
+
+    // 3. Concentrated scree cluster around the fissure entrance
     for (let f = 0; f < 18; f++) {
       const fx = -95 + (Math.random() - 0.5) * 22;
       const fz = -110 + (Math.random() - 0.5) * 24;
       const fy = getTerrainHeight(fx, fz);
-      const scree = new THREE.Mesh(rockGeoC, rockMat);
-      const sScale = 0.4 + Math.random() * 0.9;
-      scree.scale.set(sScale, sScale * 0.7, sScale);
-      scree.position.set(fx, fy + sScale * 0.2, fz);
+      const scree = new THREE.Mesh(rockGeoMedium, rockMat);
+      const scScale = 0.4 + Math.random() * 0.8;
+      scree.scale.set(scScale, scScale * 0.7, scScale);
+      scree.position.set(fx, fy + scScale * 0.2, fz);
       scree.rotation.set(Math.random() * 3, Math.random() * 3, Math.random() * 3);
       scree.castShadow = true;
       boulderGroup.add(scree);
@@ -1103,12 +1176,12 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
     const craterCenterY = getTerrainHeight(-75, -50);
     craterInvestigationGroup.position.set(-75, craterCenterY, -50);
 
-    // A. Massive Basalt Boulders Ringing the Crater Rim (Radius ~30-34m)
-    const rimBoulderGeo = createMediumPolyRockGeo(2.4, 2, 0.35);
-    const rimAngles = [0.1, 0.65, 1.25, 1.9, 2.7, 3.4, 4.1, 4.9, 5.6];
+    // A. Massive Basalt Boulders Ringing the Irregular Medium Crater Rim (Radius ~11.5 - 13.5m)
+    const rimBoulderGeo = createMediumPolyRockGeo(1.8, 2, 0.32);
+    const rimAngles = [0.15, 0.72, 1.35, 2.05, 2.78, 3.52, 4.25, 4.95, 5.75];
     for (let i = 0; i < rimAngles.length; i++) {
       const angle = rimAngles[i];
-      const radius = 31 + (i % 3) * 2.5;
+      const radius = 11.8 + (i % 3) * 1.2;
       const bx = Math.cos(angle) * radius;
       const bz = Math.sin(angle) * radius;
       const worldX = -75 + bx;
@@ -1116,9 +1189,9 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
       const by = getTerrainHeight(worldX, worldZ) - craterCenterY;
 
       const boulder = new THREE.Mesh(rimBoulderGeo, rockMat);
-      const bScale = 1.2 + (i % 4) * 0.45;
-      boulder.scale.set(bScale * 1.2, bScale * 0.9, bScale * 1.1);
-      boulder.position.set(bx, by + bScale * 0.5, bz);
+      const bScale = 0.95 + (i % 4) * 0.35;
+      boulder.scale.set(bScale * 1.1, bScale * 0.85, bScale * 1.05);
+      boulder.position.set(bx, by + bScale * 0.35, bz);
       boulder.rotation.set((i * 1.3) % Math.PI, (i * 0.7) % Math.PI, (i * 0.9) % Math.PI);
       boulder.castShadow = true;
       boulder.receiveShadow = true;
@@ -1126,19 +1199,19 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
     }
 
     // B. Inner Talus Scree & Angular Rocks Tumbling Down Crater Walls
-    for (let s = 0; s < 28; s++) {
-      const sAng = (s * Math.PI * 2) / 28 + (s % 3) * 0.2;
-      const sRad = 12 + (s % 5) * 3.8;
+    for (let s = 0; s < 22; s++) {
+      const sAng = (s * Math.PI * 2) / 22 + (s % 3) * 0.2;
+      const sRad = 4.8 + (s % 5) * 1.4;
       const sx = Math.cos(sAng) * sRad;
       const sz = Math.sin(sAng) * sRad;
       const worldX = -75 + sx;
       const worldZ = -50 + sz;
       const sy = getTerrainHeight(worldX, worldZ) - craterCenterY;
 
-      const rock = new THREE.Mesh(rockGeoC, rockMat);
-      const rScale = 0.5 + Math.random() * 0.8;
+      const rock = new THREE.Mesh(rockGeoSmallStone, rockMat);
+      const rScale = 0.5 + Math.random() * 0.7;
       rock.scale.set(rScale, rScale * 0.6, rScale);
-      rock.position.set(sx, sy + rScale * 0.25, sz);
+      rock.position.set(sx, sy + rScale * 0.18, sz);
       rock.rotation.set(Math.random() * 3, Math.random() * 3, Math.random() * 3);
       rock.castShadow = true;
       craterInvestigationGroup.add(rock);
@@ -2129,7 +2202,9 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
     const keys = { w: false, s: false, a: false, d: false, shift: false, space: false };
 
     // Player Physical State (1/6th Lunar Gravity)
-    let playerPos = new THREE.Vector3(104, EYE_HEIGHT, 66);
+    const initialGroundY = getTerrainHeight(104, 66);
+    let playerPos = new THREE.Vector3(104, initialGroundY + EYE_HEIGHT, 66);
+    camera.position.set(104, initialGroundY + EYE_HEIGHT, 66);
     let playerVelocityY = 0;
     let isGrounded = true;
     const LUNAR_GRAVITY = 6.2; // Adjusted for responsive gameplay feel (real 1.62m/s^2)
