@@ -16,7 +16,12 @@ import {
   Volume2,
   Scan,
   Trophy,
-  CheckCircle2
+  CheckCircle2,
+  MapPin,
+  Clock,
+  ListOrdered,
+  X,
+  Wifi
 } from 'lucide-react';
 import { audio } from '../../game/audioManager';
 import InvestigationModal from './InvestigationModal';
@@ -39,16 +44,131 @@ import {
 } from '../../game/lunarTextures';
 
 /**
- * LunarMapChapter1 — Historic Surveyor 1 Landing Site & Subterranean Anomaly
- * 
- * Features 6 Main Zones:
- * - Zone 1: Team Landing Zone (Aegis-01 transport vehicle, astronauts Maya Chen & Leo Vance, comms, crates)
- * - Zone 2: Surveyor 1 Recovery Site (Authentic 1966 spaceframe, footpads, Vidicon camera, solar mast)
- * - Zone 3: Crater Investigation Area (68m impact crater, rim boulders, scree, buried metallic object)
- * - Zone 4: Alien Structure Discovery (Partially buried geometric obsidian monolith, levitating shards, data conduit)
- * - Zone 5: Mission Echo Interface (Volumetric holographic Surveyor 1 simulation with 3 interactive puzzles)
- * - Zone 6: Recovery and Extraction Area (Robotic stabilizers, quantum archive vault, extraction pallet, victory)
+ * 7-Stage Suggested Player Journey Framework
+ * Guides the player through the map without making the level feel like a corridor.
  */
+export const JOURNEY_STAGES = [
+  {
+    stepIndex: 0,
+    id: 'spawn_landing',
+    name: 'Spawn — Landing zone',
+    durationEst: 'Approx. 2 minutes',
+    zoneName: 'ZONE 1 · TEAM LANDING',
+    targetCoords: { x: 104, z: 66 },
+    waypointLabel: 'Landing Site Terminal',
+    objective: 'Player exits the transport vehicle. The mission director explains the recovery objective.',
+    narrative: 'Arin and the recovery team disembark from the Aegis-01 lunar rover. Radio comms verify life support systems and the primary mission objective: recovering Surveyor 1.',
+    instructions: 'Debrief with Specialist Maya Chen and Officer Leo Vance at the mobile mission terminal. Familiarize with EVA movement, camera control, scanning, and objectives.',
+    commsCallout: {
+      callsign: 'GOLDSTONE-COMMS',
+      speaker: 'Flight Director (Aegis Base)',
+      text: 'Commander Arin, recovery team Aegis-01 is boots on the regolith. Surveyor 1 is 100 meters due West across the mare basin. Debrief with Chen and Vance at the mobile terminal, then proceed across the plains.'
+    }
+  },
+  {
+    stepIndex: 1,
+    id: 'explore_surveyor',
+    name: 'Explore — Surveyor 1',
+    durationEst: 'Approx. 3–4 minutes',
+    zoneName: 'ZONE 2 · SURVEYOR 1 RECOVERY',
+    targetCoords: { x: 0, z: 0 },
+    waypointLabel: 'Surveyor 1 Lander',
+    objective: 'Player approaches the lander, scans its components and detects the anomalous transmission.',
+    narrative: 'Arin navigates across the cratered lunar basin to Surveyor 1. Scanners audit the historic camera turret, solar array, and crushed footpads, detecting an anomalous 432 Hz carrier humming from beneath the lander.',
+    instructions: 'Follow the rover tracks and footprint trails West to the Surveyor 1 site. Scan the historic Vidicon camera, solar mast, and footpads using [F] Scanner Pulse. Investigate the anomalous 432 Hz frequency detected beneath the spaceframe.',
+    commsCallout: {
+      callsign: 'CHEN-SCIENCE',
+      speaker: 'Specialist Maya Chen',
+      text: 'Arin, there she is. 160 Earth years untouched in the vacuum. Scan the camera turret, solar mast, and footpads. Wait... my suit magnetometer is registering an anomalous 432 Hz carrier humming directly beneath the spaceframe.'
+    }
+  },
+  {
+    stepIndex: 2,
+    id: 'investigate_crater',
+    name: 'Investigate — Crater',
+    durationEst: 'Approx. 3 minutes',
+    zoneName: 'ZONE 3 · CRATER INVESTIGATION',
+    targetCoords: { x: -75, z: -50 },
+    waypointLabel: 'Crater Investigation Basin',
+    objective: 'Player follows the signal and examines three potential signal sources.',
+    narrative: 'Following the 432 Hz carrier and a subtle subterranean conduit, Arin investigates the 24-meter impact crater. Scanning three distinct sites isolates the transmission epicenter.',
+    instructions: 'Follow the 432 Hz signal and the dark cable conduit to the 24m crater. Examine Survey Site Alpha (rim outcrop), Survey Site Beta (inner scree slope), and Survey Site Gamma (buried precursor object) to isolate the harmonic epicenter.',
+    commsCallout: {
+      callsign: 'VANCE-OPS',
+      speaker: 'Officer Leo Vance',
+      text: 'The 432 Hz signal is intensifying toward that 24-meter impact crater at azimuth 295°. Check the rim outcrop, the scree slope, and the buried metallic signature at the crater floor.'
+    }
+  },
+  {
+    stepIndex: 3,
+    id: 'discover_alien',
+    name: 'Discover — Alien structure',
+    durationEst: 'Approx. 2 minutes',
+    zoneName: 'ZONE 4 · ALIEN STRUCTURE DISCOVERY',
+    targetCoords: { x: -120, z: -75 },
+    waypointLabel: 'Precursor Monolith',
+    objective: 'Player finds the structure and activates its interface.',
+    narrative: 'Beyond the crater rim along the basalt ridge, Arin discovers a partially buried geometric obsidian structure humming with synthetic vibration and glowing conduit lines.',
+    instructions: 'Follow the exposed conduit northwest toward the basalt ridge to find the partially buried obsidian structure. Feel the bedrock synthetic vibration through your suit boots. Approach the Central Scanning Panel to interface with the array.',
+    commsCallout: {
+      callsign: 'CHEN-SCIENCE',
+      speaker: 'Specialist Maya Chen',
+      text: 'Good lord... Arin, do you see that? An obsidian geometric monolith buried in the lunar regolith. It’s drawing power directly from Surveyor’s landing site. Access the central scanning panel!'
+    }
+  },
+  {
+    stepIndex: 4,
+    id: 'solve_echo',
+    name: 'Solve — Mission Echo',
+    durationEst: 'Approx. 7–10 minutes',
+    zoneName: 'ZONE 5 · MISSION ECHO INTERFACE',
+    targetCoords: { x: -116, z: -72 },
+    waypointLabel: 'Mission Echo Array',
+    objective: 'Player completes the three historical reconstruction puzzles.',
+    narrative: 'Interfacing with the alien array projects a volumetric simulation of Surveyor 1\'s 1966 mission. Arin reconstructs the flight telemetry, optical panorama, and frequency archives.',
+    instructions: 'Interact with the Mission Echo terminal [E]. Calibrate the 1966 Controlled Descent retro-burn, stitch the Vidicon 360° panoramic surface observation, and apply the 432.06 Hz harmonic notch filter to restore the corrupted telemetry archive.',
+    commsCallout: {
+      callsign: 'GOLDSTONE-COMMS',
+      speaker: 'Flight Director (Aegis Base)',
+      text: 'The alien interface is parsing Surveyor’s historical flight records. Complete the descent telemetry, align the Vidicon optics, and apply the 432 Hz notch filter to restore the archive.'
+    }
+  },
+  {
+    stepIndex: 5,
+    id: 'recover_surveyor',
+    name: 'Recover — Surveyor 1',
+    durationEst: 'Approx. 3 minutes',
+    zoneName: 'ZONE 6 · RECOVERY & EXTRACTION',
+    targetCoords: { x: 0, z: 0 },
+    waypointLabel: 'Surveyor 1 Recovery Rig',
+    objective: 'Player disconnects the fictional alien feed, secures the archive and prepares the spacecraft for recovery.',
+    narrative: 'With the alien interface solved, the dark conduit powers down. Arin returns to Surveyor 1 to disconnect the alien feed, lock the 11,237 restored frames into the Quantum Archive, and prep the recovery rig.',
+    instructions: 'Return to Surveyor 1 where the recovery team has deployed the heavy robotic rig. Inspect the Recovery Rig to sever the alien feed, lock the 11,237 historic frames into the Quantum Archive Vault, and brace the lander on the extraction sled.',
+    commsCallout: {
+      callsign: 'VANCE-OPS',
+      speaker: 'Officer Leo Vance',
+      text: 'The alien conduit has powered down! Recovery rig is deployed at the landing site. Disconnect the alien link, lock the 11,237 restored frames into the Quantum Archive, and prep the sled.'
+    }
+  },
+  {
+    stepIndex: 6,
+    id: 'end_next_signal',
+    name: 'End — Next signal',
+    durationEst: 'Approx. 1–2 minutes',
+    zoneName: 'ZONE 6 · RECOVERY & EXTRACTION',
+    targetCoords: { x: 3.8, z: -2.6 },
+    waypointLabel: 'Secure Extraction Pallet',
+    objective: 'The team discovers a new set of coordinates. Arin decides to continue Project Legacy.',
+    narrative: 'Inspection of the decoded carrier wave reveals coordinates leading deep beneath the lunar surface to "Vault Zero". Arin commits the team to the next expedition of Project Legacy.',
+    instructions: 'Inspect the Mobile Extraction Pallet [E]. Review the decrypted transmission vector, confirm the coordinates to Vault Zero, and commit Arin to the next chapter of Project Legacy.',
+    commsCallout: {
+      callsign: 'CHEN-SCIENCE',
+      speaker: 'Specialist Maya Chen',
+      text: 'Commander Arin... the carrier wave wasn’t random noise. It contained encrypted coordinates to an uncharted facility deep beneath the lunar crust: Vault Zero. We have to continue Project Legacy.'
+    }
+  }
+];
+
 export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
   const mountRef = useRef(null);
   const nearInteractableRef = useRef(null);
@@ -58,7 +178,7 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
 
   // HUD & Game State
   const [isLocked, setIsLocked] = useState(false);
-  const [activeObjective, setActiveObjective] = useState('Debrief with recovery team at Landing Zone & proceed West toward Surveyor 1');
+  const [activeObjective, setActiveObjective] = useState(JOURNEY_STAGES[0].objective);
   const [activeZone, setActiveZone] = useState('ZONE 1 · TEAM LANDING');
   const [distanceToLanding, setDistanceToLanding] = useState(0);
   const [distanceToSurveyor, setDistanceToSurveyor] = useState(0);
@@ -72,6 +192,51 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
   const [investigateTarget, setInvestigateTarget] = useState(null);
   const [nearInteractable, setNearInteractable] = useState(null);
   const [hudNotice, setHudNotice] = useState('Click screen to look • WASD to walk • Space to Jump • [F] Scan • [E] Interact');
+
+  // 7-Stage Suggested Player Journey State
+  const [journeyStageIndex, setJourneyStageIndex] = useState(0);
+  const [completedStageIndices, setCompletedStageIndices] = useState([]);
+  const [activeComms, setActiveComms] = useState(null);
+  const [showJourneyRoadmap, setShowJourneyRoadmap] = useState(false);
+  const [navTargetBearing, setNavTargetBearing] = useState(264);
+  const [navTargetDistance, setNavTargetDistance] = useState(105);
+
+  const advanceJourneyStage = (nextIndex) => {
+    setJourneyStageIndex((current) => {
+      if (nextIndex <= current || nextIndex >= JOURNEY_STAGES.length) return current;
+      const stage = JOURNEY_STAGES[nextIndex];
+      if (stage) {
+        setActiveObjective(stage.objective);
+        if (stage.commsCallout) {
+          setActiveComms(stage.commsCallout);
+          audio.playRadioCommsChatter(stage.commsCallout.speaker.includes('Chen') ? 'chen' : stage.commsCallout.speaker.includes('Vance') ? 'vance' : 'director');
+        }
+      }
+      setCompletedStageIndices(prev => Array.from(new Set([...prev, current])));
+      return nextIndex;
+    });
+  };
+
+  // Initial Spawn Transmission from Flight Director
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const initialStage = JOURNEY_STAGES[0];
+      if (initialStage && initialStage.commsCallout) {
+        setActiveComms(initialStage.commsCallout);
+        audio.playRadioCommsChatter('director');
+      }
+    }, 2200);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Auto-dismiss comms toast after 14 seconds
+  useEffect(() => {
+    if (!activeComms) return;
+    const timer = setTimeout(() => {
+      setActiveComms(null);
+    }, 14000);
+    return () => clearTimeout(timer);
+  }, [activeComms]);
 
   // Mission Echo & Extraction State
   const [isMissionEchoOpen, setIsMissionEchoOpen] = useState(false);
@@ -4131,6 +4296,30 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
         setDistanceToAnomaly(distAnomaly);
         setCompassHeading(headingDeg);
 
+        // 7-Stage Suggested Player Journey Nav-Target calculation
+        const currentStageObj = JOURNEY_STAGES[journeyStageIndex] || JOURNEY_STAGES[0];
+        if (currentStageObj?.targetCoords) {
+          const dx = currentStageObj.targetCoords.x - playerPos.x;
+          const dz = currentStageObj.targetCoords.z - playerPos.z;
+          const distToNav = Math.round(Math.hypot(dx, dz));
+          setNavTargetDistance(distToNav);
+
+          let rad = Math.atan2(dx, -dz);
+          let deg = Math.round((THREE.MathUtils.radToDeg(rad) % 360 + 360) % 360);
+          setNavTargetBearing(deg);
+        }
+
+        // Automatic Natural Non-Corridor Stage Transitions
+        if (journeyStageIndex === 0 && (distLanding > 24 || distSurveyor < 65)) {
+          advanceJourneyStage(1);
+        } else if (journeyStageIndex === 1 && (distCrater < 45 && distLanding > 60)) {
+          advanceJourneyStage(2);
+        } else if (journeyStageIndex === 2 && (distAlien < 38 || (playerPos.x < -60 && playerPos.z < -80))) {
+          advanceJourneyStage(3);
+        } else if (journeyStageIndex === 3 && (distEcho < 20 || isMissionEchoOpen)) {
+          advanceJourneyStage(4);
+        }
+
         // Dynamic 432 Hz Signal Resonance Calculation based on proximity & Mission Echo state
         let sig = 0;
         if (isMissionEchoCompletedRef.current) {
@@ -4374,9 +4563,9 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
           {/* Compass & Objective */}
           <div className="space-y-2 pointer-events-auto max-w-md">
             
-            {/* Top Compass Heading Tape */}
-            <div className="flex items-center gap-3 px-3 py-1.5 rounded-xl bg-black/80 backdrop-blur-md border border-cyan-500/30 text-xs text-cyan-300 shadow-xl">
-              <Compass className="w-4 h-4 text-cyan-400 animate-spin-slow" />
+            {/* Top Compass Heading Tape with Nav Target Bearing */}
+            <div className="flex items-center gap-3 px-3 py-1.5 rounded-xl bg-black/80 backdrop-blur-md border border-cyan-500/30 text-xs text-cyan-300 shadow-xl flex-wrap sm:flex-nowrap">
+              <Compass className="w-4 h-4 text-cyan-400 animate-spin-slow flex-shrink-0" />
               <div className="flex items-center gap-2">
                 <span className="font-bold text-white tracking-widest">{compassHeading}°</span>
                 <span className="text-slate-400 text-[10px]">
@@ -4393,20 +4582,47 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
               <span className="px-2 py-0.5 rounded bg-cyan-950/80 border border-cyan-400/40 text-[10px] text-cyan-300 font-bold uppercase tracking-wider">
                 {activeZone}
               </span>
+              <span className="text-slate-600 hidden sm:inline">|</span>
+              <div className="flex items-center gap-1 text-[10px] text-amber-300 font-bold bg-amber-950/40 px-2 py-0.5 rounded border border-amber-500/30">
+                <MapPin className="w-3 h-3 text-amber-400 flex-shrink-0" />
+                <span>NAV: {JOURNEY_STAGES[journeyStageIndex]?.waypointLabel} [{navTargetDistance}m · {navTargetBearing}°]</span>
+              </div>
             </div>
 
-            {/* Active Objective Pill */}
-            <div className="p-3 rounded-xl bg-black/85 backdrop-blur-md border border-cyan-500/40 shadow-xl text-xs space-y-1">
-              <div className="text-[10px] text-cyan-400 font-bold uppercase tracking-widest flex items-center gap-1.5">
-                <Shield className="w-3.5 h-3.5 text-cyan-400" />
-                <span>Primary Objective · Chapter 1</span>
+            {/* 7-STAGE SUGGESTED PLAYER JOURNEY CARD */}
+            <div className="p-3.5 rounded-xl bg-black/85 backdrop-blur-md border border-cyan-500/40 shadow-xl text-xs space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="text-[10px] text-cyan-400 font-bold uppercase tracking-widest flex items-center gap-1.5">
+                  <Shield className="w-3.5 h-3.5 text-cyan-400" />
+                  <span>JOURNEY · STEP {journeyStageIndex + 1} OF 7</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="px-2 py-0.5 rounded-full bg-cyan-950 border border-cyan-500/40 text-[9px] text-cyan-300 font-mono flex items-center gap-1">
+                    <Clock className="w-2.5 h-2.5" />
+                    <span>{JOURNEY_STAGES[journeyStageIndex]?.durationEst}</span>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => { audio.playClick(); setShowJourneyRoadmap(prev => !prev); }}
+                    className="p-1 px-2 rounded bg-white/10 hover:bg-white/20 text-slate-300 text-[10px] flex items-center gap-1 uppercase transition-colors"
+                    title="Toggle 7-Stage Journey Roadmap"
+                  >
+                    <ListOrdered className="w-3 h-3" />
+                    <span>Roadmap</span>
+                  </button>
+                </div>
               </div>
-              <div className="text-white font-sans text-xs">
-                {activeObjective}
+
+              <div className="text-sm font-bold text-white tracking-wide">
+                {JOURNEY_STAGES[journeyStageIndex]?.name}
               </div>
-              
+
+              <div className="text-slate-300 font-sans text-xs leading-relaxed">
+                {JOURNEY_STAGES[journeyStageIndex]?.objective}
+              </div>
+
               {/* Waypoint Distances for Zones 1, 2, 3, 4 */}
-              <div className="flex flex-wrap items-center gap-3 pt-1.5 text-[10px] text-slate-400">
+              <div className="flex flex-wrap items-center gap-3 pt-1 text-[10px] text-slate-400 border-t border-white/10">
                 <div>LANDING: <strong className="text-amber-300">{distanceToLanding}m</strong></div>
                 <div>SURVEYOR 1: <strong className="text-cyan-300">{distanceToSurveyor}m</strong></div>
                 <div>CRATER: <strong className="text-purple-300">{distanceToCrater}m</strong></div>
@@ -4547,6 +4763,141 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
         </div>
       )}
 
+      {/* INCOMING TACTICAL COMMS TRANSMISSION TOAST BANNER */}
+      {activeComms && (
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-40 max-w-lg w-[92vw] pointer-events-auto animate-fade-in">
+          <div className="p-3.5 rounded-2xl bg-slate-950/95 border-2 border-cyan-400/80 shadow-[0_0_40px_rgba(6,182,212,0.5)] backdrop-blur-xl flex items-start gap-3">
+            <div className="p-2 rounded-xl bg-cyan-500/20 border border-cyan-400/40 text-cyan-300 flex-shrink-0 mt-0.5">
+              <Radio className="w-4 h-4 text-cyan-400 animate-pulse" />
+            </div>
+
+            <div className="flex-1 space-y-1">
+              <div className="flex items-center justify-between text-[10px] tracking-widest uppercase">
+                <div className="flex items-center gap-2">
+                  <span className="px-1.5 py-0.5 rounded bg-cyan-900/60 text-cyan-300 font-bold font-mono">
+                    {activeComms.callsign}
+                  </span>
+                  <span className="text-cyan-400 font-bold">{activeComms.speaker}</span>
+                </div>
+                {/* Audio visualizer bars */}
+                <div className="flex items-center gap-0.5 h-3">
+                  <span className="w-0.5 h-2 bg-cyan-400 animate-pulse" />
+                  <span className="w-0.5 h-3 bg-cyan-300 animate-pulse delay-75" />
+                  <span className="w-0.5 h-1.5 bg-cyan-400 animate-pulse delay-150" />
+                  <span className="w-0.5 h-2.5 bg-cyan-200 animate-pulse delay-100" />
+                </div>
+              </div>
+              <p className="text-slate-100 text-xs font-sans leading-relaxed">
+                "{activeComms.text}"
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => { audio.playClick(); setActiveComms(null); }}
+              className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-white/10 transition-colors"
+              title="Dismiss comms"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* 7-STAGE SUGGESTED PLAYER JOURNEY ROADMAP MODAL */}
+      {showJourneyRoadmap && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/85 backdrop-blur-xl animate-fade-in font-mono select-none">
+          <div className="relative w-full max-w-2xl rounded-2xl bg-slate-950 border border-cyan-500/50 shadow-[0_0_60px_rgba(6,182,212,0.3)] overflow-hidden flex flex-col max-h-[90vh]">
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-cyan-500/30 bg-cyan-950/30">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-cyan-500/20 border border-cyan-400/40 text-cyan-300">
+                  <ListOrdered className="w-5 h-5 text-cyan-400" />
+                </div>
+                <div>
+                  <div className="text-[10px] text-cyan-400 tracking-widest uppercase">
+                    MISSION DIRECTIVE · CHAPTER 1
+                  </div>
+                  <h2 className="text-base sm:text-lg font-bold text-white tracking-wide uppercase">
+                    Suggested Player Journey Sequence
+                  </h2>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => { audio.playClick(); setShowJourneyRoadmap(false); }}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Journey List */}
+            <div className="p-6 space-y-3 overflow-y-auto custom-scrollbar">
+              <div className="text-[11px] text-slate-400 font-sans pb-1">
+                The following 7-phase sequence guides exploration across Oceanus Procellarum naturally, preserving full 360° terrain freedom without artificial corridors.
+              </div>
+
+              {JOURNEY_STAGES.map((stg, idx) => {
+                const isCurrent = idx === journeyStageIndex;
+                const isDone = completedStageIndices.includes(idx) || idx < journeyStageIndex;
+                return (
+                  <div
+                    key={stg.id}
+                    className={`p-3.5 rounded-xl border transition-all ${
+                      isCurrent
+                        ? 'bg-cyan-950/40 border-cyan-400 shadow-[0_0_20px_rgba(6,182,212,0.2)]'
+                        : isDone
+                        ? 'bg-emerald-950/20 border-emerald-500/30 text-slate-300'
+                        : 'bg-black/40 border-white/10 opacity-70'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <div className="flex items-center gap-2">
+                        {isDone ? (
+                          <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                        ) : isCurrent ? (
+                          <span className="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-ping flex-shrink-0" />
+                        ) : (
+                          <span className="w-2.5 h-2.5 rounded-full bg-slate-600 flex-shrink-0" />
+                        )}
+                        <span className={`text-xs font-bold uppercase tracking-wider ${isCurrent ? 'text-cyan-300' : isDone ? 'text-emerald-300' : 'text-slate-400'}`}>
+                          {idx + 1}. {stg.name}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="px-2 py-0.5 rounded-full bg-black/50 border border-white/10 text-[10px] text-slate-400 font-mono">
+                          {stg.durationEst}
+                        </span>
+                        {isCurrent && (
+                          <span className="px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 font-bold text-[9px] uppercase tracking-wider">
+                            ACTIVE TARGET
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <p className="text-xs text-slate-300 font-sans pl-6">
+                      {stg.objective}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Footer */}
+            <div className="p-4 border-t border-cyan-500/30 bg-black/60 flex justify-end">
+              <button
+                type="button"
+                onClick={() => { audio.playClick(); setShowJourneyRoadmap(false); }}
+                className="px-5 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs uppercase tracking-wider"
+              >
+                Return to Surface View
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* SCANNER ACTIVE RADAR RING EFFECT OVERLAY */}
       {scanPulseActive && (
         <div className="absolute inset-0 pointer-events-none z-20 flex items-center justify-center">
@@ -4560,25 +4911,18 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
           target={investigateTarget}
           onClose={() => setInvestigateTarget(null)}
           onLogData={(target) => {
-            if (target.id === 'poi_mission_terminal' || target.id === 'poi_maya_chen' || target.id === 'poi_leo_vance') {
-              setActiveObjective('Follow the EVA trail West (264°) to inspect Surveyor 1.');
-            } else if (target.id === 'surveyor_camera' || target.id === 'surveyor_footpad' || target.id === 'surveyor_solar' || target.id === 'surveyor_core') {
-              setActiveObjective('Anomalous 432 Hz frequency detected beneath lander! Follow the track to the North-West impact crater.');
-            } else if (target.id === 'poi_crater_site_alpha') {
-              setActiveObjective('Site Alpha shows only baseline 22% resonance. Scan deeper in the crater towards Site Beta and Gamma.');
-            } else if (target.id === 'poi_crater_site_beta') {
-              setActiveObjective('Harmonic echo detected (54%)! The buried metallic object at Site Gamma is the primary epicenter.');
-            } else if (target.id === 'poi_crater_site_gamma') {
-              setActiveObjective('Precursor artifact analyzed! Follow the dark data conduit northwest into the ridge to find the Alien Structure.');
+            if (target.id === 'poi_mission_terminal' || target.id === 'poi_maya_chen' || target.id === 'poi_leo_vance' || target.id === 'poi_lunar_transport') {
+              advanceJourneyStage(1);
+            } else if (target.id && target.id.startsWith('surveyor_')) {
+              advanceJourneyStage(2);
+            } else if (target.id === 'poi_crater_site_alpha' || target.id === 'poi_crater_site_beta' || target.id === 'poi_crater_site_gamma') {
+              advanceJourneyStage(3);
             } else if (target.id === 'poi_alien_structure' || target.id === 'poi_data_conduit') {
-              setActiveObjective('Access the Central Scanning Panel to interface with the alien network and initiate Mission Echo.');
-            } else if (target.id === 'poi_recovery_rig') {
-              setActiveObjective('Surveyor 1 stabilized! Inspect the Quantum Archive Vault and Mobile Extraction Pallet.');
-            } else if (target.id === 'poi_quantum_storage_unit') {
-              setActiveObjective('11,237 historic frames archived! Check the Extraction Pallet to decipher the mystery coordinates.');
+              advanceJourneyStage(4);
+            } else if (target.id === 'poi_recovery_rig' || target.id === 'poi_quantum_storage_unit') {
+              advanceJourneyStage(6);
             } else if (target.id === 'poi_extraction_pallet') {
               setShowChapter1Completion(true);
-              setActiveObjective('CHAPTER 1 COMPLETE: Decrypted stellar coordinates to Vault Zero secured for Carrier Aegis!');
             } else {
               setActiveObjective(`Cataloged: ${target.title}. Continue exploring the sector.`);
             }
@@ -4593,11 +4937,11 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
         onCompleteEcho={() => {
           setIsMissionEchoCompleted(true);
           isMissionEchoCompletedRef.current = true;
-          setActiveObjective('Mission Echo Complete! Alien structure dormant. Return to Surveyor 1 to oversee recovery.');
+          advanceJourneyStage(5);
         }}
       />
 
-      {/* CHAPTER 1 MISSION ACCOMPLISHED BANNER */}
+      {/* CHAPTER 1 MISSION ACCOMPLISHED BANNER (END — NEXT SIGNAL) */}
       {showChapter1Completion && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/90 backdrop-blur-xl animate-fade-in font-mono select-none">
           <div className="relative w-full max-w-xl rounded-2xl bg-slate-950 border-2 border-emerald-500/60 shadow-[0_0_80px_rgba(16,185,129,0.35)] p-6 text-center space-y-5">
@@ -4610,32 +4954,48 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
                 MISSION ACCOMPLISHED · CHAPTER 1 COMPLETE
               </div>
               <h2 className="text-xl sm:text-2xl font-bold text-white tracking-wide uppercase">
-                The First Footprint Secured
+                End — Next Signal: Vault Zero
               </h2>
             </div>
 
             <p className="text-slate-300 text-xs sm:text-sm font-sans leading-relaxed">
-              Surveyor 1 has been braced with robotic stabilizers and its historic 11,237 Vidicon frames are archived in the quantum vault. 
-              The alien data conduit has powered down, and its decrypted carrier wave has revealed the coordinates of an ancient subterranean facility: <strong>Vault Zero</strong>.
+              Surveyor 1 has been braced with robotic stabilizers and all 11,237 historic Vidicon frames are secured in the quantum vault. 
+              The alien conduit has powered down, leaving its decrypted transmission vector pointing to an ancient subterranean complex deep beneath the lunar crust: <strong>Vault Zero</strong>.
             </p>
 
             <div className="p-3.5 rounded-xl bg-black/60 border border-emerald-500/30 text-left text-xs font-mono space-y-1.5">
               <div className="flex justify-between text-slate-400">
-                <span>Historic Lander:</span>
-                <span className="text-emerald-300 font-bold">Surveyor 1 (1966) Stabilized</span>
+                <span>Phase 1 — Spawn & Debrief:</span>
+                <span className="text-emerald-300 font-bold">Team Landing Complete</span>
               </div>
               <div className="flex justify-between text-slate-400">
-                <span>Corrupted Frames:</span>
-                <span className="text-cyan-300 font-bold">11,237 Restored (100%)</span>
+                <span>Phase 2 — Explore Surveyor 1:</span>
+                <span className="text-emerald-300 font-bold">4/4 Components Scanned</span>
               </div>
               <div className="flex justify-between text-slate-400">
-                <span>Harmonic Vector:</span>
-                <span className="text-purple-300 font-bold">432.06 Hz Subterranean Azimuth</span>
+                <span>Phase 3 — Investigate Crater:</span>
+                <span className="text-purple-300 font-bold">432.06 Hz Epicenter Isolated</span>
               </div>
               <div className="flex justify-between text-slate-400">
-                <span>Next Chapter:</span>
-                <span className="text-amber-300 font-bold">Chapter 2: Vault Zero Ingress</span>
+                <span>Phase 4 — Discover Alien Structure:</span>
+                <span className="text-cyan-300 font-bold">Precursor Monolith Interfaced</span>
               </div>
+              <div className="flex justify-between text-slate-400">
+                <span>Phase 5 — Solve Mission Echo:</span>
+                <span className="text-cyan-300 font-bold">3/3 Historical Puzzles Restored</span>
+              </div>
+              <div className="flex justify-between text-slate-400">
+                <span>Phase 6 — Recover Surveyor 1:</span>
+                <span className="text-emerald-300 font-bold">Alien Feed Severed · 11,237 Frames</span>
+              </div>
+              <div className="flex justify-between text-slate-400">
+                <span>Phase 7 — End Next Signal:</span>
+                <span className="text-amber-300 font-bold">Arin Commits to Project Legacy</span>
+              </div>
+            </div>
+
+            <div className="p-3 rounded-xl bg-cyan-950/30 border border-cyan-500/30 text-left text-xs font-sans text-cyan-200">
+              <strong className="text-cyan-300 font-mono">Captain Arin Rao:</strong> "We came to recover our past... but whoever built this left an invitation to what comes next. Project Legacy continues."
             </div>
 
             <div className="flex justify-center gap-4 pt-2">
@@ -4644,7 +5004,7 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
                 onClick={() => { audio.playClick(); setShowChapter1Completion(false); }}
                 className="px-5 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-slate-300 font-bold text-xs uppercase tracking-wider transition-all"
               >
-                Continue Exploring
+                Continue Free Exploration
               </button>
               {onReturnMenu && (
                 <button
@@ -4652,7 +5012,7 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
                   onClick={() => { audio.playClick(); onReturnMenu(); }}
                   className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-cyan-600 hover:from-emerald-500 hover:to-cyan-500 text-white font-bold text-xs uppercase tracking-wider shadow-lg shadow-emerald-600/30 transition-all hover:scale-105 active:scale-95"
                 >
-                  Return to Main Menu
+                  Return to Base Menu
                 </button>
               )}
             </div>
