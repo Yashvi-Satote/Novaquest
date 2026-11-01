@@ -119,6 +119,86 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
     const EYE_HEIGHT = 1.75;
     camera.position.set(104, EYE_HEIGHT, 66); // Start at Zone 1 Team Landing Zone looking West toward Surveyor 1
 
+    // First-Person 3D Handheld Sci-Fi Scanner (Viewmodel attached to astronaut camera view)
+    const fpScannerGroup = new THREE.Group();
+    fpScannerGroup.position.set(0.24, -0.22, -0.46);
+    fpScannerGroup.rotation.set(-0.12, -0.16, 0.05);
+
+    // Scanner main body chassis (dark matte composite aerospace alloy)
+    const scannerChassisMat = new THREE.MeshStandardMaterial({
+      color: 0x1e293b,
+      metalness: 0.88,
+      roughness: 0.28
+    });
+    const scannerChassis = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.16, 0.24), scannerChassisMat);
+    fpScannerGroup.add(scannerChassis);
+
+    // Ergonomic grip handle
+    const scannerGrip = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.022, 0.026, 0.14, 12),
+      new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.95 })
+    );
+    scannerGrip.position.set(0, -0.12, -0.03);
+    scannerGrip.rotation.x = 0.22;
+    fpScannerGroup.add(scannerGrip);
+
+    // Beveled Top Display Screen Housing
+    const scannerScreenHousing = new THREE.Mesh(
+      new THREE.BoxGeometry(0.095, 0.015, 0.11),
+      new THREE.MeshStandardMaterial({ color: 0x0f172a, metalness: 0.9, roughness: 0.2 })
+    );
+    scannerScreenHousing.position.set(0, 0.082, 0.01);
+    scannerScreenHousing.rotation.x = 0.32;
+    fpScannerGroup.add(scannerScreenHousing);
+
+    // Glowing Holographic LCD Telemetry Display Screen
+    const scannerScreen = new THREE.Mesh(
+      new THREE.PlaneGeometry(0.085, 0.09),
+      new THREE.MeshBasicMaterial({ color: 0x06b6d4 })
+    );
+    scannerScreen.position.set(0, 0.092, 0.01);
+    scannerScreen.rotation.x = -Math.PI / 2 + 0.32;
+    fpScannerGroup.add(scannerScreen);
+
+    // Forward LIDAR Emitter Collar & Lens Barrel
+    const emitterBarrel = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.034, 0.042, 0.07, 16),
+      new THREE.MeshStandardMaterial({ color: 0x334155, metalness: 0.92, roughness: 0.18 })
+    );
+    emitterBarrel.rotation.x = Math.PI / 2;
+    emitterBarrel.position.set(0, 0.02, 0.15);
+    fpScannerGroup.add(emitterBarrel);
+
+    // Glowing Emitter Focal Lens Ring
+    const emitterLensMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8 });
+    const emitterLens = new THREE.Mesh(new THREE.CylinderGeometry(0.026, 0.026, 0.012, 16), emitterLensMat);
+    emitterLens.rotation.x = Math.PI / 2;
+    emitterLens.position.set(0, 0.02, 0.188);
+    fpScannerGroup.add(emitterLens);
+
+    // Twin Directional Waveguide Antenna Prongs
+    for (const px of [-0.044, 0.044]) {
+      const prong = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.005, 0.005, 0.11, 8),
+        new THREE.MeshStandardMaterial({ color: 0xd4d4d8, metalness: 0.95, roughness: 0.15 })
+      );
+      prong.rotation.x = Math.PI / 2;
+      prong.position.set(px, 0.035, 0.16);
+      fpScannerGroup.add(prong);
+
+      const prongTip = new THREE.Mesh(new THREE.SphereGeometry(0.007, 8, 8), new THREE.MeshBasicMaterial({ color: 0x38bdf8 }));
+      prongTip.position.set(px, 0.035, 0.215);
+      fpScannerGroup.add(prongTip);
+    }
+
+    // Scanner Forward Projection PointLight
+    const scannerSpot = new THREE.PointLight(0x06b6d4, 1.2, 10);
+    scannerSpot.position.set(0, 0.03, 0.22);
+    fpScannerGroup.add(scannerSpot);
+
+    camera.add(fpScannerGroup);
+    scene.add(camera);
+
     // 3. RENDERER WITH HIGH-CONTRAST PBR SHADOWS
     let renderer;
     try {
@@ -770,6 +850,80 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
     s1BeaconB.position.set(-2.6, 1.25, -1.8);
     surveyorGroup.add(s1BeaconB);
 
+    // J. Surface Sampler Pantograph Robotic Arm (Scissor Arm with Soil Mechanics Scoop)
+    const samplerArmGroup = new THREE.Group();
+    samplerArmGroup.position.set(Math.cos(2.1) * 1.8, 1.3, Math.sin(2.1) * 1.8);
+    samplerArmGroup.rotation.y = 2.1;
+
+    // Base pivot turret
+    const armPivot = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.14, 0.35, 12), matAluminum);
+    samplerArmGroup.add(armPivot);
+
+    // Articulated upper scissor pantograph arm
+    const upperArm = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.06, 1.4), matAluminum);
+    upperArm.position.set(0, -0.2, 0.65);
+    upperArm.rotation.x = 0.55;
+    upperArm.castShadow = true;
+    samplerArmGroup.add(upperArm);
+
+    // Elbow actuator joint
+    const armElbow = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.12, 10), matAluminum);
+    armElbow.rotation.z = Math.PI / 2;
+    armElbow.position.set(0, -0.55, 1.25);
+    samplerArmGroup.add(armElbow);
+
+    // Lower forearm extending to soil
+    const lowerArm = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.05, 1.3), matAluminum);
+    lowerArm.position.set(0, -0.9, 1.75);
+    lowerArm.rotation.x = -0.45;
+    lowerArm.castShadow = true;
+    samplerArmGroup.add(lowerArm);
+
+    // Soil scoop bucket embedded into lunar regolith
+    const scoopBucket = new THREE.Mesh(
+      new THREE.BoxGeometry(0.2, 0.14, 0.26),
+      new THREE.MeshStandardMaterial({ color: 0x64748b, metalness: 0.9, roughness: 0.35 })
+    );
+    scoopBucket.position.set(0, -1.22, 2.3);
+    scoopBucket.rotation.x = 0.15;
+    scoopBucket.castShadow = true;
+    samplerArmGroup.add(scoopBucket);
+
+    surveyorGroup.add(samplerArmGroup);
+
+    // K. Small Scientific Instruments on Surveyor 1:
+    // 1. Alpha-Scattering Surface Instrument (Chemical composition sensor head)
+    const alphaSensor = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.22, 0.26, 0.28, 16),
+      matGoldFoil
+    );
+    alphaSensor.position.set(-1.2, 0.2, 1.6);
+    alphaSensor.castShadow = true;
+    surveyorGroup.add(alphaSensor);
+
+    const alphaWire = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 1.6, 6), matRocketNozzle);
+    alphaWire.position.set(-1.0, 0.9, 1.2);
+    alphaWire.rotation.x = 0.6;
+    alphaWire.rotation.z = -0.4;
+    surveyorGroup.add(alphaWire);
+
+    // 2. Micrometeorite Detector Sensor Plate (Mounted to central mast)
+    const microMeteoritePlate = new THREE.Mesh(
+      new THREE.BoxGeometry(0.38, 0.38, 0.04),
+      new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.9, roughness: 0.2 })
+    );
+    microMeteoritePlate.position.set(-0.35, 4.4, 0);
+    microMeteoritePlate.rotation.y = 0.7;
+    surveyorGroup.add(microMeteoritePlate);
+
+    // 3. Footpad Magnetic Iron Sensor Plate on Leg 2
+    const footpadMagnet = new THREE.Mesh(
+      new THREE.BoxGeometry(0.12, 0.06, 0.22),
+      new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.95, roughness: 0.1 })
+    );
+    footpadMagnet.position.set(Math.cos((2 * Math.PI) / 3) * 3.6, 0.24, Math.sin((2 * Math.PI) / 3) * 3.6 + 0.3);
+    surveyorGroup.add(footpadMagnet);
+
     scene.add(surveyorGroup);
 
     // =========================================================================
@@ -1134,7 +1288,105 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
 
     landingZoneGroup.add(terminalGroup);
 
-    // H. Small Basalt Rocks Scattered Around Landing Zone
+    // H. Ruggedized Data-Storage Containers (Sealed Lunar Memory Vaults)
+    for (let c = 0; c < 2; c++) {
+      const dataCanister = new THREE.Group();
+      dataCanister.position.set(-2.6 + c * 0.65, 0, 1.2 + c * 0.3);
+
+      const canisterBody = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.18, 0.18, 0.55, 16),
+        new THREE.MeshStandardMaterial({ color: 0x334155, metalness: 0.9, roughness: 0.25 })
+      );
+      canisterBody.position.y = 0.28;
+      canisterBody.castShadow = true;
+      dataCanister.add(canisterBody);
+
+      // Status indicator LED ring
+      const ledRing = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.185, 0.185, 0.04, 16),
+        new THREE.MeshBasicMaterial({ color: c === 0 ? 0x06b6d4 : 0x10b981 })
+      );
+      ledRing.position.y = 0.38;
+      dataCanister.add(ledRing);
+
+      const handle = new THREE.Mesh(
+        new THREE.TorusGeometry(0.08, 0.015, 8, 16, Math.PI),
+        matAluminum
+      );
+      handle.position.set(0, 0.56, 0);
+      handle.rotation.x = Math.PI;
+      dataCanister.add(handle);
+
+      landingZoneGroup.add(dataCanister);
+    }
+
+    // I. Flexible Heavy-Duty Cable Connections in Zone 1
+    const createCable = (p1, p2, sag = 0.15) => {
+      const mid = new THREE.Vector3(
+        (p1.x + p2.x) * 0.5,
+        Math.min(p1.y, p2.y) - sag,
+        (p1.z + p2.z) * 0.5
+      );
+      const curve = new THREE.CatmullRomCurve3([p1, mid, p2]);
+      const tubeGeo = new THREE.TubeGeometry(curve, 20, 0.025, 6, false);
+      const tubeMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.85, metalness: 0.1 });
+      return new THREE.Mesh(tubeGeo, tubeMat);
+    };
+
+    // Solar Panel 1 -> Mission Terminal
+    landingZoneGroup.add(createCable(
+      new THREE.Vector3(2.0, 0.2, -7.0),
+      new THREE.Vector3(-1.8, 0.2, 0.5),
+      0.18
+    ));
+    // Solar Panel 2 -> Mission Terminal
+    landingZoneGroup.add(createCable(
+      new THREE.Vector3(4.8, 0.2, -6.4),
+      new THREE.Vector3(-1.8, 0.2, 0.5),
+      0.20
+    ));
+    // Mission Terminal -> High Gain Comms Dish
+    landingZoneGroup.add(createCable(
+      new THREE.Vector3(-1.8, 0.2, 0.5),
+      new THREE.Vector3(-1.0, 0.2, -6.5),
+      0.16
+    ));
+
+    // J. Portable Laser Raman Spectrometer on Mini-Tripod beside Maya Chen
+    const specGroup = new THREE.Group();
+    specGroup.position.set(-1.4, 0, 3.8);
+
+    for (let t = 0; t < 3; t++) {
+      const tAng = (t * Math.PI * 2) / 3;
+      const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.85, 8), matAluminum);
+      leg.position.set(Math.cos(tAng) * 0.22, 0.38, Math.sin(tAng) * 0.22);
+      leg.rotation.x = Math.sin(tAng) * 0.35;
+      leg.rotation.z = -Math.cos(tAng) * 0.35;
+      specGroup.add(leg);
+    }
+
+    const specHead = new THREE.Mesh(
+      new THREE.BoxGeometry(0.32, 0.22, 0.38),
+      new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.85, roughness: 0.3 })
+    );
+    specHead.position.y = 0.78;
+    specGroup.add(specHead);
+
+    const specLens = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.05, 0.06, 0.1, 16),
+      new THREE.MeshBasicMaterial({ color: 0xa855f7 })
+    );
+    specLens.rotation.x = 0.5;
+    specLens.position.set(0, 0.72, 0.22);
+    specGroup.add(specLens);
+
+    const specLight = new THREE.PointLight(0xa855f7, 1.8, 5);
+    specLight.position.set(0, 0.72, 0.26);
+    specGroup.add(specLight);
+
+    landingZoneGroup.add(specGroup);
+
+    // K. Small Basalt Rocks Scattered Around Landing Zone
     for (let r = 0; r < 18; r++) {
       const rAng = Math.random() * Math.PI * 2;
       const rDist = 3.5 + Math.random() * 14;
@@ -1591,7 +1843,72 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
     uplinkDish.rotation.x = -0.65;
     extractionPalletGroup.add(uplinkDish);
 
+    // D. Lunar Regolith Core Drill Sampling Unit (Mounted on extraction pallet)
+    const drillUnitGroup = new THREE.Group();
+    drillUnitGroup.position.set(-0.2, 0.45, 0.6);
+
+    const drillStand = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.05, 0.9, 10), matAluminum);
+    drillStand.position.y = 0.45;
+    drillUnitGroup.add(drillStand);
+
+    const drillMotor = new THREE.Mesh(
+      new THREE.BoxGeometry(0.28, 0.32, 0.22),
+      new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.9, roughness: 0.25 })
+    );
+    drillMotor.position.y = 0.85;
+    drillUnitGroup.add(drillMotor);
+
+    const drillBit = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.02, 0.025, 0.65, 8),
+      new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.98, roughness: 0.15 })
+    );
+    drillBit.position.y = 0.3;
+    drillUnitGroup.add(drillBit);
+
+    extractionPalletGroup.add(drillUnitGroup);
+
+    // E. Extra Mission Equipment Cases & Hard Data Drives on Pallet
+    const palletCrateA = new THREE.Mesh(
+      new THREE.BoxGeometry(0.85, 0.45, 0.6),
+      new THREE.MeshStandardMaterial({ color: 0xf59e0b, metalness: 0.7, roughness: 0.35 })
+    );
+    palletCrateA.position.set(-0.3, 0.45, -0.6);
+    palletCrateA.rotation.y = 0.2;
+    palletCrateA.castShadow = true;
+    extractionPalletGroup.add(palletCrateA);
+
+    const palletCrateB = new THREE.Mesh(
+      new THREE.BoxGeometry(0.65, 0.35, 0.45),
+      new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.85, roughness: 0.3 })
+    );
+    palletCrateB.position.set(-0.25, 0.82, -0.58);
+    palletCrateB.rotation.y = -0.1;
+    palletCrateB.castShadow = true;
+    extractionPalletGroup.add(palletCrateB);
+
     recoveryRigGroup.add(extractionPalletGroup);
+
+    // F. Hazard Warning Strobes on 3 Gantry Pillars
+    for (let g = 0; g < 3; g++) {
+      const gAng = (g * Math.PI * 2) / 3 + 0.35;
+      const strobe = new THREE.PointLight(0xf59e0b, 2.2, 10);
+      strobe.position.set(Math.cos(gAng) * 3.8, 3.5, Math.sin(gAng) * 3.8);
+      recoveryRigGroup.add(strobe);
+    }
+
+    // G. Heavy Power & Hydraulic Umbilical Cables between Rig & Pallet
+    const rigCableA = new THREE.Mesh(
+      new THREE.TubeGeometry(
+        new THREE.CatmullRomCurve3([
+          new THREE.Vector3(Math.cos(0.35) * 3.8, 0.2, Math.sin(0.35) * 3.8),
+          new THREE.Vector3(2.5, 0.05, -1.0),
+          new THREE.Vector3(3.8, 0.2, -2.6)
+        ]),
+        20, 0.035, 6, false
+      ),
+      new THREE.MeshStandardMaterial({ color: 0x111827, roughness: 0.9 })
+    );
+    recoveryRigGroup.add(rigCableA);
 
     scene.add(recoveryRigGroup);
 
@@ -2429,6 +2746,21 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
       // Update Camera Orientation
       const euler = new THREE.Euler(pitch, yaw, 0, 'YXZ');
       camera.quaternion.setFromEuler(euler);
+
+      // Animate First-Person Handheld Sci-Fi Scanner Viewmodel
+      if (fpScannerGroup) {
+        const bobY = isMoving && isGrounded ? Math.sin(walkTimer * 2) * 0.012 : Math.sin(time * 1.5) * 0.004;
+        const bobX = isMoving && isGrounded ? Math.cos(walkTimer) * 0.008 : 0;
+        fpScannerGroup.position.set(0.24 + bobX, -0.22 + bobY, -0.46);
+
+        if (scanPulseActive) {
+          scannerSpot.intensity = 4.5 + Math.sin(time * 24) * 2.0;
+          emitterLensMat.color.setHex(0x22d3ee);
+        } else {
+          scannerSpot.intensity = 0.9 + Math.sin(time * 2.2) * 0.25;
+          emitterLensMat.color.setHex(0x0284c7);
+        }
+      }
 
       // Electrostatically levitating terminator dust motes
       if (!underground && dustParticles) {
