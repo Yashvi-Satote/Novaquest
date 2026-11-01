@@ -17,15 +17,26 @@ export default function ProloguePage() {
 
   // Phase state:
   // 1. 'gender_select'
-  // 2. 'bedroom_3d' (playable 3D character in room)
-  // 3. 'telescope_focus' (interactive eyepiece)
-  // 4. 'match_cut_2126' (transition to spacecraft)
+  // 2. 'kid_memory' (2-second cinematic cutscene of kid looking at stars through telescope)
+  // 3. 'bedroom_3d' (playable 3D character in room)
+  // 4. 'telescope_focus' (interactive eyepiece)
+  // 5. 'match_cut_2126' (transition to spacecraft)
   const [phase, setPhase] = useState('gender_select');
   const [selectedGender, setSelectedGender] = useState('male');
 
   // Telescope focus slider (0 to 100)
   const [focusValue, setFocusValue] = useState(25);
   const isMoonFocused = focusValue >= 85;
+
+  // 2-second cinematic cutscene timer before starting the playable 3D bedroom
+  useEffect(() => {
+    if (phase === 'kid_memory') {
+      const timer = setTimeout(() => {
+        setPhase('bedroom_3d');
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [phase]);
 
   // ESC key listener to step back into the 3D room
   useEffect(() => {
@@ -56,11 +67,11 @@ export default function ProloguePage() {
     setSelectedGender(gender);
     createNewGame({ gender });
 
-    // Transition smoothly to Step 2 3D Bedroom
+    // Transition smoothly to kid telescope memory cutscene (shown for 2 seconds)
     setTimeout(() => {
-      setPhase('bedroom_3d');
+      setPhase('kid_memory');
       audio.startAmbience();
-    }, 400);
+    }, 300);
   };
 
   // Step 2: Reached Telescope in 3D
@@ -182,6 +193,51 @@ export default function ProloguePage() {
           <div className="mt-10 text-xs font-mono text-slate-500 flex items-center gap-2 z-10">
             <Shield className="w-3.5 h-3.5 text-slate-600" />
             <span>ARCHIVE DOSSIER LINKED · INITIALIZING 3D WORLD</span>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* STEP 1.5: 2-SECOND CINEMATIC MEMORY — KID LOOKING AT STARS THROUGH TELESCOPE */}
+      {/* ========================================================================= */}
+      {phase === 'kid_memory' && (
+        <div className="relative h-screen w-screen overflow-hidden bg-black flex flex-col justify-between p-6 sm:p-8 animate-fade-in select-none">
+          {/* Fullscreen Cinematic Background Artwork of Kid with Telescope */}
+          <img
+            src={isFemale ? '/images/kid_girl_telescope_stars.jpg' : '/images/kid_boy_telescope_stars.jpg'}
+            alt="Young Arin looking at stars through telescope"
+            className="absolute inset-0 w-full h-full object-cover transition-transform duration-[2500ms] ease-out scale-100 hover:scale-105"
+          />
+
+          {/* Cinematic Vignette & Radial Shadow Overlays */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-black/70 pointer-events-none" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_45%,rgba(0,0,0,0.85)_100%)] pointer-events-none" />
+
+          {/* Top Classification Tag */}
+          <div className="relative z-10 flex items-center justify-between font-mono text-xs text-cyan-400">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-black/75 border border-cyan-500/40 backdrop-blur-md shadow-lg">
+              <Sparkles className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />
+              <span>FLASHBACK ARCHIVE · {pronouns.descriptor.toUpperCase()}</span>
+            </div>
+            <div className="text-slate-300 text-[11px] bg-black/75 px-3 py-1.5 rounded-full border border-white/10 backdrop-blur-md hidden sm:block">
+              Earth · Late Night Bedroom
+            </div>
+          </div>
+
+          {/* Bottom Caption & Subtitles */}
+          <div className="relative z-10 max-w-xl mx-auto text-center space-y-3 mb-6">
+            <div className="p-4 sm:p-5 rounded-2xl bg-black/80 border border-white/15 backdrop-blur-md shadow-2xl">
+              <p className="text-sm sm:text-base font-light text-slate-100 italic tracking-wide leading-relaxed">
+                {isFemale
+                  ? '“Before commanding expeditions to humanity’s forgotten relics... she was just a child looking up at the Moon.”'
+                  : '“Before commanding expeditions to humanity’s forgotten relics... he was just a child looking up at the Moon.”'}
+              </p>
+            </div>
+          </div>
+
+          {/* 2-Second Cinematic Progress Bar */}
+          <div className="absolute bottom-0 inset-x-0 h-1 bg-white/10">
+            <div className="h-full bg-gradient-to-r from-cyan-500 via-sky-400 to-indigo-500 animate-[pulse_1s_infinite] w-full" />
           </div>
         </div>
       )}
