@@ -59,3 +59,4 @@ Authentic GLB models located locally in `Novaquest/frontend/public/models/spacec
 - **Planetary Ephemerides:** NASA JPL Keplerian Elements for Approximate Positions of the Major Planets (valid 1800–2050 AD) implemented in `ephemeris.js`.
 - **Interstellar Trajectories:** NASA JPL Horizons Ephemeris System and Voyager Interstellar Mission trajectory vector tables (Voyager 1, Voyager 2, Pioneer 10, Pioneer 11, New Horizons) implemented in `interstellarData.js`.
 - **Spacecraft Mission Metadata:** Synchronized with `matthewgiarra/spacecraft-models` (`spacecraft.json`) and the 278-record Novaquest Flask/SQLite database `space_hardware.db`.
+
