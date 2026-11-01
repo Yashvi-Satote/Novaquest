@@ -67,3 +67,7 @@ __pycache__/
 .env
 .env.*
 !.env.example
+
+# External 3D model asset junction
+frontend/public/models/spacecraft-models/
+
