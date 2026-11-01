@@ -48,6 +48,24 @@ class Chapter1Service:
                     "name": "Crater Investigation Area",
                     "coordinates": {"x": -75, "z": -50},
                     "description": "A 64-meter impact crater harboring an anomalous magnetic resonance and a partially buried non-human metallic object."
+                },
+                {
+                    "zone_number": 4,
+                    "name": "Alien Structure Discovery",
+                    "coordinates": {"x": -120, "z": -75},
+                    "description": "An ancient, partially buried geometric alien structure embedded in the northwest basalt ridge, connected to Surveyor 1 by a dark data conduit."
+                },
+                {
+                    "zone_number": 5,
+                    "name": "Mission Echo Interface",
+                    "coordinates": {"x": -116, "z": -72},
+                    "description": "An interactive holographic projection interface beside the alien structure, reconstructing the historical 1966 Surveyor 1 mission archives."
+                },
+                {
+                    "zone_number": 6,
+                    "name": "Recovery and Extraction Area",
+                    "coordinates": {"x": 0, "z": 0},
+                    "description": "The secured Surveyor 1 site equipped with robotic stabilizers, quantum storage vault, and extraction pallet as the alien signal powers down."
                 }
             ]
         }
@@ -91,6 +109,38 @@ class Chapter1Service:
                 "title": "Examine Buried Metallic Object",
                 "description": "Inspect the partially exposed metallic precursor artifact embedded in the crater wall.",
                 "target_coordinates": {"x": -78, "z": -54},
+                "status": "locked"
+            },
+            {
+                "id": "obj_zone4_alien_structure",
+                "zone": 4,
+                "title": "Discover Alien Structure",
+                "description": "Follow the dark data conduit from the crater northwest into the basalt ridge to uncover the alien geometric monolith.",
+                "target_coordinates": {"x": -120, "z": -75},
+                "status": "locked"
+            },
+            {
+                "id": "obj_zone4_activate_interface",
+                "zone": 4,
+                "title": "Activate Central Scanning Panel",
+                "description": "Approach the alien interface panel to interface with the anomalous network.",
+                "target_coordinates": {"x": -118, "z": -74},
+                "status": "locked"
+            },
+            {
+                "id": "obj_zone5_mission_echo",
+                "zone": 5,
+                "title": "Complete Mission Echo Simulations",
+                "description": "Solve the 3 historical simulation puzzles: Controlled Descent, Surface Observation, and Image Archive Restoration.",
+                "target_coordinates": {"x": -116, "z": -72},
+                "status": "locked"
+            },
+            {
+                "id": "obj_zone6_recovery",
+                "zone": 6,
+                "title": "Return to Surveyor 1 Recovery Rig",
+                "description": "Return to Surveyor 1, verify the conduit has powered down, secure the robotic lifting stabilizers, and extract the stellar coordinates.",
+                "target_coordinates": {"x": 0, "z": 0},
                 "status": "locked"
             }
         ]
@@ -208,6 +258,162 @@ class Chapter1Service:
                     "Scanners record a 99.4% peak harmonic resonance at 432.06 Hz. The composition does not match "
                     "any known NASA, ESA, or CNSA alloy database. It points directly toward deeper subterranean strata."
                 )
+            },
+
+            # ================= ZONE 4: ALIEN STRUCTURE DISCOVERY =================
+            {
+                "id": "poi_alien_structure",
+                "zone": 4,
+                "name": "Precursor Geometric Monolith",
+                "category": "alien_structure",
+                "coordinates": {"x": -120, "y": 2.5, "z": -75},
+                "radius": 7.0,
+                "summary": "Partially buried non-human geometric structure.",
+                "details": (
+                    "A seamless obsidian-like polyhedral structure protruding from the basalt ridge. "
+                    "Surfaces are completely smooth with no fasteners, screws, or seams. Intricate luminescent "
+                    "cyan glyph circuitry lines trace across its dark metallic facets, while geometric shards "
+                    "levitate silently above its apex in an active repulsive Casimir-force field."
+                )
+            },
+            {
+                "id": "poi_data_conduit",
+                "zone": 4,
+                "name": "Subterranean Data Conduit",
+                "category": "alien_infrastructure",
+                "coordinates": {"x": -60, "y": 0.1, "z": -35},
+                "radius": 4.5,
+                "summary": "Dark glowing conduit extending toward Surveyor 1.",
+                "details": (
+                    "A glassy, dark metallic conduit running along the regolith from the alien structure "
+                    "directly to the base of Surveyor 1. Rhythmic cyan light pulses travel along the conduit, "
+                    "indicating active data extraction and harmonic synchronization."
+                )
+            },
+            {
+                "id": "poi_scanning_panel",
+                "zone": 4,
+                "name": "Central Scanning Panel & Interface",
+                "category": "alien_interface",
+                "coordinates": {"x": -118, "y": 1.5, "z": -74},
+                "radius": 4.0,
+                "summary": "Interactive energy interface on the monolith's frontal face.",
+                "details": (
+                    "A recessed scanning panel emitting a faint blue glow and low-frequency vibration. "
+                    "Placing an EVA sensor probe on this panel initiates the Mission Echo historical reconstruction."
+                )
+            },
+
+            # ================= ZONE 5: MISSION ECHO INTERFACE =================
+            {
+                "id": "poi_mission_echo_console",
+                "zone": 5,
+                "name": "Mission Echo Holographic Console",
+                "category": "mission_echo",
+                "coordinates": {"x": -116, "y": 1.2, "z": -72},
+                "radius": 4.5,
+                "summary": "Volumetric projection matrix reconstructing 1966 Surveyor 1 mission.",
+                "details": (
+                    "When activated, the surrounding terrain dims as high-fidelity blue holographic wireframes "
+                    "project into the air. Reconstructs Surveyor 1's controlled descent, panoramic observations, "
+                    "and the decryption of the corrupted historic image archive."
+                )
+            },
+            {
+                "id": "poi_descent_simulation",
+                "zone": 5,
+                "name": "Descent Trajectory Visualizer",
+                "category": "mission_echo",
+                "coordinates": {"x": -115, "y": 2.0, "z": -71},
+                "radius": 4.0,
+                "summary": "Historical 1966 descent flight telemetry simulation.",
+                "details": (
+                    "Visualizes the 1966 descent from retro-rocket ignition at 75 km altitude down to "
+                    "vernier engine cut-off at 3.4 meters, completing humanity's first extraterrestrial soft landing."
+                )
+            },
+
+            # ================= ZONE 6: RECOVERY AND EXTRACTION AREA =================
+            {
+                "id": "poi_recovery_rig",
+                "zone": 6,
+                "name": "Robotic Stabilization Gantry",
+                "category": "recovery_extraction",
+                "coordinates": {"x": 1.8, "y": 1.2, "z": 0.5},
+                "radius": 5.0,
+                "summary": "Hydraulic carbon-fiber gantry securing Surveyor 1.",
+                "details": (
+                    "Deployed by Officer Leo Vance to brace the historic spacecraft. With the alien conduit "
+                    "powered down, the lander is completely stabilized for NASA heritage preservation."
+                )
+            },
+            {
+                "id": "poi_quantum_storage_unit",
+                "zone": 6,
+                "name": "Quantum Archive Vault (Q-SSD)",
+                "category": "recovery_extraction",
+                "coordinates": {"x": -1.2, "y": 1.4, "z": -1.0},
+                "radius": 4.0,
+                "summary": "Solid-state storage unit with 11,237 restored Vidicon frames.",
+                "details": (
+                    "All 11,237 historic images and decoded telemetry packets are secured inside this "
+                    "radiation-hardened quantum storage unit, ready for orbital transfer to Carrier Aegis."
+                )
+            },
+            {
+                "id": "poi_extraction_pallet",
+                "zone": 6,
+                "name": "Secure Transport Pallet & Mystery Coordinates",
+                "category": "recovery_extraction",
+                "coordinates": {"x": 3.5, "y": 0.6, "z": -2.5},
+                "radius": 5.5,
+                "summary": "Mobile transport pallet containing deciphered Chapter 2 coordinates.",
+                "details": (
+                    "The final payload container. Contains the extracted precursor signal fragment. "
+                    "Decoded telemetry yields deep lunar coordinates pointing toward an ancient subterranean "
+                    "vault system beneath the Oceanus Procellarum basalt crust."
+                )
+            }
+        ]
+
+    def get_mission_echo_puzzles(self) -> List[Dict[str, Any]]:
+        """Returns the three Mission Echo interactive simulation puzzles."""
+        return [
+            {
+                "step": 1,
+                "id": "echo_descent",
+                "title": "Controlled Descent Sequence",
+                "description": "Adjust the retro-rocket burn duration and Vernier thruster throttle to achieve a nominal touchdown velocity of 3.05 m/s at Oceanus Procellarum.",
+                "parameters": {
+                    "initial_altitude_km": 75.0,
+                    "target_touchdown_mps": 3.05,
+                    "burn_time_sec": 40.2,
+                    "status": "pending"
+                }
+            },
+            {
+                "step": 2,
+                "id": "echo_observation",
+                "title": "Lunar Surface Observation",
+                "description": "Align the Vidicon camera mirror elevation and optical filter wheel to reconstruct a 360-degree panoramic mosaic of the landing basin.",
+                "parameters": {
+                    "filter_selected": "Clear / UV-Pass",
+                    "elevation_angle_deg": 18.5,
+                    "frames_stitched": "360 / 360",
+                    "status": "pending"
+                }
+            },
+            {
+                "step": 3,
+                "id": "echo_archive_restoration",
+                "title": "Historic Archive Restoration",
+                "description": "Filter out the 432.06 Hz alien harmonic interference from the 11,237 television frames to extract the hidden stellar vector coordinates.",
+                "parameters": {
+                    "filter_frequency_hz": 432.06,
+                    "reconstructed_frames": 11237,
+                    "coordinate_signal": "DECIPHERED · CHAPTER 2 VECTOR UNLOCKED",
+                    "status": "pending"
+                }
             }
         ]
 

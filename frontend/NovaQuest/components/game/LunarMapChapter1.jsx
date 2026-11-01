@@ -14,10 +14,13 @@ import {
   Maximize2,
   MousePointer,
   Volume2,
-  Scan
+  Scan,
+  Trophy,
+  CheckCircle2
 } from 'lucide-react';
 import { audio } from '../../game/audioManager';
 import InvestigationModal from './InvestigationModal';
+import MissionEchoModal from './MissionEchoModal';
 import { 
   createLunarRegolithTexture,
   createLunarBumpTexture,
@@ -34,20 +37,18 @@ import {
 /**
  * LunarMapChapter1 — Historic Surveyor 1 Landing Site & Subterranean Anomaly
  * 
- * Features:
- * - 500m x 500m total terrain with natural boundary crater rims and steep basalt ridges
- * - 300m x 300m core playable area around historic Surveyor 1 (Oceanus Procellarum)
- * - Low-angle harsh solar lighting casting dramatic long vacuum shadows
- * - Pure black sky (#000000) with Earth hanging in the western sky, zero atmospheric haze
- * - Fully detailed 3D Surveyor 1 lander (frame, legs, footpads, Vidicon camera, solar array)
- * - Artemis 2126 forward recovery pod & telemetry hub
- * - Hidden subterranean fissure & alien precursor monolith chamber
- * - Astronaut first-person EVA movement with 1/6th lunar gravity jumping
- * - LIDAR pulse scanner ([F]) & interactive investigation dossier ([E])
+ * Features 6 Main Zones:
+ * - Zone 1: Team Landing Zone (Aegis-01 transport vehicle, astronauts Maya Chen & Leo Vance, comms, crates)
+ * - Zone 2: Surveyor 1 Recovery Site (Authentic 1966 spaceframe, footpads, Vidicon camera, solar mast)
+ * - Zone 3: Crater Investigation Area (68m impact crater, rim boulders, scree, buried metallic object)
+ * - Zone 4: Alien Structure Discovery (Partially buried geometric obsidian monolith, levitating shards, data conduit)
+ * - Zone 5: Mission Echo Interface (Volumetric holographic Surveyor 1 simulation with 3 interactive puzzles)
+ * - Zone 6: Recovery and Extraction Area (Robotic stabilizers, quantum archive vault, extraction pallet, victory)
  */
 export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
   const mountRef = useRef(null);
   const nearInteractableRef = useRef(null);
+  const isMissionEchoCompletedRef = useRef(false);
 
   // HUD & Game State
   const [isLocked, setIsLocked] = useState(false);
@@ -56,6 +57,7 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
   const [distanceToLanding, setDistanceToLanding] = useState(0);
   const [distanceToSurveyor, setDistanceToSurveyor] = useState(0);
   const [distanceToCrater, setDistanceToCrater] = useState(0);
+  const [distanceToAlienStructure, setDistanceToAlienStructure] = useState(0);
   const [distanceToAnomaly, setDistanceToAnomaly] = useState(0);
   const [anomalousSignal, setAnomalousSignal] = useState(0); // 0 to 100% signal strength
   const [compassHeading, setCompassHeading] = useState(0); // 0 to 360 deg
@@ -64,6 +66,11 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
   const [investigateTarget, setInvestigateTarget] = useState(null);
   const [nearInteractable, setNearInteractable] = useState(null);
   const [hudNotice, setHudNotice] = useState('Click screen to look • WASD to walk • Space to Jump • [F] Scan • [E] Interact');
+
+  // Mission Echo & Extraction State
+  const [isMissionEchoOpen, setIsMissionEchoOpen] = useState(false);
+  const [isMissionEchoCompleted, setIsMissionEchoCompleted] = useState(false);
+  const [showChapter1Completion, setShowChapter1Completion] = useState(false);
 
   // Suit Telemetry State
   const [oxygenLevel, setOxygenLevel] = useState(98.6);
@@ -82,7 +89,15 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
   const triggerInvestigation = () => {
     if (nearInteractableRef.current) {
       audio.playInteract();
-      setInvestigateTarget(nearInteractableRef.current);
+      const id = nearInteractableRef.current.id;
+      if (id === 'poi_scanning_panel' || id === 'poi_mission_echo_console' || id === 'poi_descent_simulation') {
+        setIsMissionEchoOpen(true);
+      } else if (id === 'poi_extraction_pallet' && isMissionEchoCompletedRef.current) {
+        setShowChapter1Completion(true);
+        setInvestigateTarget(nearInteractableRef.current);
+      } else {
+        setInvestigateTarget(nearInteractableRef.current);
+      }
     }
   };
 
@@ -414,6 +429,16 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
       new THREE.Vector3(-74, 0, -50)
     ];
     scene.add(createTrackRibbon(trackPointsB, 1.6));
+
+    // Track 3: Zone 3 Crater (-75, -50) -> Zone 4 Alien Structure (-120, -75)
+    const trackPointsC = [
+      new THREE.Vector3(-76, 0, -51),
+      new THREE.Vector3(-88, 0, -58),
+      new THREE.Vector3(-102, 0, -66),
+      new THREE.Vector3(-114, 0, -72),
+      new THREE.Vector3(-118, 0, -74)
+    ];
+    scene.add(createTrackRibbon(trackPointsC, 1.5));
 
     // 9. MEDIUM-POLY BASALT ROCK BOULDERS & FRACTURED SCREE
     // Medium-poly procedural sculpted rock generator (perturbs icosahedron vertices with angular cleavage)
@@ -1182,6 +1207,301 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
 
     scene.add(craterInvestigationGroup);
 
+    // =========================================================================
+    // 13. ZONE 4 — ALIEN STRUCTURE DISCOVERY (X: -120, Z: -75)
+    // =========================================================================
+    const alienStructureGroup = new THREE.Group();
+    const alienTerrainY = getTerrainHeight(-120, -75);
+    alienStructureGroup.position.set(-120, alienTerrainY, -75);
+
+    // A. Partially Buried Geometric Polyhedral Monolith (Obsidian / Dark Metallic)
+    const alienHullMat = new THREE.MeshStandardMaterial({
+      map: alienGlyphMap,
+      color: 0x0a0c16,
+      emissive: 0x06b6d4,
+      emissiveIntensity: 0.55,
+      metalness: 0.96,
+      roughness: 0.12
+    });
+    // Truncated faceted polyhedral body (smooth surfaces, no visible joints or screws)
+    const monolithCore = new THREE.Mesh(new THREE.CylinderGeometry(2.4, 3.8, 5.2, 8), alienHullMat);
+    monolithCore.position.y = 2.4;
+    monolithCore.rotation.y = 0.38;
+    monolithCore.castShadow = true;
+    monolithCore.receiveShadow = true;
+    alienStructureGroup.add(monolithCore);
+
+    // Angled faceted outer pylons bracing the monolith into the basalt ridge
+    for (let p = 0; p < 4; p++) {
+      const pAng = (p * Math.PI * 2) / 4 + 0.38;
+      const pylon = new THREE.Mesh(new THREE.ConeGeometry(0.85, 4.2, 6), alienHullMat);
+      pylon.position.set(Math.cos(pAng) * 3.4, 1.8, Math.sin(pAng) * 3.4);
+      pylon.rotation.x = Math.sin(pAng) * 0.25;
+      pylon.rotation.z = -Math.cos(pAng) * 0.25;
+      pylon.castShadow = true;
+      alienStructureGroup.add(pylon);
+    }
+
+    // B. Central Scanning Panel & Energy Interface (Recessed on front face)
+    const scanPanelGeo = new THREE.BoxGeometry(1.4, 1.8, 0.25);
+    const scanPanelMat = new THREE.MeshStandardMaterial({
+      color: 0x0284c7,
+      emissive: 0x38bdf8,
+      emissiveIntensity: 0.85,
+      roughness: 0.08,
+      metalness: 0.95
+    });
+    const scanPanel = new THREE.Mesh(scanPanelGeo, scanPanelMat);
+    scanPanel.position.set(0, 2.1, 2.75);
+    scanPanel.rotation.x = -0.22;
+    scanPanel.castShadow = true;
+    alienStructureGroup.add(scanPanel);
+
+    // Subtle blue energy aperture / beam shooting upwards
+    const energyBeamGeo = new THREE.CylinderGeometry(0.08, 0.35, 16, 16);
+    const energyBeamMat = new THREE.MeshBasicMaterial({
+      color: 0x38bdf8,
+      transparent: true,
+      opacity: 0.45,
+      blending: THREE.AdditiveBlending
+    });
+    const energyBeam = new THREE.Mesh(energyBeamGeo, energyBeamMat);
+    energyBeam.position.set(0, 9.5, 0);
+    alienStructureGroup.add(energyBeam);
+
+    // C. Levitating / Suspended Geometric Shards (Orbiting Apex)
+    const floatingShardGroup = new THREE.Group();
+    floatingShardGroup.position.set(0, 5.6, 0);
+    const shardGeo = new THREE.OctahedronGeometry(0.42, 0);
+    const shardMat = new THREE.MeshStandardMaterial({
+      color: 0x06b6d4,
+      emissive: 0x38bdf8,
+      emissiveIntensity: 0.9,
+      metalness: 0.95,
+      roughness: 0.1
+    });
+    const floatingShards = [];
+    for (let s = 0; s < 4; s++) {
+      const shardMesh = new THREE.Mesh(shardGeo, shardMat);
+      shardMesh.castShadow = true;
+      floatingShardGroup.add(shardMesh);
+      floatingShards.push({ mesh: shardMesh, angle: (s * Math.PI * 2) / 4, dist: 2.2, height: (s % 2) * 0.5 });
+    }
+    alienStructureGroup.add(floatingShardGroup);
+
+    // D. Pulsing Alien Glow Light reflecting on nearby basalt rocks
+    const alienGlowLight = new THREE.PointLight(0x06b6d4, 4.5, 32);
+    alienGlowLight.position.set(0, 3.2, 2.2);
+    alienStructureGroup.add(alienGlowLight);
+
+    // E. Levitating Luminescent Particle Cloud around the monolith
+    const alienParticleCount = 180;
+    const alienParticleGeo = new THREE.BufferGeometry();
+    const alienPartPositions = new Float32Array(alienParticleCount * 3);
+    for (let i = 0; i < alienParticleCount; i++) {
+      const aAng = Math.random() * Math.PI * 2;
+      const aRad = 1.0 + Math.random() * 8.0;
+      alienPartPositions[i * 3] = Math.cos(aAng) * aRad;
+      alienPartPositions[i * 3 + 1] = 0.5 + Math.random() * 7.5;
+      alienPartPositions[i * 3 + 2] = Math.sin(aAng) * aRad;
+    }
+    alienParticleGeo.setAttribute('position', new THREE.BufferAttribute(alienPartPositions, 3));
+    const alienParticleMat = new THREE.PointsMaterial({
+      map: dustParticleTex,
+      size: 0.42,
+      color: 0x38bdf8,
+      transparent: true,
+      opacity: 0.8,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false
+    });
+    const alienMotes = new THREE.Points(alienParticleGeo, alienParticleMat);
+    alienStructureGroup.add(alienMotes);
+
+    scene.add(alienStructureGroup);
+
+    // F. Dark Subterranean Data Conduit Ribbon connecting Alien Structure to Surveyor 1
+    const conduitPoints = [
+      new THREE.Vector3(-120, getTerrainHeight(-120, -75) + 0.12, -75),
+      new THREE.Vector3(-96, getTerrainHeight(-96, -62) + 0.12, -62),
+      new THREE.Vector3(-75, getTerrainHeight(-75, -50) + 0.12, -50),
+      new THREE.Vector3(-42, getTerrainHeight(-42, -28) + 0.12, -28),
+      new THREE.Vector3(-18, getTerrainHeight(-18, -12) + 0.12, -12),
+      new THREE.Vector3(0, surveyorTerrainY + 0.12, 0)
+    ];
+    const conduitCurve = new THREE.CatmullRomCurve3(conduitPoints);
+    const conduitTubeGeo = new THREE.TubeGeometry(conduitCurve, 64, 0.16, 8, false);
+    const conduitMat = new THREE.MeshStandardMaterial({
+      color: 0x0f172a,
+      emissive: 0x06b6d4,
+      emissiveIntensity: 0.65,
+      metalness: 0.95,
+      roughness: 0.2
+    });
+    const conduitMesh = new THREE.Mesh(conduitTubeGeo, conduitMat);
+    scene.add(conduitMesh);
+
+    // =========================================================================
+    // 14. ZONE 5 — MISSION ECHO INTERFACE (X: -116, Z: -72)
+    // =========================================================================
+    const missionEchoGroup = new THREE.Group();
+    const echoTerrainY = getTerrainHeight(-116, -72);
+    missionEchoGroup.position.set(-116, echoTerrainY, -72);
+
+    // A. Holographic Projection Floor Pedestal
+    const holoPedestalGeo = new THREE.CylinderGeometry(2.8, 3.2, 0.25, 32);
+    const holoPedestalMat = new THREE.MeshStandardMaterial({
+      color: 0x0f172a,
+      metalness: 0.92,
+      roughness: 0.25
+    });
+    const holoPedestal = new THREE.Mesh(holoPedestalGeo, holoPedestalMat);
+    holoPedestal.position.y = 0.12;
+    holoPedestal.receiveShadow = true;
+    missionEchoGroup.add(holoPedestal);
+
+    // Glowing Cyan Projection Rings
+    for (let r = 0; r < 2; r++) {
+      const ringGeo = new THREE.RingGeometry(1.6 + r * 0.7, 1.8 + r * 0.7, 48);
+      const ringMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8, side: THREE.DoubleSide, transparent: true, opacity: 0.75 });
+      const ring = new THREE.Mesh(ringGeo, ringMat);
+      ring.rotation.x = -Math.PI / 2;
+      ring.position.y = 0.26 + r * 0.05;
+      missionEchoGroup.add(ring);
+    }
+
+    // B. Reconstructed Wireframe Holographic Surveyor 1 Model (Floating at Y: 2.4m)
+    const holoSurveyorGroup = new THREE.Group();
+    holoSurveyorGroup.position.set(0, 2.4, 0);
+
+    const holoWireMat = new THREE.MeshBasicMaterial({
+      color: 0x38bdf8,
+      wireframe: true,
+      transparent: true,
+      opacity: 0.75
+    });
+    const holoCore = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 1.2, 1.1, 12), holoWireMat);
+    holoSurveyorGroup.add(holoCore);
+
+    for (let l = 0; l < 3; l++) {
+      const lAng = (l * Math.PI * 2) / 3;
+      const hLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 1.8, 6), holoWireMat);
+      hLeg.position.set(Math.cos(lAng) * 1.1, -0.4, Math.sin(lAng) * 1.1);
+      hLeg.rotation.x = Math.sin(lAng) * 0.5;
+      hLeg.rotation.z = -Math.cos(lAng) * 0.5;
+      holoSurveyorGroup.add(hLeg);
+    }
+
+    const hMast = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 1.4, 6), holoWireMat);
+    hMast.position.y = 1.2;
+    holoSurveyorGroup.add(hMast);
+
+    const hPanel = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.04, 0.6), holoWireMat);
+    hPanel.position.set(0, 1.8, 0.1);
+    holoSurveyorGroup.add(hPanel);
+
+    missionEchoGroup.add(holoSurveyorGroup);
+
+    // C. Floating Interactive Data Fragment Planes
+    const dataFragments = [];
+    for (let d = 0; d < 3; d++) {
+      const dAng = (d * Math.PI * 2) / 3;
+      const fragPlane = new THREE.Mesh(
+        new THREE.PlaneGeometry(0.8, 0.55),
+        new THREE.MeshBasicMaterial({ color: 0x06b6d4, side: THREE.DoubleSide, transparent: true, opacity: 0.65 })
+      );
+      fragPlane.position.set(Math.cos(dAng) * 1.8, 2.0 + (d % 2) * 0.4, Math.sin(dAng) * 1.8);
+      fragPlane.lookAt(new THREE.Vector3(0, 2.0, 0));
+      missionEchoGroup.add(fragPlane);
+      dataFragments.push(fragPlane);
+    }
+
+    const echoLight = new THREE.PointLight(0x38bdf8, 3.2, 18);
+    echoLight.position.set(0, 2.5, 0);
+    missionEchoGroup.add(echoLight);
+
+    scene.add(missionEchoGroup);
+
+    // =========================================================================
+    // 15. ZONE 6 — RECOVERY AND EXTRACTION AREA (SURVEYOR 1 SITE AT X: 0, Z: 0)
+    // =========================================================================
+    const recoveryRigGroup = new THREE.Group();
+    recoveryRigGroup.position.set(0, surveyorTerrainY, 0);
+
+    // A. 3 Articulated Robotic Stabilizer Gantry Arms Bracing Surveyor 1
+    const rigMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.88, roughness: 0.3 });
+    const rigHazardMat = new THREE.MeshStandardMaterial({ color: 0xf59e0b, metalness: 0.7, roughness: 0.35 });
+
+    for (let g = 0; g < 3; g++) {
+      const gAng = (g * Math.PI * 2) / 3 + 0.35;
+      const gantryPillar = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.16, 3.4, 12), rigMat);
+      gantryPillar.position.set(Math.cos(gAng) * 3.8, 1.7, Math.sin(gAng) * 3.8);
+      gantryPillar.castShadow = true;
+      recoveryRigGroup.add(gantryPillar);
+
+      const braceArm = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.14, 2.4), rigHazardMat);
+      braceArm.position.set(Math.cos(gAng) * 2.5, 2.4, Math.sin(gAng) * 2.5);
+      braceArm.lookAt(new THREE.Vector3(0, 2.1, 0));
+      braceArm.castShadow = true;
+      recoveryRigGroup.add(braceArm);
+
+      const clampPad = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.32, 0.15), matAluminum);
+      clampPad.position.set(Math.cos(gAng) * 1.5, 2.1, Math.sin(gAng) * 1.5);
+      recoveryRigGroup.add(clampPad);
+    }
+
+    // B. Quantum Data-Storage Vault (Q-SSD) mounted to the telemetry mast
+    const qVault = new THREE.Mesh(
+      new THREE.BoxGeometry(0.65, 0.45, 0.45),
+      new THREE.MeshStandardMaterial({ color: 0x0f172a, metalness: 0.95, roughness: 0.2 })
+    );
+    qVault.position.set(0.6, 2.8, 0.5);
+    qVault.castShadow = true;
+    recoveryRigGroup.add(qVault);
+
+    const qStatusLed = new THREE.PointLight(0x10b981, 2.0, 6);
+    qStatusLed.position.set(0.6, 3.1, 0.5);
+    recoveryRigGroup.add(qStatusLed);
+
+    // C. Secure Mobile Extraction Pallet & Transport Sled
+    const extractionPalletGroup = new THREE.Group();
+    extractionPalletGroup.position.set(3.8, 0, -2.6);
+    extractionPalletGroup.rotation.y = -0.5;
+
+    const palletChassis = new THREE.Mesh(
+      new THREE.BoxGeometry(3.2, 0.4, 2.0),
+      new THREE.MeshStandardMaterial({ color: 0x334155, metalness: 0.85, roughness: 0.35 })
+    );
+    palletChassis.position.y = 0.25;
+    palletChassis.castShadow = true;
+    palletChassis.receiveShadow = true;
+    extractionPalletGroup.add(palletChassis);
+
+    const canist = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.38, 0.38, 1.1, 16),
+      new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.9, roughness: 0.2 })
+    );
+    canist.position.set(0.6, 0.95, 0);
+    canist.castShadow = true;
+    extractionPalletGroup.add(canist);
+
+    const canistLight = new THREE.PointLight(0x06b6d4, 1.8, 5);
+    canistLight.position.set(0.6, 1.4, 0);
+    extractionPalletGroup.add(canistLight);
+
+    const uplinkMast = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 2.2, 8), matAluminum);
+    uplinkMast.position.set(-1.0, 1.2, 0);
+    extractionPalletGroup.add(uplinkMast);
+
+    const uplinkDish = new THREE.Mesh(new THREE.SphereGeometry(0.6, 16, 16, 0, Math.PI * 2, 0, Math.PI / 2), matAluminum);
+    uplinkDish.position.set(-1.0, 2.3, 0);
+    uplinkDish.rotation.x = -0.65;
+    extractionPalletGroup.add(uplinkDish);
+
+    recoveryRigGroup.add(extractionPalletGroup);
+
+    scene.add(recoveryRigGroup);
+
     // 12. SUBTERRANEAN ANOMALOUS FISSURE & PRECURSOR CAVERN (X: -95, Z: -110)
     // Fissure Opening on the surface
     const fissureGroup = new THREE.Group();
@@ -1614,6 +1934,156 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
         officerNote: 'Astonishing... look at these crystalline edge facets! This isn’t aerospace debris from Apollo or Surveyor. It’s an extraterrestrial precursor artifact, and it’s transmitting a beacon deep underground!'
       },
 
+      // ================= ZONE 4: ALIEN STRUCTURE DISCOVERY =================
+      {
+        id: 'poi_alien_structure',
+        title: 'Precursor Geometric Monolith',
+        position: new THREE.Vector3(-120, alienTerrainY + 2.5, -75),
+        radius: 7.0,
+        sector: 'Zone 4 · Alien Structure Discovery',
+        artifactAge: 'Unknown Extraterrestrial Epoch',
+        integrity: '100% Intact / Active Field',
+        telemetryStatus: 'Carrier Frequency Locked',
+        description: 'An ancient, partially buried geometric obsidian monolith. Ultra-smooth surfaces devoid of rivets or mechanical seams. Thin luminescent cyan circuitry tracks pulse across its facets as geometric shards levitate above its apex.',
+        readings: {
+          'Material Lattice': 'Anomalous Carbon-Titanium Superlattice',
+          'Surface Seams': 'Zero (Monolithic Construction)',
+          'Levitation Field': 'Repulsive Casimir-Force Gradient',
+          'Conduit Link': 'Broadcasting toward Surveyor 1'
+        },
+        officerNote: 'Unbelievable... it contrasts so starkly with Surveyor 1. One is 1966 aluminum and cables; this is pure alien geometry. And look at that dark conduit running all the way back to the lander!'
+      },
+      {
+        id: 'poi_data_conduit',
+        title: 'Subterranean Data Conduit',
+        position: new THREE.Vector3(-60, getTerrainHeight(-60, -35) + 0.5, -35),
+        radius: 5.0,
+        sector: 'Zone 4 · Subterranean Network',
+        artifactAge: 'Synchronized with Lander Touchdown',
+        integrity: 'Active Carrier Wave',
+        telemetryStatus: 'Data Extraction Stream',
+        description: 'A glassy dark conduit extending along the lunar regolith from the alien structure directly into Surveyor 1. Rhythmic cyan light pulses travel along its length, extracting and analyzing the lander\'s historical telemetry.',
+        readings: {
+          'Transmission Frequency': '432.06 Hz Continuous',
+          'Packet Flux': '1.42 Tbps Harmonic Stream',
+          'Target Terminus': 'Surveyor 1 Mast & Vidicon Memory',
+          'Conduit State': 'Active Handshake'
+        },
+        officerNote: 'The conduit has been tapping Surveyor 1 for decades, monitoring humanity\'s earliest robotic footprint. It’s like an extraterrestrial listening post.'
+      },
+      {
+        id: 'poi_scanning_panel',
+        title: 'Central Scanning Panel & Interface',
+        position: new THREE.Vector3(-119.2, alienTerrainY + 2.0, -73.2),
+        radius: 4.5,
+        sector: 'Zone 4 · Alien Interface',
+        artifactAge: 'Interactive Precursor Console',
+        integrity: '100% Responsive',
+        telemetryStatus: 'Handshake Ready · [E] to Initiate',
+        description: 'A recessed geometric scanning panel emitting a faint blue glow and low-frequency vibration. Placing an EVA sensory probe on this panel initiates the Mission Echo historical simulation.',
+        readings: {
+          'Interface Protocol': 'Optoelectronic Resonance Handshake',
+          'Handshake Carrier': '432.06 Hz Sine Carrier',
+          'Mode': 'Mission Echo Simulation Ready',
+          'Access Clearance': 'Human Biometric Recognized'
+        },
+        officerNote: 'The panel is responding to my suit sensors! It’s ready to interface. Press [E] to activate Mission Echo.'
+      },
+
+      // ================= ZONE 5: MISSION ECHO INTERFACE =================
+      {
+        id: 'poi_mission_echo_console',
+        title: 'Mission Echo Holographic Array',
+        position: new THREE.Vector3(-116, echoTerrainY + 1.5, -72),
+        radius: 5.0,
+        sector: 'Zone 5 · Mission Echo Interface',
+        artifactAge: '1966 Historical Simulation',
+        integrity: 'Volumetric Projection Active',
+        telemetryStatus: '3 Simulation Phases Available',
+        description: 'A high-fidelity blue volumetric projection matrix reconstructing Surveyor 1\'s controlled descent, panoramic observations, and corrupted image archives based on recovered records.',
+        readings: {
+          'Phase 1': 'Terminal Descent Calibration (3.05 m/s)',
+          'Phase 2': 'Vidicon 360° Panorama Stitching',
+          'Phase 3': 'Historic Archive Decryption (11,237 Frames)',
+          'System Status': 'Interactive Simulation Online'
+        },
+        officerNote: 'A holographic wireframe of Surveyor 1 floating right here on the Moon... It’s reconstructing the descent telemetry frame by frame!'
+      },
+      {
+        id: 'poi_descent_simulation',
+        title: 'Controlled Descent Trajectory Visualizer',
+        position: new THREE.Vector3(-115, echoTerrainY + 2.0, -71),
+        radius: 4.2,
+        sector: 'Zone 5 · Mission Echo Interface',
+        artifactAge: 'June 2, 1966 Reconstruction',
+        integrity: 'Simulation Active',
+        telemetryStatus: 'Descent Vector Synchronized',
+        description: 'Volumetric flight path tracing Surveyor 1 from 75 km orbital injection down to 3.05 m/s soft touchdown in Oceanus Procellarum.',
+        readings: {
+          'Main Retro Ignition': '75.3 km Altitude',
+          'Vernier Cutoff': '3.4 m Above Surface',
+          'Landing Velocity': '3.05 m/s Soft Touchdown',
+          'Simulation Sync': 'Interactive via Mission Echo'
+        },
+        officerNote: 'The physics of the 1966 landing laid bare in glowing blue light. We can step right into humanity’s first extraterrestrial landing sequence.'
+      },
+
+      // ================= ZONE 6: RECOVERY AND EXTRACTION AREA =================
+      {
+        id: 'poi_recovery_rig',
+        title: 'Artemis/Aegis Robotic Recovery Rig',
+        position: new THREE.Vector3(1.8, surveyorTerrainY + 1.8, 0.5),
+        radius: 5.2,
+        sector: 'Zone 6 · Surveyor 1 Recovery Site',
+        artifactAge: 'Current Expedition (2126)',
+        integrity: '100% Operational',
+        telemetryStatus: 'Surveyor 1 Braced & Stabilized',
+        description: 'Hydraulic carbon-fiber gantry arms deployed by Leo Vance to brace Surveyor 1. The dark alien conduit has powered down, leaving the historic lander secured for NASA preservation.',
+        readings: {
+          'Stabilizer Load': '294 kg Neutral Support',
+          'Alien Conduit State': 'Dormant (0.0 V Residual)',
+          'Structural Integrity': '100% Protected',
+          'Heritage Tag': 'NASA Permanent Historic Monument'
+        },
+        officerNote: 'The recovery rig is locked in place. Surveyor 1 survived 160 years of cosmic vacuum, and now its place in history is permanently protected.'
+      },
+      {
+        id: 'poi_quantum_storage_unit',
+        title: 'Quantum Archive Vault (Q-SSD)',
+        position: new THREE.Vector3(-1.2, surveyorTerrainY + 1.6, -1.0),
+        radius: 4.2,
+        sector: 'Zone 6 · Surveyor 1 Recovery Site',
+        artifactAge: 'Current Expedition (2126)',
+        integrity: '100% Data Transfer Complete',
+        telemetryStatus: '11,237 Frames Archived',
+        description: 'Radiation-hardened solid-state quantum vault clamped to the lander\'s mast. Successfully captured and archived all 11,237 historic frames and decoded signal packets.',
+        readings: {
+          'Archive Download': '11,237 Frames (100% Verified)',
+          'Harmonic Signal': 'Decrypted & Extracted',
+          'Orbital Downlink': 'Beamed to Carrier Aegis',
+          'Status': 'Vault Sealed'
+        },
+        officerNote: 'Every scan line, every pixel humanity transmitted in 1966 is now safe in this vault—along with the decoded precursor signal.'
+      },
+      {
+        id: 'poi_extraction_pallet',
+        title: 'Secure Extraction Sled & Mystery Coordinates',
+        position: new THREE.Vector3(3.8, surveyorTerrainY + 0.8, -2.6),
+        radius: 5.5,
+        sector: 'Zone 6 · Recovery & Extraction',
+        artifactAge: 'Current Expedition (2126)',
+        integrity: 'Ready for Extraction',
+        telemetryStatus: 'Decrypted Coordinates Ready',
+        description: 'Mobile motorized transport pallet containing the extracted precursor signal core. The deciphered stellar vectors reveal the location of a subterranean alien cavern designated "Vault Zero".',
+        readings: {
+          'Payload': 'Decrypted Precursor Signal Core',
+          'Stellar Vectors': '432.06 Hz Subterranean Azimuth',
+          'Next Objective': 'Target Coordinates: Vault Zero (Chapter 2)',
+          'Mission Status': 'CHAPTER 1 OBJECTIVES COMPLETE'
+        },
+        officerNote: '“Mission accomplished, team! Surveyor 1 is secured, the archive is saved, and we’ve unlocked the exact coordinates to where this signal came from. Arin to Carrier Aegis: prepare for the next phase!”'
+      },
+
       // Fissure & Cavern (Exploration towards Zones 4-6)
       {
         id: 'anomaly_fissure_site',
@@ -1920,6 +2390,37 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
         }
       }
 
+      // Animate Zone 4 floating shards orbiting monolith apex
+      if (floatingShardGroup) {
+        floatingShardGroup.rotation.y += delta * 0.45;
+        for (let s = 0; s < floatingShards.length; s++) {
+          const sh = floatingShards[s];
+          sh.mesh.position.y = sh.height + Math.sin(time * 2.2 + s) * 0.15;
+        }
+      }
+
+      // Animate Zone 5 wireframe holographic Surveyor 1 & data fragments
+      if (holoSurveyorGroup) {
+        holoSurveyorGroup.rotation.y += delta * 0.35;
+        for (let d = 0; d < dataFragments.length; d++) {
+          dataFragments[d].position.y = 2.0 + (d % 2) * 0.4 + Math.sin(time * 2.0 + d) * 0.08;
+        }
+      }
+
+      // Dynamic Zone 4 & 6 state responsiveness (lighting & conduit)
+      if (isMissionEchoCompletedRef.current) {
+        if (alienGlowLight) alienGlowLight.intensity = 0.4;
+        if (energyBeam) energyBeam.visible = false;
+        if (conduitMat) {
+          conduitMat.emissiveIntensity = 0.04;
+          conduitMat.color.setHex(0x0a0c10);
+        }
+        if (qStatusLed) qStatusLed.intensity = 3.2;
+      } else {
+        if (alienGlowLight) alienGlowLight.intensity = 3.8 + Math.sin(time * 3.5) * 1.2;
+        if (conduitMat) conduitMat.emissiveIntensity = 0.5 + Math.sin(time * 4.0) * 0.25;
+      }
+
       // Throttled HUD Telemetry Updates (5 Hz updates instead of 60 FPS state flooding)
       hudTimer += delta;
       if (hudTimer >= 0.2) {
@@ -1928,6 +2429,8 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
         const distLanding = Math.round(Math.hypot(playerPos.x - 105, playerPos.z - 65));
         const distSurveyor = Math.round(Math.hypot(playerPos.x, playerPos.z));
         const distCrater = Math.round(Math.hypot(playerPos.x - (-75), playerPos.z - (-50)));
+        const distAlien = Math.round(Math.hypot(playerPos.x - (-120), playerPos.z - (-75)));
+        const distEcho = Math.round(Math.hypot(playerPos.x - (-116), playerPos.z - (-72)));
         const distAnomaly = Math.round(Math.hypot(playerPos.x - (-95), playerPos.z - (-110)));
         const distBuried = Math.hypot(playerPos.x - (-78), playerPos.z - (-54));
         let headingDeg = Math.round((THREE.MathUtils.radToDeg(-yaw) % 360 + 360) % 360);
@@ -1935,12 +2438,19 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
         setDistanceToLanding(distLanding);
         setDistanceToSurveyor(distSurveyor);
         setDistanceToCrater(distCrater);
+        setDistanceToAlienStructure(distAlien);
         setDistanceToAnomaly(distAnomaly);
         setCompassHeading(headingDeg);
 
-        // Dynamic 432 Hz Signal Resonance Calculation based on proximity to Zone 3 & buried artifact
+        // Dynamic 432 Hz Signal Resonance Calculation based on proximity & Mission Echo state
         let sig = 0;
-        if (distBuried < 6.0) {
+        if (isMissionEchoCompletedRef.current) {
+          sig = Math.max(0, Math.round(4 + Math.sin(time * 0.6) * 2));
+        } else if (distAlien < 12.0) {
+          sig = 100;
+        } else if (distAlien < 36.0) {
+          sig = Math.round(85 + (36.0 - distAlien) * 0.62);
+        } else if (distBuried < 6.0) {
           sig = 99;
         } else if (distBuried < 26.0) {
           sig = Math.round(99 - (distBuried - 6.0) * 3.2);
@@ -1956,14 +2466,18 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
         sig = Math.max(0, Math.min(100, sig));
         setAnomalousSignal(sig);
 
-        // Active Zone Determination
+        // Active Zone Determination across all 6 zones
         let currentZone = 'ZONE 1 · TEAM LANDING';
         if (distLanding < 38) {
           currentZone = 'ZONE 1 · TEAM LANDING';
         } else if (distSurveyor < 35) {
-          currentZone = 'ZONE 2 · SURVEYOR 1 RECOVERY';
+          currentZone = isMissionEchoCompletedRef.current ? 'ZONE 6 · RECOVERY & EXTRACTION' : 'ZONE 2 · SURVEYOR 1 RECOVERY';
         } else if (distCrater < 42) {
           currentZone = 'ZONE 3 · CRATER INVESTIGATION';
+        } else if (distAlien < 28) {
+          currentZone = 'ZONE 4 · ALIEN STRUCTURE DISCOVERY';
+        } else if (distEcho < 22) {
+          currentZone = 'ZONE 5 · MISSION ECHO INTERFACE';
         } else if (playerPos.x < -60 && playerPos.z < -80) {
           currentZone = 'BASALT RIDGE FISSURE';
         } else {
@@ -2144,11 +2658,12 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
                 {activeObjective}
               </div>
               
-              {/* Waypoint Distances for Zones 1, 2, 3 */}
+              {/* Waypoint Distances for Zones 1, 2, 3, 4 */}
               <div className="flex flex-wrap items-center gap-3 pt-1.5 text-[10px] text-slate-400">
                 <div>LANDING: <strong className="text-amber-300">{distanceToLanding}m</strong></div>
                 <div>SURVEYOR 1: <strong className="text-cyan-300">{distanceToSurveyor}m</strong></div>
                 <div>CRATER: <strong className="text-purple-300">{distanceToCrater}m</strong></div>
+                <div>ALIEN STRUCTURE: <strong className="text-emerald-300">{distanceToAlienStructure}m</strong></div>
               </div>
             </div>
 
@@ -2168,8 +2683,8 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
                 />
               </div>
               <div className="text-[9px] text-slate-400 flex justify-between">
-                <span>Baseline (Rim)</span>
-                <span>Epicenter (Buried Object)</span>
+                <span>{isMissionEchoCompleted ? 'Structure Dormant' : 'Baseline (Rim)'}</span>
+                <span>{isMissionEchoCompleted ? 'Residual (4%)' : 'Epicenter (Monolith)'}</span>
               </div>
             </div>
           </div>
@@ -2273,12 +2788,95 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
             } else if (target.id === 'poi_crater_site_beta') {
               setActiveObjective('Harmonic echo detected (54%)! The buried metallic object at Site Gamma is the primary epicenter.');
             } else if (target.id === 'poi_crater_site_gamma') {
-              setActiveObjective('Epiphany: Non-human precursor artifact analyzed! Exotic alloy points to subterranean cavern.');
+              setActiveObjective('Precursor artifact analyzed! Follow the dark data conduit northwest into the ridge to find the Alien Structure.');
+            } else if (target.id === 'poi_alien_structure' || target.id === 'poi_data_conduit') {
+              setActiveObjective('Access the Central Scanning Panel to interface with the alien network and initiate Mission Echo.');
+            } else if (target.id === 'poi_recovery_rig') {
+              setActiveObjective('Surveyor 1 stabilized! Inspect the Quantum Archive Vault and Mobile Extraction Pallet.');
+            } else if (target.id === 'poi_quantum_storage_unit') {
+              setActiveObjective('11,237 historic frames archived! Check the Extraction Pallet to decipher the mystery coordinates.');
+            } else if (target.id === 'poi_extraction_pallet') {
+              setShowChapter1Completion(true);
+              setActiveObjective('CHAPTER 1 COMPLETE: Decrypted stellar coordinates to Vault Zero secured for Carrier Aegis!');
             } else {
               setActiveObjective(`Cataloged: ${target.title}. Continue exploring the sector.`);
             }
           }}
         />
+      )}
+
+      {/* ZONE 5 — MISSION ECHO INTERFACE MODAL */}
+      <MissionEchoModal
+        isOpen={isMissionEchoOpen}
+        onClose={() => setIsMissionEchoOpen(false)}
+        onCompleteEcho={() => {
+          setIsMissionEchoCompleted(true);
+          isMissionEchoCompletedRef.current = true;
+          setActiveObjective('Mission Echo Complete! Alien structure dormant. Return to Surveyor 1 to oversee recovery.');
+        }}
+      />
+
+      {/* CHAPTER 1 MISSION ACCOMPLISHED BANNER */}
+      {showChapter1Completion && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/90 backdrop-blur-xl animate-fade-in font-mono select-none">
+          <div className="relative w-full max-w-xl rounded-2xl bg-slate-950 border-2 border-emerald-500/60 shadow-[0_0_80px_rgba(16,185,129,0.35)] p-6 text-center space-y-5">
+            <div className="inline-flex p-3 rounded-2xl bg-emerald-500/20 border border-emerald-400/40 text-emerald-300">
+              <Trophy className="w-8 h-8 text-emerald-400 animate-bounce" />
+            </div>
+
+            <div className="space-y-1">
+              <div className="text-[11px] text-emerald-400 font-bold tracking-widest uppercase">
+                MISSION ACCOMPLISHED · CHAPTER 1 COMPLETE
+              </div>
+              <h2 className="text-xl sm:text-2xl font-bold text-white tracking-wide uppercase">
+                The First Footprint Secured
+              </h2>
+            </div>
+
+            <p className="text-slate-300 text-xs sm:text-sm font-sans leading-relaxed">
+              Surveyor 1 has been braced with robotic stabilizers and its historic 11,237 Vidicon frames are archived in the quantum vault. 
+              The alien data conduit has powered down, and its decrypted carrier wave has revealed the coordinates of an ancient subterranean facility: <strong>Vault Zero</strong>.
+            </p>
+
+            <div className="p-3.5 rounded-xl bg-black/60 border border-emerald-500/30 text-left text-xs font-mono space-y-1.5">
+              <div className="flex justify-between text-slate-400">
+                <span>Historic Lander:</span>
+                <span className="text-emerald-300 font-bold">Surveyor 1 (1966) Stabilized</span>
+              </div>
+              <div className="flex justify-between text-slate-400">
+                <span>Corrupted Frames:</span>
+                <span className="text-cyan-300 font-bold">11,237 Restored (100%)</span>
+              </div>
+              <div className="flex justify-between text-slate-400">
+                <span>Harmonic Vector:</span>
+                <span className="text-purple-300 font-bold">432.06 Hz Subterranean Azimuth</span>
+              </div>
+              <div className="flex justify-between text-slate-400">
+                <span>Next Chapter:</span>
+                <span className="text-amber-300 font-bold">Chapter 2: Vault Zero Ingress</span>
+              </div>
+            </div>
+
+            <div className="flex justify-center gap-4 pt-2">
+              <button
+                type="button"
+                onClick={() => { audio.playClick(); setShowChapter1Completion(false); }}
+                className="px-5 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-slate-300 font-bold text-xs uppercase tracking-wider transition-all"
+              >
+                Continue Exploring
+              </button>
+              {onReturnMenu && (
+                <button
+                  type="button"
+                  onClick={() => { audio.playClick(); onReturnMenu(); }}
+                  className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-cyan-600 hover:from-emerald-500 hover:to-cyan-500 text-white font-bold text-xs uppercase tracking-wider shadow-lg shadow-emerald-600/30 transition-all hover:scale-105 active:scale-95"
+                >
+                  Return to Main Menu
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
       )}
 
     </div>
