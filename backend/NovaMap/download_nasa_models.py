@@ -142,7 +142,7 @@ MODELS = [
     }
 ]
 
-TARGET_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "frontend", "public", "models", "spacecraft"))
+TARGET_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "frontend", "public", "models", "spacecraft"))
 os.makedirs(TARGET_DIR, exist_ok=True)
 
 print(f"Target directory: {TARGET_DIR}")
@@ -195,4 +195,3 @@ with open(manifest_path, "w", encoding="utf-8") as f:
     json.dump(manifest, f, indent=2)
 
 print(f"Finished. Manifest saved to {manifest_path} with {len(manifest)} models.")
-
