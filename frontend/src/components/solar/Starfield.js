@@ -26,45 +26,50 @@ export class Starfield {
     this.sharedTexture = this.createStarSprite();
     this.nebulaTexture = this.createNebulaSprite();
 
-    // 1. Faint Celestial Background (18,000 stars, radius 18,000 to 32,000 units)
+    // 1. Faint Deep Cosmic Background (22,000 stars, radius 18,000 to 34,000 units)
     // Non-uniform distribution: weighted toward the 60.2° tilted galactic disk
     this.pointsGroups.push(this.createGalacticStarLayer({
-      count: 18000,
+      count: 22000,
       minRadius: 18000,
-      maxRadius: 32000,
+      maxRadius: 34000,
       baseSize: 2.2,
       minBrightness: 0.15,
       maxBrightness: 0.65,
-      galacticConcentration: 0.55
+      galacticConcentration: 0.58
     }));
 
-    // 2. Mid-Magnitude Stellar Field (6,000 stars, radius 14,000 to 26,000 units)
+    // 2. Mid-Magnitude Stellar Field (7,500 stars, radius 14,000 to 28,000 units)
     // Sharper stars with distinct astronomical spectral temperatures
     this.pointsGroups.push(this.createGalacticStarLayer({
-      count: 6000,
+      count: 7500,
       minRadius: 14000,
-      maxRadius: 26000,
-      baseSize: 3.4,
+      maxRadius: 28000,
+      baseSize: 3.5,
       minBrightness: 0.40,
-      maxBrightness: 0.85,
-      galacticConcentration: 0.65
+      maxBrightness: 0.88,
+      galacticConcentration: 0.68
     }));
 
-    // 3. Prominent Navigational Beacons (420 prominent stars, radius 12,000 to 22,000 units)
-    // Distinct sparkling stellar beacons across major constellations
+    // 3. Prominent Navigational Beacons (480 prominent stars, radius 12,000 to 22,000 units)
+    // Distinct sparkling stellar beacons with diamond diffraction spikes across major constellations
+    this.beaconTexture = this.createBeaconSprite();
     this.pointsGroups.push(this.createGalacticStarLayer({
-      count: 420,
+      count: 480,
       minRadius: 12000,
       maxRadius: 22000,
-      baseSize: 5.2,
-      minBrightness: 0.85,
+      baseSize: 6.2,
+      minBrightness: 0.88,
       maxBrightness: 1.0,
-      galacticConcentration: 0.35 // Distributed across the sky for constellation beacons
+      galacticConcentration: 0.35, // Distributed across the sky for constellation beacons
+      customTexture: this.beaconTexture
     }));
 
-    // 4. The Milky Way Galactic Band & Core Glow (~12,000 soft-blended nebula dust particles)
+    // 4. The Milky Way Galactic Band (~12,000 soft-blended stellar dust particles)
     // Dense stellar glow along the 60.2° galactic plane with golden core in Sagittarius
     this.pointsGroups.push(this.createGalacticBand());
+
+    // 5. Diffuse Interstellar Nebula Clouds & Absorption Rifts (~6,000 large soft cloud puffs)
+    this.pointsGroups.push(this.createNebulaStructures());
 
     // Add all layers to the celestial sphere group
     this.pointsGroups.forEach(points => this.group.add(points));
@@ -74,7 +79,7 @@ export class Starfield {
    * Generates a star layer with non-uniform galactic plane concentration
    * based on the 60.2° inclination of the solar ecliptic to the Milky Way disk.
    */
-  createGalacticStarLayer({ count, minRadius, maxRadius, baseSize, minBrightness, maxBrightness, galacticConcentration }) {
+  createGalacticStarLayer({ count, minRadius, maxRadius, baseSize, minBrightness, maxBrightness, galacticConcentration, customTexture }) {
     const geometry = new THREE.BufferGeometry();
     const positions = new Float32Array(count * 3);
     const colors = new Float32Array(count * 3);
@@ -95,30 +100,25 @@ export class Starfield {
     const sinTilt = Math.sin(tiltRad);
 
     for (let i = 0; i < count; i++) {
-      // Non-uniform galactic latitude distribution:
-      // With probability `galacticConcentration`, compress latitude closer to the galactic equator
       const isGalacticDiskStar = Math.random() < galacticConcentration;
       
       const u = Math.random();
       const v = isGalacticDiskStar
         ? 0.5 + (Math.random() - 0.5) * Math.pow(Math.random(), 1.6) // Clustered near disk equator
-        : Math.random(); // Uniform across sky
+        : Math.random();
 
       const theta = u * 2.0 * Math.PI;
       const phi = Math.acos(2.0 * v - 1.0);
       const radius = minRadius + Math.random() * (maxRadius - minRadius);
 
-      // Local galactic coordinates
       const lx = radius * Math.sin(phi) * Math.cos(theta);
       const ly = radius * Math.sin(phi) * Math.sin(theta);
       const lz = radius * Math.cos(phi);
 
-      // Rotate by 60.2° to match orientation relative to solar ecliptic
       positions[i * 3] = lx;
       positions[i * 3 + 1] = ly * cosTilt - lz * sinTilt;
       positions[i * 3 + 2] = ly * sinTilt + lz * cosTilt;
 
-      // Astronomical magnitude power-law: dimmer stars are vastly more frequent
       const magWeight = Math.pow(Math.random(), 1.8);
       const brightness = minBrightness + magWeight * (maxBrightness - minBrightness);
 
@@ -136,7 +136,7 @@ export class Starfield {
     const material = new THREE.PointsMaterial({
       size: baseSize,
       vertexColors: true,
-      map: this.sharedTexture,
+      map: customTexture || this.sharedTexture,
       transparent: true,
       depthWrite: false,
       blending: THREE.AdditiveBlending
@@ -180,14 +180,20 @@ export class Starfield {
         : bandRadius * (0.70 + Math.random() * 0.60);
 
       const heightSpread = isCore ? 3200 : 1600;
-      // Normal-like distribution for disk thickness
-      const h = (Math.random() + Math.random() - 1.0) * heightSpread;
+      let h = (Math.random() + Math.random() - 1.0) * heightSpread;
+
+      // Great Rift absorption lane in Cygnus-Aquila region (~70° to 135°):
+      // Push dust outward from the exact midplane to create dark absorption rift
+      if (angle > 1.2 && angle < 2.35) {
+        if (Math.abs(h) < 450) {
+          h += Math.sign(h || 1) * 450;
+        }
+      }
 
       const lx = Math.cos(angle) * r;
       const ly = h;
       const lz = Math.sin(angle) * r;
 
-      // Rotate by 60.2° to match solar ecliptic
       positions[i * 3] = lx;
       positions[i * 3 + 1] = ly * cosTilt - lz * sinTilt;
       positions[i * 3 + 2] = ly * sinTilt + lz * cosTilt;
@@ -197,8 +203,7 @@ export class Starfield {
         : bandPalette[Math.floor(Math.random() * 4)];
 
       tempColor.copy(baseColor);
-      // Soft, non-overwhelming opacity
-      const opacity = isCore ? (0.22 + Math.random() * 0.30) : (0.08 + Math.random() * 0.22);
+      const opacity = isCore ? (0.22 + Math.random() * 0.28) : (0.08 + Math.random() * 0.20);
       tempColor.multiplyScalar(opacity);
 
       colors[i * 3] = tempColor.r;
@@ -211,6 +216,67 @@ export class Starfield {
 
     const material = new THREE.PointsMaterial({
       size: 4.8,
+      vertexColors: true,
+      map: this.nebulaTexture,
+      transparent: true,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending
+    });
+
+    return new THREE.Points(geometry, material);
+  }
+
+  /**
+   * Layer of large, ethereal interstellar dust clouds providing volumetric depth
+   */
+  createNebulaStructures() {
+    const count = 5500;
+    const geometry = new THREE.BufferGeometry();
+    const positions = new Float32Array(count * 3);
+    const colors = new Float32Array(count * 3);
+
+    const nebulaPalette = [
+      new THREE.Color(0x38bdf8), // Cyan reflection nebula
+      new THREE.Color(0x6366f1), // Deep indigo
+      new THREE.Color(0xf43f5e), // Faint H-alpha emission
+      new THREE.Color(0xd97706)  // Core dust glow
+    ];
+
+    const tempColor = new THREE.Color();
+    const bandRadius = 20000;
+    const tiltRad = THREE.MathUtils.degToRad(60.2);
+    const cosTilt = Math.cos(tiltRad);
+    const sinTilt = Math.sin(tiltRad);
+
+    for (let i = 0; i < count; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const r = bandRadius * (0.65 + Math.random() * 0.70);
+      const h = (Math.random() + Math.random() - 1.0) * 2200;
+
+      const lx = Math.cos(angle) * r;
+      const ly = h;
+      const lz = Math.sin(angle) * r;
+
+      positions[i * 3] = lx;
+      positions[i * 3 + 1] = ly * cosTilt - lz * sinTilt;
+      positions[i * 3 + 2] = ly * sinTilt + lz * cosTilt;
+
+      const baseColor = nebulaPalette[Math.floor(Math.random() * nebulaPalette.length)];
+      tempColor.copy(baseColor);
+      // Very faint, non-overwhelming opacity for subtle depth
+      const opacity = 0.04 + Math.random() * 0.08;
+      tempColor.multiplyScalar(opacity);
+
+      colors[i * 3] = tempColor.r;
+      colors[i * 3 + 1] = tempColor.g;
+      colors[i * 3 + 2] = tempColor.b;
+    }
+
+    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+    const material = new THREE.PointsMaterial({
+      size: 14.0, // Large soft puffs
       vertexColors: true,
       map: this.nebulaTexture,
       transparent: true,
@@ -236,6 +302,38 @@ export class Starfield {
 
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, 64, 64);
+
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.generateMipmaps = false;
+    texture.minFilter = THREE.LinearFilter;
+    return texture;
+  }
+
+  createBeaconSprite() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 64;
+    canvas.height = 64;
+    const ctx = canvas.getContext('2d');
+
+    // Central circular glow
+    const gradient = ctx.createRadialGradient(32, 32, 0, 32, 32, 28);
+    gradient.addColorStop(0, 'rgba(255, 255, 255, 1.0)');
+    gradient.addColorStop(0.25, 'rgba(235, 245, 255, 0.9)');
+    gradient.addColorStop(0.55, 'rgba(180, 210, 255, 0.25)');
+    gradient.addColorStop(1.0, 'rgba(0, 0, 0, 0.0)');
+
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, 64, 64);
+
+    // Subtle diamond / cross diffraction spikes
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.moveTo(32, 6);
+    ctx.lineTo(32, 58);
+    ctx.moveTo(6, 32);
+    ctx.lineTo(58, 32);
+    ctx.stroke();
 
     const texture = new THREE.CanvasTexture(canvas);
     texture.generateMipmaps = false;
@@ -286,6 +384,10 @@ export class Starfield {
     if (this.sharedTexture) {
       this.sharedTexture.dispose();
       this.sharedTexture = null;
+    }
+    if (this.beaconTexture) {
+      this.beaconTexture.dispose();
+      this.beaconTexture = null;
     }
     if (this.nebulaTexture) {
       this.nebulaTexture.dispose();

@@ -1,0 +1,187 @@
+[
+  {
+    "slug": "voyager-1",
+    "aliases": [
+      "voyager-2"
+    ],
+    "name": "Voyager Spacecraft",
+    "file": "/models/spacecraft/voyager.glb",
+    "size_bytes": 285936,
+    "provenance": "NASA 3D Resources (Official Public Domain - NASA-3D-Resources GitHub)",
+    "isAuthenticModel": true
+  },
+  {
+    "slug": "pioneer-10",
+    "aliases": [
+      "pioneer-11"
+    ],
+    "name": "Pioneer 10 Spacecraft",
+    "file": "/models/spacecraft/pioneer_10.glb",
+    "size_bytes": 2049840,
+    "provenance": "NASA 3D Resources (Official Public Domain - NASA-3D-Resources GitHub)",
+    "isAuthenticModel": true
+  },
+  {
+    "slug": "perseverance-rover",
+    "aliases": [
+      "perseverance"
+    ],
+    "name": "Perseverance Rover",
+    "file": "/models/spacecraft/perseverance.glb",
+    "size_bytes": 4987176,
+    "provenance": "NASA 3D Resources (Official Public Domain - NASA-3D-Resources GitHub)",
+    "isAuthenticModel": true
+  },
+  {
+    "slug": "ingenuity-helicopter",
+    "aliases": [
+      "ingenuity"
+    ],
+    "name": "Ingenuity Mars Helicopter",
+    "file": "/models/spacecraft/ingenuity.glb",
+    "size_bytes": 2019408,
+    "provenance": "NASA 3D Resources (Official Public Domain - NASA-3D-Resources GitHub)",
+    "isAuthenticModel": true
+  },
+  {
+    "slug": "opportunity-rover",
+    "aliases": [
+      "spirit-rover",
+      "opportunity",
+      "spirit"
+    ],
+    "name": "Mars Exploration Rover (Spirit / Opportunity)",
+    "file": "/models/spacecraft/mer_opportunity.glb",
+    "size_bytes": 36668,
+    "provenance": "NASA 3D Resources (Official Public Domain - NASA-3D-Resources GitHub)",
+    "isAuthenticModel": true
+  },
+  {
+    "slug": "mars-reconnaissance-orbiter",
+    "aliases": [
+      "mro"
+    ],
+    "name": "Mars Reconnaissance Orbiter (MRO)",
+    "file": "/models/spacecraft/mro.glb",
+    "size_bytes": 2652460,
+    "provenance": "NASA 3D Resources (Official Public Domain - NASA-3D-Resources GitHub)",
+    "isAuthenticModel": true
+  },
+  {
+    "slug": "juno-spacecraft",
+    "aliases": [
+      "juno"
+    ],
+    "name": "Juno Spacecraft",
+    "file": "/models/spacecraft/juno.glb",
+    "size_bytes": 8999028,
+    "provenance": "NASA 3D Resources (Official Public Domain - NASA-3D-Resources GitHub)",
+    "isAuthenticModel": true
+  },
+  {
+    "slug": "galileo-orbiter",
+    "aliases": [
+      "galileo"
+    ],
+    "name": "Galileo Orbiter",
+    "file": "/models/spacecraft/galileo.glb",
+    "size_bytes": 248532,
+    "provenance": "NASA 3D Resources (Official Public Domain - NASA-3D-Resources GitHub)",
+    "isAuthenticModel": true
+  },
+  {
+    "slug": "cassini-huygens",
+    "aliases": [
+      "cassini"
+    ],
+    "name": "Cassini-Huygens Spacecraft",
+    "file": "/models/spacecraft/cassini.glb",
+    "size_bytes": 1660492,
+    "provenance": "NASA 3D Resources (Official Public Domain - NASA-3D-Resources GitHub)",
+    "isAuthenticModel": true
+  },
+  {
+    "slug": "parker-solar-probe",
+    "aliases": [],
+    "name": "Parker Solar Probe",
+    "file": "/models/spacecraft/parker_solar_probe.glb",
+    "size_bytes": 443572,
+    "provenance": "NASA 3D Resources (Official Public Domain - NASA-3D-Resources GitHub)",
+    "isAuthenticModel": true
+  },
+  {
+    "slug": "james-webb-space-telescope",
+    "aliases": [
+      "jwst"
+    ],
+    "name": "James Webb Space Telescope",
+    "file": "/models/spacecraft/jwst.glb",
+    "size_bytes": 4710016,
+    "provenance": "NASA 3D Resources (Official Public Domain - NASA-3D-Resources GitHub)",
+    "isAuthenticModel": true
+  },
+  {
+    "slug": "hubble-space-telescope",
+    "aliases": [
+      "hubble"
+    ],
+    "name": "Hubble Space Telescope",
+    "file": "/models/spacecraft/hubble.glb",
+    "size_bytes": 1694988,
+    "provenance": "NASA 3D Resources (Official Public Domain - NASA-3D-Resources GitHub)",
+    "isAuthenticModel": true
+  },
+  {
+    "slug": "osiris-rex",
+    "aliases": [],
+    "name": "OSIRIS-REx Spacecraft",
+    "file": "/models/spacecraft/osiris_rex.glb",
+    "size_bytes": 1281308,
+    "provenance": "NASA 3D Resources (Official Public Domain - NASA-3D-Resources GitHub)",
+    "isAuthenticModel": true
+  },
+  {
+    "slug": "rosetta",
+    "aliases": [
+      "philae"
+    ],
+    "name": "Rosetta Spacecraft",
+    "file": "/models/spacecraft/rosetta.glb",
+    "size_bytes": 2262728,
+    "provenance": "NASA 3D Resources (Official Public Domain - NASA-3D-Resources GitHub)",
+    "isAuthenticModel": true
+  },
+  {
+    "slug": "apollo-11-lm-descent-stage",
+    "aliases": [
+      "apollo-11-lunar-module"
+    ],
+    "name": "Apollo Lunar Module",
+    "file": "/models/spacecraft/apollo_lm.glb",
+    "size_bytes": 716840,
+    "provenance": "NASA 3D Resources (Official Public Domain - NASA-3D-Resources GitHub)",
+    "isAuthenticModel": true
+  },
+  {
+    "slug": "international-space-station",
+    "aliases": [
+      "iss"
+    ],
+    "name": "International Space Station (ISS)",
+    "file": "/models/spacecraft/iss.glb",
+    "size_bytes": 476992,
+    "provenance": "NASA 3D Resources (Official Public Domain - NASA-3D-Resources GitHub)",
+    "isAuthenticModel": true
+  },
+  {
+    "slug": "lunar-reconnaissance-orbiter",
+    "aliases": [
+      "lro"
+    ],
+    "name": "Lunar Reconnaissance Orbiter",
+    "file": "/models/spacecraft/lro.glb",
+    "size_bytes": 654500,
+    "provenance": "NASA 3D Resources (Official Public Domain - NASA-3D-Resources GitHub)",
+    "isAuthenticModel": true
+  }
+]

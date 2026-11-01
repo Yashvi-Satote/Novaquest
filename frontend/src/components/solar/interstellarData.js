@@ -122,6 +122,7 @@ export const SCALE_PRESETS = {
   PLANETARY: {
     id: 'planetary',
     label: 'Planetary Surface & Orbit',
+    shortLabel: 'Planetary',
     description: 'Close inspection of planetary terrain, landing sites, and orbital modules.',
     cameraDistance: 10,
     targetY: 0
@@ -129,6 +130,7 @@ export const SCALE_PRESETS = {
   SOLAR_SYSTEM: {
     id: 'solar',
     label: 'Solar System Overview',
+    shortLabel: 'Solar System',
     description: 'The Sun, terrestrial worlds, asteroid belt, and gas giants out to Neptune.',
     cameraDistance: 180,
     targetY: 0
@@ -136,6 +138,7 @@ export const SCALE_PRESETS = {
   HELIOSPHERE: {
     id: 'heliosphere',
     label: 'Heliosphere & Interstellar',
+    shortLabel: 'Heliosphere',
     description: 'The solar wind bubble boundary and escaping probes (Voyager 1 & 2, Pioneer, New Horizons).',
     cameraDistance: 900,
     targetY: 350
@@ -143,8 +146,43 @@ export const SCALE_PRESETS = {
   GALACTIC: {
     id: 'galactic',
     label: 'Wider Milky Way Context',
+    shortLabel: 'Galactic Context',
     description: 'The Solar System oriented at ~60° tilt relative to the Milky Way galactic disk.',
     cameraDistance: 3200,
     targetY: 1500
+  },
+  VOYAGER_LOCAL: {
+    id: 'voyager_local',
+    label: 'Voyager 1 Local (1,000 km)',
+    shortLabel: 'Voyager 1 Local',
+    description: '1,000 km proximity exploration sphere centered on Voyager 1 in the local interstellar medium (ISM).',
+    sphereRadiusKm: 1000,
+    cameraDistance: 14,
+    targetY: 0
   }
 };
+
+/**
+ * Scientific Telemetry & Physical Metrics for Voyager 1 Local Proximity Volume (1,000 km radius)
+ * 
+ * SCIENTIFIC CLARIFICATION & DISCLAIMER:
+ * A 1,000 km sphere around Voyager 1 is a local proximity visualization,
+ * NOT a representation of the entire interstellar environment.
+ * The local volume represents pristine interstellar vacuum.
+ * No nearby stars, satellites, spacecraft, or macroscopic debris exist in this volume.
+ */
+export const VOYAGER_LOCAL_METRICS = {
+  sphereRadiusKm: 1000,
+  sphereRadiusLabel: '1,000 km',
+  regime: 'Local Interstellar Medium (ISM)',
+  solarDistanceAU: 163.7,
+  solarDistanceKm: '24.5 billion km',
+  asymptoticSpeedKmS: 16.9,
+  asymptoticSpeedAUYear: 3.57,
+  constellationHeading: 'Ophiuchus (RA 17h 14m, Dec +12°)',
+  plasmaDensityCm3: '~0.08 cm⁻³ (PWS plasma wave detection post-heliopause crossing)',
+  magneticFieldStrengthNT: '~0.48 nT (Interstellar magnetic field detected by MAG)',
+  cosmicRayFlux: '90%+ Galactic Cosmic Rays (solar wind ions depleted)',
+  nearbyObjectsDisclaimer: 'Verified pristine interstellar vacuum volume; 0 known macroscopic natural or artificial objects exist within this local 1,000 km volume.'
+};
+
