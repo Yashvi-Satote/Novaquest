@@ -179,6 +179,28 @@ export const CELESTIAL_BODIES = [
     placeholderMissions: ['viking-1-lander', 'curiosity-rover', 'perseverance-rover', 'mars-reconnaissance-orbiter']
   },
   {
+    id: 'ceres',
+    name: 'Ceres',
+    type: 'dwarf-planet',
+    radius: 0.62,
+    distance: 48.0,
+    orbitalPeriod: 1682, // ~4.6 Earth years
+    rotationPeriod: 9.07,
+    axialTilt: 4.0,
+    color: '#9ca3af',
+    surfacePalette: ['#6b7280', '#9ca3af', '#4b5563', '#d1d5db'],
+    atmosphere: false,
+    overview: 'The largest object in the asteroid belt between Mars and Jupiter, and the only dwarf planet in the inner solar system, famously explored by NASA Dawn.',
+    realStats: {
+      diameter: '940 km',
+      distanceFromSun: '414 million km (2.77 AU)',
+      orbitalPeriod: '4.6 Earth years',
+      moons: '0',
+      surfaceTemp: '-105 °C to -38 °C'
+    },
+    placeholderMissions: ['dawn']
+  },
+  {
     id: 'jupiter',
     name: 'Jupiter',
     type: 'planet',

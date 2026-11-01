@@ -41,7 +41,7 @@ export default function SolarControlsHUD({
   onToggleLightingMode,
   cameraMode = 'orbit',
   onChangeCameraMode,
-  layerVisibility = { orbits: true, trajectories: true, markers: true },
+  layerVisibility = { orbits: true, trajectories: true, markers: true, labels: true, stars: true },
   onToggleLayer,
   onScrubStart,
   onScrubEnd
@@ -267,6 +267,7 @@ export default function SolarControlsHUD({
         {/* Visual Layers Dropdown */}
         <div className="relative">
           <button
+            id="layers-menu-toggle-btn"
             type="button"
             onClick={() => setShowLayersMenu(prev => !prev)}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-semibold backdrop-blur-xl transition-all cursor-pointer shadow-lg ${
@@ -278,8 +279,8 @@ export default function SolarControlsHUD({
           </button>
 
           {showLayersMenu && (
-            <div className="absolute right-0 top-10 w-48 bg-[#0a071c]/95 backdrop-blur-2xl border border-purple-500/30 rounded-xl shadow-2xl p-2.5 flex flex-col gap-1.5 text-xs z-30">
-              <span className="text-[10px] text-purple-400 font-mono uppercase tracking-wider px-2 py-0.5">Visual Layers</span>
+            <div className="absolute right-0 top-10 w-52 bg-[#0a071c]/95 backdrop-blur-2xl border border-purple-500/30 rounded-xl shadow-2xl p-2.5 flex flex-col gap-1.5 text-xs z-30">
+              <span className="text-[10px] text-purple-400 font-mono uppercase tracking-wider px-2 py-0.5">NASA Eyes Visual Layers</span>
               <button
                 type="button"
                 onClick={() => onToggleLayer('orbits')}
@@ -287,6 +288,14 @@ export default function SolarControlsHUD({
               >
                 <span>Planetary Orbits</span>
                 {layerVisibility.orbits && <Check className="w-3.5 h-3.5 text-cyan-400" />}
+              </button>
+              <button
+                type="button"
+                onClick={() => onToggleLayer('labels')}
+                className="flex items-center justify-between px-2.5 py-1.5 rounded-lg hover:bg-purple-900/40 text-purple-200 hover:text-white cursor-pointer"
+              >
+                <span>Planet Name Labels</span>
+                {layerVisibility.labels && <Check className="w-3.5 h-3.5 text-cyan-400" />}
               </button>
               <button
                 type="button"
@@ -303,6 +312,14 @@ export default function SolarControlsHUD({
               >
                 <span>Spacecraft Markers</span>
                 {layerVisibility.markers && <Check className="w-3.5 h-3.5 text-cyan-400" />}
+              </button>
+              <button
+                type="button"
+                onClick={() => onToggleLayer('stars')}
+                className="flex items-center justify-between px-2.5 py-1.5 rounded-lg hover:bg-purple-900/40 text-purple-200 hover:text-white cursor-pointer"
+              >
+                <span>Stars & Milky Way</span>
+                {layerVisibility.stars && <Check className="w-3.5 h-3.5 text-cyan-400" />}
               </button>
             </div>
           )}

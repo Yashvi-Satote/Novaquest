@@ -109,6 +109,15 @@ export const JPL_PLANETARY_ELEMENTS = {
     node: 49.55953891, node_dot: -0.29257343,
     baseSceneDistance: 40.0
   },
+  ceres: {
+    a: 2.7675, a_dot: 0.0,
+    e: 0.0758, e_dot: 0.0,
+    I: 10.593, I_dot: 0.0,
+    L: 102.8, L_dot: 7819.8,
+    w_bar: 73.6, w_bar_dot: 0.0,
+    node: 80.3, node_dot: 0.0,
+    baseSceneDistance: 48.0
+  },
   jupiter: {
     a: 5.20288700, a_dot: -0.00011607,
     e: 0.04838624, e_dot: -0.00013253,
