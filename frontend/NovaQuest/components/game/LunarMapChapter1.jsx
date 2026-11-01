@@ -51,15 +51,19 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
 
   // HUD & Game State
   const [isLocked, setIsLocked] = useState(false);
-  const [activeObjective, setActiveObjective] = useState('Survey the historic Surveyor 1 touchdown site');
+  const [activeObjective, setActiveObjective] = useState('Debrief with recovery team at Landing Zone & proceed West toward Surveyor 1');
+  const [activeZone, setActiveZone] = useState('ZONE 1 · TEAM LANDING');
+  const [distanceToLanding, setDistanceToLanding] = useState(0);
   const [distanceToSurveyor, setDistanceToSurveyor] = useState(0);
+  const [distanceToCrater, setDistanceToCrater] = useState(0);
   const [distanceToAnomaly, setDistanceToAnomaly] = useState(0);
+  const [anomalousSignal, setAnomalousSignal] = useState(0); // 0 to 100% signal strength
   const [compassHeading, setCompassHeading] = useState(0); // 0 to 360 deg
   const [isUnderground, setIsUnderground] = useState(false);
   const [scanPulseActive, setScanPulseActive] = useState(false);
   const [investigateTarget, setInvestigateTarget] = useState(null);
   const [nearInteractable, setNearInteractable] = useState(null);
-  const [hudNotice, setHudNotice] = useState('Click to look around • WASD to walk • Space for Low-G Jump • [F] Scanner');
+  const [hudNotice, setHudNotice] = useState('Click screen to look • WASD to walk • Space to Jump • [F] Scan • [E] Interact');
 
   // Suit Telemetry State
   const [oxygenLevel, setOxygenLevel] = useState(98.6);
@@ -98,7 +102,7 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
     // 2. CAMERA — First-Person Astronaut Eye Level (1.75m)
     const camera = new THREE.PerspectiveCamera(65, width / height, 0.1, 2000);
     const EYE_HEIGHT = 1.75;
-    camera.position.set(45, EYE_HEIGHT, 50); // Start near Artemis recovery craft looking towards Surveyor 1
+    camera.position.set(104, EYE_HEIGHT, 66); // Start at Zone 1 Team Landing Zone looking West toward Surveyor 1
 
     // 3. RENDERER WITH HIGH-CONTRAST PBR SHADOWS
     let renderer;
@@ -225,11 +229,11 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
     // Procedural terrain height generation with crater formulas & outer boundary mountain walls
     const posAttr = terrainGeo.attributes.position;
     const craterCenters = [
-      { x: 0, z: 0, radius: 45, depth: 3.2, rimHeight: 1.4 }, // Surveyor 1 basin depression
-      { x: 75, z: -65, radius: 28, depth: 4.8, rimHeight: 2.2 }, // South-East impact crater
-      { x: -80, z: 60, radius: 35, depth: 5.5, rimHeight: 2.5 }, // North-West crater
+      { x: 0, z: 0, radius: 45, depth: 3.2, rimHeight: 1.4 }, // Zone 2: Surveyor 1 basin depression
+      { x: -75, z: -50, radius: 34, depth: 7.2, rimHeight: 2.6 }, // Zone 3: Crater Investigation Area
+      { x: 75, z: -65, radius: 26, depth: 4.5, rimHeight: 2.0 }, // South-East impact crater
       { x: -95, z: -110, radius: 22, depth: 6.2, rimHeight: 3.0 }, // Anomaly fissure basin
-      { x: 120, z: 90, radius: 40, depth: 5.0, rimHeight: 2.4 } // East crater
+      { x: 120, z: 90, radius: 38, depth: 5.0, rimHeight: 2.2 } // East crater
     ];
 
     // Secondary micro-craters scattered across the landscape
@@ -274,6 +278,13 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
           const rimNorm = rimDist / (mc.radius * 0.4);
           h += Math.sin(rimNorm * Math.PI) * mc.rim;
         }
+      }
+
+      // Zone 1 Landing Flat Area (Ensures flat, slightly uneven ground for the transport vehicle)
+      const distLanding = Math.hypot(x - 105, z - 65);
+      if (distLanding < 32) {
+        const flatFactor = Math.min(1.0, distLanding / 32);
+        h *= (0.2 + 0.8 * flatFactor);
       }
 
       // NATURAL BOUNDARIES: Beyond r > 150m, terrain ascends into impassable crater walls (25-45m high)
@@ -384,25 +395,25 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
       return new THREE.Mesh(ribbonGeo, trackMat);
     };
 
-    // Track 1: Artemis Recovery Pod (55, 40) -> Surveyor 1 (0, 0)
+    // Track 1: Zone 1 Team Landing Zone (105, 65) -> Zone 2 Surveyor 1 (0, 0)
     const trackPointsA = [
-      new THREE.Vector3(52, 0, 38),
-      new THREE.Vector3(40, 0, 28),
-      new THREE.Vector3(26, 0, 16),
-      new THREE.Vector3(12, 0, 6),
-      new THREE.Vector3(2, 0, 0)
+      new THREE.Vector3(100, 0, 64),
+      new THREE.Vector3(76, 0, 48),
+      new THREE.Vector3(50, 0, 30),
+      new THREE.Vector3(25, 0, 14),
+      new THREE.Vector3(3, 0, 2)
     ];
-    scene.add(createTrackRibbon(trackPointsA, 1.5));
+    scene.add(createTrackRibbon(trackPointsA, 1.8));
 
-    // Track 2: Surveyor 1 (0, 0) -> Precursor Anomaly Fissure (-95, -110)
+    // Track 2: Zone 2 Surveyor 1 (0, 0) -> Zone 3 Crater Investigation Area (-75, -50)
     const trackPointsB = [
-      new THREE.Vector3(-4, 0, -2),
-      new THREE.Vector3(-22, 0, -18),
-      new THREE.Vector3(-48, 0, -42),
-      new THREE.Vector3(-72, 0, -78),
-      new THREE.Vector3(-90, 0, -102)
+      new THREE.Vector3(-3, 0, -2),
+      new THREE.Vector3(-24, 0, -16),
+      new THREE.Vector3(-46, 0, -32),
+      new THREE.Vector3(-66, 0, -44),
+      new THREE.Vector3(-74, 0, -50)
     ];
-    scene.add(createTrackRibbon(trackPointsB, 1.4));
+    scene.add(createTrackRibbon(trackPointsB, 1.6));
 
     // 9. MEDIUM-POLY BASALT ROCK BOULDERS & FRACTURED SCREE
     // Medium-poly procedural sculpted rock generator (perturbs icosahedron vertices with angular cleavage)
@@ -626,100 +637,550 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
     heritageRing.position.y = 0.06;
     surveyorGroup.add(heritageRing);
 
+    // Recovery team survey markers placed around Surveyor 1
+    const s1MarkerA = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 1.2, 8), matAluminum);
+    s1MarkerA.position.set(2.8, 0.6, 2.0);
+    surveyorGroup.add(s1MarkerA);
+    const s1BeaconA = new THREE.PointLight(0x06b6d4, 2.0, 8);
+    s1BeaconA.position.set(2.8, 1.25, 2.0);
+    surveyorGroup.add(s1BeaconA);
+
+    const s1MarkerB = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 1.2, 8), matAluminum);
+    s1MarkerB.position.set(-2.6, 0.6, -1.8);
+    surveyorGroup.add(s1MarkerB);
+    const s1BeaconB = new THREE.PointLight(0xf59e0b, 2.0, 8);
+    s1BeaconB.position.set(-2.6, 1.25, -1.8);
+    surveyorGroup.add(s1BeaconB);
+
     scene.add(surveyorGroup);
 
-    // 11. ARTEMIS / AEGIS 2126 FORWARD RECOVERY POD & UNCREWED EXPLORATION CART (X: 55, Z: 40)
-    const podGroup = new THREE.Group();
-    const podTerrainY = getTerrainHeight(55, 40);
-    podGroup.position.set(55, podTerrainY, 40);
+    // =========================================================================
+    // 11. ZONE 1 — TEAM LANDING ZONE (X: 105, Z: 65)
+    // =========================================================================
+    const landingZoneGroup = new THREE.Group();
+    const landingTerrainY = getTerrainHeight(105, 65);
+    landingZoneGroup.position.set(105, landingTerrainY, 65);
 
-    // Modern faceted titanium exploration capsule (Medium-Poly 12-sided)
-    const podBody = new THREE.Mesh(
-      new THREE.CylinderGeometry(2.9, 3.8, 3.4, 12),
-      new THREE.MeshStandardMaterial({ color: 0x334155, metalness: 0.92, roughness: 0.22 })
-    );
-    podBody.position.y = 1.7;
-    podBody.castShadow = true;
-    podGroup.add(podBody);
+    // A. Disturbed Regolith Dust Ring / Landing Scorch Pad
+    const landingRingGeo = new THREE.RingGeometry(4.5, 14.0, 32);
+    const landingRingMat = new THREE.MeshStandardMaterial({
+      map: regolithMap,
+      color: 0x181a20,
+      roughness: 0.99,
+      side: THREE.DoubleSide,
+      depthWrite: false,
+      polygonOffset: true,
+      polygonOffsetFactor: -1.0
+    });
+    const landingPadRing = new THREE.Mesh(landingRingGeo, landingRingMat);
+    landingPadRing.rotation.x = -Math.PI / 2;
+    landingPadRing.position.y = 0.04;
+    landingZoneGroup.add(landingPadRing);
 
-    // Observation cupola dome with golden solar-protective sheen
-    const cupola = new THREE.Mesh(
-      new THREE.SphereGeometry(1.3, 24, 16, 0, Math.PI * 2, 0, Math.PI / 2),
-      new THREE.MeshStandardMaterial({ color: 0xf59e0b, metalness: 0.95, roughness: 0.1, transparent: true, opacity: 0.85 })
-    );
-    cupola.position.set(0, 3.4, 0);
-    podGroup.add(cupola);
+    // B. Parked Lunar Transport Vehicle (Aegis-01) at (X: 110.5, Z: 65 -> offset in group (5.5, 0, 0))
+    const transportVehicleGroup = new THREE.Group();
+    transportVehicleGroup.position.set(5.5, 0, 0);
+    transportVehicleGroup.rotation.y = Math.PI * 0.95; // Pointing West towards Surveyor 1
 
-    // Telemetry antenna dish
-    const dish = new THREE.Mesh(
-      new THREE.SphereGeometry(1.3, 24, 24, 0, Math.PI * 2, 0, Math.PI / 2),
-      new THREE.MeshStandardMaterial({ color: 0x06b6d4, metalness: 0.9, roughness: 0.18 })
-    );
-    dish.position.set(0, 4.4, 0);
-    dish.rotation.x = -0.6;
-    dish.castShadow = true;
-    podGroup.add(dish);
+    // Vehicle Chassis (Heavy Pressurized Titanium Hull)
+    const vehBodyMat = new THREE.MeshStandardMaterial({ color: 0x334155, metalness: 0.88, roughness: 0.3 });
+    const vehAccentMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.85, roughness: 0.25 });
+    const vehGlassMat = new THREE.MeshStandardMaterial({
+      color: 0xf59e0b,
+      metalness: 0.96,
+      roughness: 0.08,
+      transparent: true,
+      opacity: 0.88
+    });
 
-    // Pulsing Cyan Beacon Light
-    const podBeacon = new THREE.PointLight(0x06b6d4, 3.5, 35);
-    podBeacon.position.set(0, 5.2, 0);
-    podGroup.add(podBeacon);
+    // Lower Frame & Skid Plate
+    const vehChassis = new THREE.Mesh(new THREE.BoxGeometry(6.6, 1.2, 3.2), vehBodyMat);
+    vehChassis.position.y = 1.3;
+    vehChassis.castShadow = true;
+    vehChassis.receiveShadow = true;
+    transportVehicleGroup.add(vehChassis);
 
-    // Uncrewed Autonomous Exploration Cart / Rover parked by the pod
-    const roverGroup = new THREE.Group();
-    roverGroup.position.set(5.2, 0.45, -2.5);
-    roverGroup.rotation.y = -0.4;
+    // Upper Pressurized Crew Cabin with Slanted Cockpit Nose
+    const vehCabin = new THREE.Mesh(new THREE.BoxGeometry(4.2, 1.6, 2.9), vehAccentMat);
+    vehCabin.position.set(-0.8, 2.4, 0);
+    vehCabin.castShadow = true;
+    transportVehicleGroup.add(vehCabin);
 
-    const roverChassis = new THREE.Mesh(
-      new THREE.BoxGeometry(2.2, 0.45, 1.4),
-      new THREE.MeshStandardMaterial({ color: 0x475569, metalness: 0.85, roughness: 0.3 })
-    );
-    roverChassis.position.y = 0.55;
-    roverChassis.castShadow = true;
-    roverGroup.add(roverChassis);
+    // Cockpit Window Viewport (Golden Solar Shield Glass)
+    const vehCockpitGlass = new THREE.Mesh(new THREE.BoxGeometry(1.6, 1.2, 2.6), vehGlassMat);
+    vehCockpitGlass.position.set(2.0, 2.2, 0);
+    vehCockpitGlass.rotation.z = -0.32;
+    transportVehicleGroup.add(vehCockpitGlass);
 
-    // 4 Wire-Mesh Wheels
-    const wheelMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.9, roughness: 0.4 });
-    const wheelPositions = [
-      [-1.1, 0.35, -0.85],
-      [1.1, 0.35, -0.85],
-      [-1.1, 0.35, 0.85],
-      [1.1, 0.35, 0.85]
+    // Rear Pressurized Airlock Hatch
+    const airlockDoor = new THREE.Mesh(new THREE.CylinderGeometry(0.7, 0.7, 0.2, 16), matAluminum);
+    airlockDoor.rotation.z = Math.PI / 2;
+    airlockDoor.position.set(-3.35, 1.6, 0);
+    transportVehicleGroup.add(airlockDoor);
+
+    // Roof Equipment Rack & Telemetry Array
+    const roofRack = new THREE.Mesh(new THREE.BoxGeometry(3.6, 0.2, 2.4), matAluminum);
+    roofRack.position.set(-0.6, 3.3, 0);
+    transportVehicleGroup.add(roofRack);
+
+    const roofDish = new THREE.Mesh(new THREE.SphereGeometry(0.85, 16, 16, 0, Math.PI * 2, 0, Math.PI / 2), matAluminum);
+    roofDish.position.set(-1.4, 4.0, 0);
+    roofDish.rotation.x = 0.45;
+    roofDish.rotation.z = -0.35;
+    transportVehicleGroup.add(roofDish);
+
+    // 6 Rugged Lunar Titanium Flex-Mesh Wheels with Suspension Struts
+    const wheelMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.92, roughness: 0.38 });
+    const wheelOffsets = [
+      [ 2.2, 0.7,  1.9],
+      [ 0.0, 0.7,  1.9],
+      [-2.2, 0.7,  1.9],
+      [ 2.2, 0.7, -1.9],
+      [ 0.0, 0.7, -1.9],
+      [-2.2, 0.7, -1.9]
     ];
-    for (const [wx, wy, wz] of wheelPositions) {
-      const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.38, 0.28, 16), wheelMat);
-      wheel.rotation.z = Math.PI / 2;
+    for (const [wx, wy, wz] of wheelOffsets) {
+      const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.68, 0.68, 0.48, 20), wheelMat);
+      wheel.rotation.x = Math.PI / 2;
       wheel.position.set(wx, wy, wz);
       wheel.castShadow = true;
-      roverGroup.add(wheel);
+      transportVehicleGroup.add(wheel);
+
+      // Suspension Arm
+      const strut = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.7, 0.3), matAluminum);
+      strut.position.set(wx, wy + 0.45, wz > 0 ? wz - 0.2 : wz + 0.2);
+      strut.rotation.z = wx > 0 ? 0.3 : -0.3;
+      transportVehicleGroup.add(strut);
     }
 
-    // Robotic sample collection arm
-    const armBase = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.9, 12), matAluminum);
-    armBase.position.set(0.9, 0.95, 0.4);
-    armBase.rotation.z = -0.6;
-    roverGroup.add(armBase);
+    // High-Intensity Dual Forward LED Landing Headlights (Casting Long Shadows West)
+    const headlightMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+    for (const sideZ of [-1.1, 1.1]) {
+      const headlightMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.1, 12), headlightMat);
+      headlightMesh.rotation.z = Math.PI / 2;
+      headlightMesh.position.set(3.35, 1.6, sideZ);
+      transportVehicleGroup.add(headlightMesh);
 
-    // Mini sensor mast
-    const sensorMast = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.8, 12), matAluminum);
-    sensorMast.position.set(-0.8, 1.1, -0.4);
-    roverGroup.add(sensorMast);
-
-    podGroup.add(roverGroup);
-
-    // Recovery Equipment Cases & Sample Storage
-    for (let c = 0; c < 3; c++) {
-      const boxCase = new THREE.Mesh(
-        new THREE.BoxGeometry(1.2, 0.7, 0.8),
-        new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.35, metalness: 0.2 })
-      );
-      boxCase.position.set(7.4 + c * 0.9, 0.35, -0.2 + c * 0.6);
-      boxCase.rotation.y = c * 0.3;
-      boxCase.castShadow = true;
-      podGroup.add(boxCase);
+      const headlightBeam = new THREE.SpotLight(0xfffaed, 5.0, 65, Math.PI / 5, 0.45, 1.2);
+      headlightBeam.position.set(3.4, 1.6, sideZ);
+      headlightBeam.target.position.set(25.0, -1.0, sideZ * 1.5);
+      headlightBeam.castShadow = true;
+      transportVehicleGroup.add(headlightBeam);
+      transportVehicleGroup.add(headlightBeam.target);
     }
 
-    scene.add(podGroup);
+    // Vehicle Top Beacon Strobe Light
+    const vehBeacon = new THREE.PointLight(0xf59e0b, 2.5, 25);
+    vehBeacon.position.set(0.6, 3.6, 0);
+    transportVehicleGroup.add(vehBeacon);
+
+    landingZoneGroup.add(transportVehicleGroup);
+
+    // C. Reusable Astronaut Creator Helper
+    const astronautCrewList = [];
+    const createAstronautMesh = (name, role, accentColor, isHoldingDatapad) => {
+      const astroGroup = new THREE.Group();
+      const suitWhiteMat = new THREE.MeshStandardMaterial({ color: 0xf1f5f9, roughness: 0.55, metalness: 0.15 });
+      const jointDarkMat = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.8, metalness: 0.3 });
+      const accentMat = new THREE.MeshStandardMaterial({ color: accentColor, roughness: 0.4, metalness: 0.2 });
+      const goldVisorMat = new THREE.MeshStandardMaterial({
+        color: 0xf59e0b,
+        metalness: 0.98,
+        roughness: 0.04
+      });
+
+      // Torso / Chest Unit
+      const torso = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.72, 0.36), suitWhiteMat);
+      torso.position.y = 1.22;
+      torso.castShadow = true;
+      astroGroup.add(torso);
+
+      // Chest Mission Badge / Control Unit
+      const chestPack = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.32, 0.12), accentMat);
+      chestPack.position.set(0, 1.3, 0.2);
+      astroGroup.add(chestPack);
+
+      // Oxygen connector tubes
+      for (const ox of [-0.08, 0.08]) {
+        const hose = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.3, 8), jointDarkMat);
+        hose.position.set(ox, 1.12, 0.22);
+        astroGroup.add(hose);
+      }
+
+      // PLSS Backpack (Portable Life Support System)
+      const backpack = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.76, 0.26), suitWhiteMat);
+      backpack.position.set(0, 1.25, -0.25);
+      backpack.castShadow = true;
+      astroGroup.add(backpack);
+
+      // Backpack Status Indicator LED
+      const plssLight = new THREE.PointLight(accentColor, 1.5, 6);
+      plssLight.position.set(0, 1.55, -0.38);
+      astroGroup.add(plssLight);
+
+      // Helmet & Curved Gold Solar Visor
+      const helmet = new THREE.Mesh(new THREE.SphereGeometry(0.24, 16, 16), suitWhiteMat);
+      helmet.position.set(0, 1.74, 0.02);
+      helmet.castShadow = true;
+      astroGroup.add(helmet);
+
+      const visor = new THREE.Mesh(new THREE.SphereGeometry(0.19, 16, 16, 0, Math.PI, 0, Math.PI), goldVisorMat);
+      visor.rotation.x = -Math.PI / 2;
+      visor.position.set(0, 1.74, 0.08);
+      astroGroup.add(visor);
+
+      // Legs & Heavy EVA Boots
+      for (const lx of [-0.17, 0.17]) {
+        const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.09, 0.65, 12), suitWhiteMat);
+        leg.position.set(lx, 0.62, 0);
+        leg.castShadow = true;
+        astroGroup.add(leg);
+
+        const knee = new THREE.Mesh(new THREE.SphereGeometry(0.1, 10, 10), jointDarkMat);
+        knee.position.set(lx, 0.32, 0);
+        astroGroup.add(knee);
+
+        const boot = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.22, 0.38), jointDarkMat);
+        boot.position.set(lx, 0.11, 0.06);
+        boot.castShadow = true;
+        astroGroup.add(boot);
+      }
+
+      // Arms & Hands
+      if (isHoldingDatapad) {
+        const lArm = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.07, 0.45, 10), suitWhiteMat);
+        lArm.position.set(-0.35, 1.25, 0.12);
+        lArm.rotation.x = -0.7;
+        lArm.rotation.z = -0.3;
+        astroGroup.add(lArm);
+
+        const rArm = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.07, 0.45, 10), suitWhiteMat);
+        rArm.position.set(0.35, 1.25, 0.12);
+        rArm.rotation.x = -0.6;
+        rArm.rotation.z = 0.3;
+        astroGroup.add(rArm);
+
+        // Glowing Field Datapad
+        const datapad = new THREE.Mesh(
+          new THREE.BoxGeometry(0.32, 0.03, 0.22),
+          new THREE.MeshStandardMaterial({ color: 0x0f172a, metalness: 0.9, roughness: 0.2 })
+        );
+        datapad.position.set(0, 1.05, 0.36);
+        datapad.rotation.x = -0.4;
+        astroGroup.add(datapad);
+
+        const screen = new THREE.Mesh(
+          new THREE.PlaneGeometry(0.28, 0.18),
+          new THREE.MeshBasicMaterial({ color: 0x38bdf8 })
+        );
+        screen.position.set(0, 1.07, 0.36);
+        screen.rotation.x = -Math.PI / 2 - 0.4;
+        astroGroup.add(screen);
+
+        const padLight = new THREE.PointLight(0x38bdf8, 1.8, 4);
+        padLight.position.set(0, 1.15, 0.4);
+        astroGroup.add(padLight);
+      } else {
+        for (const ax of [-0.36, 0.36]) {
+          const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.07, 0.6, 10), suitWhiteMat);
+          arm.position.set(ax, 1.18, 0);
+          arm.rotation.z = ax > 0 ? -0.15 : 0.15;
+          arm.castShadow = true;
+          astroGroup.add(arm);
+
+          const glove = new THREE.Mesh(new THREE.SphereGeometry(0.09, 8, 8), jointDarkMat);
+          glove.position.set(ax * 1.1, 0.85, 0);
+          astroGroup.add(glove);
+        }
+      }
+
+      astroGroup.userData = { name, role, initialY: 0, breathSpeed: 1.5 + Math.random() * 0.5 };
+      astronautCrewList.push(astroGroup);
+      return astroGroup;
+    };
+
+    // Astronaut 1: Specialist Maya Chen (Holding Field Datapad) at (-2.2, 0, 3.2)
+    const mayaMesh = createAstronautMesh('Specialist Maya Chen', 'Lead Exobiologist', 0x06b6d4, true);
+    mayaMesh.position.set(-2.2, 0, 3.2);
+    mayaMesh.rotation.y = -0.8;
+    landingZoneGroup.add(mayaMesh);
+
+    // Astronaut 2: Officer Leo Vance (Ops Engineer) at (-4.5, 0, -2.5)
+    const leoMesh = createAstronautMesh('Officer Leo Vance', 'Surface Operations', 0xf59e0b, false);
+    leoMesh.position.set(-4.5, 0, -2.5);
+    leoMesh.rotation.y = 1.1;
+    landingZoneGroup.add(leoMesh);
+
+    // D. Portable High-Gain Satellite Communication Dish on Tripod
+    const commsGroup = new THREE.Group();
+    commsGroup.position.set(-1.0, 0, -6.5);
+
+    for (let t = 0; t < 3; t++) {
+      const tAng = (t * Math.PI * 2) / 3;
+      const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 1.8, 8), matAluminum);
+      leg.position.set(Math.cos(tAng) * 0.55, 0.75, Math.sin(tAng) * 0.55);
+      leg.rotation.x = Math.sin(tAng) * 0.45;
+      leg.rotation.z = -Math.cos(tAng) * 0.45;
+      leg.castShadow = true;
+      commsGroup.add(leg);
+    }
+
+    const commMast = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 2.2, 10), matAluminum);
+    commMast.position.y = 1.5;
+    commMast.castShadow = true;
+    commsGroup.add(commMast);
+
+    const commDish = new THREE.Mesh(
+      new THREE.SphereGeometry(1.2, 24, 16, 0, Math.PI * 2, 0, Math.PI / 2),
+      new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.9, roughness: 0.25 })
+    );
+    commDish.position.set(0, 2.5, 0);
+    commDish.rotation.x = -0.7; // Aimed up toward orbit
+    commDish.rotation.y = 0.5;
+    commDish.castShadow = true;
+    commsGroup.add(commDish);
+
+    const commBeacon = new THREE.PointLight(0x06b6d4, 2.2, 12);
+    commBeacon.position.set(0, 2.7, 0);
+    commsGroup.add(commBeacon);
+
+    landingZoneGroup.add(commsGroup);
+
+    // E. Stacked Mission Equipment Containers (Ruggedized Nanuk-style Crates)
+    const crateMatA = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.7, roughness: 0.4 });
+    const crateMatB = new THREE.MeshStandardMaterial({ color: 0xf59e0b, metalness: 0.6, roughness: 0.35 });
+    const crateOffsets = [
+      { x: -3.2, y: 0.4, z: -4.8, rot: 0.1, mat: crateMatA },
+      { x: -1.9, y: 0.4, z: -4.9, rot: -0.15, mat: crateMatB },
+      { x: -2.5, y: 1.15, z: -4.85, rot: 0.05, mat: crateMatA },
+      { x: -3.8, y: 0.35, z: -3.8, rot: 0.4, mat: crateMatB }
+    ];
+    for (const co of crateOffsets) {
+      const crate = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.75, 0.75), co.mat);
+      crate.position.set(co.x, co.y, co.z);
+      crate.rotation.y = co.rot;
+      crate.castShadow = true;
+      crate.receiveShadow = true;
+      landingZoneGroup.add(crate);
+    }
+
+    // F. Two Small Ground-Deployable Solar Panel Wings
+    for (let sp = 0; sp < 2; sp++) {
+      const panelGroup = new THREE.Group();
+      panelGroup.position.set(2.0 + sp * 2.8, 0, -7.0 + sp * 0.6);
+      panelGroup.rotation.y = 0.5; // Angled toward sun (240, 75, -180)
+
+      const stand = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.06, 1.0, 8), matAluminum);
+      stand.position.y = 0.5;
+      stand.castShadow = true;
+      panelGroup.add(stand);
+
+      const panelWing = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.05, 0.9), matSolarPanel);
+      panelWing.position.set(0, 0.95, 0);
+      panelWing.rotation.x = -0.32;
+      panelWing.castShadow = true;
+      panelGroup.add(panelWing);
+
+      landingZoneGroup.add(panelGroup);
+    }
+
+    // G. Portable Mission Terminal Console ([E] Mission Terminal)
+    const terminalGroup = new THREE.Group();
+    terminalGroup.position.set(-1.8, 0, 0.5);
+
+    const termStand = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.12, 1.1, 10), matAluminum);
+    termStand.position.y = 0.55;
+    termStand.castShadow = true;
+    terminalGroup.add(termStand);
+
+    const termHead = new THREE.Mesh(
+      new THREE.BoxGeometry(0.85, 0.55, 0.12),
+      new THREE.MeshStandardMaterial({ color: 0x0f172a, metalness: 0.85, roughness: 0.3 })
+    );
+    termHead.position.set(0, 1.1, 0);
+    termHead.rotation.x = -0.38;
+    termHead.castShadow = true;
+    terminalGroup.add(termHead);
+
+    const termScreen = new THREE.Mesh(
+      new THREE.PlaneGeometry(0.76, 0.46),
+      new THREE.MeshBasicMaterial({ color: 0x06b6d4 })
+    );
+    termScreen.position.set(0, 1.12, 0.07);
+    termScreen.rotation.x = -0.38;
+    terminalGroup.add(termScreen);
+
+    const termLight = new THREE.PointLight(0x06b6d4, 2.5, 8);
+    termLight.position.set(0, 1.3, 0.3);
+    terminalGroup.add(termLight);
+
+    landingZoneGroup.add(terminalGroup);
+
+    // H. Small Basalt Rocks Scattered Around Landing Zone
+    for (let r = 0; r < 18; r++) {
+      const rAng = Math.random() * Math.PI * 2;
+      const rDist = 3.5 + Math.random() * 14;
+      const rock = new THREE.Mesh(rockGeoC, rockMat);
+      const rScale = 0.25 + Math.random() * 0.45;
+      rock.scale.set(rScale, rScale * 0.65, rScale);
+      rock.position.set(Math.cos(rAng) * rDist, rScale * 0.2, Math.sin(rAng) * rDist);
+      rock.rotation.set(Math.random() * 3, Math.random() * 3, Math.random() * 3);
+      rock.castShadow = true;
+      landingZoneGroup.add(rock);
+    }
+
+    // I. Static Astronaut EVA Footprints Leading West Toward Surveyor 1
+    const landingFootprints = [
+      { x: -1.0, z: 1.2, rot: -2.1 },
+      { x: -2.8, z: 2.2, rot: -2.1 },
+      { x: -5.0, z: 3.4, rot: -2.2 },
+      { x: -8.0, z: 4.8, rot: -2.1 },
+      { x: -12.0, z: 6.2, rot: -2.0 },
+      { x: -16.5, z: 7.5, rot: -2.0 },
+      { x: -22.0, z: 9.0, rot: -2.1 }
+    ];
+    for (let i = 0; i < landingFootprints.length; i++) {
+      const fp = landingFootprints[i];
+      const isRight = i % 2 === 0;
+      const offsetSide = isRight ? 0.2 : -0.2;
+      const printMesh = new THREE.Mesh(bootprintGeo, bootprintMat);
+      printMesh.position.set(fp.x + Math.sin(fp.rot) * offsetSide, 0.04, fp.z - Math.cos(fp.rot) * offsetSide);
+      printMesh.rotation.y = fp.rot;
+      landingZoneGroup.add(printMesh);
+    }
+
+    scene.add(landingZoneGroup);
+
+    // =========================================================================
+    // 12. ZONE 3 — CRATER INVESTIGATION AREA (X: -75, Z: -50)
+    // =========================================================================
+    const craterInvestigationGroup = new THREE.Group();
+    const craterCenterY = getTerrainHeight(-75, -50);
+    craterInvestigationGroup.position.set(-75, craterCenterY, -50);
+
+    // A. Massive Basalt Boulders Ringing the Crater Rim (Radius ~30-34m)
+    const rimBoulderGeo = createMediumPolyRockGeo(2.4, 2, 0.35);
+    const rimAngles = [0.1, 0.65, 1.25, 1.9, 2.7, 3.4, 4.1, 4.9, 5.6];
+    for (let i = 0; i < rimAngles.length; i++) {
+      const angle = rimAngles[i];
+      const radius = 31 + (i % 3) * 2.5;
+      const bx = Math.cos(angle) * radius;
+      const bz = Math.sin(angle) * radius;
+      const worldX = -75 + bx;
+      const worldZ = -50 + bz;
+      const by = getTerrainHeight(worldX, worldZ) - craterCenterY;
+
+      const boulder = new THREE.Mesh(rimBoulderGeo, rockMat);
+      const bScale = 1.2 + (i % 4) * 0.45;
+      boulder.scale.set(bScale * 1.2, bScale * 0.9, bScale * 1.1);
+      boulder.position.set(bx, by + bScale * 0.5, bz);
+      boulder.rotation.set((i * 1.3) % Math.PI, (i * 0.7) % Math.PI, (i * 0.9) % Math.PI);
+      boulder.castShadow = true;
+      boulder.receiveShadow = true;
+      craterInvestigationGroup.add(boulder);
+    }
+
+    // B. Inner Talus Scree & Angular Rocks Tumbling Down Crater Walls
+    for (let s = 0; s < 28; s++) {
+      const sAng = (s * Math.PI * 2) / 28 + (s % 3) * 0.2;
+      const sRad = 12 + (s % 5) * 3.8;
+      const sx = Math.cos(sAng) * sRad;
+      const sz = Math.sin(sAng) * sRad;
+      const worldX = -75 + sx;
+      const worldZ = -50 + sz;
+      const sy = getTerrainHeight(worldX, worldZ) - craterCenterY;
+
+      const rock = new THREE.Mesh(rockGeoC, rockMat);
+      const rScale = 0.5 + Math.random() * 0.8;
+      rock.scale.set(rScale, rScale * 0.6, rScale);
+      rock.position.set(sx, sy + rScale * 0.25, sz);
+      rock.rotation.set(Math.random() * 3, Math.random() * 3, Math.random() * 3);
+      rock.castShadow = true;
+      craterInvestigationGroup.add(rock);
+    }
+
+    // C. Partially Buried Metallic Precursor Object (Embedded in lower wall/floor at X: -78, Z: -54)
+    const buriedObjGroup = new THREE.Group();
+    const buriedWorldY = getTerrainHeight(-78, -54);
+    buriedObjGroup.position.set(-3.0, buriedWorldY - craterCenterY, -4.0);
+    buriedObjGroup.rotation.set(0.42, -0.65, 0.28); // Protruding at an angle from the regolith
+
+    // Alien Non-Human Precursor Geometric Prismatic Monolith Core
+    const buriedMonolithGeo = new THREE.CylinderGeometry(0.9, 1.4, 4.8, 8);
+    const buriedMonolithMat = new THREE.MeshStandardMaterial({
+      map: alienGlyphMap,
+      color: 0x0e1122,
+      emissive: 0x818cf8,
+      emissiveIntensity: 0.65,
+      metalness: 0.98,
+      roughness: 0.12
+    });
+    const buriedMonolith = new THREE.Mesh(buriedMonolithGeo, buriedMonolithMat);
+    buriedMonolith.position.y = 1.4;
+    buriedMonolith.castShadow = true;
+    buriedObjGroup.add(buriedMonolith);
+
+    // Anomalous 432 Hz Resonant Purple Light
+    const buriedObjectLight = new THREE.PointLight(0xa855f7, 4.5, 22);
+    buriedObjectLight.position.set(0, 2.5, 0);
+    buriedObjGroup.add(buriedObjectLight);
+
+    // Glowing Geometric Ring Emitting from Soil Breach
+    const groundBreachRing = new THREE.Mesh(
+      new THREE.RingGeometry(1.6, 2.6, 32),
+      new THREE.MeshBasicMaterial({ color: 0x818cf8, side: THREE.DoubleSide, transparent: true, opacity: 0.8 })
+    );
+    groundBreachRing.rotation.x = -Math.PI / 2;
+    groundBreachRing.position.y = 0.08;
+    buriedObjGroup.add(groundBreachRing);
+
+    craterInvestigationGroup.add(buriedObjGroup);
+
+    // D. 3 Survey Pylon Markers for the 3-Location Handheld Scanner Puzzle
+    const createSurveyPylon = (id, beaconColor, px, pz) => {
+      const pylonGroup = new THREE.Group();
+      const worldY = getTerrainHeight(px, pz);
+      pylonGroup.position.set(px - (-75), worldY - craterCenterY, pz - (-50));
+
+      for (let t = 0; t < 3; t++) {
+        const tAng = (t * Math.PI * 2) / 3;
+        const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 1.2, 8), matAluminum);
+        leg.position.set(Math.cos(tAng) * 0.35, 0.5, Math.sin(tAng) * 0.35);
+        leg.rotation.x = Math.sin(tAng) * 0.35;
+        leg.rotation.z = -Math.cos(tAng) * 0.35;
+        pylonGroup.add(leg);
+      }
+
+      const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 1.5, 8), matAluminum);
+      mast.position.y = 1.0;
+      pylonGroup.add(mast);
+
+      const beaconGeo = new THREE.SphereGeometry(0.12, 12, 12);
+      const beaconMat = new THREE.MeshBasicMaterial({ color: beaconColor });
+      const beaconMesh = new THREE.Mesh(beaconGeo, beaconMat);
+      beaconMesh.position.y = 1.8;
+      pylonGroup.add(beaconMesh);
+
+      const beaconLight = new THREE.PointLight(beaconColor, 2.5, 12);
+      beaconLight.position.y = 1.8;
+      pylonGroup.add(beaconLight);
+
+      return pylonGroup;
+    };
+
+    // Site Alpha (North Rim Outcrop) at (-68, -40) - Amber Beacon (22% resonance)
+    const pylonAlpha = createSurveyPylon('poi_crater_site_alpha', 0xf59e0b, -68, -40);
+    craterInvestigationGroup.add(pylonAlpha);
+
+    // Site Beta (Inner Scree Slope) at (-74, -48) - Cyan Beacon (54% resonance)
+    const pylonBeta = createSurveyPylon('poi_crater_site_beta', 0x06b6d4, -74, -48);
+    craterInvestigationGroup.add(pylonBeta);
+
+    // Site Gamma (Buried Metallic Object) at (-78, -54) - Purple Beacon (99.4% resonance)
+    const pylonGamma = createSurveyPylon('poi_crater_site_gamma', 0xa855f7, -78, -54);
+    craterInvestigationGroup.add(pylonGamma);
+
+    scene.add(craterInvestigationGroup);
 
     // 12. SUBTERRANEAN ANOMALOUS FISSURE & PRECURSOR CAVERN (X: -95, Z: -110)
     // Fissure Opening on the surface
@@ -945,14 +1406,89 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
     const bootprints = [];
     let footStepToggle = false;
 
-    // 12. INTERACTION POINTS DATABASE
+    // 12. INTERACTION POINTS DATABASE (ZONES 1, 2, 3)
     const interactables = [
+      // ================= ZONE 1: TEAM LANDING ZONE =================
+      {
+        id: 'poi_mission_terminal',
+        title: 'Tactical Mission Terminal',
+        position: new THREE.Vector3(103.2, landingTerrainY + 1.1, 65.5),
+        radius: 4.2,
+        sector: 'Zone 1 · Team Landing Zone',
+        artifactAge: 'Current Expedition (2126)',
+        integrity: '100% Operational',
+        telemetryStatus: 'Carrier Aegis Link Active',
+        description: 'NASA Reconnaissance Division tactical field terminal. Displays mission parameters, EVA suit vitals, route waypoints to Surveyor 1, and Carrier Aegis high-bandwidth uplink.',
+        readings: {
+          'Carrier Aegis Uplink': '48.2 Gbps Carrier Locked',
+          'EVA Mark VIII Status': '100% Nominal (O2 / Power)',
+          'Heading to Surveyor 1': '264° West (120m away)',
+          'Primary Task': 'Investigate historic lander & trace seismic tremor'
+        },
+        officerNote: 'Leo and Maya have the landing vehicle secured. Time to inspect Surveyor 1 and see what caused the seismic disruption that brought us here.'
+      },
+      {
+        id: 'poi_maya_chen',
+        title: 'Specialist Maya Chen (Lead Scientist)',
+        position: new THREE.Vector3(102.8, landingTerrainY + 1.2, 68.2),
+        radius: 3.8,
+        sector: 'Zone 1 · Recovery Team',
+        artifactAge: 'Crewmate',
+        integrity: 'Suit Pressure 32.5 kPa',
+        telemetryStatus: 'Biometrics Active',
+        description: 'Lead sensor specialist monitoring magnetospheric background and seismic telemetry across Oceanus Procellarum.',
+        readings: {
+          'Heart Rate': '76 BPM (Calm / Focused)',
+          'Suit Oxygen': '99.1% Reserves',
+          'EM Resonance': '432 Hz Harmonic Detected',
+          'Field Datapad': 'LIDAR Spectrometry Streaming'
+        },
+        officerNote: '“Captain, keep an eye on your handheld scanner. We caught a distinct harmonic vibration on the descent that didn’t match any natural moonquake. It’s originating West-Northwest of Surveyor 1.”'
+      },
+      {
+        id: 'poi_leo_vance',
+        title: 'Officer Leo Vance (Operations Engineer)',
+        position: new THREE.Vector3(100.5, landingTerrainY + 1.2, 62.5),
+        radius: 3.8,
+        sector: 'Zone 1 · Recovery Team',
+        artifactAge: 'Crewmate',
+        integrity: 'Suit Pressure 32.8 kPa',
+        telemetryStatus: 'Biometrics Active',
+        description: 'Surface operations engineer verifying Aegis-01 subsystems and deploying redundant power couplings.',
+        readings: {
+          'Vehicle Power': '96.4% Solid-State Reserve',
+          'Life Support Buffer': '72 Hours Redundant',
+          'Tire Pressure': '1.2 bar Nitrogen Infill',
+          'Landing Headlights': 'Dual High-Beam Array Active'
+        },
+        officerNote: '“Aegis-01 is grounded and steady, Captain. Headlights will give you visual reference across the dark mare. Holler if you need suit replenishment.”'
+      },
+      {
+        id: 'poi_lunar_transport',
+        title: 'Lunar Transport Vehicle (Aegis-01)',
+        position: new THREE.Vector3(110.5, landingTerrainY + 1.8, 65.0),
+        radius: 6.5,
+        sector: 'Zone 1 · Team Landing Zone',
+        artifactAge: 'Current Expedition (2126)',
+        integrity: '100% Hull Integrity',
+        telemetryStatus: 'Standby / Headlights Active',
+        description: 'Heavy six-wheeled pressurized expedition vehicle with dual high-intensity LED headlights, airlock ingress, and communications mast.',
+        readings: {
+          'Vehicle Mass': '4,850 kg Wet Weight',
+          'Drive System': 'Dual Electric Rocker-Bogie',
+          'Operational Range': '180 km Traversal Radius',
+          'Shielding': 'Reinforced Titanium / Boron Composite'
+        },
+        officerNote: 'Our mobile base on this vacuum wasteland. Those headlights cut through the pitch black like twin suns.'
+      },
+
+      // ================= ZONE 2: SURVEYOR 1 RECOVERY SITE =================
       {
         id: 'surveyor_camera',
         title: 'Vidicon Television Camera Turret',
         position: new THREE.Vector3(0.65, surveyorTerrainY + 3.2, -0.65),
         radius: 4.2,
-        sector: 'Surveyor 1 Touchdown Site',
+        sector: 'Zone 2 · Surveyor 1 Recovery Site',
         artifactAge: '160 Earth Years (1966 - 2126)',
         integrity: '92.4% Preserved Vacuum Patina',
         telemetryStatus: 'Recovered · 11,237 Historic Frames',
@@ -971,8 +1507,8 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
         title: 'Crushable Honeycomb Footpad #2',
         position: new THREE.Vector3(Math.cos((2 * Math.PI) / 3) * 3.6, surveyorTerrainY + 0.5, Math.sin((2 * Math.PI) / 3) * 3.6),
         radius: 4.0,
-        sector: 'Surveyor 1 Soil Mechanics Zone',
-        artifactAge: '160 Earth Years',
+        sector: 'Zone 2 · Surveyor 1 Soil Mechanics',
+        artifactAge: '160 Earth Years (1966)',
         integrity: '100% Intact Structure',
         telemetryStatus: 'Soil Compaction Validated',
         image: '/images/moon_close_up_telescope.jpg',
@@ -990,8 +1526,8 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
         title: 'Planar Solar Array Panel',
         position: new THREE.Vector3(0, surveyorTerrainY + 5.2, 0.2),
         radius: 4.5,
-        sector: 'Surveyor 1 Power Mast',
-        artifactAge: '160 Earth Years',
+        sector: 'Zone 2 · Surveyor 1 Power Mast',
+        artifactAge: '160 Earth Years (1966)',
         integrity: '84.8% (Cosmic Darkened)',
         telemetryStatus: 'Photovoltaic Array',
         description: '792 silicon solar cells producing 89 Watts under full sunlight. Micrometeorite patina and cosmic ray tracking have darkened the protective covers.',
@@ -1004,23 +1540,81 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
         officerNote: 'The solar panel is still turned toward the low sun, faithful to the last telemetry command sent from Goldstone Deep Space Station.'
       },
       {
-        id: 'aegis_pod',
-        title: 'Artemis/Aegis Telemetry Hub',
-        position: new THREE.Vector3(55, podTerrainY + 1.6, 40),
-        radius: 5.5,
-        sector: 'Forward Recovery Base (2126)',
-        artifactAge: 'Current Expedition',
-        integrity: '100% Operational',
-        telemetryStatus: 'Cislunar Carrier Link Active',
-        description: 'Deployed by Arin’s specialized NASA recovery team. Relays real-time high-bandwidth quantum telemetry to the orbital spacecraft overhead.',
+        id: 'surveyor_core',
+        title: 'Surveyor 1 Lander Spaceframe & Subsurface Anomaly',
+        position: new THREE.Vector3(0, surveyorTerrainY + 1.8, 0),
+        radius: 4.8,
+        sector: 'Zone 2 · Surveyor 1 Recovery Site',
+        artifactAge: '160 Earth Years (1966)',
+        integrity: 'Preserved Landmark',
+        telemetryStatus: '432 Hz Subsurface Vibration Detected',
+        description: 'The central triangular tubular frame, retromotor, and vernier thrusters. Suit magnetometers detect an unexpected low-frequency 432 Hz electromagnetic pulse radiating from beneath the site, trending North-West toward the nearby impact crater.',
         readings: {
-          'Orbital Downlink': '48.2 Gbps Carrier Locked',
-          'EVA Power Resupply': '100% Charged',
-          'Vacuum Canisters': '8 Sealed Sample Units Ready',
-          'Radiation Shielding': 'Polyethylene / Boron Composite'
+          'Spacecraft Mass': '294 kg Dry Weight',
+          'Propulsion': 'Solid Retromotor + 3 Hydrazine Verniers',
+          'Harmonic Resonance': '432.06 Hz Continuous Carrier',
+          'Subsurface Vector': '295° Azimuth (Heading to Crater)'
         },
-        officerNote: 'Our link back to the orbital carrier. From here, every grain of regolith and telemetry packet we log is transmitted to the archives back home.'
+        officerNote: 'Wait... this seismic vibration isn’t from Surveyor. It’s passing directly beneath the landing site and heading toward that impact crater to the North-West!'
       },
+
+      // ================= ZONE 3: CRATER INVESTIGATION AREA =================
+      {
+        id: 'poi_crater_site_alpha',
+        title: 'Survey Site Alpha (North Rim Outcrop)',
+        position: new THREE.Vector3(-68, getTerrainHeight(-68, -40) + 1.2, -40),
+        radius: 5.0,
+        sector: 'Zone 3 · Crater Investigation Area',
+        artifactAge: 'Pre-Imbrian Lunar Basalt',
+        integrity: 'Intact Bedrock',
+        telemetryStatus: 'LIDAR Baseline Recorded',
+        description: 'High-standing basalt outcrop on the crater rim overlooking the shadowed interior. Handheld scanner calibrates baseline mineral composition.',
+        readings: {
+          'Basalt Titanium Oxide': '8.4% (Standard Mare Basalt)',
+          'Magnetic Resonance': '22% (Geological Baseline)',
+          'Thermal Variance': '0.0°C Ambient Background',
+          'Signal Vector': 'Diverging · Deeper inside crater'
+        },
+        officerNote: 'Site Alpha shows only normal titanium basalt reflection. The anomalous signal isn’t on the rim—it’s coming from deeper inside the crater bowl.'
+      },
+      {
+        id: 'poi_crater_site_beta',
+        title: 'Survey Site Beta (Inner Scree Slope)',
+        position: new THREE.Vector3(-74, getTerrainHeight(-74, -48) + 1.2, -48),
+        radius: 5.0,
+        sector: 'Zone 3 · Crater Investigation Area',
+        artifactAge: 'Impact-Melted Breccia',
+        integrity: 'Fractured Strata',
+        telemetryStatus: 'Harmonic Echo Detected',
+        description: 'Talus field of impact-melted breccia in deep crater shadow. Seismic reflection indicates harmonic interference echoing off the lower crater wall.',
+        readings: {
+          'Breccia Composition': 'Shock-Glass / Pyroxene Agglutinates',
+          'Magnetic Resonance': '54% (Reflected Harmonic Echo)',
+          'Subsurface Density': '+18% Overburden Inconsistency',
+          'Signal Frequency': '432.06 Hz Standing Wave'
+        },
+        officerNote: 'Signal strength jumped to 54%! The harmonic is echoing off the scree, but the primary epicenter is right ahead at the base of the wall—near that strange metallic protrusion!'
+      },
+      {
+        id: 'poi_crater_site_gamma',
+        title: 'Survey Site Gamma (Buried Precursor Object)',
+        position: new THREE.Vector3(-78, getTerrainHeight(-78, -54) + 1.2, -54),
+        radius: 5.5,
+        sector: 'Zone 3 · Crater Investigation Area',
+        artifactAge: 'Non-Human / Unknown Epoch',
+        integrity: '100% Non-Degraded Alloy',
+        telemetryStatus: '99.4% Peak Signal Resonance',
+        description: 'A faceted geometric metallic prism partially exposed in the crater wall. Handheld scanner hits 99.4% peak harmonic resonance at 432.06 Hz. The alloy does not match any terrestrial aerospace database.',
+        readings: {
+          'Material Composition': 'Uncatalogued Exotic Superalloy',
+          'Magnetic Resonance': '99.4% Peak Resonance (Epicenter)',
+          'Resonant Frequency': '432.06 Hz Constant Sine Wave',
+          'Structural Alignment': 'Vector Points to Subterranean Cavern'
+        },
+        officerNote: 'Astonishing... look at these crystalline edge facets! This isn’t aerospace debris from Apollo or Surveyor. It’s an extraterrestrial precursor artifact, and it’s transmitting a beacon deep underground!'
+      },
+
+      // Fissure & Cavern (Exploration towards Zones 4-6)
       {
         id: 'anomaly_fissure_site',
         title: 'Subsurface Fissure & Seismic Rupture',
@@ -1061,11 +1655,11 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
 
     // 13. FIRST-PERSON ASTRONAUT EVA PHYSICS & CONTROLS
     let pitch = 0;
-    let yaw = Math.PI * 0.8; // Looking toward Surveyor 1 initially
+    let yaw = 1.01; // Looking West toward Surveyor 1 initially from Landing Zone
     const keys = { w: false, s: false, a: false, d: false, shift: false, space: false };
 
     // Player Physical State (1/6th Lunar Gravity)
-    let playerPos = new THREE.Vector3(45, EYE_HEIGHT, 50);
+    let playerPos = new THREE.Vector3(104, EYE_HEIGHT, 66);
     let playerVelocityY = 0;
     let isGrounded = true;
     const LUNAR_GRAVITY = 6.2; // Adjusted for responsive gameplay feel (real 1.62m/s^2)
@@ -1318,18 +1912,64 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
         sPos.needsUpdate = true;
       }
 
+      // Animate astronaut crewmates subtle idle breathing
+      for (const astro of astronautCrewList) {
+        if (astro && astro.userData) {
+          const breath = Math.sin(time * astro.userData.breathSpeed) * 0.012;
+          astro.position.y = (astro.userData.initialY || 0) + breath;
+        }
+      }
+
       // Throttled HUD Telemetry Updates (5 Hz updates instead of 60 FPS state flooding)
       hudTimer += delta;
       if (hudTimer >= 0.2) {
         hudTimer = 0;
 
+        const distLanding = Math.round(Math.hypot(playerPos.x - 105, playerPos.z - 65));
         const distSurveyor = Math.round(Math.hypot(playerPos.x, playerPos.z));
+        const distCrater = Math.round(Math.hypot(playerPos.x - (-75), playerPos.z - (-50)));
         const distAnomaly = Math.round(Math.hypot(playerPos.x - (-95), playerPos.z - (-110)));
+        const distBuried = Math.hypot(playerPos.x - (-78), playerPos.z - (-54));
         let headingDeg = Math.round((THREE.MathUtils.radToDeg(-yaw) % 360 + 360) % 360);
 
+        setDistanceToLanding(distLanding);
         setDistanceToSurveyor(distSurveyor);
+        setDistanceToCrater(distCrater);
         setDistanceToAnomaly(distAnomaly);
         setCompassHeading(headingDeg);
+
+        // Dynamic 432 Hz Signal Resonance Calculation based on proximity to Zone 3 & buried artifact
+        let sig = 0;
+        if (distBuried < 6.0) {
+          sig = 99;
+        } else if (distBuried < 26.0) {
+          sig = Math.round(99 - (distBuried - 6.0) * 3.2);
+        } else if (distCrater < 38.0) {
+          sig = Math.round(48 - (distCrater - 14.0) * 1.1);
+        } else if (distSurveyor < 30.0) {
+          sig = 18;
+        } else if (playerPos.x < 0 && playerPos.z < 0) {
+          sig = Math.round(15 + (1.0 - Math.min(1.0, distCrater / 85.0)) * 22);
+        } else {
+          sig = Math.max(0, Math.round(2 + Math.sin(time * 0.7) * 2));
+        }
+        sig = Math.max(0, Math.min(100, sig));
+        setAnomalousSignal(sig);
+
+        // Active Zone Determination
+        let currentZone = 'ZONE 1 · TEAM LANDING';
+        if (distLanding < 38) {
+          currentZone = 'ZONE 1 · TEAM LANDING';
+        } else if (distSurveyor < 35) {
+          currentZone = 'ZONE 2 · SURVEYOR 1 RECOVERY';
+        } else if (distCrater < 42) {
+          currentZone = 'ZONE 3 · CRATER INVESTIGATION';
+        } else if (playerPos.x < -60 && playerPos.z < -80) {
+          currentZone = 'BASALT RIDGE FISSURE';
+        } else {
+          currentZone = 'OCEANUS PROCELLARUM TRAIL';
+        }
+        setActiveZone(currentZone);
 
         // Dynamic Solar Visor Glare Intensity calculation
         // Sun vector (240, 75, -180) normalized ≈ (0.78, 0.24, -0.58)
@@ -1489,9 +2129,9 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
                 </span>
               </div>
               <span className="text-slate-600">|</span>
-              <div className="text-[11px] text-slate-300">
-                {isUnderground ? 'SUBTERRANEAN CAVERN' : 'OCEANUS PROCELLARUM'}
-              </div>
+              <span className="px-2 py-0.5 rounded bg-cyan-950/80 border border-cyan-400/40 text-[10px] text-cyan-300 font-bold uppercase tracking-wider">
+                {activeZone}
+              </span>
             </div>
 
             {/* Active Objective Pill */}
@@ -1504,10 +2144,32 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
                 {activeObjective}
               </div>
               
-              {/* Waypoint Distances */}
-              <div className="flex items-center gap-4 pt-1.5 text-[10px] text-slate-400">
+              {/* Waypoint Distances for Zones 1, 2, 3 */}
+              <div className="flex flex-wrap items-center gap-3 pt-1.5 text-[10px] text-slate-400">
+                <div>LANDING: <strong className="text-amber-300">{distanceToLanding}m</strong></div>
                 <div>SURVEYOR 1: <strong className="text-cyan-300">{distanceToSurveyor}m</strong></div>
-                <div>ANOMALY: <strong className="text-purple-300">{distanceToAnomaly}m</strong></div>
+                <div>CRATER: <strong className="text-purple-300">{distanceToCrater}m</strong></div>
+              </div>
+            </div>
+
+            {/* Handheld Scanner Anomaly Resonance Gauge */}
+            <div className="p-2.5 rounded-xl bg-purple-950/80 backdrop-blur-md border border-purple-500/40 text-xs shadow-xl space-y-1">
+              <div className="flex items-center justify-between text-[10px] text-purple-300 font-bold tracking-wider uppercase">
+                <span className="flex items-center gap-1.5">
+                  <Radio className="w-3.5 h-3.5 text-purple-400 animate-pulse" />
+                  <span>Scanner Resonance · 432.06 Hz</span>
+                </span>
+                <span className="text-white font-mono">{anomalousSignal}%</span>
+              </div>
+              <div className="w-full bg-black/60 rounded-full h-2 overflow-hidden border border-purple-400/30">
+                <div 
+                  className="h-full bg-gradient-to-r from-cyan-500 via-indigo-500 to-purple-500 transition-all duration-300"
+                  style={{ width: `${anomalousSignal}%` }}
+                />
+              </div>
+              <div className="text-[9px] text-slate-400 flex justify-between">
+                <span>Baseline (Rim)</span>
+                <span>Epicenter (Buried Object)</span>
               </div>
             </div>
           </div>
@@ -1602,7 +2264,19 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
           target={investigateTarget}
           onClose={() => setInvestigateTarget(null)}
           onLogData={(target) => {
-            setActiveObjective(`Cataloged: ${target.title}. Continue exploring the sector.`);
+            if (target.id === 'poi_mission_terminal' || target.id === 'poi_maya_chen' || target.id === 'poi_leo_vance') {
+              setActiveObjective('Follow the EVA trail West (264°) to inspect Surveyor 1.');
+            } else if (target.id === 'surveyor_camera' || target.id === 'surveyor_footpad' || target.id === 'surveyor_solar' || target.id === 'surveyor_core') {
+              setActiveObjective('Anomalous 432 Hz frequency detected beneath lander! Follow the track to the North-West impact crater.');
+            } else if (target.id === 'poi_crater_site_alpha') {
+              setActiveObjective('Site Alpha shows only baseline 22% resonance. Scan deeper in the crater towards Site Beta and Gamma.');
+            } else if (target.id === 'poi_crater_site_beta') {
+              setActiveObjective('Harmonic echo detected (54%)! The buried metallic object at Site Gamma is the primary epicenter.');
+            } else if (target.id === 'poi_crater_site_gamma') {
+              setActiveObjective('Epiphany: Non-human precursor artifact analyzed! Exotic alloy points to subterranean cavern.');
+            } else {
+              setActiveObjective(`Cataloged: ${target.title}. Continue exploring the sector.`);
+            }
           }}
         />
       )}
