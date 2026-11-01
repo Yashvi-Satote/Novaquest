@@ -87,7 +87,11 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
 
   // Component-scoped triggers accessible both from keydown and HUD buttons
   const triggerScannerPulse = () => {
-    audio.playScannerPing();
+    if (activeZone && activeZone.includes('CRATER')) {
+      audio.playCraterScannerPulse();
+    } else {
+      audio.playScannerPing();
+    }
     setScanPulseActive(true);
     triggerScannerBeamRef.current?.();
     setTimeout(() => setScanPulseActive(false), 2400);
@@ -95,17 +99,41 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
 
   const triggerInvestigation = () => {
     if (nearInteractableRef.current) {
-      audio.playInteract();
       const id = nearInteractableRef.current.id;
       if (id === 'poi_scanning_panel' || id === 'poi_mission_echo_console' || id === 'poi_descent_simulation') {
+        audio.playMissionEchoActivation();
+        setTimeout(() => audio.playMissionEchoArchivalAudio(), 320);
         if (triggerSparksRef.current && nearInteractableRef.current.position) {
           triggerSparksRef.current(nearInteractableRef.current.position);
         }
         setIsMissionEchoOpen(true);
+      } else if (id && id.startsWith('surveyor_')) {
+        audio.playSurveyorScannerBeep();
+        setTimeout(() => audio.playSurveyorInterface(), 260);
+        setInvestigateTarget(nearInteractableRef.current);
+      } else if (id === 'poi_mission_terminal' || id === 'poi_lunar_transport') {
+        audio.playEquipmentFeedback();
+        setTimeout(() => audio.playRadioCommsChatter('chen'), 420);
+        setInvestigateTarget(nearInteractableRef.current);
+      } else if (id === 'poi_maya_chen') {
+        audio.playRadioCommsChatter('chen');
+        setInvestigateTarget(nearInteractableRef.current);
+      } else if (id === 'poi_leo_vance') {
+        audio.playRadioCommsChatter('vance');
+        setInvestigateTarget(nearInteractableRef.current);
+      } else if (id && id.startsWith('poi_crater_')) {
+        audio.playCraterInterference(0.9);
+        setTimeout(() => audio.playCraterScannerPulse(), 220);
+        setInvestigateTarget(nearInteractableRef.current);
+      } else if (id === 'poi_alien_structure' || id === 'poi_data_conduit') {
+        audio.playAnomalyHarmonic();
+        setInvestigateTarget(nearInteractableRef.current);
       } else if (id === 'poi_extraction_pallet' && isMissionEchoCompletedRef.current) {
+        audio.playEquipmentFeedback();
         setShowChapter1Completion(true);
         setInvestigateTarget(nearInteractableRef.current);
       } else {
+        audio.playInteract();
         setInvestigateTarget(nearInteractableRef.current);
       }
     }
@@ -3699,6 +3727,9 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
     let lastStepTime = 0;
 
     const onKeyDown = (e) => {
+      audio.ensureContext();
+      audio.startSuitBreathing();
+      audio.startAmbience();
       const code = e.code;
       if (code === 'KeyW' || code === 'ArrowUp') keys.w = true;
       if (code === 'KeyS' || code === 'ArrowDown') keys.s = true;
@@ -3764,6 +3795,9 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
     document.addEventListener('pointerlockchange', onPointerLockChange);
 
     const handleCanvasClick = () => {
+      audio.ensureContext();
+      audio.startSuitBreathing();
+      audio.startAmbience();
       if (document.pointerLockElement !== renderer.domElement) {
         try {
           renderer.domElement.requestPointerLock();
@@ -3779,6 +3813,12 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
     let lastNearId = null;
     let hudTimer = 0;
     const clock = new THREE.Clock();
+
+    // Vacuum Acoustic Director Trackers
+    let lastInterferenceTime = 0;
+    let lastRadioChatterTime = 0;
+    let isAlienVibrating = false;
+    let isMachineryRunning = false;
 
     const animate = () => {
       animId = requestAnimationFrame(animate);
@@ -4165,6 +4205,52 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
         setOxygenLevel(prev => Math.max(92.0, +(prev - 0.001).toFixed(2)));
         setSuitPower(prev => Math.max(88.0, +(prev - 0.002).toFixed(2)));
         setHeartRate(isMoving ? (keys.shift ? 112 : 86) : 72);
+
+        // Dynamic Spatial Acoustic Zone Director (Vacuum Conduction & Telemetry)
+        // Zone 4: Alien Structure Sub-bass Vibration conducted through bedrock
+        if (distAlien < 44) {
+          if (!isAlienVibrating) {
+            audio.startAlienStructureVibration();
+            isAlienVibrating = true;
+          }
+          const vibrationIntensity = Math.max(0, (44 - distAlien) / 44);
+          audio.updateAlienStructureVibration(vibrationIntensity);
+        } else if (isAlienVibrating) {
+          audio.updateAlienStructureVibration(0);
+          if (distAlien > 52) {
+            audio.stopAlienStructureVibration();
+            isAlienVibrating = false;
+          }
+        }
+
+        // Zone 6: Robotic Machinery Hydraulic Hum conducted through suit
+        const distRecoveryRig = distSurveyor; // Recovery equipment is at Surveyor site
+        if (distRecoveryRig < 32 && isMissionEchoCompletedRef.current) {
+          if (!isMachineryRunning) {
+            audio.startRoboticMachineryLoop();
+            isMachineryRunning = true;
+          }
+          const machineIntensity = Math.max(0, (32 - distRecoveryRig) / 32);
+          audio.updateRoboticMachineryLoop(machineIntensity);
+        } else if (isMachineryRunning) {
+          audio.updateRoboticMachineryLoop(0);
+          if (distRecoveryRig > 40) {
+            audio.stopRoboticMachineryLoop();
+            isMachineryRunning = false;
+          }
+        }
+
+        // Zone 3: Crater Signal Interference & Static Crackles through helmet comms
+        if (distCrater < 36 && time - lastInterferenceTime > 5.5) {
+          audio.playCraterInterference(1 - distCrater / 36);
+          lastInterferenceTime = time + (Math.random() * 2.5);
+        }
+
+        // Zone 1 & Zone 6: Periodic Radio Comms check-ins (long quiet pauses in between)
+        if (distLanding < 32 && time - lastRadioChatterTime > 55.0) {
+          audio.playRadioCommsChatter(Math.random() > 0.5 ? 'chen' : 'vance');
+          lastRadioChatterTime = time + (Math.random() * 15.0);
+        }
       }
 
       renderer.render(scene, camera);
@@ -4185,6 +4271,7 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
     const resizeTimer = setTimeout(handleResize, 100);
 
     return () => {
+      audio.stopAllLoops();
       clearTimeout(resizeTimer);
       window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('keyup', onKeyUp);
