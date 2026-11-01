@@ -234,6 +234,26 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
     const solarPanelMap = createSolarPanelTexture(512, 512);
     const alienGlyphMap = createAlienGlyphTexture(512, 512);
     const roverTrackMap = createRoverTrackTexture(256, 512);
+    const dustParticleTex = createGlowParticleTexture(64);
+
+    // Astronaut EVA Footprint Decal System (Initialized early for all zones & movement)
+    const bootprintGroup = new THREE.Group();
+    scene.add(bootprintGroup);
+    const bootprintGeo = new THREE.PlaneGeometry(0.32, 0.68);
+    bootprintGeo.rotateX(-Math.PI / 2);
+    const bootprintMat = new THREE.MeshStandardMaterial({
+      map: roverTrackMap,
+      color: 0x1f2127,
+      roughness: 0.99,
+      transparent: true,
+      opacity: 0.8,
+      depthWrite: false,
+      polygonOffset: true,
+      polygonOffsetFactor: -1.0
+    });
+    const maxBootprints = 35;
+    const bootprints = [];
+    let footStepToggle = false;
 
     // 7. MEDIUM-POLY 500m x 500m LUNAR TERRAIN & NATURAL BOUNDARY CRATER WALLS
     // 200x200 resolution = 40,000 vertices, 80,000 faces (crisp medium-poly terrain)
@@ -1641,7 +1661,6 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
     scene.add(cavernGroup);
 
     // 14. ELECTROSTATIC TERMINATOR DUST MOTES (PHOTOELECTRIC LEVITATION PHENOMENON)
-    const dustParticleTex = createGlowParticleTexture(64);
     const dustCount = 450;
     const dustGeo = new THREE.BufferGeometry();
     const dustPositions = new Float32Array(dustCount * 3);
@@ -1706,25 +1725,6 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
     });
     const precursorSpores = new THREE.Points(sporeGeo, sporeMat);
     cavernGroup.add(precursorSpores);
-
-    // 16. ASTRONAUT EVA FOOTPRINT DECAL SYSTEM
-    const bootprintGroup = new THREE.Group();
-    scene.add(bootprintGroup);
-    const bootprintGeo = new THREE.PlaneGeometry(0.32, 0.68);
-    bootprintGeo.rotateX(-Math.PI / 2);
-    const bootprintMat = new THREE.MeshStandardMaterial({
-      map: roverTrackMap,
-      color: 0x1f2127,
-      roughness: 0.99,
-      transparent: true,
-      opacity: 0.8,
-      depthWrite: false,
-      polygonOffset: true,
-      polygonOffsetFactor: -1.0
-    });
-    const maxBootprints = 35;
-    const bootprints = [];
-    let footStepToggle = false;
 
     // 12. INTERACTION POINTS DATABASE (ZONES 1, 2, 3)
     const interactables = [
