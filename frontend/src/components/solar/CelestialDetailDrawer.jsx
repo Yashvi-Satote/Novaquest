@@ -39,7 +39,7 @@ export default function CelestialDetailDrawer({
   let typeLabel = 'Celestial Body';
   if (body.type === 'star') typeLabel = 'Yellow Dwarf Star';
   else if (body.type === 'planet') typeLabel = body.atmosphere ? (body.radius > 3.0 ? 'Gas / Ice Giant' : 'Terrestrial Planet') : 'Cratered Terrestrial Planet';
-  else if (body.type === 'dwarf-planet') typeLabel = 'Kuiper Belt Dwarf Planet';
+  else if (body.type === 'dwarf-planet') typeLabel = body.id === 'ceres' ? 'Main Asteroid Belt Dwarf Planet' : 'Kuiper Belt Dwarf Planet';
   else if (isMoon) typeLabel = `Natural Satellite (${body.parentPlanetName})`;
 
   return (
