@@ -35,6 +35,7 @@ import InvestigationModal from './InvestigationModal';
  */
 export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
   const mountRef = useRef(null);
+  const nearInteractableRef = useRef(null);
 
   // HUD & Game State
   const [isLocked, setIsLocked] = useState(false);
@@ -54,12 +55,28 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
   const [heartRate, setHeartRate] = useState(72);
   const [externalTemp, setExternalTemp] = useState(-118);
 
+  // Component-scoped triggers accessible both from keydown and HUD buttons
+  const triggerScannerPulse = () => {
+    audio.playScannerPing();
+    setScanPulseActive(true);
+    setTimeout(() => setScanPulseActive(false), 2400);
+  };
+
+  const triggerInvestigation = () => {
+    if (nearInteractableRef.current) {
+      audio.playInteract();
+      setInvestigateTarget(nearInteractableRef.current);
+    }
+  };
+
   useEffect(() => {
     const container = mountRef.current;
     if (!container) return;
 
-    let width = container.clientWidth;
-    let height = container.clientHeight;
+    let width = container.clientWidth || window.innerWidth || 800;
+    let height = container.clientHeight || window.innerHeight || 600;
+    if (width <= 0) width = 800;
+    if (height <= 0) height = 600;
 
     // 1. SCENE SETUP — Pure Pitch Black Vacuum
     const scene = new THREE.Scene();
@@ -71,7 +88,12 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
     camera.position.set(45, EYE_HEIGHT, 50); // Start near Artemis recovery craft looking towards Surveyor 1
 
     // 3. RENDERER WITH HIGH-CONTRAST PBR SHADOWS
-    const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+    let renderer;
+    try {
+      renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+    } catch {
+      renderer = new THREE.WebGLRenderer();
+    }
     renderer.setSize(width, height);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     renderer.shadowMap.enabled = true;
@@ -714,37 +736,19 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
 
     const handleCanvasClick = () => {
       if (document.pointerLockElement !== renderer.domElement) {
-        renderer.domElement.requestPointerLock();
+        try {
+          renderer.domElement.requestPointerLock();
+        } catch {}
       }
     };
 
     renderer.domElement.addEventListener('click', handleCanvasClick);
 
-    // Scanner Pulse Function
-    const triggerScannerPulse = () => {
-      audio.playScannerPing();
-      setScanPulseActive(true);
-      setTimeout(() => setScanPulseActive(false), 2400);
-    };
-
-    // Investigation Trigger
-    const triggerInvestigation = () => {
-      for (const item of interactables) {
-        let targetCheckPos = item.position.clone();
-        if (isUnderground && item.id !== 'precursor_monolith_site') continue;
-        if (!isUnderground && item.id === 'precursor_monolith_site') continue;
-
-        const dist = playerPos.distanceTo(targetCheckPos);
-        if (dist < item.radius) {
-          audio.playInteract();
-          setInvestigateTarget(item);
-          break;
-        }
-      }
-    };
-
     // 14. ANIMATION & GAME SIMULATION LOOP
     let animId;
+    let underground = false;
+    let lastNearId = null;
+    let hudTimer = 0;
     const clock = new THREE.Clock();
 
     const animate = () => {
@@ -801,14 +805,16 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
 
       // Check for Transition into/out of Subterranean Precursor Cavern
       const distToFissure = Math.hypot(playerPos.x - (-95), playerPos.z - (-110));
-      if (!isUnderground && distToFissure < 6.5) {
+      if (!underground && distToFissure < 6.5) {
         // Step into fissure -> descend underground
+        underground = true;
         setIsUnderground(true);
         playerPos.set(-95, CAVERN_Y + 1.8, -125);
         playerVelocityY = 0;
         audio.playAnomalyHarmonic();
-      } else if (isUnderground && distToFissure < 8.0 && playerPos.z > -105) {
+      } else if (underground && distToFissure < 8.0 && playerPos.z > -105) {
         // Return to surface ramp
+        underground = false;
         setIsUnderground(false);
         playerPos.set(-95, fissureTerrainY + 2.0, -98);
         playerVelocityY = 0;
@@ -816,7 +822,7 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
 
       // Ground Height Calculation
       let targetGroundY;
-      if (isUnderground) {
+      if (underground) {
         targetGroundY = CAVERN_Y; // Cavern floor level
       } else {
         // Natural boundary clamp (r <= 210m so player cannot walk over outer crater rims)
@@ -860,37 +866,44 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
       const euler = new THREE.Euler(pitch, yaw, 0, 'YXZ');
       camera.quaternion.setFromEuler(euler);
 
-      // HUD Distance & Proximity Calculations
-      const distSurveyor = Math.hypot(playerPos.x - 0, playerPos.z - 0);
-      setDistanceToSurveyor(Math.round(distSurveyor));
+      // Throttled HUD Telemetry Updates (5 Hz updates instead of 60 FPS state flooding)
+      hudTimer += delta;
+      if (hudTimer >= 0.2) {
+        hudTimer = 0;
 
-      const distAnomaly = Math.hypot(playerPos.x - (-95), playerPos.z - (-110));
-      setDistanceToAnomaly(Math.round(distAnomaly));
+        const distSurveyor = Math.round(Math.hypot(playerPos.x, playerPos.z));
+        const distAnomaly = Math.round(Math.hypot(playerPos.x - (-95), playerPos.z - (-110)));
+        let headingDeg = Math.round((THREE.MathUtils.radToDeg(-yaw) % 360 + 360) % 360);
 
-      // Compass Heading (Degrees 0 to 360)
-      let headingDeg = THREE.MathUtils.radToDeg(-yaw) % 360;
-      if (headingDeg < 0) headingDeg += 360;
-      setCompassHeading(Math.round(headingDeg));
+        setDistanceToSurveyor(distSurveyor);
+        setDistanceToAnomaly(distAnomaly);
+        setCompassHeading(headingDeg);
 
-      // Check Nearby Interactable
-      let foundInteract = null;
-      for (const item of interactables) {
-        let checkPos = item.position.clone();
-        if (isUnderground && item.id !== 'precursor_monolith_site') continue;
-        if (!isUnderground && item.id === 'precursor_monolith_site') continue;
+        // Check Nearby Interactable
+        let foundInteract = null;
+        for (const item of interactables) {
+          if (underground && item.id !== 'precursor_monolith_site') continue;
+          if (!underground && item.id === 'precursor_monolith_site') continue;
 
-        const d = playerPos.distanceTo(checkPos);
-        if (d < item.radius) {
-          foundInteract = item;
-          break;
+          const d = Math.hypot(playerPos.x - item.position.x, playerPos.z - item.position.z);
+          if (d < item.radius) {
+            foundInteract = item;
+            break;
+          }
         }
-      }
-      setNearInteractable(foundInteract);
 
-      // Dynamic Suit Telemetry simulation
-      setOxygenLevel(prev => Math.max(92.0, +(prev - delta * 0.003).toFixed(2)));
-      setSuitPower(prev => Math.max(88.0, +(prev - delta * 0.004).toFixed(2)));
-      setHeartRate(isMoving ? (keys.shift ? 112 : 88) : 72);
+        nearInteractableRef.current = foundInteract;
+        const newNearId = foundInteract ? foundInteract.id : null;
+        if (newNearId !== lastNearId) {
+          lastNearId = newNearId;
+          setNearInteractable(foundInteract);
+        }
+
+        // Gradual Suit Telemetry simulation
+        setOxygenLevel(prev => Math.max(92.0, +(prev - 0.001).toFixed(2)));
+        setSuitPower(prev => Math.max(88.0, +(prev - 0.002).toFixed(2)));
+        setHeartRate(isMoving ? (keys.shift ? 112 : 86) : 72);
+      }
 
       renderer.render(scene, camera);
     };
@@ -899,16 +912,18 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
 
     const handleResize = () => {
       if (!container || !renderer || !camera) return;
-      width = container.clientWidth;
-      height = container.clientHeight;
-      camera.aspect = width / height;
+      const w = container.clientWidth || window.innerWidth || 800;
+      const h = container.clientHeight || window.innerHeight || 600;
+      camera.aspect = w / (h > 0 ? h : 1);
       camera.updateProjectionMatrix();
-      renderer.setSize(width, height);
+      renderer.setSize(w, h);
     };
 
     window.addEventListener('resize', handleResize);
+    const resizeTimer = setTimeout(handleResize, 100);
 
     return () => {
+      clearTimeout(resizeTimer);
       window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('keyup', onKeyUp);
       window.removeEventListener('resize', handleResize);
@@ -1101,3 +1116,4 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
     </div>
   );
 }
+

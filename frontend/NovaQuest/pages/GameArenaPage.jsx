@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Component } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft, 
@@ -8,12 +8,71 @@ import {
   VolumeX, 
   Shield, 
   Radio, 
-  Layers 
+  Layers,
+  RotateCcw
 } from 'lucide-react';
 import { getSaveGame, getSettings, saveSettings } from '../game/saveManager';
 import { audio } from '../game/audioManager';
 import SettingsModal from '../components/game/SettingsModal';
 import LunarMapChapter1 from '../components/game/LunarMapChapter1';
+
+/**
+ * Resilient Error Boundary for 3D WebGL / EVA Scene
+ * Prevents full-screen crashes and renders high-tech fallback diagnostics.
+ */
+class GameErrorBoundary extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error('GameArena 3D Error Caught:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="flex flex-col items-center justify-center h-full w-full bg-black text-slate-100 p-8 text-center font-mono select-none">
+          <div className="w-16 h-16 rounded-2xl bg-cyan-950/60 border border-cyan-500/40 flex items-center justify-center text-cyan-400 mb-6 shadow-[0_0_30px_rgba(6,182,212,0.3)]">
+            <Radio className="w-8 h-8 animate-pulse" />
+          </div>
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-950/40 border border-cyan-500/30 text-cyan-300 text-xs mb-3">
+            <span>EVA TELEMETRY · REBOOT PROTOCOL</span>
+          </div>
+          <h2 className="text-xl font-bold uppercase tracking-widest text-white mb-2">
+            Lunar Surface Link Interrupted
+          </h2>
+          <p className="text-xs text-slate-400 max-w-md mb-6 leading-relaxed">
+            {this.state.error?.message || 'WebGL display context reset. Re-initialize suit systems to resume exploration.'}
+          </p>
+          <div className="flex items-center gap-4">
+            <button
+              type="button"
+              onClick={() => this.setState({ hasError: false, error: null })}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-black font-bold text-xs uppercase tracking-wider transition-all shadow-lg shadow-cyan-500/30 hover:scale-105 active:scale-95"
+            >
+              <RotateCcw className="w-4 h-4" />
+              <span>Re-Initialize EVA Suit</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => window.location.href = '/'}
+              className="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 font-bold text-xs uppercase tracking-wider border border-white/10 transition-all hover:scale-105 active:scale-95"
+            >
+              Return to Base Menu
+            </button>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 export default function GameArenaPage({ theme }) {
   const navigate = useNavigate();
@@ -100,11 +159,13 @@ export default function GameArenaPage({ theme }) {
       </header>
 
       {/* MAIN 3D CHAPTER 1 LUNAR SURFACE MAP */}
-      <main className="relative flex-1 w-full h-full">
-        <LunarMapChapter1
-          mcGender={mcGender}
-          onReturnMenu={() => navigate('/')}
-        />
+      <main className="relative flex-1 w-full min-h-0 h-full overflow-hidden">
+        <GameErrorBoundary>
+          <LunarMapChapter1
+            mcGender={mcGender}
+            onReturnMenu={() => navigate('/')}
+          />
+        </GameErrorBoundary>
       </main>
 
       {/* SETTINGS MODAL */}

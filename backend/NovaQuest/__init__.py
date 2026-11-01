@@ -7,3 +7,4 @@ from .chapter1_service import chapter1_service
 from .routes import novaquest_bp
 
 __all__ = ["chapter1_service", "novaquest_bp"]
+

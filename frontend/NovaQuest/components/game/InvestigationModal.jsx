@@ -164,3 +164,4 @@ export default function InvestigationModal({ target, onClose, onLogData }) {
     </div>
   );
 }
+

@@ -197,3 +197,4 @@ class Chapter1Service:
 
 # Singleton service instance
 chapter1_service = Chapter1Service()
+

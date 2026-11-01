@@ -74,3 +74,4 @@ def record_investigation():
             "message": f"Telemetry entry cataloged for {poi_id or 'unknown point'}."
         }
     })
+
