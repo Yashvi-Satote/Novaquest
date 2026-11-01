@@ -1,6 +1,6 @@
 /**
  * Web Audio API Sound Synthesizer for Novaquest
- * Synthesizes procedural sci-fi UI sound effects and ambient deep-space drones
+ * Synthesizes procedural sci-fi UI sound effects, lunar EVA cues, and ambient deep-space drones
  * without relying on external MP3 downloads.
  */
 
@@ -147,6 +147,151 @@ class AudioManager {
 
       sub.start(now);
       sub.stop(now + 1.1);
+    } catch {}
+  }
+
+  /**
+   * Scanner Ping: Ethereal radar frequency ping for the scanner wave
+   */
+  playScannerPing() {
+    const ctx = this.ensureContext();
+    if (!ctx) return;
+    const { sfx } = this.getVolumes();
+    if (sfx <= 0.001) return;
+
+    try {
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(1320, now);
+      osc.frequency.exponentialRampToValueAtTime(880, now + 0.35);
+
+      gain.gain.setValueAtTime(sfx * 0.22, now);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.45);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(now);
+      osc.stop(now + 0.45);
+    } catch {}
+  }
+
+  /**
+   * Footstep on lunar regolith: Muffled low-frequency dust crunch in vacuum
+   */
+  playFootstepLunar() {
+    const ctx = this.ensureContext();
+    if (!ctx) return;
+    const { sfx } = this.getVolumes();
+    if (sfx <= 0.001) return;
+
+    try {
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(110 + Math.random() * 25, now);
+      osc.frequency.exponentialRampToValueAtTime(45, now + 0.08);
+
+      gain.gain.setValueAtTime(sfx * 0.10, now);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.09);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(now);
+      osc.stop(now + 0.09);
+    } catch {}
+  }
+
+  /**
+   * Low-gravity jump lift / EVA suit boost sound
+   */
+  playJumpLunar() {
+    const ctx = this.ensureContext();
+    if (!ctx) return;
+    const { sfx } = this.getVolumes();
+    if (sfx <= 0.001) return;
+
+    try {
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(160, now);
+      osc.frequency.exponentialRampToValueAtTime(280, now + 0.2);
+
+      gain.gain.setValueAtTime(sfx * 0.16, now);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.24);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(now);
+      osc.stop(now + 0.24);
+    } catch {}
+  }
+
+  /**
+   * Resonant harmonic 432 Hz extraterrestrial monolith hum
+   */
+  playAnomalyHarmonic() {
+    const ctx = this.ensureContext();
+    if (!ctx) return;
+    const { sfx } = this.getVolumes();
+    if (sfx <= 0.001) return;
+
+    try {
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(432, now); // Sacred 432 Hz harmonic
+
+      gain.gain.setValueAtTime(0.001, now);
+      gain.gain.linearRampToValueAtTime(sfx * 0.28, now + 0.15);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 1.2);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(now);
+      osc.stop(now + 1.2);
+    } catch {}
+  }
+
+  /**
+   * Interactive inspect / sample analyzer confirmation
+   */
+  playInteract() {
+    const ctx = this.ensureContext();
+    if (!ctx) return;
+    const { sfx } = this.getVolumes();
+    if (sfx <= 0.001) return;
+
+    try {
+      const now = ctx.currentTime;
+      [587, 880, 1174].forEach((freq, idx) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, now + idx * 0.05);
+
+        gain.gain.setValueAtTime(sfx * 0.14, now + idx * 0.05);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + idx * 0.05 + 0.12);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.start(now + idx * 0.05);
+        osc.stop(now + idx * 0.05 + 0.12);
+      });
     } catch {}
   }
 
