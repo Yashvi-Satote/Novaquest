@@ -30,8 +30,10 @@ export default function SolarSystemPage({ theme, onToggleTheme }) {
   const [cameraMode, setCameraMode] = useState('orbit'); // 'orbit' | 'free_fly'
   const [layerVisibility, setLayerVisibility] = useState({
     orbits: true,
+    labels: true,
     trajectories: true,
-    markers: true
+    markers: true,
+    stars: true
   });
 
   const handleTogglePlay = () => {

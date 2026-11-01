@@ -47,22 +47,25 @@ export default function MissionExplorerSidebar({
       setError(null);
       try {
         const firstRes = await fetchHardware({ limit: 50, page: 1 });
-        const allItems = [...(firstRes.items || [])];
-        const totalPages = firstRes.total_pages || 1;
+        if (isMounted && firstRes.items) {
+          setItems(firstRes.items);
+          setIsLoading(false);
+        }
 
+        const totalPages = firstRes.total_pages || 1;
         if (totalPages > 1) {
           const pagePromises = [];
           for (let p = 2; p <= totalPages; p++) {
             pagePromises.push(fetchHardware({ limit: 50, page: p }));
           }
           const restResults = await Promise.all(pagePromises);
-          restResults.forEach(r => {
-            if (r.items) allItems.push(...r.items);
-          });
-        }
-
-        if (isMounted) {
-          setItems(allItems);
+          if (isMounted) {
+            const allItems = [...(firstRes.items || [])];
+            restResults.forEach(r => {
+              if (r.items) allItems.push(...r.items);
+            });
+            setItems(allItems);
+          }
         }
       } catch (err) {
         console.error('Failed to load mission catalogue from API:', err);
@@ -113,6 +116,8 @@ export default function MissionExplorerSidebar({
         const itemDest = (item.destination_category || item.destination || '').toLowerCase();
         if (cat === 'inner planets') {
           if (!['mercury', 'venus'].includes(itemDest)) return false;
+        } else if (cat === 'asteroids') {
+          if (!itemDest.includes('asteroid') && !itemDest.includes('ceres') && !itemDest.includes('vesta') && !itemDest.includes('comet') && !itemDest.includes('bennu') && !itemDest.includes('ryugu')) return false;
         } else if (!itemDest.includes(cat)) {
           return false;
         }
@@ -137,14 +142,15 @@ export default function MissionExplorerSidebar({
     });
   }, [items, searchQuery, mappingFilter, activeCategory, selectedStatus, selectedAgency, selectedType]);
 
-  const categories = ['All', 'Deep Space', 'Mars', 'Moon', 'Earth Orbit', 'Jupiter', 'Saturn', 'Inner Planets'];
+  const categories = ['All', 'Deep Space', 'Mars', 'Moon', 'Earth Orbit', 'Jupiter', 'Saturn', 'Inner Planets', 'Asteroids'];
   
   const categoryPlanetMap = {
     'Mars': 'mars',
     'Moon': 'moon',
     'Earth Orbit': 'earth',
     'Jupiter': 'jupiter',
-    'Saturn': 'saturn'
+    'Saturn': 'saturn',
+    'Asteroids': 'ceres'
   };
 
   return (
@@ -283,6 +289,7 @@ export default function MissionExplorerSidebar({
               return (
                 <button
                   key={cat}
+                  id={`cat-btn-${cat.toLowerCase().replace(/\s+/g, '-')}`}
                   type="button"
                   onClick={() => setActiveCategory(cat)}
                   className={`px-2.5 py-1 rounded-lg text-[11px] font-medium transition-all cursor-pointer ${
@@ -305,6 +312,7 @@ export default function MissionExplorerSidebar({
               Inspect {activeCategory} in 3D:
             </span>
             <button
+              id="focus-selected-planet-globe-btn"
               type="button"
               onClick={() => onSelectPlanet(categoryPlanetMap[activeCategory])}
               className="px-2.5 py-1 rounded-md bg-cyan-950 border border-cyan-400/40 text-cyan-300 hover:text-white hover:bg-cyan-900/60 text-[10px] font-mono font-bold transition-all cursor-pointer flex items-center gap-1"

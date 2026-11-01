@@ -156,7 +156,7 @@ export default function SpacecraftDetailPage({ theme, onToggleTheme }) {
     setModelLoadError(null);
 
     loadSpacecraft3DModel(craftData.slug).then(model3D => {
-      // Dynamic bounding box centering
+      // Robust bounding box centering and normalization
       const bbox = new THREE.Box3().setFromObject(model3D);
       const center = new THREE.Vector3();
       const size = new THREE.Vector3();
@@ -165,11 +165,13 @@ export default function SpacecraftDetailPage({ theme, onToggleTheme }) {
 
       const maxDim = Math.max(size.x, size.y, size.z) || 1.0;
       const fitScale = 2.4 / maxDim;
-      model3D.position.sub(center.clone().multiplyScalar(fitScale));
-      model3D.scale.multiplyScalar(fitScale);
+
+      model3D.position.sub(center);
 
       const rootGroup = new THREE.Group();
       rootGroup.add(model3D);
+      rootGroup.scale.setScalar(fitScale);
+
       scene.add(rootGroup);
       modelGroupRef.current = rootGroup;
 

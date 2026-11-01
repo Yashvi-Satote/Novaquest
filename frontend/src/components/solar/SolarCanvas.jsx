@@ -152,11 +152,17 @@ const SolarCanvas = forwardRef(function SolarCanvas({
     if (layerVisibility.orbits !== prevLayerRef.current?.orbits) {
       engineRef.current.setLayerVisibility('orbits', layerVisibility.orbits);
     }
+    if (layerVisibility.labels !== prevLayerRef.current?.labels) {
+      engineRef.current.setLayerVisibility('labels', layerVisibility.labels);
+    }
     if (layerVisibility.trajectories !== prevLayerRef.current?.trajectories) {
       engineRef.current.setLayerVisibility('trajectories', layerVisibility.trajectories);
     }
     if (layerVisibility.markers !== prevLayerRef.current?.markers) {
       engineRef.current.setLayerVisibility('markers', layerVisibility.markers);
+    }
+    if (layerVisibility.stars !== prevLayerRef.current?.stars) {
+      engineRef.current.setLayerVisibility('stars', layerVisibility.stars);
     }
     prevLayerRef.current = layerVisibility;
   }, [layerVisibility]);

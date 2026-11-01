@@ -565,6 +565,22 @@ function createSunCoronaTexture() {
   return new THREE.CanvasTexture(canvas);
 }
 
+const textureLoader = new THREE.TextureLoader();
+
+const PLANET_TEXTURE_URLS = {
+  sun: '/textures/planets/sun.jpg',
+  mercury: '/textures/planets/mercury.jpg',
+  venus: '/textures/planets/venus_atmosphere.jpg',
+  earth: '/textures/planets/earth_day.jpg',
+  moon: '/textures/planets/moon.jpg',
+  mars: '/textures/planets/mars.jpg',
+  jupiter: '/textures/planets/jupiter.jpg',
+  saturn: '/textures/planets/saturn.jpg',
+  uranus: '/textures/planets/uranus.jpg',
+  neptune: '/textures/planets/neptune.jpg',
+  pluto: '/textures/planets/pluto.jpg'
+};
+
 export class PlanetBody {
   constructor(data, scene) {
     this.data = data;
@@ -573,6 +589,7 @@ export class PlanetBody {
     this.disposables = [];
     this.moons = [];
     this.clickableMeshes = [];
+    this.labelSprite = null;
 
     this.orbitPivot = new THREE.Group();
     this.scene.add(this.orbitPivot);
@@ -581,6 +598,7 @@ export class PlanetBody {
     this.orbitPivot.add(this.container);
 
     this.createBody();
+    this.createLabel();
     if (this.data.hasRings) {
       this.createRings();
     }
@@ -596,10 +614,31 @@ export class PlanetBody {
 
   createBody() {
     const isSun = this.data.id === 'sun';
-    const geometry = new THREE.SphereGeometry(this.data.radius, 48, 48);
+    const geometry = new THREE.SphereGeometry(this.data.radius, 64, 64);
     this.disposables.push(geometry);
 
-    const texture = createPlanetTexture(this.data);
+    let texture;
+    const realTextureUrl = PLANET_TEXTURE_URLS[this.data.id];
+    if (realTextureUrl) {
+      texture = textureLoader.load(
+        realTextureUrl,
+        (tex) => {
+          tex.colorSpace = THREE.SRGBColorSpace;
+          tex.wrapS = THREE.ClampToEdgeWrapping;
+          tex.wrapT = THREE.ClampToEdgeWrapping;
+          tex.generateMipmaps = true;
+          tex.minFilter = THREE.LinearMipmapLinearFilter;
+          tex.needsUpdate = true;
+        },
+        undefined,
+        (err) => {
+          console.warn(`Falling back to procedural texture for ${this.data.id}:`, err);
+        }
+      );
+      texture.colorSpace = THREE.SRGBColorSpace;
+    } else {
+      texture = createPlanetTexture(this.data);
+    }
     this.disposables.push(texture);
 
     let material;
@@ -635,28 +674,54 @@ export class PlanetBody {
       this.coronaSprite.scale.set(this.data.radius * 3.8, this.data.radius * 3.8, 1);
       this.container.add(this.coronaSprite);
 
+    } else if (this.data.id === 'earth') {
+      const earthSpecular = textureLoader.load('/textures/planets/earth_specular.jpg');
+      this.disposables.push(earthSpecular);
+
+      material = new THREE.MeshStandardMaterial({
+        map: texture,
+        roughnessMap: earthSpecular,
+        roughness: 0.42,
+        metalness: 0.08
+      });
+
+      // Authentic Rotating Earth Cloud Layer
+      const cloudGeo = new THREE.SphereGeometry(this.data.radius * 1.012, 64, 64);
+      const cloudTexture = textureLoader.load('/textures/planets/earth_clouds.jpg', (tex) => {
+        tex.colorSpace = THREE.SRGBColorSpace;
+        tex.wrapS = THREE.RepeatWrapping;
+        tex.wrapT = THREE.ClampToEdgeWrapping;
+      });
+      const cloudMat = new THREE.MeshStandardMaterial({
+        map: cloudTexture,
+        transparent: true,
+        opacity: 0.72,
+        blending: THREE.NormalBlending,
+        depthWrite: false
+      });
+      this.disposables.push(cloudGeo, cloudTexture, cloudMat);
+      this.cloudMesh = new THREE.Mesh(cloudGeo, cloudMat);
+      this.container.add(this.cloudMesh);
+
+      // Delicate Atmospheric Rayleigh Scattering Glow
+      const atmoGeo = new THREE.SphereGeometry(this.data.radius * 1.036, 48, 48);
+      const atmoMat = new THREE.MeshBasicMaterial({
+        color: new THREE.Color(0x38bdf8),
+        transparent: true,
+        opacity: 0.32,
+        blending: THREE.AdditiveBlending,
+        side: THREE.BackSide
+      });
+      this.disposables.push(atmoGeo, atmoMat);
+      const atmoMesh = new THREE.Mesh(atmoGeo, atmoMat);
+      this.container.add(atmoMesh);
+
     } else {
       material = new THREE.MeshStandardMaterial({
         map: texture,
-        roughness: this.data.id === 'earth' ? 0.38 : (this.data.id === 'venus' ? 0.95 : 0.72),
-        metalness: this.data.id === 'earth' ? 0.12 : 0.05
+        roughness: this.data.id === 'venus' ? 0.95 : (this.data.id === 'mars' ? 0.78 : 0.68),
+        metalness: 0.05
       });
-
-      // Earth Cloud Layer
-      if (this.data.id === 'earth') {
-        const cloudGeo = new THREE.SphereGeometry(this.data.radius * 1.012, 48, 48);
-        const cloudTexture = createEarthCloudsTexture();
-        const cloudMat = new THREE.MeshStandardMaterial({
-          map: cloudTexture,
-          transparent: true,
-          opacity: 0.65,
-          blending: THREE.NormalBlending,
-          depthWrite: false
-        });
-        this.disposables.push(cloudGeo, cloudTexture, cloudMat);
-        this.cloudMesh = new THREE.Mesh(cloudGeo, cloudMat);
-        this.container.add(this.cloudMesh);
-      }
 
       // Atmosphere Glow Layer
       if (this.data.atmosphere) {
@@ -684,21 +749,108 @@ export class PlanetBody {
     this.container.position.x = this.data.distance;
   }
 
+  createLabel() {
+    if (this.data.id === 'sun') return;
+    const canvas = document.createElement('canvas');
+    canvas.width = 256;
+    canvas.height = 64;
+    const ctx = canvas.getContext('2d');
+
+    // Translucent dark background pill
+    const r = 12;
+    const x = 12, y = 14, w = 232, h = 36;
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y);
+    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+    ctx.lineTo(x + w, y + h - r);
+    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    ctx.lineTo(x + r, y + h);
+    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+    ctx.lineTo(x, y + r);
+    ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(7, 5, 22, 0.78)';
+    ctx.fill();
+
+    ctx.lineWidth = 1.5;
+    ctx.strokeStyle = 'rgba(56, 189, 248, 0.4)';
+    ctx.stroke();
+
+    // Planet indicator dot
+    ctx.fillStyle = this.data.color || '#38bdf8';
+    ctx.beginPath();
+    ctx.arc(32, 32, 4.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Name label
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 17px system-ui, -apple-system, sans-serif';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(this.data.name.toUpperCase(), 46, 32);
+
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.generateMipmaps = false;
+    texture.minFilter = THREE.LinearFilter;
+    this.disposables.push(texture);
+
+    const spriteMat = new THREE.SpriteMaterial({
+      map: texture,
+      transparent: true,
+      depthTest: false,
+      depthWrite: false
+    });
+    this.disposables.push(spriteMat);
+
+    this.labelSprite = new THREE.Sprite(spriteMat);
+    const yOffset = this.data.radius * 1.5 + 1.2;
+    this.labelSprite.position.set(0, yOffset, 0);
+    this.labelSprite.scale.set(7.0, 1.75, 1);
+    this.container.add(this.labelSprite);
+  }
+
+  setLabelVisibility(visible) {
+    if (this.labelSprite) {
+      this.labelSprite.visible = visible;
+    }
+  }
+
   createRings() {
     const ringConfig = this.data.hasRings;
     const isUranus = this.data.id === 'uranus';
-    const ringGeo = new THREE.RingGeometry(ringConfig.innerRadius, ringConfig.outerRadius, 64);
+    const ringGeo = new THREE.RingGeometry(ringConfig.innerRadius, ringConfig.outerRadius, 128);
     ringGeo.rotateX(Math.PI / 2);
+
+    // Map radial coordinates so ring texture strip wraps around radially
+    const pos = ringGeo.attributes.position;
+    const uv = ringGeo.attributes.uv;
+    for (let i = 0; i < pos.count; i++) {
+      const x = pos.getX(i);
+      const z = pos.getZ(i);
+      const r = Math.sqrt(x * x + z * z);
+      const u = (r - ringConfig.innerRadius) / (ringConfig.outerRadius - ringConfig.innerRadius);
+      uv.setXY(i, u, 0.5);
+    }
+    uv.needsUpdate = true;
     this.disposables.push(ringGeo);
 
-    const ringTexture = createRingTexture(isUranus);
+    let ringTexture;
+    if (!isUranus) {
+      ringTexture = textureLoader.load('/textures/planets/saturn_ring.png', (tex) => {
+        tex.wrapS = THREE.ClampToEdgeWrapping;
+        tex.wrapT = THREE.ClampToEdgeWrapping;
+      });
+    } else {
+      ringTexture = createRingTexture(true);
+    }
     this.disposables.push(ringTexture);
 
     const ringMat = new THREE.MeshStandardMaterial({
       map: ringTexture,
       side: THREE.DoubleSide,
       transparent: true,
-      opacity: isUranus ? 0.6 : 0.92,
+      opacity: isUranus ? 0.6 : 0.95,
       roughness: 0.85,
       metalness: 0.05
     });
@@ -736,7 +888,11 @@ export class PlanetBody {
       }
       this.disposables.push(moonGeo);
 
-      const moonTexture = createMoonTexture(m);
+      const moonTexture = m.id === 'moon' 
+        ? textureLoader.load('/textures/planets/moon.jpg', (tex) => {
+            tex.colorSpace = THREE.SRGBColorSpace;
+          }) 
+        : createMoonTexture(m);
       this.disposables.push(moonTexture);
 
       const moonMat = new THREE.MeshStandardMaterial({
@@ -858,7 +1014,7 @@ export class PlanetBody {
     this.container.position.set(x, y, z);
   }
 
-  updatePosition(delta, speedMultiplier = 1, isPlaying = true) {
+  updatePosition(delta, speedMultiplier = 1, isPlaying = true, camera = null) {
     if (isPlaying && this.data.orbitalPeriod > 0) {
       const baseOrbitSpeed = 0.45;
       const orbitalSpeed = (baseOrbitSpeed / Math.sqrt(this.data.distance)) * speedMultiplier;
@@ -878,6 +1034,25 @@ export class PlanetBody {
       this.cloudMesh.rotation.y += 0.08 * delta * speedMultiplier;
     }
 
+    // Adaptive distance-based scaling and proximity fade for billboard label
+    if (this.labelSprite && camera) {
+      const worldPos = this.getWorldPosition();
+      const dist = camera.position.distanceTo(worldPos);
+      const closeThreshold = this.data.radius * 5.0;
+      if (dist < closeThreshold) {
+        // Smoothly fade out label when camera zooms in close to inspect the planet
+        const factor = Math.max(0, (dist - this.data.radius * 2.2) / (closeThreshold - this.data.radius * 2.2));
+        this.labelSprite.material.opacity = factor;
+        this.labelSprite.visible = factor > 0.05;
+      } else {
+        this.labelSprite.material.opacity = 1.0;
+        this.labelSprite.visible = true;
+        const baseScale = Math.min(Math.max(0.04 * dist, 1.6), 26.0);
+        this.labelSprite.scale.set(baseScale * 4, baseScale, 1);
+        this.labelSprite.position.y = this.data.radius * 1.35 + baseScale * 0.42;
+      }
+    }
+
     if (isPlaying && this.moons.length > 0) {
       this.moons.forEach(m => {
         const moonSpeed = (2.0 / Math.abs(m.data.orbitalPeriod || 28)) * speedMultiplier;
@@ -894,6 +1069,9 @@ export class PlanetBody {
   }
 
   dispose() {
+    if (this.labelSprite) {
+      this.container.remove(this.labelSprite);
+    }
     if (this.orbitLine) {
       this.scene.remove(this.orbitLine);
     }

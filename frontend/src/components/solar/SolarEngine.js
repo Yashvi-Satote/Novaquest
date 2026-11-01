@@ -54,7 +54,9 @@ export class SolarEngine {
     this.layerVisibility = {
       orbits: true,
       trajectories: true,
-      markers: true
+      markers: true,
+      labels: true,
+      stars: true
     };
 
     // Isolated Tween Group
@@ -730,6 +732,12 @@ export class SolarEngine {
     } else if (layer === 'markers') {
       this.interstellar.setMarkersVisible(visible);
       this.markers.setMarkersVisible(visible);
+    } else if (layer === 'labels') {
+      this.planetBodies.forEach(body => body.setLabelVisibility(visible));
+    } else if (layer === 'stars') {
+      if (this.starfield && this.starfield.group) {
+        this.starfield.group.visible = visible;
+      }
     }
   }
 
@@ -764,9 +772,9 @@ export class SolarEngine {
       this.tweenGroup.update();
     }
 
-    // 3. Update Celestial Bodies (axial rotation and moon orbits)
+    // 3. Update Celestial Bodies (axial rotation, moon orbits, and adaptive labels)
     this.planetBodies.forEach(body => {
-      body.updatePosition(delta, this.speedMultiplier, this.isPlaying);
+      body.updatePosition(delta, this.speedMultiplier, this.isPlaying, this.camera);
     });
 
     // 4. Update Spacecraft Markers
