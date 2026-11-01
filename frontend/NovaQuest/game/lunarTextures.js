@@ -203,6 +203,7 @@ export function createBasaltRockTexture(width = 512, height = 512) {
 
 /**
  * Creates Surveyor 1 MLI (Multi-Layer Insulation) Gold Foil Wrinkled Texture
+ * High-detail embossed kapton thermal blanket with seams, crinkles, and rivets
  */
 export function createGoldFoilTexture(width = 512, height = 512) {
   const canvas = document.createElement('canvas');
@@ -210,32 +211,55 @@ export function createGoldFoilTexture(width = 512, height = 512) {
   canvas.height = height;
   const ctx = canvas.getContext('2d');
 
-  // Vibrant warm amber gold base
-  ctx.fillStyle = '#d97706';
+  // Rich warm amber gold kapton base
+  ctx.fillStyle = '#b45309';
   ctx.fillRect(0, 0, width, height);
 
-  // Draw embossed foil crinkle facets
-  const gridSize = 16;
-  for (let y = 0; y < height; y += gridSize) {
-    for (let x = 0; x < width; x += gridSize) {
-      const isAlt = ((x + y) / gridSize) % 2 === 0;
-      ctx.fillStyle = isAlt ? '#f59e0b' : '#b45309';
-      ctx.fillRect(x, y, gridSize, gridSize);
+  // Irregular organic foil crinkle triangulation
+  const imgData = ctx.getImageData(0, 0, width, height);
+  const data = imgData.data;
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const idx = (y * width + x) * 4;
+      const n1 = Math.sin(x * 0.12) * Math.cos(y * 0.12);
+      const n2 = Math.sin(x * 0.28 + y * 0.22) * 0.5;
+      const n3 = Math.sin((x - y) * 0.35) * 0.25;
+      const crinkle = (n1 + n2 + n3) * 45;
 
-      // Diagonal foil fold crease
-      ctx.strokeStyle = 'rgba(254, 240, 138, 0.45)';
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(x, y);
-      ctx.lineTo(x + gridSize, y + gridSize);
-      ctx.stroke();
+      const r = Math.max(160, Math.min(255, 217 + crinkle));
+      const g = Math.max(90, Math.min(210, 140 + crinkle * 0.85));
+      const b = Math.max(5, Math.min(45, 12 + crinkle * 0.15));
 
-      ctx.strokeStyle = 'rgba(120, 53, 15, 0.4)';
-      ctx.beginPath();
-      ctx.moveTo(x + gridSize, y);
-      ctx.lineTo(x, y + gridSize);
-      ctx.stroke();
+      data[idx] = r;
+      data[idx + 1] = g;
+      data[idx + 2] = b;
+      data[idx + 3] = 255;
     }
+  }
+  ctx.putImageData(imgData, 0, 0);
+
+  // Sharp thermal tape seam lines and foil attachment rivets
+  ctx.strokeStyle = 'rgba(254, 240, 138, 0.65)';
+  ctx.lineWidth = 1.8;
+  for (let y = 0; y < height; y += 64) {
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(width, y);
+    ctx.stroke();
+
+    // Rivet dots along seam
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+    for (let rx = 16; rx < width; rx += 32) {
+      ctx.beginPath();
+      ctx.arc(rx, y, 1.8, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+  for (let x = 0; x < width; x += 64) {
+    ctx.beginPath();
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x, height);
+    ctx.stroke();
   }
 
   const texture = new THREE.CanvasTexture(canvas);
@@ -471,6 +495,167 @@ export function createGlowParticleTexture(size = 64) {
   ctx.fillRect(0, 0, size, size);
 
   const texture = new THREE.CanvasTexture(canvas);
+  return texture;
+}
+
+/**
+ * Creates High-Visibility Industrial Hazard Warning Stripes (Yellow & Black)
+ */
+export function createHazardStripeTexture(width = 256, height = 256) {
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d');
+
+  ctx.fillStyle = '#f59e0b'; // OSHA Hazard Amber
+  ctx.fillRect(0, 0, width, height);
+
+  ctx.fillStyle = '#111827'; // Dark charcoal black
+  const stripeWidth = 32;
+  ctx.lineWidth = stripeWidth;
+
+  for (let d = -width; d < width * 2; d += stripeWidth * 2) {
+    ctx.beginPath();
+    ctx.moveTo(d, 0);
+    ctx.lineTo(d + width, height);
+    ctx.stroke();
+  }
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.RepeatWrapping;
+  texture.repeat.set(4, 1);
+  return texture;
+}
+
+/**
+ * Creates Aerospace Woven Carbon Fiber Micro-Twill Texture
+ */
+export function createCarbonFiberTexture(width = 256, height = 256) {
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d');
+
+  ctx.fillStyle = '#131722';
+  ctx.fillRect(0, 0, width, height);
+
+  const twill = 8;
+  for (let y = 0; y < height; y += twill) {
+    for (let x = 0; x < width; x += twill) {
+      const isCheck = ((x / twill) + (y / twill)) % 2 === 0;
+      ctx.fillStyle = isCheck ? '#1e2433' : '#0d1017';
+      ctx.fillRect(x, y, twill, twill);
+
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+      ctx.strokeRect(x, y, twill, twill);
+    }
+  }
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.RepeatWrapping;
+  texture.repeat.set(8, 8);
+  return texture;
+}
+
+/**
+ * Creates High-Detail Tactical First-Person Scanner HUD Display Screen Texture
+ */
+export function createScannerHUDTexture(width = 512, height = 512) {
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d');
+
+  // Deep cyan-black glass backdrop
+  ctx.fillStyle = '#041527';
+  ctx.fillRect(0, 0, width, height);
+
+  // Grid lines
+  ctx.strokeStyle = 'rgba(6, 182, 212, 0.15)';
+  ctx.lineWidth = 1;
+  for (let i = 32; i < width; i += 32) {
+    ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, height); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(width, i); ctx.stroke();
+  }
+
+  // Circular radar reticle
+  ctx.strokeStyle = '#06b6d4';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(width / 2, height / 2, 120, 0, Math.PI * 2);
+  ctx.stroke();
+
+  ctx.strokeStyle = 'rgba(6, 182, 212, 0.4)';
+  ctx.beginPath();
+  ctx.arc(width / 2, height / 2, 70, 0, Math.PI * 2);
+  ctx.stroke();
+
+  // Oscilloscope wave
+  ctx.strokeStyle = '#38bdf8';
+  ctx.lineWidth = 3;
+  ctx.shadowColor = '#38bdf8';
+  ctx.shadowBlur = 8;
+  ctx.beginPath();
+  for (let x = 40; x < width - 40; x += 4) {
+    const y = height / 2 + Math.sin(x * 0.045) * 35 * Math.sin(x * 0.012);
+    if (x === 40) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+
+  // Telemetry typography
+  ctx.fillStyle = '#06b6d4';
+  ctx.font = 'bold 22px monospace';
+  ctx.fillText('LIDAR TEL: 432.06 MHz', 40, 50);
+
+  ctx.fillStyle = '#38bdf8';
+  ctx.font = '16px monospace';
+  ctx.fillText('RESONANCE: 99.4% [ANOMALOUS]', 40, 80);
+  ctx.fillText('RANGE: 124.8m | WNW', 40, 105);
+
+  ctx.fillStyle = '#10b981';
+  ctx.fillText('SUIT LINK: OPTIMAL', 40, height - 40);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  return texture;
+}
+
+/**
+ * Creates Spacesuit Beta-Cloth Thermal Micrometeoroid Garment (TMG) Weave Texture
+ */
+export function createSpacesuitFabricTexture(width = 512, height = 512) {
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d');
+
+  ctx.fillStyle = '#eceff4';
+  ctx.fillRect(0, 0, width, height);
+
+  const imgData = ctx.getImageData(0, 0, width, height);
+  const data = imgData.data;
+
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const idx = (y * width + x) * 4;
+      const weave = (Math.sin(x * 1.5) + Math.cos(y * 1.5)) * 12;
+      const grain = (Math.random() - 0.5) * 15;
+      const val = Math.max(180, Math.min(255, 230 + weave + grain));
+      data[idx] = val;
+      data[idx + 1] = val;
+      data[idx + 2] = val;
+      data[idx + 3] = 255;
+    }
+  }
+  ctx.putImageData(imgData, 0, 0);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.RepeatWrapping;
+  texture.repeat.set(12, 12);
   return texture;
 }
 

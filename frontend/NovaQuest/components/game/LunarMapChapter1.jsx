@@ -31,7 +31,11 @@ import {
   createAlienGlyphTexture,
   createRoverTrackTexture,
   createVisorDirtTexture,
-  createGlowParticleTexture
+  createGlowParticleTexture,
+  createHazardStripeTexture,
+  createCarbonFiberTexture,
+  createScannerHUDTexture,
+  createSpacesuitFabricTexture
 } from '../../game/lunarTextures';
 
 /**
@@ -114,86 +118,121 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x000000); // 100% Black deep space, no atmospheric haze
 
-    // 2. CAMERA — First-Person Astronaut Eye Level (1.75m)
+    // 2. PROCEDURAL HIGH-RESOLUTION PBR TEXTURES (GENERATED IN-MEMORY WITHOUT EXTERNAL NETWORK ASSETS)
+    const regolithMap = createLunarRegolithTexture(1024, 1024);
+    const regolithBumpMap = createLunarBumpTexture(512, 512);
+    const regolithRoughnessMap = createLunarRoughnessTexture(512, 512);
+    const basaltRockMap = createBasaltRockTexture(512, 512);
+    const goldFoilMap = createGoldFoilTexture(512, 512);
+    const solarPanelMap = createSolarPanelTexture(512, 512);
+    const alienGlyphMap = createAlienGlyphTexture(512, 512);
+    const roverTrackMap = createRoverTrackTexture(256, 512);
+    const dustParticleTex = createGlowParticleTexture(64);
+    const hazardStripeMap = createHazardStripeTexture(256, 256);
+    const carbonFiberMap = createCarbonFiberTexture(256, 256);
+    const scannerScreenMap = createScannerHUDTexture(512, 512);
+    const spacesuitFabricMap = createSpacesuitFabricTexture(512, 512);
+
+    // 3. CAMERA — First-Person Astronaut Eye Level (1.75m)
     const camera = new THREE.PerspectiveCamera(65, width / height, 0.1, 2000);
     const EYE_HEIGHT = 1.75;
     camera.position.set(104, EYE_HEIGHT, 66); // Start at Zone 1 Team Landing Zone looking West toward Surveyor 1
 
-    // First-Person 3D Handheld Sci-Fi Scanner (Viewmodel attached to astronaut camera view)
+    // HIGH-DETAIL FIRST-PERSON 3D SCI-FI SCANNER VIEWMODEL
     const fpScannerGroup = new THREE.Group();
     fpScannerGroup.position.set(0.24, -0.22, -0.46);
     fpScannerGroup.rotation.set(-0.12, -0.16, 0.05);
 
-    // Scanner main body chassis (dark matte composite aerospace alloy)
+    // Scanner main body chassis with Carbon-Fiber composite casing
     const scannerChassisMat = new THREE.MeshStandardMaterial({
+      map: carbonFiberMap,
       color: 0x1e293b,
       metalness: 0.88,
       roughness: 0.28
     });
-    const scannerChassis = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.16, 0.24), scannerChassisMat);
+    const scannerChassis = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.16, 0.24), scannerChassisMat);
     fpScannerGroup.add(scannerChassis);
 
-    // Ergonomic grip handle
+    // Ergonomic rubberized thumb-rest grip handle
     const scannerGrip = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.022, 0.026, 0.14, 12),
-      new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.95 })
+      new THREE.CylinderGeometry(0.022, 0.026, 0.15, 12),
+      new THREE.MeshStandardMaterial({ color: 0x0a0d14, roughness: 0.95 })
     );
     scannerGrip.position.set(0, -0.12, -0.03);
     scannerGrip.rotation.x = 0.22;
     fpScannerGroup.add(scannerGrip);
 
-    // Beveled Top Display Screen Housing
+    // Lateral Heat-Sink Cooling Vents with Copper Radiator Fins
+    for (const sx of [-0.062, 0.062]) {
+      const ventPlate = new THREE.Mesh(
+        new THREE.BoxGeometry(0.008, 0.08, 0.12),
+        new THREE.MeshStandardMaterial({ color: 0xb45309, metalness: 0.92, roughness: 0.2 })
+      );
+      ventPlate.position.set(sx, 0.02, 0.02);
+      fpScannerGroup.add(ventPlate);
+    }
+
+    // Beveled Top Display Screen Housing with Status LEDs
     const scannerScreenHousing = new THREE.Mesh(
-      new THREE.BoxGeometry(0.095, 0.015, 0.11),
-      new THREE.MeshStandardMaterial({ color: 0x0f172a, metalness: 0.9, roughness: 0.2 })
+      new THREE.BoxGeometry(0.105, 0.018, 0.12),
+      new THREE.MeshStandardMaterial({ color: 0x0f172a, metalness: 0.95, roughness: 0.2 })
     );
     scannerScreenHousing.position.set(0, 0.082, 0.01);
     scannerScreenHousing.rotation.x = 0.32;
     fpScannerGroup.add(scannerScreenHousing);
 
-    // Glowing Holographic LCD Telemetry Display Screen
+    // High-Resolution Tactical HUD Display Screen
     const scannerScreen = new THREE.Mesh(
-      new THREE.PlaneGeometry(0.085, 0.09),
-      new THREE.MeshBasicMaterial({ color: 0x06b6d4 })
+      new THREE.PlaneGeometry(0.095, 0.105),
+      new THREE.MeshBasicMaterial({ map: scannerScreenMap })
     );
-    scannerScreen.position.set(0, 0.092, 0.01);
+    scannerScreen.position.set(0, 0.093, 0.01);
     scannerScreen.rotation.x = -Math.PI / 2 + 0.32;
     fpScannerGroup.add(scannerScreen);
 
-    // Forward LIDAR Emitter Collar & Lens Barrel
+    // Multi-Stage Forward LIDAR Emitter Collar & Lens Barrel
     const emitterBarrel = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.034, 0.042, 0.07, 16),
-      new THREE.MeshStandardMaterial({ color: 0x334155, metalness: 0.92, roughness: 0.18 })
+      new THREE.CylinderGeometry(0.036, 0.046, 0.08, 16),
+      new THREE.MeshStandardMaterial({ color: 0x334155, metalness: 0.94, roughness: 0.15 })
     );
     emitterBarrel.rotation.x = Math.PI / 2;
     emitterBarrel.position.set(0, 0.02, 0.15);
     fpScannerGroup.add(emitterBarrel);
 
+    // Stepped Brass Waveguide Induction Coil
+    const coil = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.042, 0.042, 0.03, 16),
+      new THREE.MeshStandardMaterial({ color: 0xd97706, metalness: 0.95, roughness: 0.25 })
+    );
+    coil.rotation.x = Math.PI / 2;
+    coil.position.set(0, 0.02, 0.13);
+    fpScannerGroup.add(coil);
+
     // Glowing Emitter Focal Lens Ring
     const emitterLensMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8 });
-    const emitterLens = new THREE.Mesh(new THREE.CylinderGeometry(0.026, 0.026, 0.012, 16), emitterLensMat);
+    const emitterLens = new THREE.Mesh(new THREE.CylinderGeometry(0.028, 0.028, 0.014, 16), emitterLensMat);
     emitterLens.rotation.x = Math.PI / 2;
-    emitterLens.position.set(0, 0.02, 0.188);
+    emitterLens.position.set(0, 0.02, 0.192);
     fpScannerGroup.add(emitterLens);
 
-    // Twin Directional Waveguide Antenna Prongs
-    for (const px of [-0.044, 0.044]) {
+    // Twin Articulated Directional Waveguide Antenna Prongs
+    for (const px of [-0.046, 0.046]) {
       const prong = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.005, 0.005, 0.11, 8),
-        new THREE.MeshStandardMaterial({ color: 0xd4d4d8, metalness: 0.95, roughness: 0.15 })
+        new THREE.CylinderGeometry(0.005, 0.005, 0.12, 8),
+        new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.98, roughness: 0.12 })
       );
       prong.rotation.x = Math.PI / 2;
       prong.position.set(px, 0.035, 0.16);
       fpScannerGroup.add(prong);
 
-      const prongTip = new THREE.Mesh(new THREE.SphereGeometry(0.007, 8, 8), new THREE.MeshBasicMaterial({ color: 0x38bdf8 }));
-      prongTip.position.set(px, 0.035, 0.215);
+      const prongTip = new THREE.Mesh(new THREE.SphereGeometry(0.008, 8, 8), new THREE.MeshBasicMaterial({ color: 0x38bdf8 }));
+      prongTip.position.set(px, 0.035, 0.22);
       fpScannerGroup.add(prongTip);
     }
 
     // Scanner Forward Projection PointLight
-    const scannerSpot = new THREE.PointLight(0x06b6d4, 1.2, 10);
-    scannerSpot.position.set(0, 0.03, 0.22);
+    const scannerSpot = new THREE.PointLight(0x06b6d4, 1.4, 10);
+    scannerSpot.position.set(0, 0.03, 0.24);
     fpScannerGroup.add(scannerSpot);
 
     camera.add(fpScannerGroup);
@@ -304,17 +343,6 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
     const earthAtmosphere = new THREE.Mesh(earthAtmosphereGeo, earthAtmosphereMat);
     earthGroup.add(earthAtmosphere);
     scene.add(earthGroup);
-
-    // 6. PROCEDURAL PBR TEXTURES (GENERATED IN-MEMORY WITHOUT EXTERNAL ASSETS)
-    const regolithMap = createLunarRegolithTexture(1024, 1024);
-    const regolithBumpMap = createLunarBumpTexture(512, 512);
-    const regolithRoughnessMap = createLunarRoughnessTexture(512, 512);
-    const basaltRockMap = createBasaltRockTexture(512, 512);
-    const goldFoilMap = createGoldFoilTexture(512, 512);
-    const solarPanelMap = createSolarPanelTexture(512, 512);
-    const alienGlyphMap = createAlienGlyphTexture(512, 512);
-    const roverTrackMap = createRoverTrackTexture(256, 512);
-    const dustParticleTex = createGlowParticleTexture(64);
 
     // Astronaut EVA Footprint Decal System (Initialized early for all zones & movement)
     const bootprintGroup = new THREE.Group();
@@ -705,76 +733,224 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
     const matGlassOptic = new THREE.MeshStandardMaterial({ color: 0x38bdf8, emissive: 0x0284c7, emissiveIntensity: 0.5, roughness: 0.08 });
     const matRocketNozzle = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.95, roughness: 0.35 });
 
-    // A. Triangular Tubular Space Frame Body (Medium-Poly 16-sided cylinder)
-    const frameBody = new THREE.Mesh(new THREE.CylinderGeometry(1.6, 2.4, 2.0, 16), matAluminum);
-    frameBody.position.y = 2.1;
-    frameBody.castShadow = true;
-    surveyorGroup.add(frameBody);
+    // A. Authentic Open Triangular Tubular Lattice Space Frame (NASA Surveyor Specification)
+    const frameTrussGroup = new THREE.Group();
+    const cornerRadius = 1.35;
+    const cornerAngles = [0, (2 * Math.PI) / 3, (4 * Math.PI) / 3];
+    const topY = 2.7;
+    const botY = 1.2;
 
-    // Internal structural cross struts
-    for (let s = 0; s < 3; s++) {
-      const sAng = (s * Math.PI * 2) / 3;
-      const crossStrut = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 3.2, 12), matAluminum);
-      crossStrut.position.set(Math.cos(sAng) * 1.2, 2.1, Math.sin(sAng) * 1.2);
-      crossStrut.rotation.z = 0.5;
-      crossStrut.rotation.y = sAng;
-      surveyorGroup.add(crossStrut);
+    // 1. Three vertical main corner posts with bolted gusset plates
+    for (let i = 0; i < 3; i++) {
+      const ang = cornerAngles[i];
+      const cx = Math.cos(ang) * cornerRadius;
+      const cz = Math.sin(ang) * cornerRadius;
+
+      const post = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, topY - botY, 12), matAluminum);
+      post.position.set(cx, (topY + botY) * 0.5, cz);
+      post.castShadow = true;
+      frameTrussGroup.add(post);
+
+      // Upper and lower joint gusset bracket rings
+      for (const gy of [botY + 0.05, topY - 0.05]) {
+        const gusset = new THREE.Mesh(new THREE.CylinderGeometry(0.065, 0.065, 0.08, 12), matAluminum);
+        gusset.position.set(cx, gy, cz);
+        frameTrussGroup.add(gusset);
+      }
     }
 
-    // B. Vernier Propulsion Rocket Engine Bell Nozzles (3 inverted thrusters facing down)
+    // 2. Horizontal and diagonal Warren truss members for each of the 3 triangular faces
+    for (let i = 0; i < 3; i++) {
+      const a1 = cornerAngles[i];
+      const a2 = cornerAngles[(i + 1) % 3];
+      const p1Top = new THREE.Vector3(Math.cos(a1) * cornerRadius, topY, Math.sin(a1) * cornerRadius);
+      const p1Bot = new THREE.Vector3(Math.cos(a1) * cornerRadius, botY, Math.sin(a1) * cornerRadius);
+      const p2Top = new THREE.Vector3(Math.cos(a2) * cornerRadius, topY, Math.sin(a2) * cornerRadius);
+      const p2Bot = new THREE.Vector3(Math.cos(a2) * cornerRadius, botY, Math.sin(a2) * cornerRadius);
+
+      const addStrut = (start, end) => {
+        const dir = new THREE.Vector3().subVectors(end, start);
+        const len = dir.length();
+        const strut = new THREE.Mesh(new THREE.CylinderGeometry(0.032, 0.032, len, 8), matAluminum);
+        strut.position.copy(start).addScaledVector(dir, 0.5);
+        strut.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir.clone().normalize());
+        strut.castShadow = true;
+        frameTrussGroup.add(strut);
+      };
+
+      // Top and bottom horizontal boundary tubes
+      addStrut(p1Top, p2Top);
+      addStrut(p1Bot, p2Bot);
+
+      // Dual diagonal cross-struts (Warren truss)
+      addStrut(p1Bot, p2Top);
+      addStrut(p1Top, p2Bot);
+    }
+
+    // 3. Central pyramidal apex struts converging to mast collar
+    const apexCenter = new THREE.Vector3(0, 3.2, 0);
+    for (let i = 0; i < 3; i++) {
+      const ang = cornerAngles[i];
+      const pTop = new THREE.Vector3(Math.cos(ang) * cornerRadius, topY, Math.sin(ang) * cornerRadius);
+      const dir = new THREE.Vector3().subVectors(apexCenter, pTop);
+      const strut = new THREE.Mesh(new THREE.CylinderGeometry(0.038, 0.038, dir.length(), 8), matAluminum);
+      strut.position.copy(pTop).addScaledVector(dir, 0.5);
+      strut.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir.clone().normalize());
+      frameTrussGroup.add(strut);
+    }
+    surveyorGroup.add(frameTrussGroup);
+
+    // B. High-Detail Vernier Propulsion Rocket Engines with Gimbal Actuators & Feed Tubing
     for (let v = 0; v < 3; v++) {
-      const vAng = (v * Math.PI * 2) / 3 + 0.5;
-      const vernier = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.28, 0.42, 16), matRocketNozzle);
-      vernier.position.set(Math.cos(vAng) * 1.4, 1.0, Math.sin(vAng) * 1.4);
-      vernier.castShadow = true;
-      surveyorGroup.add(vernier);
+      const vAng = cornerAngles[v] + 0.55;
+      const vx = Math.cos(vAng) * 1.35;
+      const vz = Math.sin(vAng) * 1.35;
+      const engineGroup = new THREE.Group();
+      engineGroup.position.set(vx, botY, vz);
+
+      // Upper gimbal pivot ring
+      const gimbalRing = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.06, 12), matAluminum);
+      engineGroup.add(gimbalRing);
+
+      // Spherical combustion chamber dome
+      const chamber = new THREE.Mesh(new THREE.SphereGeometry(0.13, 16, 16), matRocketNozzle);
+      chamber.position.y = -0.08;
+      engineGroup.add(chamber);
+
+      // Flared ceramic expansion bell nozzle
+      const nozzle = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.28, 0.46, 20), matRocketNozzle);
+      nozzle.position.y = -0.32;
+      nozzle.castShadow = true;
+      engineGroup.add(nozzle);
+
+      // Nozzle interior dark heat-resistant ceramic throat
+      const nozzleInner = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.08, 0.24, 0.44, 16),
+        new THREE.MeshStandardMaterial({ color: 0x0a0c12, roughness: 0.85 })
+      );
+      nozzleInner.position.y = -0.32;
+      engineGroup.add(nozzleInner);
+
+      // Gimbal pushrod actuator
+      const actuator = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.32, 8), matAluminum);
+      actuator.position.set(0.12, -0.15, 0.06);
+      actuator.rotation.z = -0.35;
+      engineGroup.add(actuator);
+
+      surveyorGroup.add(engineGroup);
     }
 
-    // C. Helium Pressurization Spherical Tanks (3 titanium spheres)
+    // C. 3 Titanium Helium Pressurization Spheres with Equator Weld Seams & Tubing
     for (let t = 0; t < 3; t++) {
-      const tAng = (t * Math.PI * 2) / 3 - 0.5;
-      const tank = new THREE.Mesh(new THREE.SphereGeometry(0.32, 16, 16), matAluminum);
-      tank.position.set(Math.cos(tAng) * 1.5, 2.2, Math.sin(tAng) * 1.5);
+      const tAng = cornerAngles[t] - 0.52;
+      const tx = Math.cos(tAng) * 1.25;
+      const tz = Math.sin(tAng) * 1.25;
+      const tankGroup = new THREE.Group();
+      tankGroup.position.set(tx, 2.05, tz);
+
+      const tank = new THREE.Mesh(new THREE.SphereGeometry(0.28, 20, 20), matAluminum);
       tank.castShadow = true;
-      surveyorGroup.add(tank);
+      tankGroup.add(tank);
+
+      // Equator weld seam ring
+      const seam = new THREE.Mesh(new THREE.TorusGeometry(0.282, 0.012, 8, 24), matAluminum);
+      seam.rotation.x = Math.PI / 2;
+      tankGroup.add(seam);
+
+      // Tank mounting saddle bracket
+      const saddle = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.28, 0.12), matRocketNozzle);
+      saddle.position.set(0, -0.18, 0);
+      tankGroup.add(saddle);
+
+      surveyorGroup.add(tankGroup);
     }
 
-    // D. Gold MLI Thermal Insulation Equipment Compartments (A & B)
-    const compA = new THREE.Mesh(new THREE.BoxGeometry(1.3, 0.9, 0.9), matGoldFoil);
-    compA.position.set(0.7, 1.8, 0.3);
-    compA.castShadow = true;
+    // D. High-Detail Gold MLI Kapton Insulation Compartments with Seams & Radiator Louvers
+    const compA = new THREE.Group();
+    compA.position.set(0.65, 1.85, 0.25);
+    const compABox = new THREE.Mesh(new THREE.BoxGeometry(1.25, 0.85, 0.85), matGoldFoil);
+    compABox.castShadow = true;
+    compA.add(compABox);
+
+    // Heat radiator louvers on compartment side
+    const radLouverA = new THREE.Mesh(
+      new THREE.PlaneGeometry(0.7, 0.5),
+      new THREE.MeshStandardMaterial({ color: 0xd4d4d8, metalness: 0.95, roughness: 0.15 })
+    );
+    radLouverA.position.set(0, 0, 0.43);
+    compA.add(radLouverA);
     surveyorGroup.add(compA);
 
-    const compB = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.8, 0.8), matGoldFoil);
-    compB.position.set(-0.7, 1.8, 0.3);
-    compB.castShadow = true;
+    const compB = new THREE.Group();
+    compB.position.set(-0.65, 1.85, 0.25);
+    const compBBox = new THREE.Mesh(new THREE.BoxGeometry(1.15, 0.75, 0.75), matGoldFoil);
+    compBBox.castShadow = true;
+    compB.add(compBBox);
+
+    const radLouverB = new THREE.Mesh(
+      new THREE.PlaneGeometry(0.6, 0.45),
+      new THREE.MeshStandardMaterial({ color: 0xd4d4d8, metalness: 0.95, roughness: 0.15 })
+    );
+    radLouverB.position.set(0, 0, 0.38);
+    compB.add(radLouverB);
     surveyorGroup.add(compB);
 
-    // E. 3 Articulated Tripod Landing Legs with Honeycomb Footpads
+    // E. 3 High-Detail Articulated Tripod Landing Legs with Telescoping Oleo Pistons & Honeycomb Footpads
+    const chromePistonMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, metalness: 0.98, roughness: 0.06 });
+    const blueCollarMat = new THREE.MeshStandardMaterial({ color: 0x1e3a8a, metalness: 0.88, roughness: 0.3 });
+
     for (let i = 0; i < 3; i++) {
-      const legAngle = (i * Math.PI * 2) / 3;
+      const legAngle = cornerAngles[i];
       const legGroup = new THREE.Group();
       legGroup.rotation.y = legAngle;
 
-      // Primary strut
-      const strut = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 3.8, 16), matAluminum);
-      strut.position.set(0, 1.1, 2.2);
+      // Upper A-frame hinge mount bracket
+      const hingeBracket = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.22, 0.16), matAluminum);
+      hingeBracket.position.set(0, 1.4, 1.4);
+      legGroup.add(hingeBracket);
+
+      // Primary upper tubular strut
+      const strut = new THREE.Mesh(new THREE.CylinderGeometry(0.065, 0.065, 3.6, 16), matAluminum);
+      strut.position.set(0, 1.05, 2.3);
       strut.rotation.x = 0.65;
       strut.castShadow = true;
       legGroup.add(strut);
 
-      // Hydraulic shock absorber cylinder
-      const shock = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.13, 1.8, 16), matAluminum);
-      shock.position.set(0, 1.5, 1.6);
-      shock.rotation.x = 0.4;
-      legGroup.add(shock);
+      // Hydraulic shock absorber outer cylinder (Blue anodized)
+      const shockCylinder = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 1.6, 16), blueCollarMat);
+      shockCylinder.position.set(0, 1.55, 1.7);
+      shockCylinder.rotation.x = 0.42;
+      legGroup.add(shockCylinder);
 
-      // Circular crushable aluminum honeycomb footpad embedded in soil
-      const footpad = new THREE.Mesh(new THREE.CylinderGeometry(0.68, 0.72, 0.22, 24), matAluminum);
-      footpad.position.set(0, 0.11, 3.6);
+      // Telescoping polished chrome inner piston rod
+      const shockPiston = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 1.4, 16), chromePistonMat);
+      shockPiston.position.set(0, 1.08, 2.15);
+      shockPiston.rotation.x = 0.42;
+      legGroup.add(shockPiston);
+
+      // Scissor stabilizing lock linkage
+      const lockLinkA = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.65, 0.04), matAluminum);
+      lockLinkA.position.set(0.08, 1.35, 1.85);
+      lockLinkA.rotation.x = -0.4;
+      legGroup.add(lockLinkA);
+
+      // Crushable aluminum honeycomb footpad (24-sided) with radial stiffeners
+      const footpadGroup = new THREE.Group();
+      footpadGroup.position.set(0, 0.12, 3.65);
+
+      const footpad = new THREE.Mesh(new THREE.CylinderGeometry(0.68, 0.74, 0.22, 24), matAluminum);
       footpad.castShadow = true;
-      legGroup.add(footpad);
+      footpadGroup.add(footpad);
 
+      // Radial stiffener ribs across top of footpad
+      for (let r = 0; r < 6; r++) {
+        const rib = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.06, 0.65), matAluminum);
+        rib.rotation.y = (r * Math.PI) / 6;
+        rib.position.y = 0.12;
+        footpadGroup.add(rib);
+      }
+
+      legGroup.add(footpadGroup);
       surveyorGroup.add(legGroup);
     }
 
@@ -789,40 +965,107 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
     footpadTrench.position.set(Math.cos((2 * Math.PI) / 3) * 3.6, 0.03, Math.sin((2 * Math.PI) / 3) * 3.6);
     surveyorGroup.add(footpadTrench);
 
-    // F. Central Mast Assembly
-    const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 3.4, 16), matAluminum);
+    // F. Central Mast Assembly with Wire Conduit Wrap
+    const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 3.4, 16), matAluminum);
     mast.position.y = 4.2;
     mast.castShadow = true;
     surveyorGroup.add(mast);
 
-    // G. Planar Solar Array Panel angled towards the low morning sun
-    const solarPanel = new THREE.Mesh(new THREE.BoxGeometry(2.1, 0.08, 1.3), matSolarPanel);
-    solarPanel.position.set(0, 5.8, 0.2);
-    solarPanel.rotation.x = -0.32;
-    solarPanel.rotation.y = 0.45;
+    // Spiraling electrical wire harness around mast
+    const wirePoints = [];
+    for (let w = 0; w < 40; w++) {
+      const wAng = w * 0.45;
+      const wy = 2.6 + (w / 40) * 3.0;
+      wirePoints.push(new THREE.Vector3(Math.cos(wAng) * 0.09, wy, Math.sin(wAng) * 0.09));
+    }
+    const wireGeo = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(wirePoints), 36, 0.012, 6, false);
+    const wireMesh = new THREE.Mesh(wireGeo, matRocketNozzle);
+    surveyorGroup.add(wireMesh);
+
+    // G. High-Detail Planar Solar Array Panel with Structural Backing & Sun Sensor
+    const solarGroup = new THREE.Group();
+    solarGroup.position.set(0, 5.8, 0.2);
+    solarGroup.rotation.x = -0.32;
+    solarGroup.rotation.y = 0.45;
+
+    // Outer structural aluminum frame border
+    const solarFrame = new THREE.Mesh(new THREE.BoxGeometry(2.18, 0.06, 1.38), matAluminum);
+    solarGroup.add(solarFrame);
+
+    // Active Photovoltaic Silicon Wafer Face
+    const solarPanel = new THREE.Mesh(new THREE.BoxGeometry(2.1, 0.07, 1.3), matSolarPanel);
     solarPanel.castShadow = true;
-    surveyorGroup.add(solarPanel);
+    solarGroup.add(solarPanel);
 
-    // H. Steerable Vidicon TV Camera Turret with Motorized Mirror Housing
-    const cameraTurret = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.26, 0.95, 20), matAluminum);
-    cameraTurret.position.set(0.65, 3.2, -0.65);
-    cameraTurret.castShadow = true;
-    surveyorGroup.add(cameraTurret);
+    // Back reinforcing ribbing grid
+    for (let r = -0.8; r <= 0.8; r += 0.4) {
+      const rib = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.04, 1.25), matAluminum);
+      rib.position.set(r, -0.04, 0);
+      solarGroup.add(rib);
+    }
 
-    const cameraMirror = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.48, 0.1), matGlassOptic);
-    cameraMirror.position.set(0.65, 3.78, -0.65);
-    cameraMirror.rotation.x = -0.55;
-    surveyorGroup.add(cameraMirror);
+    // Solar sun-sensor stalk on panel apex
+    const sunSensorStalk = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.35, 8), matAluminum);
+    sunSensorStalk.position.set(0, 0.08, 0.72);
+    sunSensorStalk.rotation.x = Math.PI / 2;
+    solarGroup.add(sunSensorStalk);
 
-    // I. Two Omnidirectional Antennas extending outward
+    const sunSensorHead = new THREE.Mesh(new THREE.SphereGeometry(0.035, 12, 12), matGlassOptic);
+    sunSensorHead.position.set(0, 0.08, 0.9);
+    solarGroup.add(sunSensorHead);
+
+    surveyorGroup.add(solarGroup);
+
+    // H. Steerable High-Detail Vidicon TV Camera Turret with Filter Wheel & Optical Hood
+    const tvCameraGroup = new THREE.Group();
+    tvCameraGroup.position.set(0.65, 3.2, -0.65);
+
+    // Stepped cylindrical housing
+    const cameraBody = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.26, 0.85, 20), matAluminum);
+    cameraBody.castShadow = true;
+    tvCameraGroup.add(cameraBody);
+
+    // Optical filter wheel housing collar
+    const filterWheel = new THREE.Mesh(new THREE.CylinderGeometry(0.27, 0.27, 0.12, 20), matRocketNozzle);
+    filterWheel.position.y = 0.42;
+    tvCameraGroup.add(filterWheel);
+
+    // Motorized mirror hood with bevel gear bracket
+    const mirrorHood = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.45, 0.32), matAluminum);
+    mirrorHood.position.set(0, 0.68, 0);
+    mirrorHood.rotation.x = -0.45;
+    tvCameraGroup.add(mirrorHood);
+
+    // Multi-element optical glass aperture lens
+    const cameraMirror = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 0.08, 20), matGlassOptic);
+    cameraMirror.position.set(0, 0.68, 0.16);
+    cameraMirror.rotation.x = Math.PI / 2 - 0.45;
+    tvCameraGroup.add(cameraMirror);
+
+    // Camera mounting bracket to space frame
+    const cameraBracket = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.12, 0.35), matAluminum);
+    cameraBracket.position.set(-0.15, -0.42, 0.15);
+    tvCameraGroup.add(cameraBracket);
+
+    surveyorGroup.add(tvCameraGroup);
+
+    // I. High-Gain Planar Directional Antenna (Beside Mast)
+    const hgAntenna = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.45, 0.04, 24), matAluminum);
+    hgAntenna.position.set(-0.55, 4.8, 0);
+    hgAntenna.rotation.z = 0.45;
+    hgAntenna.castShadow = true;
+    surveyorGroup.add(hgAntenna);
+
+    // J. Two Omnidirectional Antennas extending outward with deployment springs
     for (let dir of [-1, 1]) {
-      const antennaArm = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 2.2, 12), matAluminum);
+      const antennaArm = new THREE.Mesh(new THREE.CylinderGeometry(0.038, 0.038, 2.2, 12), matAluminum);
       antennaArm.position.set(dir * 1.8, 2.4, 0);
       antennaArm.rotation.z = dir * 1.1;
       antennaArm.castShadow = true;
       surveyorGroup.add(antennaArm);
 
-      const antennaCone = new THREE.Mesh(new THREE.ConeGeometry(0.22, 0.38, 16), matGoldFoil);
+      // Gold Kapton Cone Cap
+      const antennaCone = new THREE.Mesh(new THREE.ConeGeometry(0.22, 0.42, 16), matGoldFoil);
       antennaCone.position.set(dir * 2.8, 2.9, 0);
       surveyorGroup.add(antennaCone);
     }
@@ -954,214 +1197,457 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
     transportVehicleGroup.position.set(5.5, 0, 0);
     transportVehicleGroup.rotation.y = Math.PI * 0.95; // Pointing West towards Surveyor 1
 
-    // Vehicle Chassis (Heavy Pressurized Titanium Hull)
-    const vehBodyMat = new THREE.MeshStandardMaterial({ color: 0x334155, metalness: 0.88, roughness: 0.3 });
-    const vehAccentMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.85, roughness: 0.25 });
+    // Vehicle Chassis Materials (High-Detail PBR)
+    const vehBodyMat = new THREE.MeshStandardMaterial({
+      color: 0x334155,
+      metalness: 0.90,
+      roughness: 0.25
+    });
+    const vehArmorMat = new THREE.MeshStandardMaterial({
+      map: carbonFiberMap,
+      color: 0x1e293b,
+      metalness: 0.85,
+      roughness: 0.32
+    });
+    const vehAccentMat = new THREE.MeshStandardMaterial({ color: 0xf1f5f9, metalness: 0.88, roughness: 0.22 });
+    const vehHazardMat = new THREE.MeshStandardMaterial({ map: hazardStripeMap, roughness: 0.35, metalness: 0.5 });
     const vehGlassMat = new THREE.MeshStandardMaterial({
       color: 0xf59e0b,
-      metalness: 0.96,
-      roughness: 0.08,
+      metalness: 0.98,
+      roughness: 0.04,
       transparent: true,
       opacity: 0.88
     });
 
-    // Lower Frame & Skid Plate
-    const vehChassis = new THREE.Mesh(new THREE.BoxGeometry(6.6, 1.2, 3.2), vehBodyMat);
-    vehChassis.position.y = 1.3;
+    // 1. Lower Reinforced Titanium Skid Chassis & Hull Keel
+    const vehChassis = new THREE.Mesh(new THREE.BoxGeometry(6.8, 0.75, 3.2), vehBodyMat);
+    vehChassis.position.y = 1.15;
     vehChassis.castShadow = true;
     vehChassis.receiveShadow = true;
     transportVehicleGroup.add(vehChassis);
 
-    // Upper Pressurized Crew Cabin with Slanted Cockpit Nose
-    const vehCabin = new THREE.Mesh(new THREE.BoxGeometry(4.2, 1.6, 2.9), vehAccentMat);
-    vehCabin.position.set(-0.8, 2.4, 0);
+    // Lateral armor side-skirts with hazard warning stripes
+    for (const sz of [-1.62, 1.62]) {
+      const skirt = new THREE.Mesh(new THREE.BoxGeometry(6.4, 0.45, 0.08), vehHazardMat);
+      skirt.position.set(0, 0.95, sz);
+      transportVehicleGroup.add(skirt);
+    }
+
+    // 2. Upper Pressurized Command Crew Module with Beveled Chamfers
+    const vehCabin = new THREE.Mesh(new THREE.BoxGeometry(4.4, 1.65, 2.95), vehAccentMat);
+    vehCabin.position.set(-0.7, 2.35, 0);
     vehCabin.castShadow = true;
     transportVehicleGroup.add(vehCabin);
 
-    // Cockpit Window Viewport (Golden Solar Shield Glass)
-    const vehCockpitGlass = new THREE.Mesh(new THREE.BoxGeometry(1.6, 1.2, 2.6), vehGlassMat);
-    vehCockpitGlass.position.set(2.0, 2.2, 0);
-    vehCockpitGlass.rotation.z = -0.32;
-    transportVehicleGroup.add(vehCockpitGlass);
+    // Carbon-fiber composite armor roof cap
+    const roofArmor = new THREE.Mesh(new THREE.BoxGeometry(4.3, 0.08, 2.85), vehArmorMat);
+    roofArmor.position.set(-0.7, 3.22, 0);
+    transportVehicleGroup.add(roofArmor);
 
-    // Rear Pressurized Airlock Hatch
-    const airlockDoor = new THREE.Mesh(new THREE.CylinderGeometry(0.7, 0.7, 0.2, 16), matAluminum);
-    airlockDoor.rotation.z = Math.PI / 2;
-    airlockDoor.position.set(-3.35, 1.6, 0);
-    transportVehicleGroup.add(airlockDoor);
+    // 3. Faceted Aerodynamic Sloping Nose & Multi-Pane Gold Solar Viewport
+    const noseFrame = new THREE.Mesh(new THREE.BoxGeometry(1.6, 1.4, 2.8), vehBodyMat);
+    noseFrame.position.set(2.1, 2.15, 0);
+    noseFrame.rotation.z = -0.35;
+    noseFrame.castShadow = true;
+    transportVehicleGroup.add(noseFrame);
 
-    // Roof Equipment Rack & Telemetry Array
-    const roofRack = new THREE.Mesh(new THREE.BoxGeometry(3.6, 0.2, 2.4), matAluminum);
-    roofRack.position.set(-0.6, 3.3, 0);
-    transportVehicleGroup.add(roofRack);
+    // Front panoramic faceted gold-iridium solar radiation glass windshield
+    const vehWindshield = new THREE.Mesh(new THREE.BoxGeometry(1.4, 1.1, 2.5), vehGlassMat);
+    vehWindshield.position.set(2.25, 2.22, 0);
+    vehWindshield.rotation.z = -0.35;
+    transportVehicleGroup.add(vehWindshield);
 
-    const roofDish = new THREE.Mesh(new THREE.SphereGeometry(0.85, 16, 16, 0, Math.PI * 2, 0, Math.PI / 2), matAluminum);
-    roofDish.position.set(-1.4, 4.0, 0);
-    roofDish.rotation.x = 0.45;
-    roofDish.rotation.z = -0.35;
-    transportVehicleGroup.add(roofDish);
+    // Center structural window mullion pillar
+    const windowMullion = new THREE.Mesh(new THREE.BoxGeometry(0.12, 1.15, 0.12), vehBodyMat);
+    windowMullion.position.set(2.32, 2.22, 0);
+    windowMullion.rotation.z = -0.35;
+    transportVehicleGroup.add(windowMullion);
 
-    // 6 Rugged Lunar Titanium Flex-Mesh Wheels with Suspension Struts
-    const wheelMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.92, roughness: 0.38 });
-    const wheelOffsets = [
-      [ 2.2, 0.7,  1.9],
-      [ 0.0, 0.7,  1.9],
-      [-2.2, 0.7,  1.9],
-      [ 2.2, 0.7, -1.9],
-      [ 0.0, 0.7, -1.9],
-      [-2.2, 0.7, -1.9]
-    ];
-    for (const [wx, wy, wz] of wheelOffsets) {
-      const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.68, 0.68, 0.48, 20), wheelMat);
-      wheel.rotation.x = Math.PI / 2;
-      wheel.position.set(wx, wy, wz);
-      wheel.castShadow = true;
-      transportVehicleGroup.add(wheel);
+    // 4. Heavy Tubular Steel Front Bull-Bar / Push Bumper with Dual Tow Shackles & Winch
+    const bumperTube = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 3.3, 12), matRocketNozzle);
+    bumperTube.rotation.x = Math.PI / 2;
+    bumperTube.position.set(3.45, 1.25, 0);
+    bumperTube.castShadow = true;
+    transportVehicleGroup.add(bumperTube);
 
-      // Suspension Arm
-      const strut = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.7, 0.3), matAluminum);
-      strut.position.set(wx, wy + 0.45, wz > 0 ? wz - 0.2 : wz + 0.2);
-      strut.rotation.z = wx > 0 ? 0.3 : -0.3;
-      transportVehicleGroup.add(strut);
+    // Winch spool in bumper center
+    const winchDrum = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 0.45, 12), matRocketNozzle);
+    winchDrum.rotation.x = Math.PI / 2;
+    winchDrum.position.set(3.5, 1.25, 0);
+    transportVehicleGroup.add(winchDrum);
+
+    // Red recovery D-shackles
+    for (const bz of [-1.1, 1.1]) {
+      const shackle = new THREE.Mesh(
+        new THREE.TorusGeometry(0.09, 0.025, 8, 16),
+        new THREE.MeshStandardMaterial({ color: 0xef4444, metalness: 0.8, roughness: 0.2 })
+      );
+      shackle.position.set(3.55, 1.25, bz);
+      transportVehicleGroup.add(shackle);
     }
 
-    // High-Intensity Dual Forward LED Landing Headlights (Casting Long Shadows West)
-    const headlightMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
-    for (const sideZ of [-1.1, 1.1]) {
-      const headlightMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.1, 12), headlightMat);
-      headlightMesh.rotation.z = Math.PI / 2;
-      headlightMesh.position.set(3.35, 1.6, sideZ);
-      transportVehicleGroup.add(headlightMesh);
+    // 5. Rear Pressurized Airlock Module with Heavy Pressure Hatch
+    const airlockHatchFrame = new THREE.Mesh(new THREE.CylinderGeometry(0.78, 0.78, 0.22, 24), vehBodyMat);
+    airlockHatchFrame.rotation.z = Math.PI / 2;
+    airlockHatchFrame.position.set(-3.4, 1.75, 0);
+    airlockHatchFrame.castShadow = true;
+    transportVehicleGroup.add(airlockHatchFrame);
 
-      const headlightBeam = new THREE.SpotLight(0xfffaed, 5.0, 65, Math.PI / 5, 0.45, 1.2);
-      headlightBeam.position.set(3.4, 1.6, sideZ);
-      headlightBeam.target.position.set(25.0, -1.0, sideZ * 1.5);
+    // Circular pressure door with 3-spoke locking wheel
+    const airlockDoor = new THREE.Mesh(new THREE.CylinderGeometry(0.68, 0.68, 0.1, 24), matAluminum);
+    airlockDoor.rotation.z = Math.PI / 2;
+    airlockDoor.position.set(-3.52, 1.75, 0);
+    transportVehicleGroup.add(airlockDoor);
+
+    const lockWheel = new THREE.Mesh(new THREE.TorusGeometry(0.18, 0.025, 8, 16), matRocketNozzle);
+    lockWheel.rotation.y = Math.PI / 2;
+    lockWheel.position.set(-3.58, 1.75, 0);
+    transportVehicleGroup.add(lockWheel);
+
+    // 6. External Life-Support High-Pressure Cryogenic Tanks (O2 / N2) on Flanks
+    for (const sideZ of [-1.55, 1.55]) {
+      const tankGroup = new THREE.Group();
+      tankGroup.position.set(-1.8, 2.5, sideZ);
+
+      const o2Tank = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.24, 0.24, 1.8, 16),
+        new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.95, roughness: 0.15 })
+      );
+      o2Tank.rotation.x = Math.PI / 2;
+      o2Tank.castShadow = true;
+      tankGroup.add(o2Tank);
+
+      // Stainless steel retaining mounting straps
+      for (const tx of [-0.6, 0.6]) {
+        const strap = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.26, 0.06, 16), matRocketNozzle);
+        strap.rotation.x = Math.PI / 2;
+        strap.position.set(tx, 0, 0);
+        tankGroup.add(strap);
+      }
+      transportVehicleGroup.add(tankGroup);
+    }
+
+    // 7. Roof Tubular Equipment Basket & Steerable High-Gain Dish
+    const roofRack = new THREE.Mesh(new THREE.BoxGeometry(3.8, 0.16, 2.4), matAluminum);
+    roofRack.position.set(-0.6, 3.32, 0);
+    transportVehicleGroup.add(roofRack);
+
+    // Steerable High-Gain Parabolic Telemetry Dish
+    const dishPedestal = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.1, 0.55, 12), matAluminum);
+    dishPedestal.position.set(-1.5, 3.65, 0);
+    transportVehicleGroup.add(dishPedestal);
+
+    const roofDish = new THREE.Mesh(
+      new THREE.SphereGeometry(0.85, 24, 16, 0, Math.PI * 2, 0, Math.PI / 2),
+      new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.94, roughness: 0.18 })
+    );
+    roofDish.position.set(-1.5, 4.15, 0);
+    roofDish.rotation.x = 0.45;
+    roofDish.rotation.z = -0.35;
+    roofDish.castShadow = true;
+    transportVehicleGroup.add(roofDish);
+
+    // Spinning LIDAR Dome Sensor Unit
+    const lidarDome = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.16, 0.18, 0.25, 16),
+      new THREE.MeshStandardMaterial({ color: 0x0f172a, metalness: 0.9, roughness: 0.2 })
+    );
+    lidarDome.position.set(0.8, 3.48, 0);
+    transportVehicleGroup.add(lidarDome);
+
+    const lidarLight = new THREE.PointLight(0x10b981, 1.8, 8);
+    lidarLight.position.set(0.8, 3.65, 0);
+    transportVehicleGroup.add(lidarLight);
+
+    // 8. Advanced Planetary Non-Pneumatic Titanium Tweel Wheels with Spiral Springs
+    const wheelMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.95, roughness: 0.28 });
+    const springBladeMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.98, roughness: 0.15 });
+
+    const wheelOffsets = [
+      [ 2.2, 0.72,  1.92],
+      [ 0.0, 0.72,  1.92],
+      [-2.2, 0.72,  1.92],
+      [ 2.2, 0.72, -1.92],
+      [ 0.0, 0.72, -1.92],
+      [-2.2, 0.72, -1.92]
+    ];
+
+    for (const [wx, wy, wz] of wheelOffsets) {
+      const tweelGroup = new THREE.Group();
+      tweelGroup.position.set(wx, wy, wz);
+
+      // Central titanium planetary hub with axle cap
+      const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.24, 0.46, 16), matAluminum);
+      hub.rotation.x = Math.PI / 2;
+      hub.castShadow = true;
+      tweelGroup.add(hub);
+
+      // Lug bolts circle
+      for (let b = 0; b < 6; b++) {
+        const bAng = (b * Math.PI * 2) / 6;
+        const bolt = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.48, 6), matRocketNozzle);
+        bolt.rotation.x = Math.PI / 2;
+        bolt.position.set(Math.cos(bAng) * 0.14, Math.sin(bAng) * 0.14, 0);
+        tweelGroup.add(bolt);
+      }
+
+      // Outer tread ring with chevron lunar traction paddles
+      const outerTread = new THREE.Mesh(new THREE.CylinderGeometry(0.68, 0.68, 0.46, 24), wheelMat);
+      outerTread.rotation.x = Math.PI / 2;
+      outerTread.castShadow = true;
+      tweelGroup.add(outerTread);
+
+      // Curved internal titanium spring blades (Tweel structure)
+      for (let s = 0; s < 12; s++) {
+        const sAng = (s * Math.PI * 2) / 12;
+        const blade = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.42, 0.42), springBladeMat);
+        blade.position.set(Math.cos(sAng) * 0.44, Math.sin(sAng) * 0.44, 0);
+        blade.rotation.z = sAng + 0.55;
+        tweelGroup.add(blade);
+      }
+
+      // Independent double-wishbone suspension linkage with coilover spring
+      const suspArm = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.65, 0.25), matAluminum);
+      suspArm.position.set(0, 0.48, wz > 0 ? -0.22 : 0.22);
+      suspArm.rotation.z = wx > 0 ? 0.28 : -0.28;
+      tweelGroup.add(suspArm);
+
+      transportVehicleGroup.add(tweelGroup);
+    }
+
+    // 9. Forward High-Intensity 8-LED Floodlight Lightbar
+    const lightbarHousing = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.18, 0.25), matRocketNozzle);
+    lightbarHousing.position.set(3.38, 2.95, 0);
+    transportVehicleGroup.add(lightbarHousing);
+
+    for (let lx = -1.0; lx <= 1.0; lx += 0.28) {
+      const ledLens = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.05, 12), new THREE.MeshBasicMaterial({ color: 0xffffff }));
+      ledLens.rotation.z = Math.PI / 2;
+      ledLens.position.set(3.48, 2.95, lx);
+      transportVehicleGroup.add(ledLens);
+    }
+
+    // Dual Forward Casting Spotlight Beams
+    for (const sideZ of [-0.9, 0.9]) {
+      const headlightBeam = new THREE.SpotLight(0xfffaed, 5.5, 75, Math.PI / 4.5, 0.4, 1.2);
+      headlightBeam.position.set(3.5, 2.95, sideZ);
+      headlightBeam.target.position.set(35.0, -1.0, sideZ * 1.5);
       headlightBeam.castShadow = true;
       transportVehicleGroup.add(headlightBeam);
       transportVehicleGroup.add(headlightBeam.target);
     }
 
-    // Vehicle Top Beacon Strobe Light
-    const vehBeacon = new THREE.PointLight(0xf59e0b, 2.5, 25);
-    vehBeacon.position.set(0.6, 3.6, 0);
+    // Vehicle Top Amber Hazard Strobe Beacon
+    const vehBeacon = new THREE.PointLight(0xf59e0b, 2.8, 28);
+    vehBeacon.position.set(0.6, 3.65, 0);
     transportVehicleGroup.add(vehBeacon);
 
     landingZoneGroup.add(transportVehicleGroup);
 
-    // C. Reusable Astronaut Creator Helper
+    // =========================================================================
+    // C. HIGH-DETAIL NASA xEMU ASTRONAUT CREWMATES (MAYA CHEN & LEO VANCE)
+    // =========================================================================
     const astronautCrewList = [];
     const createAstronautMesh = (name, role, accentColor, isHoldingDatapad) => {
       const astroGroup = new THREE.Group();
-      const suitWhiteMat = new THREE.MeshStandardMaterial({ color: 0xf1f5f9, roughness: 0.55, metalness: 0.15 });
-      const jointDarkMat = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.8, metalness: 0.3 });
-      const accentMat = new THREE.MeshStandardMaterial({ color: accentColor, roughness: 0.4, metalness: 0.2 });
+
+      // PBR Materials for xEMU Spacesuit
+      const suitFabricMat = new THREE.MeshStandardMaterial({
+        map: spacesuitFabricMap,
+        color: 0xf8fafc,
+        roughness: 0.65,
+        metalness: 0.1
+      });
+      const suitHardMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.35, metalness: 0.25 });
+      const jointDarkMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.85, metalness: 0.2 });
+      const accentMat = new THREE.MeshStandardMaterial({ color: accentColor, roughness: 0.4, metalness: 0.3 });
       const goldVisorMat = new THREE.MeshStandardMaterial({
         color: 0xf59e0b,
-        metalness: 0.98,
-        roughness: 0.04
+        metalness: 0.99,
+        roughness: 0.02
       });
 
-      // Torso / Chest Unit
-      const torso = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.72, 0.36), suitWhiteMat);
-      torso.position.y = 1.22;
-      torso.castShadow = true;
-      astroGroup.add(torso);
+      // 1. Hard Upper Torso (HUT) Shell
+      const hut = new THREE.Mesh(new THREE.BoxGeometry(0.58, 0.74, 0.38), suitHardMat);
+      hut.position.y = 1.24;
+      hut.castShadow = true;
+      astroGroup.add(hut);
 
-      // Chest Mission Badge / Control Unit
-      const chestPack = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.32, 0.12), accentMat);
-      chestPack.position.set(0, 1.3, 0.2);
-      astroGroup.add(chestPack);
+      // Shoulder Mission Stripe Bands
+      for (const sx of [-0.28, 0.28]) {
+        const stripe = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.12, 0.38), accentMat);
+        stripe.position.set(sx, 1.52, 0);
+        astroGroup.add(stripe);
+      }
 
-      // Oxygen connector tubes
-      for (const ox of [-0.08, 0.08]) {
-        const hose = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.3, 8), jointDarkMat);
+      // 2. Chest Display and Control Module (DCM) with Carbon-Fiber Faceplate & Switches
+      const dcmGroup = new THREE.Group();
+      dcmGroup.position.set(0, 1.32, 0.21);
+
+      const dcmBox = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.32, 0.11), new THREE.MeshStandardMaterial({ map: carbonFiberMap, roughness: 0.3 }));
+      dcmGroup.add(dcmBox);
+
+      // Digital Status OLED display window
+      const dcmScreen = new THREE.Mesh(
+        new THREE.PlaneGeometry(0.18, 0.09),
+        new THREE.MeshBasicMaterial({ color: 0x06b6d4 })
+      );
+      dcmScreen.position.set(0, 0.06, 0.06);
+      dcmGroup.add(dcmScreen);
+
+      // Rotary purge & pressure toggle knobs
+      for (let k = -0.09; k <= 0.09; k += 0.06) {
+        const knob = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.04, 8), matRocketNozzle);
+        knob.rotation.x = Math.PI / 2;
+        knob.position.set(k, -0.08, 0.06);
+        dcmGroup.add(knob);
+      }
+      astroGroup.add(dcmGroup);
+
+      // Dual braided umbilical oxygen & telemetry hoses
+      for (const ox of [-0.09, 0.09]) {
+        const hose = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.34, 10), jointDarkMat);
         hose.position.set(ox, 1.12, 0.22);
         astroGroup.add(hose);
       }
 
-      // PLSS Backpack (Portable Life Support System)
-      const backpack = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.76, 0.26), suitWhiteMat);
-      backpack.position.set(0, 1.25, -0.25);
-      backpack.castShadow = true;
-      astroGroup.add(backpack);
+      // 3. Portable Life Support System (PLSS Backpack) with Sublimator Radiator
+      const plssGroup = new THREE.Group();
+      plssGroup.position.set(0, 1.28, -0.26);
 
-      // Backpack Status Indicator LED
-      const plssLight = new THREE.PointLight(accentColor, 1.5, 6);
-      plssLight.position.set(0, 1.55, -0.38);
-      astroGroup.add(plssLight);
+      const plssBox = new THREE.Mesh(new THREE.BoxGeometry(0.52, 0.82, 0.28), suitHardMat);
+      plssBox.castShadow = true;
+      plssGroup.add(plssBox);
 
-      // Helmet & Curved Gold Solar Visor
-      const helmet = new THREE.Mesh(new THREE.SphereGeometry(0.24, 16, 16), suitWhiteMat);
-      helmet.position.set(0, 1.74, 0.02);
+      // Thermal sublimator radiator grill
+      const radiator = new THREE.Mesh(
+        new THREE.PlaneGeometry(0.42, 0.45),
+        new THREE.MeshStandardMaterial({ color: 0x64748b, metalness: 0.9, roughness: 0.2 })
+      );
+      radiator.position.set(0, 0.12, -0.145);
+      radiator.rotation.y = Math.PI;
+      plssGroup.add(radiator);
+
+      // PLSS Telemetry whip antenna
+      const plssAntenna = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, 0.65, 8), matAluminum);
+      plssAntenna.position.set(0.2, 0.65, -0.08);
+      plssGroup.add(plssAntenna);
+
+      // Biometric Health Indicator LED
+      const plssLight = new THREE.PointLight(accentColor, 1.8, 6);
+      plssLight.position.set(0, 0.35, -0.16);
+      plssGroup.add(plssLight);
+      astroGroup.add(plssGroup);
+
+      // 4. Helmet & Gold Mirror Visor with EVA Spotlights
+      const helmetGroup = new THREE.Group();
+      helmetGroup.position.set(0, 1.76, 0.02);
+
+      // Outer protective fiberglass helmet shell
+      const helmet = new THREE.Mesh(new THREE.SphereGeometry(0.25, 24, 24), suitHardMat);
       helmet.castShadow = true;
-      astroGroup.add(helmet);
+      helmetGroup.add(helmet);
 
-      const visor = new THREE.Mesh(new THREE.SphereGeometry(0.19, 16, 16, 0, Math.PI, 0, Math.PI), goldVisorMat);
+      // Metallic Gold Reflective Sun Visor Bubble (Mirror PBR)
+      const visor = new THREE.Mesh(new THREE.SphereGeometry(0.20, 24, 24, 0, Math.PI, 0, Math.PI), goldVisorMat);
       visor.rotation.x = -Math.PI / 2;
-      visor.position.set(0, 1.74, 0.08);
-      astroGroup.add(visor);
+      visor.position.set(0, 0, 0.07);
+      helmetGroup.add(visor);
 
-      // Legs & Heavy EVA Boots
-      for (const lx of [-0.17, 0.17]) {
-        const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.09, 0.65, 12), suitWhiteMat);
-        leg.position.set(lx, 0.62, 0);
-        leg.castShadow = true;
-        astroGroup.add(leg);
+      // Dual Helmet EVA Spotlights (Left and Right)
+      for (const hx of [-0.22, 0.22]) {
+        const spotHousing = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.04, 0.08, 12), matRocketNozzle);
+        spotHousing.rotation.x = Math.PI / 2;
+        spotHousing.position.set(hx, 0.05, 0.12);
+        helmetGroup.add(spotHousing);
 
-        const knee = new THREE.Mesh(new THREE.SphereGeometry(0.1, 10, 10), jointDarkMat);
-        knee.position.set(lx, 0.32, 0);
-        astroGroup.add(knee);
+        const spotLens = new THREE.Mesh(new THREE.CircleGeometry(0.032, 12), new THREE.MeshBasicMaterial({ color: 0xffffff }));
+        spotLens.position.set(hx, 0.05, 0.162);
+        helmetGroup.add(spotLens);
+      }
+      astroGroup.add(helmetGroup);
 
-        const boot = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.22, 0.38), jointDarkMat);
-        boot.position.set(lx, 0.11, 0.06);
+      // 5. Segmented Mobility Legs & Deep-Lug Lunar Overshoes
+      for (const lx of [-0.18, 0.18]) {
+        const legGroup = new THREE.Group();
+        legGroup.position.set(lx, 0, 0);
+
+        // Upper thigh with fabric weave
+        const thigh = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.10, 0.42, 12), suitFabricMat);
+        thigh.position.y = 0.76;
+        thigh.castShadow = true;
+        legGroup.add(thigh);
+
+        // Accordion knee mobility bearing
+        const knee = new THREE.Mesh(new THREE.SphereGeometry(0.105, 12, 12), jointDarkMat);
+        knee.position.y = 0.52;
+        legGroup.add(knee);
+
+        // Shin & boot gaiter
+        const shin = new THREE.Mesh(new THREE.CylinderGeometry(0.10, 0.11, 0.42, 12), suitFabricMat);
+        shin.position.y = 0.28;
+        shin.castShadow = true;
+        legGroup.add(shin);
+
+        // Heavy Apollo/Artemis Lunar Overshoe with deep traction lugs
+        const boot = new THREE.Mesh(
+          new THREE.BoxGeometry(0.22, 0.18, 0.42),
+          new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.95, metalness: 0.1 })
+        );
+        boot.position.set(0, 0.09, 0.06);
         boot.castShadow = true;
-        astroGroup.add(boot);
+        legGroup.add(boot);
+
+        astroGroup.add(legGroup);
       }
 
-      // Arms & Hands
+      // 6. Articulated Arms & EVA Utility Gloves
       if (isHoldingDatapad) {
-        const lArm = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.07, 0.45, 10), suitWhiteMat);
-        lArm.position.set(-0.35, 1.25, 0.12);
-        lArm.rotation.x = -0.7;
-        lArm.rotation.z = -0.3;
+        // Maya Chen: Holding Field Scientific Datapad
+        const lArm = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.07, 0.46, 12), suitFabricMat);
+        lArm.position.set(-0.36, 1.26, 0.12);
+        lArm.rotation.x = -0.72;
+        lArm.rotation.z = -0.28;
         astroGroup.add(lArm);
 
-        const rArm = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.07, 0.45, 10), suitWhiteMat);
-        rArm.position.set(0.35, 1.25, 0.12);
-        rArm.rotation.x = -0.6;
-        rArm.rotation.z = 0.3;
+        const rArm = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.07, 0.46, 12), suitFabricMat);
+        rArm.position.set(0.36, 1.26, 0.12);
+        rArm.rotation.x = -0.62;
+        rArm.rotation.z = 0.28;
         astroGroup.add(rArm);
 
-        // Glowing Field Datapad
+        // Scientific Holographic Datapad
         const datapad = new THREE.Mesh(
-          new THREE.BoxGeometry(0.32, 0.03, 0.22),
-          new THREE.MeshStandardMaterial({ color: 0x0f172a, metalness: 0.9, roughness: 0.2 })
+          new THREE.BoxGeometry(0.34, 0.03, 0.24),
+          new THREE.MeshStandardMaterial({ map: carbonFiberMap, metalness: 0.9, roughness: 0.2 })
         );
-        datapad.position.set(0, 1.05, 0.36);
-        datapad.rotation.x = -0.4;
+        datapad.position.set(0, 1.05, 0.38);
+        datapad.rotation.x = -0.42;
         astroGroup.add(datapad);
 
         const screen = new THREE.Mesh(
-          new THREE.PlaneGeometry(0.28, 0.18),
+          new THREE.PlaneGeometry(0.30, 0.20),
           new THREE.MeshBasicMaterial({ color: 0x38bdf8 })
         );
-        screen.position.set(0, 1.07, 0.36);
-        screen.rotation.x = -Math.PI / 2 - 0.4;
+        screen.position.set(0, 1.07, 0.38);
+        screen.rotation.x = -Math.PI / 2 - 0.42;
         astroGroup.add(screen);
 
-        const padLight = new THREE.PointLight(0x38bdf8, 1.8, 4);
-        padLight.position.set(0, 1.15, 0.4);
+        const padLight = new THREE.PointLight(0x38bdf8, 2.0, 5);
+        padLight.position.set(0, 1.16, 0.42);
         astroGroup.add(padLight);
       } else {
-        for (const ax of [-0.36, 0.36]) {
-          const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.07, 0.6, 10), suitWhiteMat);
+        // Leo Vance: Survey Stance
+        for (const ax of [-0.38, 0.38]) {
+          const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.085, 0.075, 0.62, 12), suitFabricMat);
           arm.position.set(ax, 1.18, 0);
-          arm.rotation.z = ax > 0 ? -0.15 : 0.15;
+          arm.rotation.z = ax > 0 ? -0.16 : 0.16;
           arm.castShadow = true;
           astroGroup.add(arm);
 
-          const glove = new THREE.Mesh(new THREE.SphereGeometry(0.09, 8, 8), jointDarkMat);
-          glove.position.set(ax * 1.1, 0.85, 0);
+          // Silicone palm grip utility glove
+          const glove = new THREE.Mesh(new THREE.SphereGeometry(0.095, 10, 10), jointDarkMat);
+          glove.position.set(ax * 1.12, 0.84, 0);
           astroGroup.add(glove);
         }
       }
@@ -1559,104 +2045,268 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
     const alienTerrainY = getTerrainHeight(-120, -75);
     alienStructureGroup.position.set(-120, alienTerrainY, -75);
 
-    // A. Partially Buried Geometric Polyhedral Monolith (Obsidian / Dark Metallic)
+    // A. Monumental Obsidian Polyhedral Monolith (High-Detail Geometric Carapace)
     const alienHullMat = new THREE.MeshStandardMaterial({
       map: alienGlyphMap,
-      color: 0x0a0c16,
-      emissive: 0x06b6d4,
-      emissiveIntensity: 0.55,
-      metalness: 0.96,
-      roughness: 0.12
+      color: 0x05070e,
+      emissive: 0x0284c7,
+      emissiveIntensity: 0.35,
+      metalness: 0.98,
+      roughness: 0.08
     });
-    // Truncated faceted polyhedral body (smooth surfaces, no visible joints or screws)
-    const monolithCore = new THREE.Mesh(new THREE.CylinderGeometry(2.4, 3.8, 5.2, 8), alienHullMat);
-    monolithCore.position.y = 2.4;
+    const alienRuneMat = new THREE.MeshBasicMaterial({
+      color: 0x38bdf8
+    });
+
+    // Heavy Octagonal Sub-Bedrock Foundation Plinth
+    const monolithFoundation = new THREE.Mesh(
+      new THREE.CylinderGeometry(4.4, 5.0, 0.8, 8),
+      alienHullMat
+    );
+    monolithFoundation.position.y = 0.4;
+    monolithFoundation.rotation.y = 0.38;
+    monolithFoundation.receiveShadow = true;
+    alienStructureGroup.add(monolithFoundation);
+
+    // Stepped Inner Base Collar with Beveled Edge
+    const monolithCollar = new THREE.Mesh(
+      new THREE.CylinderGeometry(3.6, 4.2, 0.6, 8),
+      alienHullMat
+    );
+    monolithCollar.position.y = 1.0;
+    monolithCollar.rotation.y = 0.38;
+    monolithCollar.castShadow = true;
+    monolithCollar.receiveShadow = true;
+    alienStructureGroup.add(monolithCollar);
+
+    // Primary Faceted Tapered Polyhedral Core (Obsidian monolith body)
+    const monolithCore = new THREE.Mesh(
+      new THREE.CylinderGeometry(2.2, 3.5, 6.2, 8),
+      alienHullMat
+    );
+    monolithCore.position.y = 4.1;
     monolithCore.rotation.y = 0.38;
     monolithCore.castShadow = true;
     monolithCore.receiveShadow = true;
     alienStructureGroup.add(monolithCore);
 
-    // Angled faceted outer pylons bracing the monolith into the basalt ridge
-    for (let p = 0; p < 4; p++) {
-      const pAng = (p * Math.PI * 2) / 4 + 0.38;
-      const pylon = new THREE.Mesh(new THREE.ConeGeometry(0.85, 4.2, 6), alienHullMat);
-      pylon.position.set(Math.cos(pAng) * 3.4, 1.8, Math.sin(pAng) * 3.4);
-      pylon.rotation.x = Math.sin(pAng) * 0.25;
-      pylon.rotation.z = -Math.cos(pAng) * 0.25;
-      pylon.castShadow = true;
-      alienStructureGroup.add(pylon);
+    // Beveled Apex Pyramidal Cap
+    const monolithApex = new THREE.Mesh(
+      new THREE.ConeGeometry(2.22, 1.6, 8),
+      alienHullMat
+    );
+    monolithApex.position.y = 7.95;
+    monolithApex.rotation.y = 0.38;
+    monolithApex.castShadow = true;
+    alienStructureGroup.add(monolithApex);
+
+    // 8 Recessed Glowing Cyan Circuit Channels along Monolith Vertical Ribs
+    for (let r = 0; r < 8; r++) {
+      const rAng = (r * Math.PI * 2) / 8 + 0.38;
+      const runeStrip = new THREE.Mesh(
+        new THREE.BoxGeometry(0.06, 5.4, 0.08),
+        alienRuneMat
+      );
+      const stripRadius = 2.8;
+      runeStrip.position.set(Math.cos(rAng) * stripRadius, 4.0, Math.sin(rAng) * stripRadius);
+      runeStrip.rotation.y = -rAng + Math.PI / 2;
+      alienStructureGroup.add(runeStrip);
+
+      // Node emitters along the ribs
+      for (const ny of [2.2, 4.0, 5.8]) {
+        const nodeDot = new THREE.Mesh(
+          new THREE.SphereGeometry(0.045, 8, 8),
+          alienRuneMat
+        );
+        nodeDot.position.set(Math.cos(rAng) * (stripRadius + 0.04), ny, Math.sin(rAng) * (stripRadius + 0.04));
+        alienStructureGroup.add(nodeDot);
+      }
     }
 
-    // B. Central Scanning Panel & Energy Interface (Recessed on front face)
-    const scanPanelGeo = new THREE.BoxGeometry(1.4, 1.8, 0.25);
+    // B. 4 Massive Angular Anchoring Pylons Fusing into Lunar Bedrock
+    for (let p = 0; p < 4; p++) {
+      const pAng = (p * Math.PI * 2) / 4 + 0.38 + Math.PI / 8;
+      const pylonGroup = new THREE.Group();
+      pylonGroup.position.set(Math.cos(pAng) * 3.6, 0.6, Math.sin(pAng) * 3.6);
+      pylonGroup.rotation.y = -pAng;
+
+      // Heavy angled pylon spine
+      const pylonSpine = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.65, 0.95, 4.6, 6),
+        alienHullMat
+      );
+      pylonSpine.rotation.z = 0.48; // Leaning inward toward monolith
+      pylonSpine.position.set(-0.8, 1.8, 0);
+      pylonSpine.castShadow = true;
+      pylonSpine.receiveShadow = true;
+      pylonGroup.add(pylonSpine);
+
+      // Glowing Runic Inlay Channel on outer face of pylon
+      const pylonRune = new THREE.Mesh(
+        new THREE.BoxGeometry(0.05, 3.8, 0.08),
+        alienRuneMat
+      );
+      pylonRune.rotation.z = 0.48;
+      pylonRune.position.set(-0.8 + 0.35 * Math.sin(0.48), 1.8, 0.32);
+      pylonGroup.add(pylonRune);
+
+      // Bedrock anchoring foot flange
+      const pylonFoot = new THREE.Mesh(
+        new THREE.BoxGeometry(1.6, 0.4, 1.4),
+        alienHullMat
+      );
+      pylonFoot.position.set(-0.2, 0.2, 0);
+      pylonFoot.castShadow = true;
+      pylonFoot.receiveShadow = true;
+      pylonGroup.add(pylonFoot);
+
+      alienStructureGroup.add(pylonGroup);
+    }
+
+    // C. Central Scanning Aperture & Energy Interface (Front Facet at Z+)
+    const scanPortalGroup = new THREE.Group();
+    scanPortalGroup.position.set(0, 2.5, 3.0);
+    scanPortalGroup.rotation.x = -0.18; // Angled ergonomic tilt
+
+    // Heavy Beveled Outer Portal Casing
+    const portalCasing = new THREE.Mesh(
+      new THREE.BoxGeometry(1.9, 2.3, 0.32),
+      alienHullMat
+    );
+    portalCasing.castShadow = true;
+    scanPortalGroup.add(portalCasing);
+
+    // Multi-Tier Concentric Iris Aperture Rings
+    const irisOuterRim = new THREE.Mesh(
+      new THREE.TorusGeometry(0.72, 0.08, 16, 32),
+      new THREE.MeshStandardMaterial({ color: 0x0f172a, metalness: 0.95, roughness: 0.15 })
+    );
+    irisOuterRim.position.z = 0.16;
+    scanPortalGroup.add(irisOuterRim);
+
+    // 8 Angular Interlocking Mechanical Iris Vanes
+    for (let v = 0; v < 8; v++) {
+      const vAng = (v * Math.PI * 2) / 8;
+      const vane = new THREE.Mesh(
+        new THREE.BoxGeometry(0.18, 0.42, 0.03),
+        new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.96, roughness: 0.2 })
+      );
+      vane.position.set(Math.cos(vAng) * 0.48, Math.sin(vAng) * 0.48, 0.17);
+      vane.rotation.z = vAng + 0.55;
+      scanPortalGroup.add(vane);
+    }
+
+    // Central Singularity Event-Horizon Core (Vibrant Deep Cyan Aperture)
+    const irisCore = new THREE.Mesh(
+      new THREE.CircleGeometry(0.42, 32),
+      new THREE.MeshBasicMaterial({ color: 0x0ea5e9, side: THREE.DoubleSide })
+    );
+    irisCore.position.z = 0.18;
+    scanPortalGroup.add(irisCore);
+
+    // Interactive Frosted Holographic Scanning Panel
+    const scanPanelGeo = new THREE.PlaneGeometry(1.3, 1.6);
     const scanPanelMat = new THREE.MeshStandardMaterial({
       color: 0x0284c7,
       emissive: 0x38bdf8,
-      emissiveIntensity: 0.85,
-      roughness: 0.08,
-      metalness: 0.95
+      emissiveIntensity: 0.9,
+      roughness: 0.06,
+      metalness: 0.95,
+      transparent: true,
+      opacity: 0.88,
+      side: THREE.DoubleSide
     });
     const scanPanel = new THREE.Mesh(scanPanelGeo, scanPanelMat);
-    scanPanel.position.set(0, 2.1, 2.75);
-    scanPanel.rotation.x = -0.22;
-    scanPanel.castShadow = true;
-    alienStructureGroup.add(scanPanel);
+    scanPanel.position.z = 0.22;
+    scanPortalGroup.add(scanPanel);
 
-    // Subtle blue energy aperture / beam shooting upwards
-    const energyBeamGeo = new THREE.CylinderGeometry(0.08, 0.35, 16, 16);
+    alienStructureGroup.add(scanPortalGroup);
+
+    // D. Vertical Atmospheric Vacuum Energy Beam Shooting Skyward
+    const energyBeamGeo = new THREE.CylinderGeometry(0.06, 0.38, 32, 16);
     const energyBeamMat = new THREE.MeshBasicMaterial({
       color: 0x38bdf8,
       transparent: true,
-      opacity: 0.45,
+      opacity: 0.42,
       blending: THREE.AdditiveBlending
     });
     const energyBeam = new THREE.Mesh(energyBeamGeo, energyBeamMat);
-    energyBeam.position.set(0, 9.5, 0);
+    energyBeam.position.set(0, 18, 0);
     alienStructureGroup.add(energyBeam);
 
-    // C. Levitating / Suspended Geometric Shards (Orbiting Apex)
+    // Secondary Inner High-Frequency Laser Core
+    const laserCoreGeo = new THREE.CylinderGeometry(0.02, 0.08, 32, 8);
+    const laserCoreMat = new THREE.MeshBasicMaterial({
+      color: 0xffffff,
+      transparent: true,
+      opacity: 0.65,
+      blending: THREE.AdditiveBlending
+    });
+    const laserCore = new THREE.Mesh(laserCoreGeo, laserCoreMat);
+    laserCore.position.set(0, 18, 0);
+    alienStructureGroup.add(laserCore);
+
+    // E. Counter-Rotating Levitating Geometric Crystalline Shards (Apex Orbit)
     const floatingShardGroup = new THREE.Group();
-    floatingShardGroup.position.set(0, 5.6, 0);
-    const shardGeo = new THREE.OctahedronGeometry(0.42, 0);
+    floatingShardGroup.position.set(0, 7.8, 0);
+    const shardGeoA = new THREE.OctahedronGeometry(0.48, 0);
+    const shardGeoB = new THREE.CylinderGeometry(0.18, 0.28, 0.72, 6);
     const shardMat = new THREE.MeshStandardMaterial({
       color: 0x06b6d4,
       emissive: 0x38bdf8,
-      emissiveIntensity: 0.9,
-      metalness: 0.95,
-      roughness: 0.1
+      emissiveIntensity: 0.95,
+      metalness: 0.96,
+      roughness: 0.08
     });
+
     const floatingShards = [];
-    for (let s = 0; s < 4; s++) {
-      const shardMesh = new THREE.Mesh(shardGeo, shardMat);
+    for (let s = 0; s < 6; s++) {
+      const sAng = (s * Math.PI * 2) / 6;
+      const isInner = s % 2 === 0;
+      const sRadius = isInner ? 2.1 : 3.2;
+      const sHeight = (s % 3) * 0.45;
+      const sGeo = isInner ? shardGeoA : shardGeoB;
+
+      const shardMesh = new THREE.Mesh(sGeo, shardMat);
+      shardMesh.position.set(Math.cos(sAng) * sRadius, sHeight, Math.sin(sAng) * sRadius);
+      shardMesh.rotation.set(s * 0.4, s * 0.7, s * 0.2);
       shardMesh.castShadow = true;
       floatingShardGroup.add(shardMesh);
-      floatingShards.push({ mesh: shardMesh, angle: (s * Math.PI * 2) / 4, dist: 2.2, height: (s % 2) * 0.5 });
+
+      floatingShards.push({
+        mesh: shardMesh,
+        angle: sAng,
+        dist: sRadius,
+        height: sHeight,
+        rotSpeed: isInner ? 1.2 : -0.9
+      });
     }
     alienStructureGroup.add(floatingShardGroup);
 
-    // D. Pulsing Alien Glow Light reflecting on nearby basalt rocks
-    const alienGlowLight = new THREE.PointLight(0x06b6d4, 4.5, 32);
-    alienGlowLight.position.set(0, 3.2, 2.2);
+    // F. Pulsing Alien Illumination Source
+    const alienGlowLight = new THREE.PointLight(0x06b6d4, 4.8, 34);
+    alienGlowLight.position.set(0, 3.8, 2.8);
+    alienGlowLight.castShadow = true;
     alienStructureGroup.add(alienGlowLight);
 
-    // E. Levitating Luminescent Particle Cloud around the monolith
-    const alienParticleCount = 180;
+    // G. Levitating Luminescent Particle Nebula
+    const alienParticleCount = 220;
     const alienParticleGeo = new THREE.BufferGeometry();
     const alienPartPositions = new Float32Array(alienParticleCount * 3);
     for (let i = 0; i < alienParticleCount; i++) {
       const aAng = Math.random() * Math.PI * 2;
-      const aRad = 1.0 + Math.random() * 8.0;
+      const aRad = 1.2 + Math.random() * 8.5;
       alienPartPositions[i * 3] = Math.cos(aAng) * aRad;
-      alienPartPositions[i * 3 + 1] = 0.5 + Math.random() * 7.5;
+      alienPartPositions[i * 3 + 1] = 0.4 + Math.random() * 9.5;
       alienPartPositions[i * 3 + 2] = Math.sin(aAng) * aRad;
     }
     alienParticleGeo.setAttribute('position', new THREE.BufferAttribute(alienPartPositions, 3));
     const alienParticleMat = new THREE.PointsMaterial({
       map: dustParticleTex,
-      size: 0.42,
+      size: 0.44,
       color: 0x38bdf8,
       transparent: true,
-      opacity: 0.8,
+      opacity: 0.85,
       blending: THREE.AdditiveBlending,
       depthWrite: false
     });
@@ -1665,26 +2315,51 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
 
     scene.add(alienStructureGroup);
 
-    // F. Dark Subterranean Data Conduit Ribbon connecting Alien Structure to Surveyor 1
+    // H. Dark Subterranean Data Conduit Cable with In-line Quantum Repeaters
     const conduitPoints = [
-      new THREE.Vector3(-120, getTerrainHeight(-120, -75) + 0.12, -75),
-      new THREE.Vector3(-96, getTerrainHeight(-96, -62) + 0.12, -62),
-      new THREE.Vector3(-75, getTerrainHeight(-75, -50) + 0.12, -50),
-      new THREE.Vector3(-42, getTerrainHeight(-42, -28) + 0.12, -28),
-      new THREE.Vector3(-18, getTerrainHeight(-18, -12) + 0.12, -12),
-      new THREE.Vector3(0, surveyorTerrainY + 0.12, 0)
+      new THREE.Vector3(-120, getTerrainHeight(-120, -75) + 0.14, -75),
+      new THREE.Vector3(-96, getTerrainHeight(-96, -62) + 0.14, -62),
+      new THREE.Vector3(-75, getTerrainHeight(-75, -50) + 0.14, -50),
+      new THREE.Vector3(-42, getTerrainHeight(-42, -28) + 0.14, -28),
+      new THREE.Vector3(-18, getTerrainHeight(-18, -12) + 0.14, -12),
+      new THREE.Vector3(0, surveyorTerrainY + 0.14, 0)
     ];
     const conduitCurve = new THREE.CatmullRomCurve3(conduitPoints);
-    const conduitTubeGeo = new THREE.TubeGeometry(conduitCurve, 64, 0.16, 8, false);
+    const conduitTubeGeo = new THREE.TubeGeometry(conduitCurve, 84, 0.20, 10, false);
     const conduitMat = new THREE.MeshStandardMaterial({
-      color: 0x0f172a,
+      color: 0x070912,
       emissive: 0x06b6d4,
-      emissiveIntensity: 0.65,
-      metalness: 0.95,
-      roughness: 0.2
+      emissiveIntensity: 0.7,
+      metalness: 0.96,
+      roughness: 0.18
     });
     const conduitMesh = new THREE.Mesh(conduitTubeGeo, conduitMat);
+    conduitMesh.castShadow = true;
     scene.add(conduitMesh);
+
+    // 5 In-Line Quantum Signal Repeaters with Glowing Couping Collars along the conduit
+    for (let c = 1; c <= 5; c++) {
+      const u = c / 6;
+      const cPoint = conduitCurve.getPointAt(u);
+      const repeaterGroup = new THREE.Group();
+      repeaterGroup.position.copy(cPoint);
+
+      const repeaterChassis = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.32, 0.32, 0.55, 12),
+        new THREE.MeshStandardMaterial({ color: 0x0f172a, metalness: 0.94, roughness: 0.2 })
+      );
+      repeaterChassis.rotation.z = Math.PI / 2;
+      repeaterChassis.castShadow = true;
+      repeaterGroup.add(repeaterChassis);
+
+      const repeaterRing = new THREE.Mesh(
+        new THREE.TorusGeometry(0.34, 0.04, 12, 24),
+        alienRuneMat
+      );
+      repeaterGroup.add(repeaterRing);
+
+      scene.add(repeaterGroup);
+    }
 
     // =========================================================================
     // 14. ZONE 5 — MISSION ECHO INTERFACE (X: -116, Z: -72)
@@ -1693,76 +2368,184 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
     const echoTerrainY = getTerrainHeight(-116, -72);
     missionEchoGroup.position.set(-116, echoTerrainY, -72);
 
-    // A. Holographic Projection Floor Pedestal
-    const holoPedestalGeo = new THREE.CylinderGeometry(2.8, 3.2, 0.25, 32);
+    // A. Stepped Octagonal Holographic Dais Pedestal
+    const holoPedestalGeo = new THREE.CylinderGeometry(3.2, 3.6, 0.32, 8);
     const holoPedestalMat = new THREE.MeshStandardMaterial({
-      color: 0x0f172a,
-      metalness: 0.92,
-      roughness: 0.25
+      color: 0x0b0e17,
+      metalness: 0.94,
+      roughness: 0.22
     });
     const holoPedestal = new THREE.Mesh(holoPedestalGeo, holoPedestalMat);
-    holoPedestal.position.y = 0.12;
+    holoPedestal.position.y = 0.16;
     holoPedestal.receiveShadow = true;
+    holoPedestal.castShadow = true;
     missionEchoGroup.add(holoPedestal);
 
-    // Glowing Cyan Projection Rings
-    for (let r = 0; r < 2; r++) {
-      const ringGeo = new THREE.RingGeometry(1.6 + r * 0.7, 1.8 + r * 0.7, 48);
-      const ringMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8, side: THREE.DoubleSide, transparent: true, opacity: 0.75 });
+    // Chamfered Outer Bronze/Titanium Rim Collar
+    const pedestalRim = new THREE.Mesh(
+      new THREE.CylinderGeometry(3.35, 3.45, 0.10, 8),
+      new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.95, roughness: 0.15 })
+    );
+    pedestalRim.position.y = 0.32;
+    missionEchoGroup.add(pedestalRim);
+
+    // 3 Concentric Glowing Holographic Floor Emitter Rings
+    const ringRadii = [1.2, 1.85, 2.55];
+    for (let r = 0; r < 3; r++) {
+      const ringGeo = new THREE.RingGeometry(ringRadii[r], ringRadii[r] + 0.12, 48);
+      const ringMat = new THREE.MeshBasicMaterial({
+        color: r === 1 ? 0x06b6d4 : 0x38bdf8,
+        side: THREE.DoubleSide,
+        transparent: true,
+        opacity: 0.82
+      });
       const ring = new THREE.Mesh(ringGeo, ringMat);
       ring.rotation.x = -Math.PI / 2;
-      ring.position.y = 0.26 + r * 0.05;
+      ring.position.y = 0.34 + r * 0.02;
       missionEchoGroup.add(ring);
     }
 
-    // B. Reconstructed Wireframe Holographic Surveyor 1 Model (Floating at Y: 2.4m)
+    // Central Sunken Projector Core Emitter
+    const projLens = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.48, 0.38, 0.15, 24),
+      new THREE.MeshBasicMaterial({ color: 0x38bdf8 })
+    );
+    projLens.position.y = 0.35;
+    missionEchoGroup.add(projLens);
+
+    // B. Reconstructed High-Fidelity Holographic Surveyor 1 Model (Volumetric Floating at Y: 2.2m)
     const holoSurveyorGroup = new THREE.Group();
-    holoSurveyorGroup.position.set(0, 2.4, 0);
+    holoSurveyorGroup.position.set(0, 2.2, 0);
 
     const holoWireMat = new THREE.MeshBasicMaterial({
       color: 0x38bdf8,
       wireframe: true,
       transparent: true,
-      opacity: 0.75
+      opacity: 0.85
     });
-    const holoCore = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 1.2, 1.1, 12), holoWireMat);
-    holoSurveyorGroup.add(holoCore);
+    const holoNodeMat = new THREE.MeshBasicMaterial({
+      color: 0x06b6d4
+    });
 
+    // Triangular Open Space Frame (Central Core)
+    const holoSpaceFrame = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.72, 1.15, 1.25, 3),
+      holoWireMat
+    );
+    holoSurveyorGroup.add(holoSpaceFrame);
+
+    // 3 Articulated Tripod Landing Legs with Honeycomb Footpads
     for (let l = 0; l < 3; l++) {
       const lAng = (l * Math.PI * 2) / 3;
-      const hLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 1.8, 6), holoWireMat);
-      hLeg.position.set(Math.cos(lAng) * 1.1, -0.4, Math.sin(lAng) * 1.1);
-      hLeg.rotation.x = Math.sin(lAng) * 0.5;
-      hLeg.rotation.z = -Math.cos(lAng) * 0.5;
-      holoSurveyorGroup.add(hLeg);
+      const legGroup = new THREE.Group();
+      legGroup.rotation.y = lAng;
+
+      // Upper strut
+      const hStrut = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 1.6, 6), holoWireMat);
+      hStrut.position.set(0.8, -0.3, 0);
+      hStrut.rotation.z = -0.65;
+      legGroup.add(hStrut);
+
+      // Footpad
+      const hPad = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.28, 0.06, 8), holoWireMat);
+      hPad.position.set(1.4, -0.85, 0);
+      legGroup.add(hPad);
+
+      // Joint telemetry node
+      const hNode = new THREE.Mesh(new THREE.SphereGeometry(0.045, 8, 8), holoNodeMat);
+      hNode.position.set(1.4, -0.85, 0);
+      legGroup.add(hNode);
+
+      holoSurveyorGroup.add(legGroup);
     }
 
-    const hMast = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 1.4, 6), holoWireMat);
-    hMast.position.y = 1.2;
-    holoSurveyorGroup.add(hMast);
+    // 3 Vernier Descent Engine Nozzles (Wireframe)
+    for (let v = 0; v < 3; v++) {
+      const vAng = (v * Math.PI * 2) / 3 + Math.PI / 3;
+      const hNozzle = new THREE.Mesh(new THREE.ConeGeometry(0.16, 0.38, 8, 1, true), holoWireMat);
+      hNozzle.position.set(Math.cos(vAng) * 0.65, -0.65, Math.sin(vAng) * 0.65);
+      holoSurveyorGroup.add(hNozzle);
+    }
 
-    const hPanel = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.04, 0.6), holoWireMat);
-    hPanel.position.set(0, 1.8, 0.1);
-    holoSurveyorGroup.add(hPanel);
+    // Vidicon TV Camera Mast & Turret Hood
+    const hCamMast = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.9, 6), holoWireMat);
+    hCamMast.position.set(-0.35, 0.45, 0.35);
+    holoSurveyorGroup.add(hCamMast);
+
+    const hCamHood = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.28, 0.32), holoWireMat);
+    hCamHood.position.set(-0.35, 0.95, 0.35);
+    holoSurveyorGroup.add(hCamHood);
+
+    // Central Telemetry Mast & Planar Solar Array
+    const hSolarMast = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 1.6, 6), holoWireMat);
+    hSolarMast.position.y = 1.35;
+    holoSurveyorGroup.add(hSolarMast);
+
+    const hSolarPanel = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.03, 0.65), holoWireMat);
+    hSolarPanel.position.set(0, 2.1, 0.1);
+    hSolarPanel.rotation.x = 0.32;
+    holoSurveyorGroup.add(hSolarPanel);
+
+    // High-Gain Planar Antenna
+    const hHighGain = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.35, 0.03, 12), holoWireMat);
+    hHighGain.position.set(0.65, 2.0, -0.15);
+    hHighGain.rotation.x = -0.45;
+    holoSurveyorGroup.add(hHighGain);
 
     missionEchoGroup.add(holoSurveyorGroup);
 
-    // C. Floating Interactive Data Fragment Planes
+    // C. 3 Interactive Floating Curved Holographic Data Screens
     const dataFragments = [];
+    const screenAngles = [-0.65, 0, 0.65];
     for (let d = 0; d < 3; d++) {
-      const dAng = (d * Math.PI * 2) / 3;
-      const fragPlane = new THREE.Mesh(
-        new THREE.PlaneGeometry(0.8, 0.55),
-        new THREE.MeshBasicMaterial({ color: 0x06b6d4, side: THREE.DoubleSide, transparent: true, opacity: 0.65 })
-      );
-      fragPlane.position.set(Math.cos(dAng) * 1.8, 2.0 + (d % 2) * 0.4, Math.sin(dAng) * 1.8);
-      fragPlane.lookAt(new THREE.Vector3(0, 2.0, 0));
-      missionEchoGroup.add(fragPlane);
-      dataFragments.push(fragPlane);
+      const sAng = screenAngles[d];
+      const screenGroup = new THREE.Group();
+      const sDist = 2.4;
+      screenGroup.position.set(Math.sin(sAng) * sDist, 2.0 + (d % 2) * 0.25, Math.cos(sAng) * sDist);
+      screenGroup.rotation.y = sAng + Math.PI;
+
+      // Holographic Screen Outer Wireframe Frame
+      const frameGeo = new THREE.PlaneGeometry(1.05, 0.68);
+      const frameMat = new THREE.MeshBasicMaterial({
+        color: 0x0284c7,
+        wireframe: true,
+        transparent: true,
+        opacity: 0.65
+      });
+      const frameMesh = new THREE.Mesh(frameGeo, frameMat);
+      screenGroup.add(frameMesh);
+
+      // Semi-Transparent Glowing Cyan Display Pane
+      const paneGeo = new THREE.PlaneGeometry(0.98, 0.62);
+      const paneMat = new THREE.MeshBasicMaterial({
+        color: 0x06b6d4,
+        side: THREE.DoubleSide,
+        transparent: true,
+        opacity: 0.42
+      });
+      const paneMesh = new THREE.Mesh(paneGeo, paneMat);
+      paneMesh.position.z = 0.01;
+      screenGroup.add(paneMesh);
+
+      // Interactive Corner Bracket Accents
+      for (const cx of [-0.49, 0.49]) {
+        for (const cy of [-0.31, 0.31]) {
+          const corner = new THREE.Mesh(
+            new THREE.BoxGeometry(0.08, 0.08, 0.02),
+            new THREE.MeshBasicMaterial({ color: 0x38bdf8 })
+          );
+          corner.position.set(cx, cy, 0.02);
+          screenGroup.add(corner);
+        }
+      }
+
+      missionEchoGroup.add(screenGroup);
+      dataFragments.push(screenGroup);
     }
 
-    const echoLight = new THREE.PointLight(0x38bdf8, 3.2, 18);
-    echoLight.position.set(0, 2.5, 0);
+    // High-Luminance Volumetric Projection Point Light
+    const echoLight = new THREE.PointLight(0x38bdf8, 3.8, 22);
+    echoLight.position.set(0, 2.6, 0);
     missionEchoGroup.add(echoLight);
 
     scene.add(missionEchoGroup);
@@ -1773,143 +2556,409 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
     const recoveryRigGroup = new THREE.Group();
     recoveryRigGroup.position.set(0, surveyorTerrainY, 0);
 
-    // A. 3 Articulated Robotic Stabilizer Gantry Arms Bracing Surveyor 1
-    const rigMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.88, roughness: 0.3 });
-    const rigHazardMat = new THREE.MeshStandardMaterial({ color: 0xf59e0b, metalness: 0.7, roughness: 0.35 });
-
+    // A. 3 Heavy Industrial Telescoping Gantry Towers with Hazard Striping
+    const gantryPillars = [];
     for (let g = 0; g < 3; g++) {
       const gAng = (g * Math.PI * 2) / 3 + 0.35;
-      const gantryPillar = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.16, 3.4, 12), rigMat);
-      gantryPillar.position.set(Math.cos(gAng) * 3.8, 1.7, Math.sin(gAng) * 3.8);
-      gantryPillar.castShadow = true;
-      recoveryRigGroup.add(gantryPillar);
+      const gGroup = new THREE.Group();
+      gGroup.position.set(Math.cos(gAng) * 3.8, 0, Math.sin(gAng) * 3.8);
+      gGroup.rotation.y = -gAng - Math.PI / 2;
 
-      const braceArm = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.14, 2.4), rigHazardMat);
-      braceArm.position.set(Math.cos(gAng) * 2.5, 2.4, Math.sin(gAng) * 2.5);
-      braceArm.lookAt(new THREE.Vector3(0, 2.1, 0));
-      braceArm.castShadow = true;
-      recoveryRigGroup.add(braceArm);
+      // Heavy Triangular Baseplate with Bedrock Anchor Hex Bolts
+      const baseplate = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.55, 0.65, 0.16, 6),
+        new THREE.MeshStandardMaterial({ color: 0x0f172a, metalness: 0.94, roughness: 0.22 })
+      );
+      baseplate.position.y = 0.08;
+      baseplate.castShadow = true;
+      baseplate.receiveShadow = true;
+      gGroup.add(baseplate);
 
-      const clampPad = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.32, 0.15), matAluminum);
-      clampPad.position.set(Math.cos(gAng) * 1.5, 2.1, Math.sin(gAng) * 1.5);
-      recoveryRigGroup.add(clampPad);
+      // 6 Anchor Bolts
+      for (let b = 0; b < 6; b++) {
+        const bAng = (b * Math.PI * 2) / 6;
+        const bolt = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.04, 0.04, 0.06, 6),
+          new THREE.MeshStandardMaterial({ color: 0xd4d4d8, metalness: 0.98, roughness: 0.1 })
+        );
+        bolt.position.set(Math.cos(bAng) * 0.45, 0.18, Math.sin(bAng) * 0.45);
+        gGroup.add(bolt);
+      }
+
+      // Outer Structural Steel Column Mast with OSHA Hazard Stripes
+      const outerColumn = new THREE.Mesh(
+        new THREE.BoxGeometry(0.32, 3.2, 0.32),
+        new THREE.MeshStandardMaterial({
+          map: hazardStripeMap,
+          metalness: 0.88,
+          roughness: 0.28
+        })
+      );
+      outerColumn.position.y = 1.68;
+      outerColumn.castShadow = true;
+      gGroup.add(outerColumn);
+
+      // Inner Telescoping Hydraulic Lift Ram (Polished Chrome)
+      const innerRam = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.10, 0.10, 1.8, 16),
+        new THREE.MeshStandardMaterial({ color: 0xf1f5f9, metalness: 0.99, roughness: 0.04 })
+      );
+      innerRam.position.y = 2.8;
+      gGroup.add(innerRam);
+
+      // Top Gantry Cross-Head Collar
+      const crossHead = new THREE.Mesh(
+        new THREE.BoxGeometry(0.42, 0.24, 0.38),
+        new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.92, roughness: 0.25 })
+      );
+      crossHead.position.y = 3.6;
+      crossHead.castShadow = true;
+      gGroup.add(crossHead);
+
+      // Rotating Amber Emergency Strobe Beacon Dome
+      const beaconBase = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.12, 0.14, 0.08, 16),
+        new THREE.MeshStandardMaterial({ color: 0x0f172a, metalness: 0.95, roughness: 0.2 })
+      );
+      beaconBase.position.y = 3.76;
+      gGroup.add(beaconBase);
+
+      const beaconDome = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.10, 0.12, 0.18, 16),
+        new THREE.MeshStandardMaterial({ color: 0xf59e0b, emissive: 0xf59e0b, emissiveIntensity: 0.85, roughness: 0.1 })
+      );
+      beaconDome.position.y = 3.88;
+      gGroup.add(beaconDome);
+
+      // Amber Strobe PointLight
+      const strobeLight = new THREE.PointLight(0xf59e0b, 2.6, 12);
+      strobeLight.position.y = 3.95;
+      gGroup.add(strobeLight);
+
+      // Articulated Stabilizer Clamp Arm Extending toward Surveyor 1 Frame
+      const armGroup = new THREE.Group();
+      armGroup.position.set(0, 3.4, 0);
+
+      // Upper Hydraulic Box Boom
+      const boom = new THREE.Mesh(
+        new THREE.BoxGeometry(0.14, 0.16, 2.2),
+        new THREE.MeshStandardMaterial({ map: hazardStripeMap, metalness: 0.88, roughness: 0.3 })
+      );
+      boom.position.set(0, -0.6, 1.1);
+      boom.rotation.x = -0.45;
+      boom.castShadow = true;
+      armGroup.add(boom);
+
+      // Polished Chrome Actuator Cylinder Rod
+      const actRod = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.04, 0.04, 1.4, 12),
+        new THREE.MeshStandardMaterial({ color: 0xffffff, metalness: 0.99, roughness: 0.04 })
+      );
+      actRod.position.set(0, -0.7, 1.1);
+      actRod.rotation.x = -0.45;
+      armGroup.add(actRod);
+
+      // Dual Articulated Hydraulic Hose Lines
+      const hoseCurve = new THREE.CatmullRomCurve3([
+        new THREE.Vector3(-0.10, 0, 0),
+        new THREE.Vector3(-0.16, -0.5, 0.8),
+        new THREE.Vector3(-0.08, -1.1, 2.1)
+      ]);
+      const hoseMesh = new THREE.Mesh(
+        new THREE.TubeGeometry(hoseCurve, 16, 0.022, 8, false),
+        new THREE.MeshStandardMaterial({ color: 0x0a0d14, roughness: 0.92 })
+      );
+      armGroup.add(hoseMesh);
+
+      // Soft-Touch Molded Silicone Stabilization Clamp Pad
+      const clampPad = new THREE.Mesh(
+        new THREE.BoxGeometry(0.32, 0.28, 0.18),
+        new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.85, metalness: 0.2 })
+      );
+      clampPad.position.set(0, -1.15, 2.2);
+      clampPad.castShadow = true;
+      armGroup.add(clampPad);
+
+      gGroup.add(armGroup);
+      recoveryRigGroup.add(gGroup);
+      gantryPillars.push(gGroup);
     }
 
-    // B. Quantum Data-Storage Vault (Q-SSD) mounted to the telemetry mast
-    const qVault = new THREE.Mesh(
-      new THREE.BoxGeometry(0.65, 0.45, 0.45),
-      new THREE.MeshStandardMaterial({ color: 0x0f172a, metalness: 0.95, roughness: 0.2 })
+    // B. Quantum Data-Storage Vault (Q-SSD) clamped securely to Surveyor 1 Telemetry Mast
+    const qVaultGroup = new THREE.Group();
+    qVaultGroup.position.set(0.6, 2.8, 0.5);
+
+    // Milled Aluminum Radiation-Hardened Enclosure
+    const qVaultChassis = new THREE.Mesh(
+      new THREE.BoxGeometry(0.72, 0.48, 0.46),
+      new THREE.MeshStandardMaterial({
+        map: carbonFiberMap,
+        color: 0x1e293b,
+        metalness: 0.92,
+        roughness: 0.25
+      })
     );
-    qVault.position.set(0.6, 2.8, 0.5);
-    qVault.castShadow = true;
-    recoveryRigGroup.add(qVault);
+    qVaultChassis.castShadow = true;
+    qVaultGroup.add(qVaultChassis);
 
-    const qStatusLed = new THREE.PointLight(0x10b981, 2.0, 6);
-    qStatusLed.position.set(0.6, 3.1, 0.5);
-    recoveryRigGroup.add(qStatusLed);
+    // Lateral Heat-Sink Radiator Cooling Fins
+    for (const hx of [-0.37, 0.37]) {
+      for (let f = 0; f < 5; f++) {
+        const fin = new THREE.Mesh(
+          new THREE.BoxGeometry(0.015, 0.38, 0.05),
+          new THREE.MeshStandardMaterial({ color: 0xb45309, metalness: 0.96, roughness: 0.15 })
+        );
+        fin.position.set(hx, 0, -0.15 + f * 0.075);
+        qVaultGroup.add(fin);
+      }
+    }
 
-    // C. Secure Mobile Extraction Pallet & Transport Sled
+    // Top Digital Status LED Array Bezel
+    const qStatusLed = new THREE.PointLight(0x10b981, 2.2, 8);
+    qStatusLed.position.set(0, 0.32, 0);
+    qVaultGroup.add(qStatusLed);
+
+    const qStatusIndicator = new THREE.Mesh(
+      new THREE.SphereGeometry(0.065, 12, 12),
+      new THREE.MeshBasicMaterial({ color: 0x10b981 })
+    );
+    qStatusIndicator.position.set(0, 0.26, 0.18);
+    qVaultGroup.add(qStatusIndicator);
+
+    // Mast Mounting Clamps
+    const qClamp = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.06, 0.06, 0.52, 12),
+      new THREE.MeshStandardMaterial({ color: 0xd4d4d8, metalness: 0.95, roughness: 0.15 })
+    );
+    qClamp.position.set(-0.38, 0, 0);
+    qVaultGroup.add(qClamp);
+
+    recoveryRigGroup.add(qVaultGroup);
+
+    // C. Heavy-Duty Mobile Extraction Pallet & Transport Sled (at X: 3.8, Z: -2.6)
     const extractionPalletGroup = new THREE.Group();
     extractionPalletGroup.position.set(3.8, 0, -2.6);
     extractionPalletGroup.rotation.y = -0.5;
 
-    const palletChassis = new THREE.Mesh(
-      new THREE.BoxGeometry(3.2, 0.4, 2.0),
-      new THREE.MeshStandardMaterial({ color: 0x334155, metalness: 0.85, roughness: 0.35 })
+    // Heavy Titanium Dual Runner Skids with Regolith Gliding Bevels
+    for (const sx of [-0.95, 0.95]) {
+      const runner = new THREE.Mesh(
+        new THREE.BoxGeometry(0.24, 0.18, 3.6),
+        new THREE.MeshStandardMaterial({ color: 0x475569, metalness: 0.94, roughness: 0.15 })
+      );
+      runner.position.set(sx, 0.09, 0);
+      runner.castShadow = true;
+      runner.receiveShadow = true;
+      extractionPalletGroup.add(runner);
+
+      // Curved front nose ski tip
+      const runnerTip = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.12, 0.12, 0.24, 8),
+        new THREE.MeshStandardMaterial({ color: 0x475569, metalness: 0.94, roughness: 0.15 })
+      );
+      runnerTip.rotation.z = Math.PI / 2;
+      runnerTip.position.set(sx, 0.16, 1.8);
+      extractionPalletGroup.add(runnerTip);
+    }
+
+    // Heavy Structural Deck Platform
+    const palletDeck = new THREE.Mesh(
+      new THREE.BoxGeometry(2.3, 0.16, 3.4),
+      new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.9, roughness: 0.3 })
     );
-    palletChassis.position.y = 0.25;
-    palletChassis.castShadow = true;
-    palletChassis.receiveShadow = true;
-    extractionPalletGroup.add(palletChassis);
+    palletDeck.position.y = 0.26;
+    palletDeck.castShadow = true;
+    palletDeck.receiveShadow = true;
+    extractionPalletGroup.add(palletDeck);
 
-    const canist = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.38, 0.38, 1.1, 16),
-      new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.9, roughness: 0.2 })
+    // Welded Tubular Steel Perimeter Roll Cage with Hazard Stripes
+    const cageMat = new THREE.MeshStandardMaterial({
+      map: hazardStripeMap,
+      metalness: 0.88,
+      roughness: 0.3
+    });
+    for (const cx of [-1.1, 1.1]) {
+      const cageRail = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 3.4, 8), cageMat);
+      cageRail.rotation.x = Math.PI / 2;
+      cageRail.position.set(cx, 0.65, 0);
+      extractionPalletGroup.add(cageRail);
+
+      for (const cz of [-1.5, 0, 1.5]) {
+        const post = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.45, 8), cageMat);
+        post.position.set(cx, 0.45, cz);
+        extractionPalletGroup.add(post);
+      }
+    }
+
+    // Articulated Front Towing Hitch Tongue with Red Steel Recovery Shackle
+    const hitchTongue = new THREE.Mesh(
+      new THREE.BoxGeometry(0.14, 0.10, 0.9),
+      new THREE.MeshStandardMaterial({ color: 0x334155, metalness: 0.92, roughness: 0.25 })
     );
-    canist.position.set(0.6, 0.95, 0);
-    canist.castShadow = true;
-    extractionPalletGroup.add(canist);
+    hitchTongue.position.set(0, 0.22, 2.1);
+    extractionPalletGroup.add(hitchTongue);
 
-    const canistLight = new THREE.PointLight(0x06b6d4, 1.8, 5);
-    canistLight.position.set(0.6, 1.4, 0);
-    extractionPalletGroup.add(canistLight);
+    const recoveryShackle = new THREE.Mesh(
+      new THREE.TorusGeometry(0.12, 0.035, 12, 16),
+      new THREE.MeshStandardMaterial({ color: 0xdc2626, metalness: 0.92, roughness: 0.2 })
+    );
+    recoveryShackle.position.set(0, 0.22, 2.55);
+    extractionPalletGroup.add(recoveryShackle);
 
-    const uplinkMast = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 2.2, 8), matAluminum);
-    uplinkMast.position.set(-1.0, 1.2, 0);
-    extractionPalletGroup.add(uplinkMast);
+    // Cryogenic Precursor Sample Dewar Pressure Vessel
+    const dewarGroup = new THREE.Group();
+    dewarGroup.position.set(0.55, 0.34, 0.1);
 
-    const uplinkDish = new THREE.Mesh(new THREE.SphereGeometry(0.6, 16, 16, 0, Math.PI * 2, 0, Math.PI / 2), matAluminum);
-    uplinkDish.position.set(-1.0, 2.3, 0);
-    uplinkDish.rotation.x = -0.65;
-    extractionPalletGroup.add(uplinkDish);
+    // Double-walled vacuum-insulated stainless steel pressure vessel
+    const dewarTank = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.42, 0.42, 1.35, 24),
+      new THREE.MeshStandardMaterial({ color: 0xf8fafc, metalness: 0.96, roughness: 0.08 })
+    );
+    dewarTank.position.y = 0.68;
+    dewarTank.castShadow = true;
+    dewarGroup.add(dewarTank);
 
-    // D. Lunar Regolith Core Drill Sampling Unit (Mounted on extraction pallet)
+    // Heavy Anodized Clamping Bands
+    for (const by of [0.35, 1.05]) {
+      const band = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.435, 0.435, 0.08, 24),
+        new THREE.MeshStandardMaterial({ color: 0x0284c7, metalness: 0.92, roughness: 0.15 })
+      );
+      band.position.y = by;
+      dewarGroup.add(band);
+    }
+
+    // Top Dome Manifold with Dual Analog Pressure Gauges
+    const dewarDome = new THREE.Mesh(
+      new THREE.SphereGeometry(0.42, 24, 16, 0, Math.PI * 2, 0, Math.PI / 2),
+      new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.94, roughness: 0.12 })
+    );
+    dewarDome.position.y = 1.35;
+    dewarGroup.add(dewarDome);
+
+    // Dual Pressure Gauges with Dial Needles
+    for (const gx of [-0.14, 0.14]) {
+      const gaugeHousing = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.065, 0.065, 0.04, 16),
+        new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.92, roughness: 0.2 })
+      );
+      gaugeHousing.rotation.x = Math.PI / 2;
+      gaugeHousing.position.set(gx, 1.48, 0.28);
+      dewarGroup.add(gaugeHousing);
+
+      const gaugeFace = new THREE.Mesh(
+        new THREE.CircleGeometry(0.055, 16),
+        new THREE.MeshBasicMaterial({ color: 0xf1f5f9 })
+      );
+      gaugeFace.position.set(gx, 1.48, 0.305);
+      dewarGroup.add(gaugeFace);
+    }
+
+    // Venting Frost Exhaust Nozzle & LED Status Ring
+    const ventNozzle = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.04, 0.05, 0.18, 12),
+      new THREE.MeshStandardMaterial({ color: 0xd4d4d8, metalness: 0.98, roughness: 0.1 })
+    );
+    ventNozzle.position.set(0, 1.82, 0);
+    dewarGroup.add(ventNozzle);
+
+    const dewarStatusLed = new THREE.PointLight(0x06b6d4, 1.8, 5);
+    dewarStatusLed.position.set(0, 1.6, 0);
+    dewarGroup.add(dewarStatusLed);
+
+    extractionPalletGroup.add(dewarGroup);
+
+    // Lunar Regolith Core Sampling Drill Rig
     const drillUnitGroup = new THREE.Group();
-    drillUnitGroup.position.set(-0.2, 0.45, 0.6);
+    drillUnitGroup.position.set(-0.45, 0.34, 0.7);
 
-    const drillStand = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.05, 0.9, 10), matAluminum);
-    drillStand.position.y = 0.45;
-    drillUnitGroup.add(drillStand);
+    // Dual Extruded Aluminum Guide Mast Rails
+    for (const mx of [-0.09, 0.09]) {
+      const mastRail = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.022, 0.022, 1.7, 10),
+        matAluminum
+      );
+      mastRail.position.set(mx, 0.85, 0);
+      drillUnitGroup.add(mastRail);
+    }
 
-    const drillMotor = new THREE.Mesh(
-      new THREE.BoxGeometry(0.28, 0.32, 0.22),
-      new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.9, roughness: 0.25 })
+    // Heavy Linear Carriage & Electric Drive Motor Head
+    const motorHead = new THREE.Mesh(
+      new THREE.BoxGeometry(0.36, 0.38, 0.28),
+      new THREE.MeshStandardMaterial({
+        map: carbonFiberMap,
+        color: 0x1e293b,
+        metalness: 0.94,
+        roughness: 0.2
+      })
     );
-    drillMotor.position.y = 0.85;
-    drillUnitGroup.add(drillMotor);
+    motorHead.position.set(0, 1.15, 0);
+    motorHead.castShadow = true;
+    drillUnitGroup.add(motorHead);
 
+    // Diamond-Fluted Spiral Auger Drill Bit Extending Through Deck into Soil
     const drillBit = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.02, 0.025, 0.65, 8),
-      new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.98, roughness: 0.15 })
+      new THREE.CylinderGeometry(0.035, 0.045, 1.25, 12),
+      new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.98, roughness: 0.12 })
     );
-    drillBit.position.y = 0.3;
+    drillBit.position.set(0, 0.38, 0);
+    drillBit.castShadow = true;
     drillUnitGroup.add(drillBit);
+
+    // Digital Depth Readout OLED Display
+    const drillDisplay = new THREE.Mesh(
+      new THREE.PlaneGeometry(0.16, 0.10),
+      new THREE.MeshBasicMaterial({ color: 0x38bdf8 })
+    );
+    drillDisplay.position.set(0, 1.25, 0.145);
+    drillUnitGroup.add(drillDisplay);
 
     extractionPalletGroup.add(drillUnitGroup);
 
-    // E. Extra Mission Equipment Cases & Hard Data Drives on Pallet
-    const palletCrateA = new THREE.Mesh(
-      new THREE.BoxGeometry(0.85, 0.45, 0.6),
-      new THREE.MeshStandardMaterial({ color: 0xf59e0b, metalness: 0.7, roughness: 0.35 })
-    );
-    palletCrateA.position.set(-0.3, 0.45, -0.6);
-    palletCrateA.rotation.y = 0.2;
-    palletCrateA.castShadow = true;
-    extractionPalletGroup.add(palletCrateA);
+    // Stacked Nanuk/Pelican Military-Spec Cargo Cases with Structural Ribs
+    const palletCaseMatA = new THREE.MeshStandardMaterial({ color: 0xf59e0b, roughness: 0.45, metalness: 0.2 });
+    const palletCaseMatB = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.5, metalness: 0.3 });
 
-    const palletCrateB = new THREE.Mesh(
-      new THREE.BoxGeometry(0.65, 0.35, 0.45),
-      new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.85, roughness: 0.3 })
-    );
-    palletCrateB.position.set(-0.25, 0.82, -0.58);
-    palletCrateB.rotation.y = -0.1;
-    palletCrateB.castShadow = true;
-    extractionPalletGroup.add(palletCrateB);
+    // Lower Case A (Amber Heavy Cargo)
+    const crateA = new THREE.Mesh(new THREE.BoxGeometry(0.92, 0.42, 0.65), palletCaseMatA);
+    crateA.position.set(-0.35, 0.55, -0.75);
+    crateA.rotation.y = 0.12;
+    crateA.castShadow = true;
+    extractionPalletGroup.add(crateA);
 
-    recoveryRigGroup.add(extractionPalletGroup);
+    // Upper Case B (Midnight Black Tactical Case with Steel Latches)
+    const crateB = new THREE.Mesh(new THREE.BoxGeometry(0.75, 0.35, 0.52), palletCaseMatB);
+    crateB.position.set(-0.30, 0.93, -0.72);
+    crateB.rotation.y = -0.08;
+    crateB.castShadow = true;
+    extractionPalletGroup.add(crateB);
 
-    // F. Hazard Warning Strobes on 3 Gantry Pillars
-    for (let g = 0; g < 3; g++) {
-      const gAng = (g * Math.PI * 2) / 3 + 0.35;
-      const strobe = new THREE.PointLight(0xf59e0b, 2.2, 10);
-      strobe.position.set(Math.cos(gAng) * 3.8, 3.5, Math.sin(gAng) * 3.8);
-      recoveryRigGroup.add(strobe);
+    // Latches and Corner Rubber Bumpers on Crate B
+    for (const lx of [-0.22, 0.22]) {
+      const latch = new THREE.Mesh(
+        new THREE.BoxGeometry(0.06, 0.08, 0.02),
+        new THREE.MeshStandardMaterial({ color: 0xd4d4d8, metalness: 0.95, roughness: 0.1 })
+      );
+      latch.position.set(-0.30 + lx, 0.93, -0.45);
+      extractionPalletGroup.add(latch);
     }
 
-    // G. Heavy Power & Hydraulic Umbilical Cables between Rig & Pallet
+    // Heavy Umbilical Cable Linking Surveyor 1 Recovery Rig to Pallet
     const rigCableA = new THREE.Mesh(
       new THREE.TubeGeometry(
         new THREE.CatmullRomCurve3([
           new THREE.Vector3(Math.cos(0.35) * 3.8, 0.2, Math.sin(0.35) * 3.8),
-          new THREE.Vector3(2.5, 0.05, -1.0),
-          new THREE.Vector3(3.8, 0.2, -2.6)
+          new THREE.Vector3(2.5, 0.06, -1.0),
+          new THREE.Vector3(3.8, 0.24, -2.6)
         ]),
-        20, 0.035, 6, false
+        24, 0.045, 8, false
       ),
-      new THREE.MeshStandardMaterial({ color: 0x111827, roughness: 0.9 })
+      new THREE.MeshStandardMaterial({ color: 0x0b0f19, roughness: 0.94 })
     );
+    rigCableA.castShadow = true;
     recoveryRigGroup.add(rigCableA);
 
+    recoveryRigGroup.add(extractionPalletGroup);
     scene.add(recoveryRigGroup);
 
     // 12. SUBTERRANEAN ANOMALOUS FISSURE & PRECURSOR CAVERN (X: -95, Z: -110)
@@ -2965,6 +4014,10 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
       alienGlyphMap.dispose();
       roverTrackMap.dispose();
       dustParticleTex.dispose();
+      hazardStripeMap.dispose();
+      carbonFiberMap.dispose();
+      scannerScreenMap.dispose();
+      spacesuitFabricMap.dispose();
       dustGeo.dispose();
       sporeGeo.dispose();
       bootprintGeo.dispose();
