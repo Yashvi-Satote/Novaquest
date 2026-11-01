@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Routes, Route, Link, Navigate } from 'react-router-dom';
-import Header from './components/Header';
-import ExplorerPage from './pages/ExplorerPage';
-import HardwareDetailPage from './pages/HardwareDetailPage';
-import SpacecraftDetailPage from './pages/SpacecraftDetailPage';
-import SolarSystemPage from './pages/SolarSystemPage';
-import MainMenuPage from './pages/MainMenuPage';
-import GameArenaPage from './pages/GameArenaPage';
-import ProloguePage from './pages/ProloguePage';
-import PlaceholderPage from './pages/PlaceholderPage';
+import Header from '../Shared/components/Header';
+import PlaceholderPage from '../Shared/pages/PlaceholderPage';
+import ExplorerPage from '../NovaBase/pages/ExplorerPage';
+import HardwareDetailPage from '../NovaBase/pages/HardwareDetailPage';
+import SpacecraftDetailPage from '../NovaMap/pages/SpacecraftDetailPage';
+import SolarSystemPage from '../NovaMap/pages/SolarSystemPage';
+import MainMenuPage from '../NovaQuest/pages/MainMenuPage';
+import GameArenaPage from '../NovaQuest/pages/GameArenaPage';
+import ProloguePage from '../NovaQuest/pages/ProloguePage';
 import { ArrowLeft, AlertCircle } from 'lucide-react';
 
 function NotFoundPage({ theme, onToggleTheme }) {

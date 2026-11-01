@@ -1,0 +1,125 @@
+NOVAQUEST - VERIFIED TECHNICAL STACK
+====================================
+
+Inventory scope
+---------------
+This inventory is based on the source, dependency manifests, runtime checks,
+and project assets present in this repository. It distinguishes installed and
+configured technologies from optional or unused settings.
+
+1. Programming languages and formats
+------------------------------------
+- Python: Flask backend, database access, catalogue ingestion, and asset tools.
+- JavaScript (ES modules): frontend, build configuration, and QA scripts.
+- JSX: React components and pages.
+- HTML: Vite application shell.
+- CSS: Tailwind utilities and project-specific styles.
+- SQL: PostgreSQL DDL in backend/NovaBase/schema.sql.
+- JSON: package manifests, spacecraft asset manifest, and API payloads.
+
+2. Frontend frameworks and libraries
+------------------------------------
+- React 19.3.1 and React DOM 19.3.1: component-based browser UI.
+- React Router DOM 7.18.4: client-side page routes and navigation.
+- lucide-react 1.61.0: interface icons.
+- @tweenjs/tween.js 25.0.0: camera and animation transitions.
+- Three.js 0.186.1: custom WebGL 3D solar-system, terrain, and spacecraft
+  scenes. The project uses Three.js directly; React Three Fiber is not used.
+- Three.js OrbitControls, GLTFLoader, and DRACOLoader: camera interaction,
+  local GLB model loading, and Draco-compressed geometry decoding.
+
+3. Frontend styling and assets
+------------------------------
+- Tailwind CSS 4.3.3 with @tailwindcss/vite 4.3.3: utility styling and Vite
+  integration.
+- Custom CSS: global dark/light theme, typography, backgrounds, and effects.
+- Google Fonts CDN: Inter and Space Grotesk, linked by frontend/index.html.
+- Public assets served from frontend/public: planetary textures, game images,
+  spacecraft GLB models, and the DRACO decoder resources.
+
+4. Backend framework and libraries
+-----------------------------------
+- Flask 3.1.3: Python application and JSON REST endpoints.
+- Flask-Cors 6.0.5: cross-origin response configuration.
+- SQLAlchemy 2.1.6: database engine, ORM models, queries, and sessions.
+- psycopg2-binary 2.9.13: PostgreSQL driver used by SQLAlchemy when a
+  PostgreSQL DATABASE_URL is configured.
+- python-dotenv 1.2.4: loads environment settings from .env.
+- Python standard-library sqlite3: direct reads in small catalogue inspection
+  scripts; SQLAlchemy uses its SQLite dialect for application queries.
+
+5. Databases and schemas
+------------------------
+- SQLite: current local runtime engine. The database file is
+  backend/space_hardware.db; it is ignored by Git and was present in the
+  inspected workspace. The reorganized connection module keeps this path.
+  The local health endpoint reported SQLite connected with 52 hardware rows.
+- PostgreSQL: optional deployment engine selected through DATABASE_URL.
+  PostgreSQL connectivity was not verified in this environment.
+- ORM: SQLAlchemy models in backend/NovaBase/models.py.
+- PostgreSQL DDL: backend/NovaBase/schema.sql, including PostgreSQL-specific
+  indexes and extensions. SQLite tables are created through SQLAlchemy
+  metadata.
+- Relational entities: organizations, missions, hardware, hardware aliases,
+  hardware keywords, hardware images, and hardware sources. Hardware records
+  reference missions and relevant organizations; related descriptive,
+  provenance, and image records are stored in their own tables.
+- Database initialization and ingestion: NovaBase/init_db.py,
+  NovaBase/seed_data.py, and NovaBase/expand_db.py. The app also runs the
+  idempotent seed and expansion steps during startup.
+- No separate migration framework is configured.
+
+6. APIs and external services
+-----------------------------
+- Internal Flask REST API, consumed through frontend/Shared/services/api.js:
+  GET /api/health, /api/filters, /api/hardware, /api/hardware/search,
+  /api/hardware/<id-or-slug>, /api/hardware/<id-or-slug>/images,
+  /api/missions, /api/missions/<mission-id>/hardware, and /api/organizations.
+  The Vite development server proxies /api to http://localhost:5000.
+- GitHub REST API: backend/NovaMap/download_nasa_models.py queries the
+  nasa/NASA-3D-Resources repository Contents API and downloads model files
+  from the returned download URLs.
+- NASA/JPL mission and model links are also included as catalogue provenance
+  and outbound links; these are not live API integrations in the app.
+- NASA_API_KEY appears in the environment template but is not consumed by the
+  application source. No api.nasa.gov integration was found.
+- Google Fonts is an external font stylesheet/CDN dependency.
+
+7. Authentication, users, and persistence
+-----------------------------------------
+- No registration, sign-in, authorization, server-side user session, or
+  profile implementation exists in the current source.
+- NovaUser folders are reserved for future user functionality.
+- Browser localStorage is used for theme preferences and NovaQuest game
+  saves/settings; it is not an authentication mechanism.
+
+8. Development, build, and QA tools
+-----------------------------------
+- Node.js and npm: frontend dependency and script runtime.
+- Vite 8.3.5 and @vitejs/plugin-react 6.1.2: development server and production
+  bundler.
+- Oxlint 1.89.0: frontend lint command.
+- Puppeteer Core is declared for the browser QA scripts, but was not installed
+  in the inspected node_modules. The scripts also name a fixed Chrome path
+  that is unavailable in this environment.
+- Python virtual environment and compileall: backend environment and syntax
+  validation.
+- Project scripts: frontend/run_qa.mjs, frontend/verify_all_requirements.mjs,
+  and scripts/*.mjs.
+
+9. Architecture and implementation patterns
+--------------------------------------------
+- React single-page application with route-driven feature pages.
+- Feature modules: NovaBase (spacecraft/hardware catalogue), NovaMap
+  (interactive planetary and spacecraft visualization), and NovaQuest
+  (narrative game and gameplay, currently client-side only).
+- Shared frontend services and presentation code are under frontend/Shared;
+  shared database connectivity is under backend/Shared.
+- Flask JSON REST API with SQLAlchemy ORM, relational database models,
+  filtering, search, and pagination.
+- Local-first SQLite fallback with optional PostgreSQL configuration.
+- Three.js/WebGL scene composition, GLB asset loading, and interactive camera
+  controls.
+- Game state and UI preferences persisted in browser localStorage.
+- The route shell and Vite/Python dependency manifests remain at their
+  conventional application roots; Vite's public asset URLs remain unchanged.
