@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { fetchHardwareDetail } from '../services/api';
-import Header from '../components/Header';
+import { fetchHardwareDetail } from '../../Shared/services/api';
+import Header from '../../Shared/components/Header';
 import ImageGallery from '../components/ImageGallery';
 import ImageModal from '../components/ImageModal';
 import { 

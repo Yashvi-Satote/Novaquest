@@ -13,7 +13,7 @@ import {
   CheckCircle2, 
   AlertCircle
 } from 'lucide-react';
-import { fetchHardware } from '../../services/api';
+import { fetchHardware } from '../../../Shared/services/api';
 import { 
   classifyCatalogueRecord, 
   isSpacecraftMapped, 

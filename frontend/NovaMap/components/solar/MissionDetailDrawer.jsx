@@ -22,7 +22,7 @@ import {
   Camera,
   Eye
 } from 'lucide-react';
-import { fetchHardwareDetail } from '../../services/api';
+import { fetchHardwareDetail } from '../../../Shared/services/api';
 import { getMappedSpacecraft, classifyCatalogueRecord } from './spacecraftRegistry';
 import { getSpacecraftCategoryIcon, getCategoryBadgeStyle } from './spacecraftIcons';
 import { getSpacecraftModelSpec } from './spacecraftModelRegistry';

@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Header from '../components/Header';
+import Header from '../../Shared/components/Header';
 import SolarCanvas from '../components/solar/SolarCanvas';
 import SolarControlsHUD from '../components/solar/SolarControlsHUD';
 import MissionExplorerSidebar from '../components/solar/MissionExplorerSidebar';

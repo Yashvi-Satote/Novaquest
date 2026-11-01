@@ -111,7 +111,7 @@ export default function DatabaseStatusModal({ health, onClose }) {
 
           {/* DDL Schema Reference */}
           <div className="text-xs text-slate-400">
-            A comprehensive native PostgreSQL DDL file is provided at <code className="text-cyan-300 bg-slate-900 px-1.5 py-0.5 rounded">backend/schema.sql</code>, complete with GIN full-text indexes and relational constraints.
+            A comprehensive native PostgreSQL DDL file is provided at <code className="text-cyan-300 bg-slate-900 px-1.5 py-0.5 rounded">backend/NovaBase/schema.sql</code>, complete with GIN full-text indexes and relational constraints.
           </div>
 
         </div>
