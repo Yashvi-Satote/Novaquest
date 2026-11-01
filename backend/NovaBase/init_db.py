@@ -8,48 +8,55 @@ if backend_dir not in sys.path:
     sys.path.insert(0, backend_dir)
 
 from Shared.database import engine, SessionLocal, Base, get_db_status
-from NovaBase.models import Organization, Mission, Hardware, HardwareAlias, HardwareKeyword, HardwareImage, HardwareSource
-from NovaBase.seed_data import seed_database
-from NovaBase.expand_db import expand_database
+from NovaBase.models import (
+    Organization,
+    Mission,
+    Spacecraft,
+    Model3D,
+    MissionSpacecraft,
+    SpacecraftAlias,
+    SpacecraftKeyword,
+    SpacecraftImage,
+    SpacecraftSource
+)
+from NovaBase.migrate_and_import import run_migration_and_import
 
 def init_db():
-    print("=" * 60)
-    print("Novaquest - Database Initialization")
-    print("=" * 60)
+    print("=" * 70)
+    print("Novaquest - Scalable Database Initialization")
+    print("=" * 70)
     
     status = get_db_status()
-    print(f"Database Engine: {status['engine'].upper()}")
+    print(f"Database Engine  : {status['engine'].upper()}")
     print(f"PostgreSQL Active: {status['is_postgres']}")
-    print(f"Status Note: {status['message']}")
-    print("-" * 60)
+    print(f"Connection Status: {status['status']}")
+    print(f"Status Note      : {status['message']}")
+    print("-" * 70)
     
-    print("Creating tables if they do not exist...")
+    print("Creating relational schema tables if they do not exist...")
     Base.metadata.create_all(bind=engine)
-    print("Tables created successfully.")
+    print("Schema tables ready.")
     
-    print("Ingesting verified seed dataset...")
-    seed_database()
-
-    print("Ingesting extended hardware dataset...")
-    expand_database()
+    print("Executing idempotent migration and spacecraft catalog ingestion...")
+    results = run_migration_and_import()
     
-    # Verify counts
+    # Final database verification
     db = SessionLocal()
     try:
         org_count = db.query(Organization).count()
         mission_count = db.query(Mission).count()
-        hw_count = db.query(Hardware).count()
-        img_count = db.query(HardwareImage).count()
-        src_count = db.query(HardwareSource).count()
+        sc_count = db.query(Spacecraft).count()
+        model_count = db.query(Model3D).count()
+        assoc_count = db.query(MissionSpacecraft).count()
         
-        print("-" * 60)
-        print("Database Verification Summary:")
-        print(f"  Organizations: {org_count}")
-        print(f"  Missions:      {mission_count}")
-        print(f"  Hardware:      {hw_count}")
-        print(f"  Images/Data:   {img_count}")
-        print(f"  Sources:       {src_count}")
-        print("=" * 60)
+        print("\n" + "=" * 70)
+        print("DATABASE INITIALIZATION & INTEGRITY REPORT:")
+        print(f"  Organizations              : {org_count}")
+        print(f"  Missions                   : {mission_count}")
+        print(f"  Spacecraft Records         : {sc_count}")
+        print(f"  3D Models Ingested         : {model_count}")
+        print(f"  Mission-Spacecraft Links   : {assoc_count}")
+        print("=" * 70)
         print("Initialization completed successfully!")
     finally:
         db.close()

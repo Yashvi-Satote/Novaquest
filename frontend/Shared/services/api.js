@@ -66,3 +66,30 @@ export async function fetchMissions(params = {}) {
   if (!res.ok) throw new Error(`Failed to fetch missions: ${res.statusText}`);
   return await res.json();
 }
+
+export async function fetchMissionDetail(missionId) {
+  const res = await fetch(`${API_BASE}/missions/${missionId}`);
+  if (!res.ok) throw new Error(`Failed to fetch mission ${missionId}: ${res.statusText}`);
+  return await res.json();
+}
+
+export async function fetchSpacecraft(params = {}) {
+  return fetchHardware(params);
+}
+
+export async function fetchSpacecraftDetail(idOrSlug) {
+  return fetchHardwareDetail(idOrSlug);
+}
+
+export async function fetchModels() {
+  const res = await fetch(`${API_BASE}/models`);
+  if (!res.ok) throw new Error(`Failed to fetch 3D models: ${res.statusText}`);
+  return await res.json();
+}
+
+export async function fetchModelDetail(modelName) {
+  const res = await fetch(`${API_BASE}/models/${encodeURIComponent(modelName)}`);
+  if (!res.ok) throw new Error(`Failed to fetch model "${modelName}": ${res.statusText}`);
+  return await res.json();
+}
+
