@@ -56,7 +56,7 @@ def create_db_engine():
     
     # Fallback to local SQLite development database
     # Transparently declare this so the app never pretends PostgreSQL is connected when it is not
-    db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "space_hardware.db")
+    db_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "space_hardware.db")
     sqlite_url = f"sqlite:///{db_path}"
     
     sqlite_engine = create_engine(

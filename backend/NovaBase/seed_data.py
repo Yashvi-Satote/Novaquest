@@ -8,11 +8,13 @@ import sys
 import os
 from datetime import datetime
 
-# Add current directory to path
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+# Add the backend package root to the path for direct script execution.
+backend_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if backend_dir not in sys.path:
+    sys.path.insert(0, backend_dir)
 
-from database import engine, SessionLocal, Base
-from models import Organization, Mission, Hardware, HardwareAlias, HardwareKeyword, HardwareImage, HardwareSource
+from Shared.database import engine, SessionLocal, Base
+from NovaBase.models import Organization, Mission, Hardware, HardwareAlias, HardwareKeyword, HardwareImage, HardwareSource
 
 def seed_database():
     print("Initializing database tables...")

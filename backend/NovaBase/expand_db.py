@@ -1,13 +1,15 @@
 """
 Database expansion for Novaquest.
 Adds 35+ new accurately documented human-made space hardware records.
-Run: python backend/expand_db.py
+Run: python backend/NovaBase/expand_db.py
 """
 import sys, os
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from database import engine, SessionLocal, Base
-from models import (Organization, Mission, Hardware,
-                    HardwareAlias, HardwareKeyword, HardwareImage, HardwareSource)
+backend_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if backend_dir not in sys.path:
+    sys.path.insert(0, backend_dir)
+from Shared.database import engine, SessionLocal, Base
+from NovaBase.models import (Organization, Mission, Hardware,
+                             HardwareAlias, HardwareKeyword, HardwareImage, HardwareSource)
 
 
 def upsert_org(db, org_map, slug, name, org_type, country, url):

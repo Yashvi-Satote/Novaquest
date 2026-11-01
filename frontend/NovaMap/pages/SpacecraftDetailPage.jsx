@@ -5,8 +5,8 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import * as TWEEN from '@tweenjs/tween.js';
 import { resolveSpacecraft } from '../components/solar/spacecraftResolver.js';
 import { loadSpacecraft3DModel } from '../components/solar/spacecraftModelRegistry.js';
-import { fetchHardwareDetail } from '../services/api.js';
-import Header from '../components/Header.jsx';
+import { fetchHardwareDetail } from '../../Shared/services/api.js';
+import Header from '../../Shared/components/Header.jsx';
 import {
   ArrowLeft,
   RotateCcw,

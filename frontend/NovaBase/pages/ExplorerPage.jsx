@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import Header from '../components/Header';
+import Header from '../../Shared/components/Header';
 import Sidebar from '../components/Sidebar';
 import FilterBar from '../components/FilterBar';
 import HardwareCard from '../components/HardwareCard';
 import { 
   fetchFilters, 
   fetchHardware 
-} from '../services/api';
+} from '../../Shared/services/api';
 import { 
   X, 
   AlertCircle, 
