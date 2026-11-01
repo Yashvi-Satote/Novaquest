@@ -26,7 +26,9 @@ import {
   createGoldFoilTexture,
   createSolarPanelTexture,
   createAlienGlyphTexture,
-  createRoverTrackTexture
+  createRoverTrackTexture,
+  createVisorDirtTexture,
+  createGlowParticleTexture
 } from '../../game/lunarTextures';
 
 /**
@@ -64,6 +66,7 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
   const [suitPower, setSuitPower] = useState(94.2);
   const [heartRate, setHeartRate] = useState(72);
   const [externalTemp, setExternalTemp] = useState(-118);
+  const [sunGlareIntensity, setSunGlareIntensity] = useState(0); // 0 to 1 based on sun angle
 
   // Component-scoped triggers accessible both from keydown and HUD buttons
   const triggerScannerPulse = () => {
@@ -856,6 +859,92 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
 
     scene.add(cavernGroup);
 
+    // 14. ELECTROSTATIC TERMINATOR DUST MOTES (PHOTOELECTRIC LEVITATION PHENOMENON)
+    const dustParticleTex = createGlowParticleTexture(64);
+    const dustCount = 450;
+    const dustGeo = new THREE.BufferGeometry();
+    const dustPositions = new Float32Array(dustCount * 3);
+    const dustVelocities = [];
+
+    for (let i = 0; i < dustCount; i++) {
+      const ang = Math.random() * Math.PI * 2;
+      const r = 2.0 + Math.random() * 36;
+      dustPositions[i * 3] = Math.cos(ang) * r;
+      dustPositions[i * 3 + 1] = 0.3 + Math.random() * 2.8;
+      dustPositions[i * 3 + 2] = Math.sin(ang) * r;
+
+      dustVelocities.push({
+        baseY: dustPositions[i * 3 + 1],
+        phase: Math.random() * Math.PI * 2,
+        speed: 0.9 + Math.random() * 1.5
+      });
+    }
+    dustGeo.setAttribute('position', new THREE.BufferAttribute(dustPositions, 3));
+
+    const dustMat = new THREE.PointsMaterial({
+      map: dustParticleTex,
+      size: 0.38,
+      color: 0xfef08a, // Warm golden dust illuminated by low-angle morning sunlight
+      transparent: true,
+      opacity: 0.65,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false
+    });
+    const dustParticles = new THREE.Points(dustGeo, dustMat);
+    scene.add(dustParticles);
+
+    // 15. SUBTERRANEAN PRECURSOR RESONANT ENERGY SPORES
+    const sporeCount = 300;
+    const sporeGeo = new THREE.BufferGeometry();
+    const sporePositions = new Float32Array(sporeCount * 3);
+    const sporeColors = new Float32Array(sporeCount * 3);
+
+    for (let i = 0; i < sporeCount; i++) {
+      const sAng = Math.random() * Math.PI * 2;
+      const sRad = 1.0 + Math.random() * 22;
+      sporePositions[i * 3] = Math.cos(sAng) * sRad;
+      sporePositions[i * 3 + 1] = Math.random() * 16;
+      sporePositions[i * 3 + 2] = Math.sin(sAng) * sRad;
+
+      const isIndigo = Math.random() > 0.45;
+      sporeColors[i * 3] = isIndigo ? 0.39 : 0.02;
+      sporeColors[i * 3 + 1] = isIndigo ? 0.40 : 0.75;
+      sporeColors[i * 3 + 2] = isIndigo ? 0.95 : 0.98;
+    }
+    sporeGeo.setAttribute('position', new THREE.BufferAttribute(sporePositions, 3));
+    sporeGeo.setAttribute('color', new THREE.BufferAttribute(sporeColors, 3));
+
+    const sporeMat = new THREE.PointsMaterial({
+      map: dustParticleTex,
+      size: 0.45,
+      vertexColors: true,
+      transparent: true,
+      opacity: 0.85,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false
+    });
+    const precursorSpores = new THREE.Points(sporeGeo, sporeMat);
+    cavernGroup.add(precursorSpores);
+
+    // 16. ASTRONAUT EVA FOOTPRINT DECAL SYSTEM
+    const bootprintGroup = new THREE.Group();
+    scene.add(bootprintGroup);
+    const bootprintGeo = new THREE.PlaneGeometry(0.32, 0.68);
+    bootprintGeo.rotateX(-Math.PI / 2);
+    const bootprintMat = new THREE.MeshStandardMaterial({
+      map: roverTrackMap,
+      color: 0x1f2127,
+      roughness: 0.99,
+      transparent: true,
+      opacity: 0.8,
+      depthWrite: false,
+      polygonOffset: true,
+      polygonOffsetFactor: -1.0
+    });
+    const maxBootprints = 35;
+    const bootprints = [];
+    let footStepToggle = false;
+
     // 12. INTERACTION POINTS DATABASE
     const interactables = [
       {
@@ -1116,6 +1205,26 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
         if (isGrounded && time - lastStepTime > (keys.shift ? 0.32 : 0.48)) {
           audio.playFootstepLunar();
           lastStepTime = time;
+
+          // Drop an astronaut EVA bootprint in the lunar regolith
+          if (!underground) {
+            const sideOffset = (footStepToggle ? 0.22 : -0.22);
+            footStepToggle = !footStepToggle;
+            const printX = playerPos.x + Math.cos(yaw) * sideOffset;
+            const printZ = playerPos.z - Math.sin(yaw) * sideOffset;
+            const printY = getTerrainHeight(printX, printZ) + 0.025;
+
+            const printMesh = new THREE.Mesh(bootprintGeo, bootprintMat);
+            printMesh.position.set(printX, printY, printZ);
+            printMesh.rotation.y = yaw;
+            bootprintGroup.add(printMesh);
+            bootprints.push(printMesh);
+
+            if (bootprints.length > maxBootprints) {
+              const old = bootprints.shift();
+              bootprintGroup.remove(old);
+            }
+          }
         }
       }
 
@@ -1182,6 +1291,33 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
       const euler = new THREE.Euler(pitch, yaw, 0, 'YXZ');
       camera.quaternion.setFromEuler(euler);
 
+      // Electrostatically levitating terminator dust motes
+      if (!underground && dustParticles) {
+        dustParticles.visible = true;
+        dustParticles.position.x = playerPos.x;
+        dustParticles.position.z = playerPos.z;
+        const dPos = dustGeo.attributes.position;
+        for (let i = 0; i < dustCount; i++) {
+          const vel = dustVelocities[i];
+          dPos.setY(i, vel.baseY + Math.sin(time * vel.speed + vel.phase) * 0.45);
+        }
+        dPos.needsUpdate = true;
+      } else if (dustParticles) {
+        dustParticles.visible = false;
+      }
+
+      // Precursor cavern energy spores floating upward
+      if (underground && precursorSpores) {
+        precursorSpores.rotation.y += delta * 0.14;
+        const sPos = sporeGeo.attributes.position;
+        for (let i = 0; i < sporeCount; i++) {
+          let sy = sPos.getY(i) + delta * 0.85;
+          if (sy > 17.5) sy = 0.2;
+          sPos.setY(i, sy);
+        }
+        sPos.needsUpdate = true;
+      }
+
       // Throttled HUD Telemetry Updates (5 Hz updates instead of 60 FPS state flooding)
       hudTimer += delta;
       if (hudTimer >= 0.2) {
@@ -1194,6 +1330,13 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
         setDistanceToSurveyor(distSurveyor);
         setDistanceToAnomaly(distAnomaly);
         setCompassHeading(headingDeg);
+
+        // Dynamic Solar Visor Glare Intensity calculation
+        // Sun vector (240, 75, -180) normalized ≈ (0.78, 0.24, -0.58)
+        const forwardY = Math.sin(pitch);
+        const dotSun = forwardX * 0.78 + forwardY * 0.24 + forwardZ * (-0.58);
+        const glare = Math.max(0, Math.min(1, Math.pow(Math.max(0, dotSun), 3.0)));
+        setSunGlareIntensity(+glare.toFixed(2));
 
         // Check Nearby Interactable
         let foundInteract = null;
@@ -1260,6 +1403,10 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
       solarPanelMap.dispose();
       alienGlyphMap.dispose();
       roverTrackMap.dispose();
+      dustParticleTex.dispose();
+      dustGeo.dispose();
+      sporeGeo.dispose();
+      bootprintGeo.dispose();
       renderer.dispose();
     };
   }, []);
@@ -1280,6 +1427,29 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
             background: 'radial-gradient(circle at center, transparent 65%, rgba(0,0,0,0.5) 85%, rgba(6,182,212,0.06) 100%)'
           }}
         />
+
+        {/* DYNAMIC SOLAR VISOR GLARE & ANAMORPHIC FLARE (WHEN LOOKING TOWARD LOW-ANGLE HARSH SUN) */}
+        {sunGlareIntensity > 0.05 && (
+          <div 
+            className="absolute inset-0 pointer-events-none transition-opacity duration-300"
+            style={{ opacity: sunGlareIntensity }}
+          >
+            {/* Golden extravehicular visor wash */}
+            <div className="absolute inset-0 bg-gradient-to-tr from-amber-500/10 via-amber-400/25 to-yellow-200/35 mix-blend-screen" />
+            
+            {/* Horizontal Anamorphic Lens Flare Streak */}
+            <div className="absolute top-1/2 inset-x-0 -translate-y-1/2 h-[2px] bg-gradient-to-r from-transparent via-amber-300/80 to-transparent shadow-[0_0_25px_rgba(251,191,36,0.9)]" />
+            <div className="absolute top-1/2 inset-x-12 -translate-y-1/2 h-[8px] bg-gradient-to-r from-transparent via-cyan-400/40 to-transparent blur-sm" />
+
+            {/* Polycarbonate Lens Scratches & Solar Halo */}
+            <div 
+              className="absolute inset-0"
+              style={{
+                backgroundImage: 'radial-gradient(circle at 65% 35%, rgba(254,243,199,0.35) 0%, rgba(251,191,36,0.18) 40%, transparent 75%)'
+              }}
+            />
+          </div>
+        )}
 
         {/* Reticle Crosshair */}
         <div className="absolute inset-0 flex items-center justify-center">

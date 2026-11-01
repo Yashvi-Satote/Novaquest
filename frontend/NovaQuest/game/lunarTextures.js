@@ -400,3 +400,68 @@ export function createRoverTrackTexture(width = 256, height = 512) {
   texture.repeat.set(1, 24);
   return texture;
 }
+
+/**
+ * Creates Helmet Visor Dust Smudge & Micro-Scratch Texture
+ * Shimmers when facing the harsh low-angle sun
+ */
+export function createVisorDirtTexture(width = 512, height = 512) {
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d');
+
+  ctx.clearRect(0, 0, width, height);
+
+  // Micro scratches on polycarbonate
+  ctx.strokeStyle = 'rgba(255, 230, 180, 0.08)';
+  ctx.lineWidth = 0.75;
+  for (let i = 0; i < 45; i++) {
+    const x = Math.random() * width;
+    const y = Math.random() * height;
+    const len = 15 + Math.random() * 40;
+    const ang = Math.random() * Math.PI * 2;
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x + Math.cos(ang) * len, y + Math.sin(ang) * len);
+    ctx.stroke();
+  }
+
+  // Dust specks and thumb smudges near edges
+  for (let i = 0; i < 90; i++) {
+    const x = Math.random() * width;
+    const y = Math.random() * height;
+    const r = 0.5 + Math.random() * 2;
+    ctx.fillStyle = 'rgba(250, 240, 210, 0.12)';
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  const texture = new THREE.CanvasTexture(canvas);
+  return texture;
+}
+
+/**
+ * Creates Soft Radial Glow Disc for Dust Motes & Energy Spores
+ */
+export function createGlowParticleTexture(size = 64) {
+  const canvas = document.createElement('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext('2d');
+
+  const half = size / 2;
+  const grad = ctx.createRadialGradient(half, half, 0, half, half, half);
+  grad.addColorStop(0, 'rgba(255, 255, 255, 1.0)');
+  grad.addColorStop(0.35, 'rgba(160, 220, 255, 0.75)');
+  grad.addColorStop(0.7, 'rgba(56, 189, 248, 0.25)');
+  grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, size, size);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  return texture;
+}
+
