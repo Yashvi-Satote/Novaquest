@@ -89,18 +89,18 @@ export const JOURNEY_STAGES = [
   {
     stepIndex: 2,
     id: 'investigate_crater',
-    name: 'Investigate — Crater',
+    name: 'Stage 3 — Track the signal',
     durationEst: 'Approx. 3 minutes',
-    zoneName: 'ZONE 3 · CRATER INVESTIGATION',
+    zoneName: 'ZONE 3 · ROCK FIELD & INVESTIGATION CRATER',
     targetCoords: { x: -75, z: -50 },
-    waypointLabel: 'Crater Investigation Basin',
-    objective: 'Player follows the signal and examines three potential signal sources.',
-    narrative: 'Following the 432 Hz carrier and a subtle subterranean conduit, Arin investigates the 24-meter impact crater. Scanning three distinct sites isolates the transmission epicenter.',
-    instructions: 'Follow the 432 Hz signal and the dark cable conduit to the 24m crater. Examine Survey Site Alpha (rim outcrop), Survey Site Beta (inner scree slope), and Survey Site Gamma (buried precursor object) to isolate the harmonic epicenter.',
+    waypointLabel: 'Investigation Crater & Rock Field',
+    objective: 'Track the signal across the rock field and inspect three locations around the crater: Point A (Rock formation), Point B (Crater edge), and Point C (Crater floor).',
+    narrative: 'Arin tracks the mysterious 432 Hz carrier across the rock field toward the 24-meter impact crater. Using the signal scanner, Arin measures signal strength across three key investigation points—the outer rock formation, the crater edge, and the crater floor.',
+    instructions: 'Activate the signal scanner with [Q]. Follow the direction and signal strength indicator to inspect Point A (Rock formation), Point B (Crater edge), and Point C (Crater floor).',
     commsCallout: {
-      callsign: 'VANCE-OPS',
-      speaker: 'Officer Leo Vance',
-      text: 'The 432 Hz signal is intensifying toward that 24-meter impact crater at azimuth 295°. Check the rim outcrop, the scree slope, and the buried metallic signature at the crater floor.'
+      callsign: 'CHEN-SCIENCE',
+      speaker: 'Specialist Maya Chen',
+      text: 'Arin, activate your signal scanner with [Q]. The carrier is strongest near that 24-meter crater across the rock field. Sweep the perimeter and find where that transmission is peaking.'
     }
   },
   {
@@ -241,6 +241,41 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
   const hasSignalTrackerRef = useRef(false);
   const [isGlitching, setIsGlitching] = useState(false);
 
+  // Stage 3 — Track the Signal Investigation State
+  const [stage3Inspections, setStage3Inspections] = useState({
+    pointA: false,
+    pointB: false,
+    pointC: false
+  });
+  const stage3InspectionsRef = useRef({
+    pointA: false,
+    pointB: false,
+    pointC: false
+  });
+
+  // Signal Scanner readings & direction state
+  const [scannerReading, setScannerReading] = useState({
+    active: true,
+    strength: 28,
+    tier: 'Weak signal',
+    direction: 'North-west',
+    relativeDir: 'Ahead',
+    bearingDeg: 295,
+    distanceM: 75
+  });
+  const scannerReadingRef = useRef({
+    active: true,
+    strength: 28,
+    tier: 'Weak signal',
+    direction: 'North-west',
+    relativeDir: 'Ahead',
+    bearingDeg: 295,
+    distanceM: 75
+  });
+
+  const [isPointCDiscovered, setIsPointCDiscovered] = useState(false);
+  const isPointCDiscoveredRef = useRef(false);
+
   // Opening Cinematic & Pause State
   const [isOpeningCinematic, setIsOpeningCinematic] = useState(true);
   const isOpeningCinematicRef = useRef(true);
@@ -299,6 +334,52 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
     setHudNotice('SCANNER SIGNAL-TRACKING MODE UNLOCKED: Follow 432 Hz carrier NW to Crater Basin (Zone 3)');
     audio.playInteract();
     setTimeout(() => audio.playAnomalyHarmonic(), 360);
+  };
+
+  const triggerPointCDiscovery = () => {
+    if (isPointCDiscoveredRef.current) return;
+    isPointCDiscoveredRef.current = true;
+    setIsPointCDiscovered(true);
+
+    // Audio effects for buried precursor artifact
+    audio.playAnomalyHarmonic();
+    audio.playCraterInterference(1.0);
+
+    // Scripted Comms Exchange
+    // Maya: "I'm getting a much stronger reading. Captain, there is something underneath that crater."
+    setActiveComms({
+      callsign: 'CHEN-SCIENCE',
+      speaker: 'Specialist Maya Chen',
+      text: "I'm getting a much stronger reading. Captain, there is something underneath that crater."
+    });
+    audio.playRadioCommsChatter('chen');
+
+    // 4.8s later: Arin: "Mark the location. I'm going in."
+    setTimeout(() => {
+      setActiveComms({
+        callsign: 'RAO-COMMAND',
+        speaker: 'Captain Arin Rao',
+        text: "Mark the location. I'm going in."
+      });
+      audio.playEquipmentFeedback();
+    }, 4800);
+
+    // Update active objective after dialogue
+    setTimeout(() => {
+      setActiveObjective('Precursor fragment uncovered. Follow conduit northwest to the basalt ridge fissure.');
+    }, 9500);
+  };
+
+  const inspectStage3Point = (pointId) => {
+    if (stage3InspectionsRef.current[pointId]) return;
+    const updated = { ...stage3InspectionsRef.current, [pointId]: true };
+    stage3InspectionsRef.current = updated;
+    setStage3Inspections(updated);
+    audio.playInteract();
+
+    if (pointId === 'pointC') {
+      triggerPointCDiscovery();
+    }
   };
 
   const startInteractiveScan = (target, key) => {
@@ -444,6 +525,11 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
     setScanPulseActive(true);
     triggerScannerBeamRef.current?.();
     setTimeout(() => setScanPulseActive(false), 2400);
+
+    // Show scanner telemetry feedback in HUD
+    if (journeyStageIndex === 2 || hasSignalTracker) {
+      setHudNotice(`SIGNAL TRACKER: ${scannerReadingRef.current.strength}% [${scannerReadingRef.current.tier}] · Direction: ${scannerReadingRef.current.direction}`);
+    }
   };
 
   const triggerInvestigation = () => {
@@ -485,6 +571,9 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
       } else if (id && id.startsWith('poi_crater_')) {
         audio.playCraterInterference(0.9);
         setTimeout(() => audio.playCraterScannerPulse(), 220);
+        if (id === 'poi_crater_site_alpha') inspectStage3Point('pointA');
+        else if (id === 'poi_crater_site_beta') inspectStage3Point('pointB');
+        else if (id === 'poi_crater_site_gamma') inspectStage3Point('pointC');
         setInvestigateTarget(nearInteractableRef.current);
       } else if (id === 'poi_alien_structure' || id === 'poi_data_conduit') {
         audio.playAnomalyHarmonic();
@@ -4136,57 +4225,78 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
       // ================= ZONE 3: CRATER INVESTIGATION AREA =================
       {
         id: 'poi_crater_site_alpha',
-        title: 'Survey Site Alpha (North Rim Outcrop)',
+        title: 'Point A — Rock formation',
+        shortName: 'Rock formation',
+        finding: 'Weak signal',
         position: new THREE.Vector3(-68, getTerrainHeight(-68, -40) + 1.2, -40),
-        radius: 5.0,
-        sector: 'Zone 3 · Crater Investigation Area',
-        artifactAge: 'Pre-Imbrian Lunar Basalt',
+        radius: 4.8,
+        sector: 'Zone 3 · Rock Field',
+        artifactAge: 'Pre-Imbrian Lunar Basalt Outcrop',
         integrity: 'Intact Bedrock',
-        telemetryStatus: 'LIDAR Baseline Recorded',
-        description: 'High-standing basalt outcrop on the crater rim overlooking the shadowed interior. Handheld scanner calibrates baseline mineral composition.',
+        telemetryStatus: 'Weak signal · 28.4% Strength',
+        image: '/images/moon_close_up_telescope.jpg',
+        description: 'The player inspects the outer rock formation. Handheld scanner registers a weak signal (28%). The basalt outcrop reflects diffuse seismic reverberations, indicating the true transmission epicenter lies deeper towards the crater.',
         readings: {
-          'Basalt Titanium Oxide': '8.4% (Standard Mare Basalt)',
-          'Magnetic Resonance': '22% (Geological Baseline)',
-          'Thermal Variance': '0.0°C Ambient Background',
-          'Signal Vector': 'Diverging · Deeper inside crater'
+          'Signal Status': 'Weak signal',
+          'Measured Strength': '28.4% Baseline',
+          'Carrier Vector': 'Trending West toward Crater Rim',
+          'Geological Context': 'Pre-Imbrian Titanium Basalt Outcrop'
         },
-        officerNote: 'Site Alpha shows only normal titanium basalt reflection. The anomalous signal isn’t on the rim—it’s coming from deeper inside the crater bowl.'
+        historicalFacts: [
+          'Impact Breccia & Outcrops: The lunar ejecta blanket consists of shock-shattered boulders thrown outward by meteoritic collisions.',
+          'Signal Attenuation: Basaltic bedrock scatters electromagnetic frequencies, causing a diffuse, low-amplitude reading.'
+        ],
+        officerNote: 'Signal is weak here at the rock formation (~28%). My scanner is picking up only faint reverberations. The source must be further down toward the crater edge.'
       },
       {
         id: 'poi_crater_site_beta',
-        title: 'Survey Site Beta (Inner Scree Slope)',
+        title: 'Point B — Crater edge',
+        shortName: 'Crater edge',
+        finding: 'Medium signal',
         position: new THREE.Vector3(-74, getTerrainHeight(-74, -48) + 1.2, -48),
-        radius: 5.0,
-        sector: 'Zone 3 · Crater Investigation Area',
+        radius: 4.8,
+        sector: 'Zone 3 · Crater Edge',
         artifactAge: 'Impact-Melted Breccia',
-        integrity: 'Fractured Strata',
-        telemetryStatus: 'Harmonic Echo Detected',
-        description: 'Talus field of impact-melted breccia in deep crater shadow. Seismic reflection indicates harmonic interference echoing off the lower crater wall.',
+        integrity: 'Fractured Scree Strata',
+        telemetryStatus: 'Medium signal · 65.2% Strength',
+        image: '/images/moon_close_up_telescope.jpg',
+        description: 'The player inspects the crater edge. Handheld scanner registers a medium signal (65%). Standing harmonic waves reflect off the scree slope, confirming the signal is radiating from beneath the crater bowl floor directly ahead.',
         readings: {
-          'Breccia Composition': 'Shock-Glass / Pyroxene Agglutinates',
-          'Magnetic Resonance': '54% (Reflected Harmonic Echo)',
-          'Subsurface Density': '+18% Overburden Inconsistency',
-          'Signal Frequency': '432.06 Hz Standing Wave'
+          'Signal Status': 'Medium signal',
+          'Measured Strength': '65.2% Harmonic',
+          'Slope Alignment': '31° Scree Slope of Impact Melt',
+          'Carrier Vector': 'Trending Inward & Downward to Crater Floor'
         },
-        officerNote: 'Signal strength jumped to 54%! The harmonic is echoing off the scree, but the primary epicenter is right ahead at the base of the wall—near that strange metallic protrusion!'
+        historicalFacts: [
+          'Crater Slope Mechanics: The inner scree slope rests at the 31° angle of repose of dry lunar aggregate.',
+          'Harmonic Amplification: The bowl geometry of the impact crater acts as an acoustic reflector, concentrating underground pulses.'
+        ],
+        officerNote: 'Signal strength jumped to 65%! The harmonic resonance is much sharper here at the edge. The epicenter isn’t on the rim—it’s coming right from the bottom of that crater floor!'
       },
       {
         id: 'poi_crater_site_gamma',
-        title: 'Survey Site Gamma (Buried Precursor Object)',
+        title: 'Point C — Crater floor',
+        shortName: 'Crater floor',
+        finding: 'Strong signal',
         position: new THREE.Vector3(-78, getTerrainHeight(-78, -54) + 1.2, -54),
         radius: 5.5,
-        sector: 'Zone 3 · Crater Investigation Area',
-        artifactAge: 'Non-Human / Unknown Epoch',
+        sector: 'Zone 3 · Crater Floor',
+        artifactAge: 'Non-Human / Precursor Epoch',
         integrity: '100% Non-Degraded Alloy',
-        telemetryStatus: '99.4% Peak Signal Resonance',
-        description: 'A faceted geometric metallic prism partially exposed in the crater wall. Handheld scanner hits 99.4% peak harmonic resonance at 432.06 Hz. The alloy does not match any terrestrial aerospace database.',
+        telemetryStatus: 'Strong signal · 99.4% Strength',
+        image: '/images/moon_close_up_telescope.jpg',
+        description: 'The player inspects the crater floor. Handheld scanner hits 99.4% peak harmonic resonance. A buried geometric fragment emerges through the lunar regolith, pulsing with alien energy lines.',
         readings: {
-          'Material Composition': 'Uncatalogued Exotic Superalloy',
-          'Magnetic Resonance': '99.4% Peak Resonance (Epicenter)',
-          'Resonant Frequency': '432.06 Hz Constant Sine Wave',
-          'Structural Alignment': 'Vector Points to Subterranean Cavern'
+          'Signal Status': 'Strong signal',
+          'Measured Strength': '99.4% Epicenter Peak',
+          'Object Classification': 'Buried Geometric Fragment (Precursor)',
+          'Subsurface Vector': 'Directly Downward into Bedrock Fissure'
         },
-        officerNote: 'Astonishing... look at these crystalline edge facets! This isn’t aerospace debris from Apollo or Surveyor. It’s an extraterrestrial precursor artifact, and it’s transmitting a beacon deep underground!'
+        historicalFacts: [
+          'Exotic Metallurgy: The buried fragment shows non-terrestrial crystalline facet geometry and superalloy composition.',
+          'Subterranean Connection: Ground-penetrating radar reveals a massive geometric conduit descending 80 meters beneath the crater floor.'
+        ],
+        officerNote: 'Look at those glowing edges... This is what was transmitting into Surveyor 1! A buried alien fragment right here under the lunar dust. Arin: “Mark the location. I\'m going in.”'
       },
 
       // ================= ZONE 4: ALIEN STRUCTURE DISCOVERY =================
@@ -4894,6 +5004,23 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
         targetMarkerFootpad.material.opacity = isScanned ? 0.35 : (0.55 + Math.sin(time * 3.0) * 0.25);
       }
 
+      // Animate Point C Buried Geometric Fragment & Soil Breach Ring
+      if (buriedMonolithMat && groundBreachRing && buriedObjectLight) {
+        if (isPointCDiscoveredRef.current) {
+          buriedMonolithMat.emissiveIntensity = 0.95 + Math.sin(time * 4.0) * 0.45;
+          buriedObjectLight.intensity = 5.2 + Math.sin(time * 4.0) * 2.2;
+          groundBreachRing.material.opacity = 0.85 + Math.sin(time * 3.0) * 0.15;
+          groundBreachRing.rotation.z += delta * 0.6;
+        } else {
+          // Subtle visual pulse when player gets close (within 35m of Point C)
+          const distToC = Math.hypot(playerPos.x - (-78), playerPos.z - (-54));
+          const closeGlow = Math.max(0, 1 - distToC / 35);
+          buriedMonolithMat.emissiveIntensity = 0.28 + closeGlow * 0.55 + Math.sin(time * 2.5) * 0.15;
+          buriedObjectLight.intensity = 2.0 + closeGlow * 2.8;
+          groundBreachRing.material.opacity = 0.35 + closeGlow * 0.5;
+        }
+      }
+
       // Cancel active interactive scan if player moved away from target
       if (isScanningActiveRef.current && scanningTargetRef.current && scanningTargetRef.current.position) {
         const dTarget = Math.hypot(playerPos.x - scanningTargetRef.current.position.x, playerPos.z - scanningTargetRef.current.position.z);
@@ -4958,6 +5085,20 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
             targetX = 0;
             targetZ = 0;
           }
+        } else if (journeyStageIndex === 2) {
+          if (isPointCDiscoveredRef.current) {
+            targetX = -120;
+            targetZ = -75; // Advance toward Precursor Monolith & Basalt Ridge Fissure
+          } else if (!stage3InspectionsRef.current.pointA) {
+            targetX = -68;
+            targetZ = -40; // Point A (Rock formation)
+          } else if (!stage3InspectionsRef.current.pointB) {
+            targetX = -74;
+            targetZ = -48; // Point B (Crater edge)
+          } else {
+            targetX = -78;
+            targetZ = -54; // Point C (Crater floor)
+          }
         } else {
           const currentStageObj = JOURNEY_STAGES[journeyStageIndex] || JOURNEY_STAGES[0];
           targetX = currentStageObj?.targetCoords?.x || 0;
@@ -4972,6 +5113,75 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
         let rad = Math.atan2(dx, -dz);
         let deg = Math.round((THREE.MathUtils.radToDeg(rad) % 360 + 360) % 360);
         setNavTargetBearing(deg);
+
+        // Real-Time Signal Scanner calculation based on Point C (-78, -54)
+        const dPointC = Math.hypot(playerPos.x - (-78), playerPos.z - (-54));
+        const dxC = -78 - playerPos.x;
+        const dzC = -54 - playerPos.z;
+        const radC = Math.atan2(dxC, -dzC);
+        const degC = Math.round((THREE.MathUtils.radToDeg(radC) % 360 + 360) % 360);
+
+        let cardDir = 'North-west';
+        if (degC >= 338 || degC < 23) cardDir = 'North';
+        else if (degC >= 23 && degC < 68) cardDir = 'North-east';
+        else if (degC >= 68 && degC < 113) cardDir = 'East';
+        else if (degC >= 113 && degC < 158) cardDir = 'South-east';
+        else if (degC >= 158 && degC < 203) cardDir = 'South';
+        else if (degC >= 203 && degC < 248) cardDir = 'South-west';
+        else if (degC >= 248 && degC < 293) cardDir = 'West';
+        else cardDir = 'North-west';
+
+        const relDeg = Math.round(((degC - headingDeg) % 360 + 360) % 360);
+        let relDir = 'Ahead';
+        if (relDeg < 25 || relDeg > 335) relDir = 'Ahead';
+        else if (relDeg >= 25 && relDeg < 70) relDir = 'Ahead-Right';
+        else if (relDeg >= 70 && relDeg < 110) relDir = 'Right';
+        else if (relDeg >= 110 && relDeg < 160) relDir = 'Behind-Right';
+        else if (relDeg >= 160 && relDeg < 200) relDir = 'Behind';
+        else if (relDeg >= 200 && relDeg < 250) relDir = 'Behind-Left';
+        else if (relDeg >= 250 && relDeg < 290) relDir = 'Left';
+        else relDir = 'Ahead-Left';
+
+        // Designed gameplay signal strength readings:
+        // Point A (Rock formation, ~30-45m from C): Weak signal (~28%)
+        // Point B (Crater edge, ~15-25m from C): Medium signal (~65%)
+        // Point C (Crater floor, <7m from C): Strong signal (~99%)
+        let strength = 20;
+        if (dPointC < 6.5) {
+          strength = 99;
+        } else if (dPointC < 16.0) {
+          strength = Math.round(78 + (16.0 - dPointC) * 2.1);
+        } else if (dPointC < 38.0) {
+          strength = Math.round(50 + (38.0 - dPointC) * 1.25);
+        } else if (dPointC < 95.0) {
+          strength = Math.round(20 + (95.0 - dPointC) * 0.52);
+        } else {
+          strength = Math.max(12, Math.round(20 - (dPointC - 95.0) * 0.1));
+        }
+
+        let tier = 'Weak signal';
+        if (strength >= 78) tier = 'Strong signal';
+        else if (strength >= 45) tier = 'Medium signal';
+        else tier = 'Weak signal';
+
+        const updatedTracker = {
+          active: true,
+          strength,
+          tier,
+          direction: cardDir,
+          relativeDir: relDir,
+          bearingDeg: degC,
+          distanceM: Math.round(dPointC)
+        };
+        scannerReadingRef.current = updatedTracker;
+        setScannerReading(updatedTracker);
+
+        // Stage 3 — Point C Automatic Discovery Check upon reaching Crater Floor
+        if (journeyStageIndex === 2 && dPointC < 6.5 && !isPointCDiscoveredRef.current) {
+          triggerPointCDiscovery();
+          stage3InspectionsRef.current.pointC = true;
+          setStage3Inspections({ ...stage3InspectionsRef.current });
+        }
 
         // Stage 1 Tutorial Objective Check & Natural Stage Transitions
         if (journeyStageIndex === 0) {
@@ -4989,7 +5199,7 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
           }
         } else if (journeyStageIndex === 1 && hasSignalTrackerRef.current && (distCrater < 48 && distLanding > 60)) {
           advanceJourneyStage(2);
-        } else if (journeyStageIndex === 2 && (distAlien < 38 || (playerPos.x < -60 && playerPos.z < -80))) {
+        } else if (journeyStageIndex === 2 && isPointCDiscoveredRef.current && (distAlien < 38 || (playerPos.x < -60 && playerPos.z < -80))) {
           advanceJourneyStage(3);
         } else if (journeyStageIndex === 3 && (distEcho < 20 || isMissionEchoOpen)) {
           advanceJourneyStage(4);
@@ -5467,46 +5677,172 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
               </div>
             )}
 
-            {/* SCANNER SIGNAL-TRACKING MODE WIDGET (UNLOCKED REWARD) */}
-            {hasSignalTracker && (
-              <div className="p-3 rounded-xl bg-gradient-to-br from-indigo-950/90 via-slate-950/95 to-purple-950/90 backdrop-blur-md border border-cyan-400/60 shadow-xl space-y-2 text-xs font-mono">
-                <div className="flex items-center justify-between text-[10px] text-cyan-300 font-bold tracking-wider uppercase">
+            {/* STAGE 3 — TRACK THE SIGNAL OBJECTIVES */}
+            {journeyStageIndex === 2 && (
+              <div className="p-3.5 rounded-xl bg-slate-950/90 backdrop-blur-md border border-purple-500/40 shadow-xl text-xs space-y-2">
+                <div className="flex items-center justify-between text-[10px] text-purple-300 font-bold uppercase tracking-wider">
                   <div className="flex items-center gap-1.5">
-                    <Compass className="w-3.5 h-3.5 text-cyan-400 animate-spin" style={{ animationDuration: '8s' }} />
-                    <span>SIGNAL-TRACKING MODE · ACTIVE</span>
+                    <Radio className="w-3.5 h-3.5 text-purple-400 animate-pulse" />
+                    <span>Track the Signal (Stage 3)</span>
                   </div>
-                  <span className="px-1.5 py-0.5 rounded bg-cyan-900/60 text-cyan-200 border border-cyan-400/40 text-[9px]">
-                    0.00 MHz
+                  <span className="text-slate-400 font-mono">
+                    {Object.values(stage3Inspections).filter(Boolean).length}/3 Inspected
                   </span>
                 </div>
 
-                <div className="p-2 rounded-lg bg-black/50 border border-white/10 flex items-center justify-between">
-                  <div>
-                    <div className="text-[9px] text-slate-400 uppercase">Subsurface Target</div>
-                    <div className="text-white font-bold text-xs">Crater Epicenter (Zone 3)</div>
+                <div className="space-y-1.5 pt-1">
+                  {[
+                    {
+                      id: 'pointA',
+                      targetId: 'poi_crater_site_alpha',
+                      title: 'Point A — Rock formation',
+                      finding: 'Weak signal (~28%)',
+                      desc: 'Outer basalt boulder field'
+                    },
+                    {
+                      id: 'pointB',
+                      targetId: 'poi_crater_site_beta',
+                      title: 'Point B — Crater edge',
+                      finding: 'Medium signal (~65%)',
+                      desc: 'Inner scree slope reflection'
+                    },
+                    {
+                      id: 'pointC',
+                      targetId: 'poi_crater_site_gamma',
+                      title: 'Point C — Crater floor',
+                      finding: 'Strong signal (~99%)',
+                      desc: 'Buried geometric fragment epicenter'
+                    }
+                  ].map((pt, i) => {
+                    const isDone = stage3Inspections[pt.id];
+                    const isNear = nearInteractable?.id === pt.targetId;
+                    return (
+                      <div
+                        key={pt.id}
+                        className={`p-2 rounded-lg text-[11px] transition-all border ${
+                          isDone
+                            ? 'bg-purple-950/30 text-purple-300 border-purple-500/30'
+                            : isNear
+                            ? 'bg-cyan-950/60 text-cyan-200 border-cyan-400 animate-pulse'
+                            : 'bg-white/[0.03] text-slate-300 border-white/5'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            {isDone ? (
+                              <CheckCircle2 className="w-3.5 h-3.5 text-purple-400 flex-shrink-0" />
+                            ) : (
+                              <span className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center text-[9px] flex-shrink-0 font-mono ${
+                                isNear ? 'border-cyan-400 text-cyan-300 bg-cyan-900/50' : 'border-slate-500 text-slate-400'
+                              }`}>
+                                {['A', 'B', 'C'][i]}
+                              </span>
+                            )}
+                            <span className={`font-semibold ${isDone ? 'line-through opacity-85 text-purple-200' : 'text-white'}`}>
+                              {pt.title}
+                            </span>
+                          </div>
+                          <span className={`text-[9px] px-1.5 py-0.5 rounded font-mono font-bold ${
+                            isDone ? 'bg-purple-900/50 text-purple-300' : isNear ? 'bg-cyan-900/60 text-cyan-200' : 'text-slate-500'
+                          }`}>
+                            {isDone ? pt.finding : isNear ? 'IN RANGE [E]' : 'REQUIRED'}
+                          </span>
+                        </div>
+                        <div className="text-[10px] text-slate-400 mt-0.5 pl-5">
+                          {pt.desc}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Stage 3 Status / Discovery confirmation */}
+                <div className="pt-2 border-t border-white/10 flex items-center justify-between text-[10px] font-mono">
+                  <span className="text-slate-400">
+                    {isPointCDiscovered
+                      ? 'Precursor fragment visible at crater floor'
+                      : 'Follow scanner direction & strength [Q]'}
+                  </span>
+                  {isPointCDiscovered && (
+                    <span className="text-purple-400 font-bold flex items-center gap-1 animate-pulse">
+                      <Sparkles className="w-3 h-3 text-purple-400" />
+                      <span>EPICENTER CONFIRMED</span>
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* SIGNAL TRACKER HUD CARD (STAGE 3 SPECIFICATION) */}
+            {(hasSignalTracker || journeyStageIndex === 2) && (
+              <div className="p-3.5 rounded-xl bg-slate-950/95 backdrop-blur-md border border-cyan-400/60 shadow-[0_0_35px_rgba(6,182,212,0.3)] space-y-2.5 text-xs font-mono">
+                
+                {/* Header */}
+                <div className="flex items-center justify-between border-b border-white/10 pb-1.5">
+                  <div className="flex items-center gap-2">
+                    <Radio className="w-4 h-4 text-cyan-400 animate-pulse" />
+                    <span className="font-bold text-white tracking-widest uppercase">SIGNAL TRACKER</span>
                   </div>
-                  <div className="text-right">
-                    <div className="text-[9px] text-slate-400 uppercase">Proximity</div>
-                    <div className="text-cyan-300 font-bold font-mono text-xs">{distanceToCrater}m</div>
+                  <span className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-emerald-950/80 border border-emerald-500/40 text-[9px] text-emerald-300 font-bold uppercase tracking-wider">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+                    <span>Active</span>
+                  </span>
+                </div>
+
+                {/* Big Percentage & Signal Tier */}
+                <div className="flex items-baseline justify-between pt-0.5">
+                  <div className="text-3xl font-bold tracking-tight font-mono text-cyan-300">
+                    {scannerReading.strength}%
+                  </div>
+                  <div className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                    scannerReading.tier === 'Strong signal'
+                      ? 'bg-purple-900/60 border border-purple-400/60 text-purple-200 animate-pulse'
+                      : scannerReading.tier === 'Medium signal'
+                      ? 'bg-cyan-900/60 border border-cyan-400/60 text-cyan-200'
+                      : 'bg-amber-900/40 border border-amber-500/40 text-amber-300'
+                  }`}>
+                    {scannerReading.tier}
                   </div>
                 </div>
 
+                {/* Illustrative signal strength gauge */}
                 <div className="space-y-1">
-                  <div className="flex justify-between text-[9px] text-slate-400">
-                    <span>Carrier: 432.06 Hz Sub-Harmonic</span>
-                    <span className="text-cyan-300 font-bold">{Math.max(25, Math.min(100, Math.round(100 - (distanceToCrater / 75) * 70)))}%</span>
+                  <div className="text-[10px] text-slate-400 flex items-center justify-between">
+                    <span>Illustrative signal strength</span>
+                    <span className="text-[9px] text-slate-500">{scannerReading.distanceM}m away</span>
                   </div>
-                  <div className="w-full bg-black/70 rounded-full h-1.5 overflow-hidden border border-cyan-400/30">
+                  <div className="w-full bg-black/70 rounded-full h-2 overflow-hidden border border-cyan-400/30">
                     <div
-                      className="h-full bg-gradient-to-r from-cyan-500 via-indigo-500 to-pink-500 transition-all duration-300"
-                      style={{ width: `${Math.max(25, Math.min(100, Math.round(100 - (distanceToCrater / 75) * 70)))}%` }}
+                      className={`h-full transition-all duration-300 ${
+                        scannerReading.tier === 'Strong signal'
+                          ? 'bg-gradient-to-r from-cyan-500 via-indigo-500 to-purple-500'
+                          : scannerReading.tier === 'Medium signal'
+                          ? 'bg-gradient-to-r from-blue-500 to-cyan-400'
+                          : 'bg-gradient-to-r from-slate-600 to-amber-500'
+                      }`}
+                      style={{ width: `${scannerReading.strength}%` }}
                     />
                   </div>
+                  <div className="flex justify-between text-[9px] text-slate-500 font-mono">
+                    <span>Weak signal</span>
+                    <span>Strong signal</span>
+                  </div>
                 </div>
 
-                <div className="flex items-center justify-between text-[9px] text-slate-400 pt-0.5">
-                  <span>Vector: Azimuth 295° NW</span>
-                  <span className="text-amber-300 font-bold">Press [Q] to Ping Source</span>
+                {/* Direction */}
+                <div className="p-2 rounded-lg bg-black/50 border border-white/10 flex items-center justify-between text-[11px]">
+                  <span className="text-slate-400">Direction:</span>
+                  <div className="flex items-center gap-1.5 font-bold text-white">
+                    <Compass className="w-3.5 h-3.5 text-cyan-400" />
+                    <span className="text-cyan-300">{scannerReading.direction}</span>
+                    <span className="text-slate-400 text-[10px]">({scannerReading.relativeDir})</span>
+                  </div>
+                </div>
+
+                {/* Footer status / Pulse instruction */}
+                <div className="text-[9px] text-slate-400 flex items-center justify-between pt-0.5">
+                  <span>Target: 24m Crater Bowl</span>
+                  <span className="text-amber-300 font-bold">Press [Q] for Pulse</span>
                 </div>
               </div>
             )}
@@ -6040,6 +6376,13 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
             if (Object.values(stage2ScansRef.current).every(Boolean) && !discoveryTriggeredRef.current) {
               triggerDiscoverySequence();
             }
+            if (investigateTarget?.id === 'poi_crater_site_alpha') {
+              inspectStage3Point('pointA');
+            } else if (investigateTarget?.id === 'poi_crater_site_beta') {
+              inspectStage3Point('pointB');
+            } else if (investigateTarget?.id === 'poi_crater_site_gamma') {
+              inspectStage3Point('pointC');
+            }
             setInvestigateTarget(null);
           }}
           onLogData={(target) => {
@@ -6061,8 +6404,15 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
                   triggerDiscoverySequence();
                 }
               }
-            } else if (target.id === 'poi_crater_site_alpha' || target.id === 'poi_crater_site_beta' || target.id === 'poi_crater_site_gamma') {
-              advanceJourneyStage(3);
+            } else if (target.id === 'poi_crater_site_alpha') {
+              inspectStage3Point('pointA');
+              setActiveObjective('Point A inspected: Weak signal. Use signal tracker [Q] to locate Point B on the crater edge.');
+            } else if (target.id === 'poi_crater_site_beta') {
+              inspectStage3Point('pointB');
+              setActiveObjective('Point B inspected: Medium signal. Follow signal tracker down to crater floor (Point C).');
+            } else if (target.id === 'poi_crater_site_gamma') {
+              inspectStage3Point('pointC');
+              setActiveObjective('Point C inspected: Strong signal. Buried geometric fragment uncovered.');
             } else if (target.id === 'poi_alien_structure' || target.id === 'poi_data_conduit') {
               advanceJourneyStage(4);
             } else if (target.id === 'poi_recovery_rig' || target.id === 'poi_quantum_storage_unit') {
