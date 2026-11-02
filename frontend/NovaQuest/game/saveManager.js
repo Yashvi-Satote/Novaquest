@@ -30,6 +30,17 @@ export const DEFAULT_SETTINGS = {
   }
 };
 
+export const DEFAULT_MISSION_ECHO = {
+  unlocked: false,
+  descentComplete: false,
+  surfaceComplete: false,
+  archiveComplete: false,
+  restoredFrame: null,
+  clueDiscovered: false,
+  stageComplete: false,
+  completedAt: null
+};
+
 export const INITIAL_MISSION_STATE = {
   version: '1.0',
   id: 'mission_1',
@@ -42,6 +53,7 @@ export const INITIAL_MISSION_STATE = {
   objective: 'Inspect childhood space artifacts, write the promise in the notebook, and look through the telescope.',
   timestamp: Date.now(),
   playtimeSeconds: 0,
+  missionEcho: { ...DEFAULT_MISSION_ECHO },
   player: {
     mcName: 'Captain Arin Rao',
     mcGender: 'male', // 'male' or 'female'
@@ -100,6 +112,7 @@ export function createNewGame(options = {}) {
     ...INITIAL_MISSION_STATE,
     difficulty: options.difficulty || 'Commander',
     currentChapter: 'prologue',
+    missionEcho: { ...DEFAULT_MISSION_ECHO },
     player: {
       ...INITIAL_MISSION_STATE.player,
       mcGender: gender,

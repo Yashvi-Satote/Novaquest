@@ -68,6 +68,8 @@ export default function MainMenuPage({ theme, onToggleTheme, initialOpenSettings
       const save = getSaveGame();
       if (save?.currentChapter === 'prologue') {
         navigate('/prologue');
+      } else if (save?.currentChapter === 'mission_echo') {
+        navigate('/mission-echo');
       } else {
         navigate('/play');
       }
@@ -278,7 +280,7 @@ export default function MainMenuPage({ theme, onToggleTheme, initialOpenSettings
           <div className="mt-2 p-3.5 rounded-xl bg-black/85 border border-cyan-500/30 text-xs font-mono text-slate-300 space-y-1.5 animate-fade-in backdrop-blur-md">
             <div className="text-cyan-400 font-bold uppercase tracking-wider">Historical Telemetry: Surveyor 1</div>
             <p className="text-slate-300 text-[11px] leading-relaxed">
-              Launched May 30, 1966. On June 2, 1966, Surveyor 1 accomplished America's first soft lunar landing in Oceanus Procellarum, transmitting 11,237 television photos of the cratered regolith and looking back at the brilliant blue Earth in space.
+              Launched May 30, 1966. On June 2, 1966, Surveyor 1 accomplished America's first soft lunar landing in Oceanus Procellarum, transmitting 11,240 television photos of the cratered regolith and looking back at the brilliant blue Earth in space.
             </p>
           </div>
         )}
