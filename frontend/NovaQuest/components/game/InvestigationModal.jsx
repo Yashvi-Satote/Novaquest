@@ -8,7 +8,9 @@ import {
   Sparkles, 
   Compass, 
   Layers, 
-  FileText 
+  FileText,
+  Rocket,
+  Gamepad2
 } from 'lucide-react';
 import { audio } from '../../game/audioManager';
 
@@ -104,6 +106,49 @@ export default function InvestigationModal({ target, onClose, onLogData }) {
               {target.description}
             </p>
           </div>
+
+          {/* Historical Mission Introduction (Surveyor 1) */}
+          {target.historicalFacts && (
+            <div className="space-y-3 p-4 rounded-xl bg-gradient-to-br from-cyan-950/40 via-blue-950/30 to-slate-900/60 border border-cyan-500/40 shadow-inner">
+              <div className="text-[11px] font-bold text-cyan-300 tracking-wider uppercase flex items-center gap-2">
+                <Rocket className="w-4 h-4 text-cyan-400" />
+                <span>Historical Mission Introduction · Surveyor 1</span>
+              </div>
+              <ul className="space-y-2 pt-1 font-sans text-xs sm:text-sm text-slate-200">
+                {target.historicalFacts.map((fact, idx) => (
+                  <li key={idx} className="flex items-start gap-2.5">
+                    <span className="w-2 h-2 rounded-full bg-cyan-400 mt-1 flex-shrink-0 shadow-[0_0_8px_rgba(6,182,212,0.8)]" />
+                    <span className="font-semibold text-white leading-relaxed">{fact}</span>
+                  </li>
+                ))}
+              </ul>
+              {target.historicalContext && (
+                <p className="text-slate-300 font-sans text-xs italic pt-2 border-t border-cyan-500/20 leading-relaxed">
+                  {target.historicalContext}
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* Controls & Mechanics Tutorial Guide */}
+          {target.controlsGuide && (
+            <div className="space-y-2.5 p-4 rounded-xl bg-black/60 border border-amber-500/30 shadow-inner">
+              <div className="text-[11px] font-bold text-amber-300 tracking-wider uppercase flex items-center gap-2">
+                <Gamepad2 className="w-4 h-4 text-amber-400" />
+                <span>Astronaut EVA Mechanics & Controls Reference</span>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 pt-1 font-mono">
+                {target.controlsGuide.map((item, idx) => (
+                  <div key={idx} className="p-2.5 rounded-lg bg-white/[0.04] border border-white/10 flex flex-col items-center justify-center text-center">
+                    <span className="px-2 py-0.5 rounded bg-amber-950 border border-amber-400/50 text-amber-300 font-bold text-xs tracking-wider">
+                      {item.input}
+                    </span>
+                    <span className="text-slate-200 text-[10px] uppercase font-bold mt-1.5">{item.mechanic}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Scientific Telemetry Breakdown */}
           {target.readings && (

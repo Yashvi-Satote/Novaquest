@@ -23,7 +23,9 @@ import {
   Clock,
   ListOrdered,
   X,
-  Wifi
+  Wifi,
+  Pause,
+  Gamepad2
 } from 'lucide-react';
 import { audio } from '../../game/audioManager';
 import InvestigationModal from './InvestigationModal';
@@ -53,18 +55,18 @@ export const JOURNEY_STAGES = [
   {
     stepIndex: 0,
     id: 'spawn_landing',
-    name: 'Spawn — Landing zone',
+    name: 'Stage 1 — Arrival on the Moon',
     durationEst: 'Approx. 2 minutes',
-    zoneName: 'ZONE 1 · TEAM LANDING',
-    targetCoords: { x: 104, z: 66 },
-    waypointLabel: 'Landing Site Terminal',
-    objective: 'Player exits the transport vehicle. The mission director explains the recovery objective.',
-    narrative: 'Arin and the recovery team disembark from the Aegis-01 lunar rover. Radio comms verify life support systems and the primary mission objective: recovering Surveyor 1.',
-    instructions: 'Debrief with Specialist Maya Chen and Officer Leo Vance at the mobile mission terminal. Familiarize with EVA movement, camera control, scanning, and objectives.',
+    zoneName: 'ZONE 1 · LANDING ZONE',
+    targetCoords: { x: 103.2, z: 65.5 },
+    waypointLabel: 'Mission Terminal & Route Marker',
+    objective: 'Exit transport vehicle, activate mission terminal, review historical briefing, and approach the route marker.',
+    narrative: 'The transport vehicle has landed. Arin opens the hatch and steps onto the lunar surface to debrief with the recovery team and inspect the historic mission parameters before advancing toward Surveyor 1.',
+    instructions: 'Use [WASD] to move, [Mouse] to look around, [E] to interact with the mission terminal, and [Q] to activate the scanner.',
     commsCallout: {
-      callsign: 'GOLDSTONE-COMMS',
-      speaker: 'Flight Director (Aegis Base)',
-      text: 'Commander Arin, recovery team Aegis-01 is boots on the regolith. Surveyor 1 is 100 meters due West across the mare basin. Debrief with Chen and Vance at the mobile terminal, then proceed across the plains.'
+      callsign: 'CHEN-SCIENCE',
+      speaker: 'Specialist Maya Chen',
+      text: 'Welcome to the Moon, Captain. Try not to wander too far. We have a spacecraft to recover.'
     }
   },
   {
@@ -77,7 +79,7 @@ export const JOURNEY_STAGES = [
     waypointLabel: 'Surveyor 1 Lander',
     objective: 'Player approaches the lander, scans its components and detects the anomalous transmission.',
     narrative: 'Arin navigates across the cratered lunar basin to Surveyor 1. Scanners audit the historic camera turret, solar array, and crushed footpads, detecting an anomalous 432 Hz carrier humming from beneath the lander.',
-    instructions: 'Follow the rover tracks and footprint trails West to the Surveyor 1 site. Scan the historic Vidicon camera, solar mast, and footpads using [F] Scanner Pulse. Investigate the anomalous 432 Hz frequency detected beneath the spaceframe.',
+    instructions: 'Follow the rover tracks and footprint trails West to the Surveyor 1 site. Scan the historic Vidicon camera, solar mast, and footpads using [Q] Scanner Pulse. Investigate the anomalous 432 Hz frequency detected beneath the spaceframe.',
     commsCallout: {
       callsign: 'CHEN-SCIENCE',
       speaker: 'Specialist Maya Chen',
@@ -193,7 +195,61 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
   const [scanPulseActive, setScanPulseActive] = useState(false);
   const [investigateTarget, setInvestigateTarget] = useState(null);
   const [nearInteractable, setNearInteractable] = useState(null);
-  const [hudNotice, setHudNotice] = useState('Click screen to look • WASD to walk • Space to Jump • [F] Scan • [E] Interact');
+  const [hudNotice, setHudNotice] = useState('Click screen to look • [WASD] Move • [Space] Jump • [E] Interact • [Q] Scanner • [Esc] Pause');
+
+  // Stage 1 — Arrival on the Moon Tutorial Objectives
+  const [stage1Objectives, setStage1Objectives] = useState({
+    exit_vehicle: false,
+    walk_terminal: false,
+    activate_terminal: false,
+    read_briefing: false,
+    approach_route_marker: false
+  });
+  const stage1ObjectivesRef = useRef({
+    exit_vehicle: false,
+    walk_terminal: false,
+    activate_terminal: false,
+    read_briefing: false,
+    approach_route_marker: false
+  });
+
+  // Opening Cinematic & Pause State
+  const [isOpeningCinematic, setIsOpeningCinematic] = useState(true);
+  const isOpeningCinematicRef = useRef(true);
+  const [cinematicSub, setCinematicSub] = useState('AEGIS-01 HAS LANDED. DEPRESSURIZING HATCH...');
+  const [isPaused, setIsPaused] = useState(false);
+  const isPausedRef = useRef(false);
+
+  const completeStage1Objective = (id) => {
+    if (stage1ObjectivesRef.current[id]) return;
+    stage1ObjectivesRef.current = { ...stage1ObjectivesRef.current, [id]: true };
+    setStage1Objectives({ ...stage1ObjectivesRef.current });
+    audio.playInteract();
+  };
+
+  const skipCinematic = () => {
+    if (!isOpeningCinematicRef.current) return;
+    isOpeningCinematicRef.current = false;
+    setIsOpeningCinematic(false);
+    completeStage1Objective('exit_vehicle');
+    setActiveComms({
+      callsign: 'CHEN-SCIENCE',
+      speaker: 'Specialist Maya Chen',
+      text: 'Welcome to the Moon, Captain. Try not to wander too far. We have a spacecraft to recover.'
+    });
+    audio.playRadioCommsChatter('chen');
+  };
+
+  const togglePause = () => {
+    setIsPaused(prev => {
+      const next = !prev;
+      isPausedRef.current = next;
+      if (next && document.pointerLockElement) {
+        document.exitPointerLock();
+      }
+      return next;
+    });
+  };
 
   // 7-Stage Suggested Player Journey State
   const [journeyStageIndex, setJourneyStageIndex] = useState(0);
@@ -218,18 +274,6 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
       return nextIndex;
     });
   };
-
-  // Initial Spawn Transmission from Flight Director
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      const initialStage = JOURNEY_STAGES[0];
-      if (initialStage && initialStage.commsCallout) {
-        setActiveComms(initialStage.commsCallout);
-        audio.playRadioCommsChatter('director');
-      }
-    }, 2200);
-    return () => clearTimeout(timer);
-  }, []);
 
   // Auto-dismiss comms toast after 14 seconds
   useEffect(() => {
@@ -278,7 +322,13 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
         audio.playSurveyorScannerBeep();
         setTimeout(() => audio.playSurveyorInterface(), 260);
         setInvestigateTarget(nearInteractableRef.current);
-      } else if (id === 'poi_mission_terminal' || id === 'poi_lunar_transport') {
+      } else if (id === 'poi_mission_terminal' || id === 'poi_lunar_transport' || id === 'poi_route_marker_alpha') {
+        if (id === 'poi_mission_terminal') {
+          completeStage1Objective('activate_terminal');
+        } else if (id === 'poi_route_marker_alpha') {
+          completeStage1Objective('approach_route_marker');
+          advanceJourneyStage(1);
+        }
         audio.playEquipmentFeedback();
         setTimeout(() => audio.playRadioCommsChatter('chen'), 420);
         setInvestigateTarget(nearInteractableRef.current);
@@ -2271,6 +2321,81 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
     scene.add(landingZoneGroup);
 
     // =========================================================================
+    // J. ROUTE MARKER ALPHA — TRAIL TO SURVEYOR 1 (X: 82.0, Z: 52.0)
+    // =========================================================================
+    const routeMarkerGroup = new THREE.Group();
+    const routeMarkerY = getTerrainHeight(82.0, 52.0);
+    routeMarkerGroup.position.set(82.0, routeMarkerY, 52.0);
+
+    // 1. Hexagonal Mooring Base with Ground Foundation
+    const markerBase = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.85, 1.15, 0.35, 6),
+      matRocketNozzle
+    );
+    markerBase.position.y = 0.175;
+    markerBase.castShadow = true;
+    routeMarkerGroup.add(markerBase);
+
+    // Hazard warning ring
+    const markerHazardRing = new THREE.Mesh(
+      new THREE.RingGeometry(0.86, 1.12, 6),
+      new THREE.MeshStandardMaterial({ map: hazardStripeMap, roughness: 0.4 })
+    );
+    markerHazardRing.rotation.x = -Math.PI / 2;
+    markerHazardRing.position.y = 0.355;
+    routeMarkerGroup.add(markerHazardRing);
+
+    // 2. Vertical Navigational Pylon Mast (3.2m high)
+    const markerMast = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.08, 0.12, 3.2, 12),
+      matAluminum
+    );
+    markerMast.position.y = 1.6;
+    markerMast.castShadow = true;
+    routeMarkerGroup.add(markerMast);
+
+    // 3. Directional Pointer Fin Pointed West toward Surveyor 1
+    const markerPointer = new THREE.Mesh(
+      new THREE.BoxGeometry(0.95, 0.28, 0.04),
+      new THREE.MeshStandardMaterial({ color: 0x06b6d4, metalness: 0.8, roughness: 0.2 })
+    );
+    markerPointer.position.set(-0.45, 2.7, 0);
+    markerPointer.rotation.y = 0.15;
+    routeMarkerGroup.add(markerPointer);
+
+    // 4. Pulsing Navigational Strobe Beacon
+    const markerStrobe = new THREE.PointLight(0xf59e0b, 3.0, 18);
+    markerStrobe.position.set(0, 3.3, 0);
+    routeMarkerGroup.add(markerStrobe);
+
+    const markerGlobe = new THREE.Mesh(
+      new THREE.SphereGeometry(0.14, 16, 16),
+      new THREE.MeshBasicMaterial({ color: 0xfbbf24 })
+    );
+    markerGlobe.position.set(0, 3.3, 0);
+    routeMarkerGroup.add(markerGlobe);
+
+    // 5. Holographic Ground Waypoint Ring with Arrow Chevrons
+    const groundHoloRing = new THREE.Mesh(
+      new THREE.RingGeometry(1.4, 1.7, 32),
+      new THREE.MeshBasicMaterial({ color: 0x06b6d4, transparent: true, opacity: 0.65, side: THREE.DoubleSide })
+    );
+    groundHoloRing.rotation.x = -Math.PI / 2;
+    groundHoloRing.position.y = 0.05;
+    routeMarkerGroup.add(groundHoloRing);
+
+    // Floating Holographic Waypoint Ring in the Air
+    const airHoloRing = new THREE.Mesh(
+      new THREE.RingGeometry(1.1, 1.25, 32),
+      new THREE.MeshBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.7, side: THREE.DoubleSide })
+    );
+    airHoloRing.position.set(0, 2.2, 0);
+    airHoloRing.rotation.x = 0.2;
+    routeMarkerGroup.add(airHoloRing);
+
+    scene.add(routeMarkerGroup);
+
+    // =========================================================================
     // 12. ZONE 3 — CRATER INVESTIGATION AREA (X: -75, Z: -50)
     // =========================================================================
     const craterInvestigationGroup = new THREE.Group();
@@ -3634,7 +3759,7 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
       // ================= ZONE 1: TEAM LANDING ZONE =================
       {
         id: 'poi_mission_terminal',
-        title: 'Tactical Mission Terminal',
+        title: 'Tactical Mission Terminal · Sector Alpha',
         position: new THREE.Vector3(103.2, landingTerrainY + 1.1, 65.5),
         radius: 4.2,
         sector: 'Zone 1 · Team Landing Zone',
@@ -3642,13 +3767,27 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
         integrity: '100% Operational',
         telemetryStatus: 'Carrier Aegis Link Active',
         description: 'NASA Reconnaissance Division tactical field terminal. Displays mission parameters, EVA suit vitals, route waypoints to Surveyor 1, and Carrier Aegis high-bandwidth uplink.',
+        historicalFacts: [
+          'Surveyor 1 was launched on May 30, 1966.',
+          'It achieved a soft landing on the Moon on June 2, 1966.',
+          'Its mission helped demonstrate that a spacecraft could land safely on the lunar surface.'
+        ],
+        historicalContext: 'Surveyor 1 was humanity’s first successful robotic soft lander on another celestial body. Prior to its touchdown in Oceanus Procellarum, scientists were uncertain whether the lunar regolith could support a spacecraft without sinking into deep dust. Surveyor 1 returned over 11,200 photographs and proved the bearing strength of the lunar surface, directly paving the way for the Apollo manned missions.',
+        controlsGuide: [
+          { mechanic: 'Move', input: 'WASD' },
+          { mechanic: 'Look', input: 'Mouse' },
+          { mechanic: 'Interact', input: 'E' },
+          { mechanic: 'Scanner', input: 'Q' },
+          { mechanic: 'Pause', input: 'Esc' }
+        ],
         readings: {
-          'Carrier Aegis Uplink': '48.2 Gbps Carrier Locked',
-          'EVA Mark VIII Status': '100% Nominal (O2 / Power)',
-          'Heading to Surveyor 1': '264° West (120m away)',
-          'Primary Task': 'Investigate historic lander & trace seismic tremor'
+          'Target Spacecraft': 'Surveyor 1 (Soft-landed June 2, 1966)',
+          'Touchdown Basin': 'Oceanus Procellarum (2.47° S, 43.34° W)',
+          'Heading to Target': '264° West (105m away)',
+          'Primary Task': 'Investigate historic lander & trace seismic tremor',
+          'Next Waypoint': 'Route Marker Alpha (82m West)'
         },
-        officerNote: 'Leo and Maya have the landing vehicle secured. Time to inspect Surveyor 1 and see what caused the seismic disruption that brought us here.'
+        officerNote: '“Leo and Maya have the landing vehicle secured. Time to inspect Surveyor 1 and see what caused the seismic disruption that brought us here.”'
       },
       {
         id: 'poi_maya_chen',
@@ -3703,6 +3842,24 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
           'Shielding': 'Reinforced Titanium / Boron Composite'
         },
         officerNote: 'Our mobile base on this vacuum wasteland. Those headlights cut through the pitch black like twin suns.'
+      },
+      {
+        id: 'poi_route_marker_alpha',
+        title: 'Route Marker Alpha (Trail to Surveyor 1)',
+        position: new THREE.Vector3(82.0, getTerrainHeight(82.0, 52.0) + 1.4, 52.0),
+        radius: 4.8,
+        sector: 'Zone 1 · Western Departure',
+        artifactAge: 'Current Expedition (2126)',
+        integrity: '100% Active Nav Beacon',
+        telemetryStatus: 'Optical Waypoint Locked',
+        description: 'Autonomous laser navigation beacon deployed along the historical traverse route. Transmits optical waypoints leading West across Oceanus Procellarum to the Surveyor 1 touchdown site.',
+        readings: {
+          'Heading to Surveyor 1': '264° West',
+          'Distance to Target': '82 metres',
+          'Terrain Condition': 'Firm basalt regolith / rover tracks',
+          'Guidance': 'Follow double wheel tread impressions'
+        },
+        officerNote: '“This route marker marks the transition from our landing site to the open mare plains. Straight ahead lies Surveyor 1.”'
       },
 
       // ================= ZONE 2: SURVEYOR 1 RECOVERY SITE =================
@@ -4047,6 +4204,23 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
       audio.startSuitBreathing();
       audio.startAmbience();
       const code = e.code;
+
+      // Skip Opening Cinematic with Space or E
+      if (isOpeningCinematicRef.current) {
+        if (code === 'Space' || code === 'KeyE') {
+          skipCinematic();
+        }
+        return;
+      }
+
+      // Pause Menu Toggle [Escape]
+      if (code === 'Escape') {
+        togglePause();
+        return;
+      }
+
+      if (isPausedRef.current) return;
+
       if (code === 'KeyW' || code === 'ArrowUp') keys.w = true;
       if (code === 'KeyS' || code === 'ArrowDown') keys.s = true;
       if (code === 'KeyA' || code === 'ArrowLeft') keys.a = true;
@@ -4061,8 +4235,8 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
         }
       }
 
-      // Scanner Trigger [F]
-      if (code === 'KeyF') {
+      // Scanner Trigger [Q] (Primary) and [F] (Alternate)
+      if (code === 'KeyQ' || code === 'KeyF') {
         triggerScannerPulse();
       }
 
@@ -4102,9 +4276,9 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
       const locked = document.pointerLockElement === renderer.domElement;
       setIsLocked(locked);
       if (locked) {
-        setHudNotice('Look around with mouse • WASD to walk • Space to Jump • [F] Scan • [E] Interact');
+        setHudNotice('Look around with mouse • [WASD] Move • [Space] Jump • [E] Interact • [Q] Scanner • [Esc] Pause');
       } else {
-        setHudNotice('Click screen to activate Astronaut First-Person EVA controls');
+        setHudNotice('Click screen to activate Astronaut EVA controls • [Esc] Pause');
       }
     };
 
@@ -4135,6 +4309,7 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
     let lastRadioChatterTime = 0;
     let isAlienVibrating = false;
     let isMachineryRunning = false;
+    let cinematicTimer = 0;
 
     const animate = () => {
       animId = requestAnimationFrame(animate);
@@ -4156,6 +4331,73 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
       monolith.rotation.y += delta * 0.15;
       monolithLight.intensity = 4.5 + Math.sin(time * 3.5) * 1.2;
       satelliteGroup.rotation.y += delta * 0.45;
+
+      // Animate Route Marker Alpha Beacon Strobe & Holographic rings
+      if (markerStrobe && groundHoloRing && airHoloRing) {
+        markerStrobe.intensity = 2.4 + Math.sin(time * 6.0) * 1.6;
+        groundHoloRing.rotation.z += delta * 0.45;
+        airHoloRing.rotation.z -= delta * 0.55;
+        airHoloRing.position.y = 2.2 + Math.sin(time * 2.2) * 0.12;
+      }
+
+      // Opening Cinematic Sequence (Arin egress from transport vehicle onto lunar regolith)
+      if (isOpeningCinematicRef.current) {
+        cinematicTimer += delta;
+        if (cinematicTimer < 2.0) {
+          // Phase 1: Inside vehicle cabin facing airlock hatch
+          camera.position.set(109.8, landingTerrainY + 2.4, 65.0);
+          camera.lookAt(106.0, landingTerrainY + 2.35, 65.0);
+          setCinematicSub('AEGIS-01 HAS LANDED. DEPRESSURIZING AIRLOCK HATCH...');
+        } else if (cinematicTimer < 4.4) {
+          // Phase 2: Hatch opening, stepping out into vacuum
+          const p = (cinematicTimer - 2.0) / 2.4;
+          const camX = 109.8 + (107.0 - 109.8) * p;
+          const camY = (landingTerrainY + 2.4) + (2.1 - 2.4) * p;
+          const camZ = 65.0 + (65.6 - 65.0) * p;
+          camera.position.set(camX, camY, camZ);
+          camera.lookAt(95.0, landingTerrainY + 1.8, 65.2);
+          setCinematicSub('HATCH OPENED. CAPTAIN ARIN RAO STEPS ONTO THE LUNAR SURFACE...');
+        } else if (cinematicTimer < 6.2) {
+          // Phase 3: Descending ladder steps onto regolith
+          const p = (cinematicTimer - 4.4) / 1.8;
+          const camX = 107.0 + (104.0 - 107.0) * p;
+          const camY = (landingTerrainY + 2.1) + ((initialGroundY + EYE_HEIGHT) - (landingTerrainY + 2.1)) * p;
+          const camZ = 65.6 + (66.0 - 65.6) * p;
+          camera.position.set(camX, camY, camZ);
+          yaw = 1.01;
+          pitch = 0;
+          const euler = new THREE.Euler(pitch, yaw, 0, 'YXZ');
+          camera.quaternion.setFromEuler(euler);
+          setCinematicSub('EVA INITIALIZED: FIRST BOOTS ON THE LUNAR REGOLITH. ALL SYSTEMS NOMINAL.');
+        } else {
+          // Phase 4: Cinematic complete! Hand over control to player
+          isOpeningCinematicRef.current = false;
+          setIsOpeningCinematic(false);
+          completeStage1Objective('exit_vehicle');
+          playerPos.set(104, initialGroundY + EYE_HEIGHT, 66);
+          camera.position.copy(playerPos);
+          yaw = 1.01;
+          pitch = 0;
+          const euler = new THREE.Euler(pitch, yaw, 0, 'YXZ');
+          camera.quaternion.setFromEuler(euler);
+
+          setActiveComms({
+            callsign: 'CHEN-SCIENCE',
+            speaker: 'Specialist Maya Chen',
+            text: 'Welcome to the Moon, Captain. Try not to wander too far. We have a spacecraft to recover.'
+          });
+          audio.playRadioCommsChatter('chen');
+        }
+
+        renderer.render(scene, camera);
+        return;
+      }
+
+      // If Paused, skip movement physics and keep rendering
+      if (isPausedRef.current) {
+        renderer.render(scene, camera);
+        return;
+      }
 
       // Calculate forward and right vectors from camera yaw
       const forwardX = -Math.sin(yaw);
@@ -4448,21 +4690,45 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
         setCompassHeading(headingDeg);
 
         // 7-Stage Suggested Player Journey Nav-Target calculation
-        const currentStageObj = JOURNEY_STAGES[journeyStageIndex] || JOURNEY_STAGES[0];
-        if (currentStageObj?.targetCoords) {
-          const dx = currentStageObj.targetCoords.x - playerPos.x;
-          const dz = currentStageObj.targetCoords.z - playerPos.z;
-          const distToNav = Math.round(Math.hypot(dx, dz));
-          setNavTargetDistance(distToNav);
-
-          let rad = Math.atan2(dx, -dz);
-          let deg = Math.round((THREE.MathUtils.radToDeg(rad) % 360 + 360) % 360);
-          setNavTargetBearing(deg);
+        let targetX = 0;
+        let targetZ = 0;
+        if (journeyStageIndex === 0) {
+          if (stage1ObjectivesRef.current.read_briefing) {
+            targetX = 82.0;
+            targetZ = 52.0;
+          } else {
+            targetX = 103.2;
+            targetZ = 65.5;
+          }
+        } else {
+          const currentStageObj = JOURNEY_STAGES[journeyStageIndex] || JOURNEY_STAGES[0];
+          targetX = currentStageObj?.targetCoords?.x || 0;
+          targetZ = currentStageObj?.targetCoords?.z || 0;
         }
 
-        // Automatic Natural Non-Corridor Stage Transitions
-        if (journeyStageIndex === 0 && (distLanding > 24 || distSurveyor < 65)) {
-          advanceJourneyStage(1);
+        const dx = targetX - playerPos.x;
+        const dz = targetZ - playerPos.z;
+        const distToNav = Math.round(Math.hypot(dx, dz));
+        setNavTargetDistance(distToNav);
+
+        let rad = Math.atan2(dx, -dz);
+        let deg = Math.round((THREE.MathUtils.radToDeg(rad) % 360 + 360) % 360);
+        setNavTargetBearing(deg);
+
+        // Stage 1 Tutorial Objective Check & Natural Stage Transitions
+        if (journeyStageIndex === 0) {
+          const distToTerm = Math.hypot(playerPos.x - 103.2, playerPos.z - 65.5);
+          if (distToTerm < 4.8) {
+            completeStage1Objective('walk_terminal');
+          }
+
+          const distToMarker = Math.hypot(playerPos.x - 82.0, playerPos.z - 52.0);
+          if (distToMarker < 5.8) {
+            completeStage1Objective('approach_route_marker');
+            advanceJourneyStage(1);
+          } else if (distLanding > 28 || distSurveyor < 65) {
+            advanceJourneyStage(1);
+          }
         } else if (journeyStageIndex === 1 && (distCrater < 45 && distLanding > 60)) {
           advanceJourneyStage(2);
         } else if (journeyStageIndex === 2 && (distAlien < 38 || (playerPos.x < -60 && playerPos.z < -80))) {
@@ -4782,6 +5048,63 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
               </div>
             </div>
 
+            {/* STAGE 1 — ARRIVAL ON THE MOON TUTORIAL OBJECTIVES */}
+            {journeyStageIndex === 0 && (
+              <div className="p-3.5 rounded-xl bg-slate-950/90 backdrop-blur-md border border-amber-500/40 shadow-xl text-xs space-y-2">
+                <div className="flex items-center justify-between text-[10px] text-amber-300 font-bold uppercase tracking-wider">
+                  <div className="flex items-center gap-1.5">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-amber-400" />
+                    <span>Tutorial Objectives (Stage 1)</span>
+                  </div>
+                  <span className="text-slate-400 font-mono">
+                    {Object.values(stage1Objectives).filter(Boolean).length}/5 Complete
+                  </span>
+                </div>
+
+                <div className="space-y-1.5 pt-1">
+                  {[
+                    { id: 'exit_vehicle', text: 'Exit the transport vehicle' },
+                    { id: 'walk_terminal', text: 'Walk to the mission terminal' },
+                    { id: 'activate_terminal', text: 'Activate the terminal [E]' },
+                    { id: 'read_briefing', text: 'Read the Surveyor 1 mission briefing' },
+                    { id: 'approach_route_marker', text: 'Approach the route marker leading to the spacecraft' }
+                  ].map((obj, i) => {
+                    const isDone = stage1Objectives[obj.id];
+                    return (
+                      <div 
+                        key={obj.id} 
+                        className={`flex items-center gap-2 p-1.5 rounded-lg text-[11px] transition-colors ${
+                          isDone 
+                            ? 'bg-emerald-950/30 text-emerald-300 border border-emerald-500/30 font-medium' 
+                            : 'bg-white/[0.03] text-slate-300 border border-white/5'
+                        }`}
+                      >
+                        {isDone ? (
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
+                        ) : (
+                          <span className="w-3.5 h-3.5 rounded-full border border-amber-400/60 flex items-center justify-center text-[9px] text-amber-300 flex-shrink-0 font-mono">
+                            {i + 1}
+                          </span>
+                        )}
+                        <span className={isDone ? 'line-through opacity-85' : 'text-slate-100'}>
+                          {obj.text}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Mechanics Introduced reference bar */}
+                <div className="pt-2 border-t border-white/10 flex flex-wrap items-center justify-between gap-1 text-[10px] text-slate-300 font-mono">
+                  <div><strong className="text-amber-400">[WASD]</strong> Move</div>
+                  <div><strong className="text-amber-400">[Mouse]</strong> Look</div>
+                  <div><strong className="text-amber-400">[E]</strong> Interact</div>
+                  <div><strong className="text-amber-400">[Q]</strong> Scan</div>
+                  <div><strong className="text-amber-400">[Esc]</strong> Pause</div>
+                </div>
+              </div>
+            )}
+
             {/* Handheld Scanner Anomaly Resonance Gauge */}
             <div className="p-2.5 rounded-xl bg-purple-950/80 backdrop-blur-md border border-purple-500/40 text-xs shadow-xl space-y-1">
               <div className="flex items-center justify-between text-[10px] text-purple-300 font-bold tracking-wider uppercase">
@@ -4849,7 +5172,17 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
               }`}
             >
               <Scan className="w-4 h-4" />
-              <span>[F] LIDAR Scanner</span>
+              <span>[Q] LIDAR Scanner</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={togglePause}
+              className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl border border-white/20 bg-black/80 hover:bg-black text-slate-300 hover:text-white backdrop-blur-md transition-all text-xs font-bold uppercase tracking-wider hover:scale-105 active:scale-95"
+              title="Pause Mission [Esc]"
+            >
+              <Pause className="w-4 h-4 text-amber-400" />
+              <span>[Esc] Pause</span>
             </button>
 
             {nearInteractable && (
@@ -5061,10 +5394,22 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
       {investigateTarget && (
         <InvestigationModal
           target={investigateTarget}
-          onClose={() => setInvestigateTarget(null)}
+          onClose={() => {
+            if (investigateTarget?.id === 'poi_mission_terminal') {
+              completeStage1Objective('read_briefing');
+              setActiveObjective('Objective updated: Approach Route Marker Alpha leading West toward Surveyor 1');
+            }
+            setInvestigateTarget(null);
+          }}
           onLogData={(target) => {
-            if (target.id === 'poi_mission_terminal' || target.id === 'poi_maya_chen' || target.id === 'poi_leo_vance' || target.id === 'poi_lunar_transport') {
+            if (target.id === 'poi_mission_terminal') {
+              completeStage1Objective('read_briefing');
+              setActiveObjective('Objective updated: Approach Route Marker Alpha leading West toward Surveyor 1');
+            } else if (target.id === 'poi_route_marker_alpha') {
+              completeStage1Objective('approach_route_marker');
               advanceJourneyStage(1);
+            } else if (target.id === 'poi_maya_chen' || target.id === 'poi_leo_vance' || target.id === 'poi_lunar_transport') {
+              // Crew debrief acknowledged
             } else if (target.id && target.id.startsWith('surveyor_')) {
               advanceJourneyStage(2);
             } else if (target.id === 'poi_crater_site_alpha' || target.id === 'poi_crater_site_beta' || target.id === 'poi_crater_site_gamma') {
@@ -5167,6 +5512,141 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
                   Return to Base Menu
                 </button>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* OPENING CINEMATIC LETTERBOX & TITLE OVERLAY */}
+      {isOpeningCinematic && (
+        <div className="absolute inset-0 pointer-events-auto z-50 flex flex-col justify-between">
+          {/* Top Letterbox Bar */}
+          <div className="h-20 bg-black/95 flex items-center justify-between px-8 border-b border-cyan-500/20">
+            <div className="flex items-center gap-3">
+              <div className="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-ping" />
+              <div className="text-xs font-mono tracking-widest text-cyan-300 uppercase">
+                EXPEDITION AEGIS · MISSION LOG // OCEANUS PROCELLARUM
+              </div>
+            </div>
+            <div className="text-[11px] font-mono tracking-wider text-slate-400 uppercase">
+              STAGE 1 — ARRIVAL ON THE MOON
+            </div>
+          </div>
+
+          {/* Center Cinematic Title Card */}
+          <div className="flex-1 flex flex-col items-center justify-center p-6 text-center select-none pointer-events-none">
+            <div className="p-4 rounded-2xl bg-black/75 backdrop-blur-md border border-cyan-500/30 shadow-[0_0_50px_rgba(6,182,212,0.3)] space-y-2 max-w-lg">
+              <div className="text-[10px] text-cyan-400 uppercase tracking-widest font-mono">
+                INITIALIZING EXTRAVEHICULAR ACTIVITY (EVA)
+              </div>
+              <h1 className="text-xl sm:text-2xl font-bold text-white tracking-widest uppercase">
+                Arrival on the Moon
+              </h1>
+              <p className="text-xs text-slate-300 font-sans leading-relaxed">
+                {cinematicSub}
+              </p>
+            </div>
+          </div>
+
+          {/* Bottom Letterbox Bar */}
+          <div className="h-20 bg-black/95 flex items-center justify-between px-8 border-t border-cyan-500/20">
+            <div className="text-xs font-mono text-cyan-400/90 tracking-wider">
+              {cinematicSub}
+            </div>
+            <button
+              type="button"
+              onClick={skipCinematic}
+              className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white font-mono text-xs uppercase tracking-wider flex items-center gap-2 border border-white/20 transition-all hover:scale-105 active:scale-95"
+            >
+              <span>Skip Cinematic</span>
+              <kbd className="px-1.5 py-0.5 rounded bg-black/60 border border-white/30 text-[10px] text-amber-300 font-mono">Space</kbd>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* TACTICAL PAUSE MENU MODAL */}
+      {isPaused && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 pointer-events-auto">
+          <div className="relative w-full max-w-lg rounded-2xl bg-slate-950/95 border border-cyan-500/50 shadow-[0_0_60px_rgba(6,182,212,0.3)] overflow-hidden flex flex-col">
+            <div className="p-5 border-b border-cyan-500/30 bg-cyan-950/30 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-cyan-500/20 border border-cyan-400/40 text-cyan-300">
+                  <Shield className="w-5 h-5 text-cyan-400" />
+                </div>
+                <div>
+                  <div className="text-[10px] text-cyan-400 uppercase tracking-widest">
+                    MISSION SUSPENDED · EVA TELEMETRY PAUSED
+                  </div>
+                  <h2 className="text-lg font-bold text-white tracking-wide">
+                    {JOURNEY_STAGES[journeyStageIndex]?.name || 'Mission Status'}
+                  </h2>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={togglePause}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+                title="Resume [Esc]"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-5 text-xs font-mono">
+              <div className="space-y-2">
+                <div className="text-[11px] text-amber-300 font-bold uppercase tracking-wider">
+                  Mechanics & Controls Reference
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-slate-300">
+                  <div className="p-2.5 rounded-lg bg-black/50 border border-white/10 flex justify-between items-center">
+                    <span className="text-slate-400">Move:</span>
+                    <span className="font-bold text-white px-2 py-0.5 rounded bg-white/10">WASD / Arrows</span>
+                  </div>
+                  <div className="p-2.5 rounded-lg bg-black/50 border border-white/10 flex justify-between items-center">
+                    <span className="text-slate-400">Look:</span>
+                    <span className="font-bold text-white px-2 py-0.5 rounded bg-white/10">Mouse</span>
+                  </div>
+                  <div className="p-2.5 rounded-lg bg-black/50 border border-white/10 flex justify-between items-center">
+                    <span className="text-slate-400">Interact:</span>
+                    <span className="font-bold text-white px-2 py-0.5 rounded bg-white/10">E</span>
+                  </div>
+                  <div className="p-2.5 rounded-lg bg-black/50 border border-white/10 flex justify-between items-center">
+                    <span className="text-slate-400">Scanner:</span>
+                    <span className="font-bold text-white px-2 py-0.5 rounded bg-white/10">Q / F</span>
+                  </div>
+                  <div className="p-2.5 rounded-lg bg-black/50 border border-white/10 flex justify-between items-center col-span-2">
+                    <span className="text-slate-400">Pause Menu:</span>
+                    <span className="font-bold text-white px-2 py-0.5 rounded bg-white/10">Esc</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-1.5 p-3.5 rounded-xl bg-white/[0.02] border border-white/10 font-sans">
+                <div className="text-[11px] font-mono text-cyan-400 uppercase font-bold">Active Objective</div>
+                <div className="text-slate-200 text-xs leading-relaxed">
+                  {JOURNEY_STAGES[journeyStageIndex]?.objective}
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={togglePause}
+                  className="w-full py-2.5 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold uppercase tracking-wider transition-all shadow-lg shadow-cyan-600/30"
+                >
+                  Resume EVA Mission [Esc]
+                </button>
+                {onReturnMenu && (
+                  <button
+                    type="button"
+                    onClick={onReturnMenu}
+                    className="w-full py-2 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white uppercase tracking-wider transition-colors border border-white/10"
+                  >
+                    Return to Base Menu
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         </div>
