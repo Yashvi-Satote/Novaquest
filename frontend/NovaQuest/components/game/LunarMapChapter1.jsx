@@ -1,5 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import { 
   Compass, 
   Eye, 
@@ -316,6 +318,12 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
     // 1. SCENE SETUP — Pure Pitch Black Vacuum
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x000000); // 100% Black deep space, no atmospheric haze
+
+    // GLTF & DRACO Loaders for official NASA 3D Resources
+    const dracoLoader = new DRACOLoader();
+    dracoLoader.setDecoderPath('/draco/');
+    const gltfLoader = new GLTFLoader();
+    gltfLoader.setDRACOLoader(dracoLoader);
 
     // 2. PROCEDURAL HIGH-RESOLUTION PBR TEXTURES (GENERATED IN-MEMORY WITHOUT EXTERNAL NETWORK ASSETS)
     const regolithMap = createLunarRegolithTexture(1024, 1024);
@@ -1400,6 +1408,9 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
     transportVehicleGroup.position.set(5.5, 0, 0);
     transportVehicleGroup.rotation.y = Math.PI * 0.95; // Pointing West towards Surveyor 1
 
+    const fallbackVehMeshGroup = new THREE.Group();
+    transportVehicleGroup.add(fallbackVehMeshGroup);
+
     // Vehicle Chassis Materials (High-Detail PBR)
     const vehBodyMat = new THREE.MeshStandardMaterial({
       color: 0x334155,
@@ -1427,57 +1438,57 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
     vehChassis.position.y = 1.15;
     vehChassis.castShadow = true;
     vehChassis.receiveShadow = true;
-    transportVehicleGroup.add(vehChassis);
+    fallbackVehMeshGroup.add(vehChassis);
 
     // Lateral armor side-skirts with hazard warning stripes
     for (const sz of [-1.62, 1.62]) {
       const skirt = new THREE.Mesh(new THREE.BoxGeometry(6.4, 0.45, 0.08), vehHazardMat);
       skirt.position.set(0, 0.95, sz);
-      transportVehicleGroup.add(skirt);
+      fallbackVehMeshGroup.add(skirt);
     }
 
     // 2. Upper Pressurized Command Crew Module with Beveled Chamfers
     const vehCabin = new THREE.Mesh(new THREE.BoxGeometry(4.4, 1.65, 2.95), vehAccentMat);
     vehCabin.position.set(-0.7, 2.35, 0);
     vehCabin.castShadow = true;
-    transportVehicleGroup.add(vehCabin);
+    fallbackVehMeshGroup.add(vehCabin);
 
     // Carbon-fiber composite armor roof cap
     const roofArmor = new THREE.Mesh(new THREE.BoxGeometry(4.3, 0.08, 2.85), vehArmorMat);
     roofArmor.position.set(-0.7, 3.22, 0);
-    transportVehicleGroup.add(roofArmor);
+    fallbackVehMeshGroup.add(roofArmor);
 
     // 3. Faceted Aerodynamic Sloping Nose & Multi-Pane Gold Solar Viewport
     const noseFrame = new THREE.Mesh(new THREE.BoxGeometry(1.6, 1.4, 2.8), vehBodyMat);
     noseFrame.position.set(2.1, 2.15, 0);
     noseFrame.rotation.z = -0.35;
     noseFrame.castShadow = true;
-    transportVehicleGroup.add(noseFrame);
+    fallbackVehMeshGroup.add(noseFrame);
 
     // Front panoramic faceted gold-iridium solar radiation glass windshield
     const vehWindshield = new THREE.Mesh(new THREE.BoxGeometry(1.4, 1.1, 2.5), vehGlassMat);
     vehWindshield.position.set(2.25, 2.22, 0);
     vehWindshield.rotation.z = -0.35;
-    transportVehicleGroup.add(vehWindshield);
+    fallbackVehMeshGroup.add(vehWindshield);
 
     // Center structural window mullion pillar
     const windowMullion = new THREE.Mesh(new THREE.BoxGeometry(0.12, 1.15, 0.12), vehBodyMat);
     windowMullion.position.set(2.32, 2.22, 0);
     windowMullion.rotation.z = -0.35;
-    transportVehicleGroup.add(windowMullion);
+    fallbackVehMeshGroup.add(windowMullion);
 
     // 4. Heavy Tubular Steel Front Bull-Bar / Push Bumper with Dual Tow Shackles & Winch
     const bumperTube = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 3.3, 12), matRocketNozzle);
     bumperTube.rotation.x = Math.PI / 2;
     bumperTube.position.set(3.45, 1.25, 0);
     bumperTube.castShadow = true;
-    transportVehicleGroup.add(bumperTube);
+    fallbackVehMeshGroup.add(bumperTube);
 
     // Winch spool in bumper center
     const winchDrum = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 0.45, 12), matRocketNozzle);
     winchDrum.rotation.x = Math.PI / 2;
     winchDrum.position.set(3.5, 1.25, 0);
-    transportVehicleGroup.add(winchDrum);
+    fallbackVehMeshGroup.add(winchDrum);
 
     // Red recovery D-shackles
     for (const bz of [-1.1, 1.1]) {
@@ -1486,7 +1497,7 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
         new THREE.MeshStandardMaterial({ color: 0xef4444, metalness: 0.8, roughness: 0.2 })
       );
       shackle.position.set(3.55, 1.25, bz);
-      transportVehicleGroup.add(shackle);
+      fallbackVehMeshGroup.add(shackle);
     }
 
     // 5. Rear Pressurized Airlock Module with Heavy Pressure Hatch
@@ -1494,18 +1505,18 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
     airlockHatchFrame.rotation.z = Math.PI / 2;
     airlockHatchFrame.position.set(-3.4, 1.75, 0);
     airlockHatchFrame.castShadow = true;
-    transportVehicleGroup.add(airlockHatchFrame);
+    fallbackVehMeshGroup.add(airlockHatchFrame);
 
     // Circular pressure door with 3-spoke locking wheel
     const airlockDoor = new THREE.Mesh(new THREE.CylinderGeometry(0.68, 0.68, 0.1, 24), matAluminum);
     airlockDoor.rotation.z = Math.PI / 2;
     airlockDoor.position.set(-3.52, 1.75, 0);
-    transportVehicleGroup.add(airlockDoor);
+    fallbackVehMeshGroup.add(airlockDoor);
 
     const lockWheel = new THREE.Mesh(new THREE.TorusGeometry(0.18, 0.025, 8, 16), matRocketNozzle);
     lockWheel.rotation.y = Math.PI / 2;
     lockWheel.position.set(-3.58, 1.75, 0);
-    transportVehicleGroup.add(lockWheel);
+    fallbackVehMeshGroup.add(lockWheel);
 
     // 6. External Life-Support High-Pressure Cryogenic Tanks (O2 / N2) on Flanks
     for (const sideZ of [-1.55, 1.55]) {
@@ -1527,18 +1538,18 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
         strap.position.set(tx, 0, 0);
         tankGroup.add(strap);
       }
-      transportVehicleGroup.add(tankGroup);
+      fallbackVehMeshGroup.add(tankGroup);
     }
 
     // 7. Roof Tubular Equipment Basket & Steerable High-Gain Dish
     const roofRack = new THREE.Mesh(new THREE.BoxGeometry(3.8, 0.16, 2.4), matAluminum);
     roofRack.position.set(-0.6, 3.32, 0);
-    transportVehicleGroup.add(roofRack);
+    fallbackVehMeshGroup.add(roofRack);
 
     // Steerable High-Gain Parabolic Telemetry Dish
     const dishPedestal = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.1, 0.55, 12), matAluminum);
     dishPedestal.position.set(-1.5, 3.65, 0);
-    transportVehicleGroup.add(dishPedestal);
+    fallbackVehMeshGroup.add(dishPedestal);
 
     const roofDish = new THREE.Mesh(
       new THREE.SphereGeometry(0.85, 24, 16, 0, Math.PI * 2, 0, Math.PI / 2),
@@ -1548,7 +1559,7 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
     roofDish.rotation.x = 0.45;
     roofDish.rotation.z = -0.35;
     roofDish.castShadow = true;
-    transportVehicleGroup.add(roofDish);
+    fallbackVehMeshGroup.add(roofDish);
 
     // Spinning LIDAR Dome Sensor Unit (Passive optical sensor, no colored glow)
     const lidarDome = new THREE.Mesh(
@@ -1556,7 +1567,7 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
       new THREE.MeshStandardMaterial({ color: 0x0f172a, metalness: 0.9, roughness: 0.2 })
     );
     lidarDome.position.set(0.8, 3.48, 0);
-    transportVehicleGroup.add(lidarDome);
+    fallbackVehMeshGroup.add(lidarDome);
 
     // 8. Advanced Planetary Non-Pneumatic Titanium Tweel Wheels with Spiral Springs
     const wheelMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.95, roughness: 0.28 });
@@ -1611,7 +1622,7 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
       suspArm.rotation.z = wx > 0 ? 0.28 : -0.28;
       tweelGroup.add(suspArm);
 
-      transportVehicleGroup.add(tweelGroup);
+      fallbackVehMeshGroup.add(tweelGroup);
     }
 
     // 9. Transport Vehicle Artificial Lighting — Strictly Small White Navigation Lights
@@ -1656,12 +1667,55 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
 
     landingZoneGroup.add(transportVehicleGroup);
 
+    // Official NASA 3D Resource: Space Exploration Vehicle (SEV)
+    gltfLoader.load(
+      '/models/nasa/Space_Exploration_Vehicle.glb',
+      (gltf) => {
+        const nasaVeh = gltf.scene;
+        const initialBox = new THREE.Box3().setFromObject(nasaVeh);
+        const size = new THREE.Vector3();
+        initialBox.getSize(size);
+
+        // Scale to authentic planetary exploration vehicle dimensions (~6.2m length)
+        const maxHoriz = Math.max(size.x, size.z);
+        const scaleFactor = 6.2 / (maxHoriz > 0.1 ? maxHoriz : 6.0);
+        nasaVeh.scale.set(scaleFactor, scaleFactor, scaleFactor);
+
+        // Turn front (-Z) to forward direction (+X)
+        nasaVeh.rotation.y = -Math.PI / 2;
+
+        // Position wheels flush on ground level Y = 0 and center
+        const scaledBox = new THREE.Box3().setFromObject(nasaVeh);
+        nasaVeh.position.y = -scaledBox.min.y;
+        nasaVeh.position.x = -(scaledBox.min.x + scaledBox.max.x) / 2;
+        nasaVeh.position.z = -(scaledBox.min.z + scaledBox.max.z) / 2;
+
+        nasaVeh.traverse((child) => {
+          if (child.isMesh) {
+            child.castShadow = true;
+            child.receiveShadow = true;
+          }
+        });
+
+        // Seamless swap: hide procedural fallback chassis once official NASA model is loaded
+        fallbackVehMeshGroup.visible = false;
+        transportVehicleGroup.add(nasaVeh);
+      },
+      undefined,
+      (err) => {
+        console.warn('NASA SEV model failed to load, retaining procedural vehicle:', err);
+      }
+    );
+
     // =========================================================================
     // C. HIGH-DETAIL NASA xEMU ASTRONAUT CREWMATES (MAYA CHEN & LEO VANCE)
     // =========================================================================
     const astronautCrewList = [];
     const createAstronautMesh = (name, role, accentColor, isHoldingDatapad) => {
       const astroGroup = new THREE.Group();
+      const fallbackGroup = new THREE.Group();
+      astroGroup.add(fallbackGroup);
+      astroGroup._fallbackGroup = fallbackGroup;
 
       // PBR Materials for xEMU Spacesuit
       const suitFabricMat = new THREE.MeshStandardMaterial({
@@ -1683,13 +1737,13 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
       const hut = new THREE.Mesh(new THREE.BoxGeometry(0.58, 0.74, 0.38), suitHardMat);
       hut.position.y = 1.24;
       hut.castShadow = true;
-      astroGroup.add(hut);
+      fallbackGroup.add(hut);
 
       // Shoulder Mission Stripe Bands
       for (const sx of [-0.28, 0.28]) {
         const stripe = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.12, 0.38), accentMat);
         stripe.position.set(sx, 1.52, 0);
-        astroGroup.add(stripe);
+        fallbackGroup.add(stripe);
       }
 
       // 2. Chest Display and Control Module (DCM) with Carbon-Fiber Faceplate & Switches
@@ -1714,13 +1768,13 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
         knob.position.set(k, -0.08, 0.06);
         dcmGroup.add(knob);
       }
-      astroGroup.add(dcmGroup);
+      fallbackGroup.add(dcmGroup);
 
       // Dual braided umbilical oxygen & telemetry hoses
       for (const ox of [-0.09, 0.09]) {
         const hose = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.34, 10), jointDarkMat);
         hose.position.set(ox, 1.12, 0.22);
-        astroGroup.add(hose);
+        fallbackGroup.add(hose);
       }
 
       // 3. Portable Life Support System (PLSS Backpack) with Sublimator Radiator
@@ -1749,7 +1803,7 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
       const plssLight = new THREE.PointLight(accentColor, 1.8, 6);
       plssLight.position.set(0, 0.35, -0.16);
       plssGroup.add(plssLight);
-      astroGroup.add(plssGroup);
+      fallbackGroup.add(plssGroup);
 
       // 4. Helmet & Gold Mirror Visor with EVA Spotlights
       const helmetGroup = new THREE.Group();
@@ -1777,7 +1831,7 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
         spotLens.position.set(hx, 0.05, 0.162);
         helmetGroup.add(spotLens);
       }
-      astroGroup.add(helmetGroup);
+      fallbackGroup.add(helmetGroup);
 
       // 5. Segmented Mobility Legs & Deep-Lug Lunar Overshoes
       for (const lx of [-0.18, 0.18]) {
@@ -1810,7 +1864,7 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
         boot.castShadow = true;
         legGroup.add(boot);
 
-        astroGroup.add(legGroup);
+        fallbackGroup.add(legGroup);
       }
 
       // 6. Articulated Arms & EVA Utility Gloves
@@ -1820,13 +1874,13 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
         lArm.position.set(-0.36, 1.26, 0.12);
         lArm.rotation.x = -0.72;
         lArm.rotation.z = -0.28;
-        astroGroup.add(lArm);
+        fallbackGroup.add(lArm);
 
         const rArm = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.07, 0.46, 12), suitFabricMat);
         rArm.position.set(0.36, 1.26, 0.12);
         rArm.rotation.x = -0.62;
         rArm.rotation.z = 0.28;
-        astroGroup.add(rArm);
+        fallbackGroup.add(rArm);
 
         // Scientific Holographic Datapad
         const datapad = new THREE.Mesh(
@@ -1835,7 +1889,7 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
         );
         datapad.position.set(0, 1.05, 0.38);
         datapad.rotation.x = -0.42;
-        astroGroup.add(datapad);
+        fallbackGroup.add(datapad);
 
         const screen = new THREE.Mesh(
           new THREE.PlaneGeometry(0.30, 0.20),
@@ -1843,11 +1897,11 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
         );
         screen.position.set(0, 1.07, 0.38);
         screen.rotation.x = -Math.PI / 2 - 0.42;
-        astroGroup.add(screen);
+        fallbackGroup.add(screen);
 
         const padLight = new THREE.PointLight(0x38bdf8, 2.0, 5);
         padLight.position.set(0, 1.16, 0.42);
-        astroGroup.add(padLight);
+        fallbackGroup.add(padLight);
       } else {
         // Leo Vance: Survey Stance
         for (const ax of [-0.38, 0.38]) {
@@ -1855,12 +1909,12 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
           arm.position.set(ax, 1.18, 0);
           arm.rotation.z = ax > 0 ? -0.16 : 0.16;
           arm.castShadow = true;
-          astroGroup.add(arm);
+          fallbackGroup.add(arm);
 
           // Silicone palm grip utility glove
           const glove = new THREE.Mesh(new THREE.SphereGeometry(0.095, 10, 10), jointDarkMat);
           glove.position.set(ax * 1.12, 0.84, 0);
-          astroGroup.add(glove);
+          fallbackGroup.add(glove);
         }
       }
 
@@ -1875,11 +1929,108 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
     mayaMesh.rotation.y = -0.8;
     landingZoneGroup.add(mayaMesh);
 
+    // Official NASA 3D Resource: Maya Chen EMU Astronaut Model
+    gltfLoader.load(
+      '/models/nasa/Astronaut.glb',
+      (gltf) => {
+        const mayaModel = gltf.scene;
+        const initialBox = new THREE.Box3().setFromObject(mayaModel);
+        const size = new THREE.Vector3();
+        initialBox.getSize(size);
+
+        // Scale to authentic astronaut height (~1.80m)
+        const targetHeight = 1.80;
+        const scaleFactor = targetHeight / (size.y > 0.1 ? size.y : 1.8);
+        mayaModel.scale.set(scaleFactor, scaleFactor, scaleFactor);
+
+        // Ground feet at Y = 0 and center horizontal axes
+        const scaledBox = new THREE.Box3().setFromObject(mayaModel);
+        mayaModel.position.y = -scaledBox.min.y;
+        mayaModel.position.x = -(scaledBox.min.x + scaledBox.max.x) / 2;
+        mayaModel.position.z = -(scaledBox.min.z + scaledBox.max.z) / 2;
+
+        mayaModel.traverse((child) => {
+          if (child.isMesh) {
+            child.castShadow = true;
+            child.receiveShadow = true;
+          }
+        });
+
+        // Subtle Cyan Mission Beacon Light on chest
+        const beacon = new THREE.PointLight(0x06b6d4, 0.45, 2.5);
+        beacon.position.set(0, 1.35, 0.25);
+        mayaModel.add(beacon);
+
+        // Seamless swap: hide procedural fallback astronaut and add official NASA model
+        if (mayaMesh._fallbackGroup) {
+          mayaMesh._fallbackGroup.visible = false;
+        }
+        mayaMesh.add(mayaModel);
+      },
+      undefined,
+      (err) => {
+        console.warn('NASA Maya Astronaut failed to load, retaining procedural astronaut:', err);
+      }
+    );
+
     // Astronaut 2: Officer Leo Vance (Ops Engineer) at (-4.5, 0, -2.5)
     const leoMesh = createAstronautMesh('Officer Leo Vance', 'Surface Operations', 0xf59e0b, false);
     leoMesh.position.set(-4.5, 0, -2.5);
     leoMesh.rotation.y = 1.1;
     landingZoneGroup.add(leoMesh);
+
+    // Official NASA 3D Resource: Leo Vance Z2 Spacesuit Model
+    gltfLoader.load(
+      '/models/nasa/Z2_Spacesuit.glb',
+      (gltf) => {
+        const leoModel = gltf.scene;
+        const initialBox = new THREE.Box3().setFromObject(leoModel);
+        const size = new THREE.Vector3();
+        initialBox.getSize(size);
+
+        // Check if upright or needs orientation correction
+        if (size.z > size.y * 1.5) {
+          leoModel.rotation.x = Math.PI / 2;
+        }
+
+        const orientedBox = new THREE.Box3().setFromObject(leoModel);
+        const orientedSize = new THREE.Vector3();
+        orientedBox.getSize(orientedSize);
+
+        // Scale to authentic planetary exploration suit height (~1.85m)
+        const targetHeight = 1.85;
+        const scaleFactor = targetHeight / (orientedSize.y > 0.1 ? orientedSize.y : 1.85);
+        leoModel.scale.set(scaleFactor, scaleFactor, scaleFactor);
+
+        // Ground feet at Y = 0 and center horizontal axes
+        const finalBox = new THREE.Box3().setFromObject(leoModel);
+        leoModel.position.y = -finalBox.min.y;
+        leoModel.position.x = -(finalBox.min.x + finalBox.max.x) / 2;
+        leoModel.position.z = -(finalBox.min.z + finalBox.max.z) / 2;
+
+        leoModel.traverse((child) => {
+          if (child.isMesh) {
+            child.castShadow = true;
+            child.receiveShadow = true;
+          }
+        });
+
+        // Subtle Amber Mission Beacon Light on chest
+        const beacon = new THREE.PointLight(0xf59e0b, 0.45, 2.5);
+        beacon.position.set(0, 1.35, 0.25);
+        leoModel.add(beacon);
+
+        // Seamless swap: hide procedural fallback astronaut and add official NASA model
+        if (leoMesh._fallbackGroup) {
+          leoMesh._fallbackGroup.visible = false;
+        }
+        leoMesh.add(leoModel);
+      },
+      undefined,
+      (err) => {
+        console.warn('NASA Leo Vance Z2 Spacesuit failed to load, retaining procedural astronaut:', err);
+      }
+    );
 
     // D. Portable High-Gain Satellite Communication Dish on Tripod
     const commsGroup = new THREE.Group();
@@ -4495,6 +4646,7 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
       sparkMat.dispose();
       sporeGeo.dispose();
       bootprintGeo.dispose();
+      dracoLoader.dispose();
       triggerSparksRef.current = null;
       triggerScannerBeamRef.current = null;
       renderer.dispose();
