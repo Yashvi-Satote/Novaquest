@@ -72,18 +72,18 @@ export const JOURNEY_STAGES = [
   {
     stepIndex: 1,
     id: 'explore_surveyor',
-    name: 'Explore — Surveyor 1',
-    durationEst: 'Approx. 3–4 minutes',
-    zoneName: 'ZONE 2 · SURVEYOR 1 RECOVERY',
+    name: 'Stage 2 — Inspect Surveyor 1',
+    durationEst: 'Approx. 4 minutes',
+    zoneName: 'ZONE 2 · SURVEYOR 1 RECOVERY SITE',
     targetCoords: { x: 0, z: 0 },
     waypointLabel: 'Surveyor 1 Lander',
-    objective: 'Player approaches the lander, scans its components and detects the anomalous transmission.',
-    narrative: 'Arin navigates across the cratered lunar basin to Surveyor 1. Scanners audit the historic camera turret, solar array, and crushed footpads, detecting an anomalous 432 Hz carrier humming from beneath the lander.',
-    instructions: 'Follow the rover tracks and footprint trails West to the Surveyor 1 site. Scan the historic Vidicon camera, solar mast, and footpads using [Q] Scanner Pulse. Investigate the anomalous 432 Hz frequency detected beneath the spaceframe.',
+    objective: 'Investigate the condition of Surveyor 1.',
+    narrative: 'Arin approaches the historic Surveyor 1 lander resting in Oceanus Procellarum since June 2, 1966. Using the handheld scanner, Arin conducts interactive telemetry audits on three critical components: the Vidicon television camera assembly, the solar panel and antenna mast, and the crushable honeycomb landing footpad.',
+    instructions: 'Approach Surveyor 1. Locate and scan the 3 required targets: (1) Television camera, (2) Solar panel and antenna, and (3) Landing leg and footpad. Complete calibration on all three to assess the lander.',
     commsCallout: {
       callsign: 'CHEN-SCIENCE',
       speaker: 'Specialist Maya Chen',
-      text: 'Arin, there she is. 160 Earth years untouched in the vacuum. Scan the camera turret, solar mast, and footpads. Wait... my suit magnetometer is registering an anomalous 432 Hz carrier humming directly beneath the spaceframe.'
+      text: 'Arin, there she is. 160 Earth years untouched in the vacuum. Approach the lander and use your scanner to inspect the television camera, solar array and antenna mast, and landing footpad.'
     }
   },
   {
@@ -213,6 +213,34 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
     approach_route_marker: false
   });
 
+  // Stage 2 — Inspect Surveyor 1 Objectives & Interactive Scanning
+  const [stage2Scans, setStage2Scans] = useState({
+    camera: false,
+    solar: false,
+    footpad: false
+  });
+  const stage2ScansRef = useRef({
+    camera: false,
+    solar: false,
+    footpad: false
+  });
+
+  // Interactive Scanner Calibration state
+  const [isScanningActive, setIsScanningActive] = useState(false);
+  const isScanningActiveRef = useRef(false);
+  const [scanProgress, setScanProgress] = useState(0);
+  const [scanFrequency, setScanFrequency] = useState(136.2);
+  const [scanningTarget, setScanningTarget] = useState(null);
+  const scanningTargetRef = useRef(null);
+  const scanIntervalRef = useRef(null);
+
+  // The Discovery Event & Scanner Signal-Tracking Mode
+  const [discoveryEvent, setDiscoveryEvent] = useState(null);
+  const discoveryTriggeredRef = useRef(false);
+  const [hasSignalTracker, setHasSignalTracker] = useState(false);
+  const hasSignalTrackerRef = useRef(false);
+  const [isGlitching, setIsGlitching] = useState(false);
+
   // Opening Cinematic & Pause State
   const [isOpeningCinematic, setIsOpeningCinematic] = useState(true);
   const isOpeningCinematicRef = useRef(true);
@@ -225,6 +253,116 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
     stage1ObjectivesRef.current = { ...stage1ObjectivesRef.current, [id]: true };
     setStage1Objectives({ ...stage1ObjectivesRef.current });
     audio.playInteract();
+  };
+
+  const triggerDiscoverySequence = () => {
+    if (discoveryTriggeredRef.current) return;
+    discoveryTriggeredRef.current = true;
+
+    // 1. Visual glitch & anomalous harmonic pulse
+    setIsGlitching(true);
+    setTimeout(() => setIsGlitching(false), 1800);
+    audio.playGlitchBurst();
+    audio.playAnomalyHarmonic();
+
+    // 2. Display UNKNOWN TRANSMISSION modal / alert card
+    setDiscoveryEvent({
+      showModal: true,
+      phase: 'alert'
+    });
+
+    // 3. Scripted radio comms sequence
+    // Specialist Maya Chen
+    setActiveComms({
+      callsign: 'CHEN-SCIENCE',
+      speaker: 'Specialist Maya Chen',
+      text: "Captain, that's strange. The signal isn't coming from the lander's communication system. It's coming from somewhere below the surface."
+    });
+    audio.playRadioCommsChatter('chen');
+
+    // Captain Arin Rao replies after 5.4 seconds
+    setTimeout(() => {
+      setActiveComms({
+        callsign: 'RAO-COMMAND',
+        speaker: 'Captain Arin Rao',
+        text: "Then Surveyor isn't the source. It's connected to something else."
+      });
+      audio.playEquipmentFeedback();
+    }, 5400);
+  };
+
+  const dismissDiscoveryEvent = () => {
+    setDiscoveryEvent(null);
+    setHasSignalTracker(true);
+    hasSignalTrackerRef.current = true;
+    setActiveObjective('New objective: Locate the transmission source.');
+    setHudNotice('SCANNER SIGNAL-TRACKING MODE UNLOCKED: Follow 432 Hz carrier NW to Crater Basin (Zone 3)');
+    audio.playInteract();
+    setTimeout(() => audio.playAnomalyHarmonic(), 360);
+  };
+
+  const startInteractiveScan = (target, key) => {
+    if (isScanningActiveRef.current) return;
+    setIsScanningActive(true);
+    isScanningActiveRef.current = true;
+    setScanningTarget(target);
+    scanningTargetRef.current = target;
+    setScanProgress(0);
+    setScanFrequency(136.2);
+
+    audio.playSurveyorScannerBeep();
+    triggerScannerBeamRef.current?.();
+
+    let currentProg = 0;
+    let freq = 136.2;
+    let tickCount = 0;
+
+    if (scanIntervalRef.current) clearInterval(scanIntervalRef.current);
+
+    scanIntervalRef.current = setInterval(() => {
+      currentProg += 2.8;
+      freq += (2295.0 - 136.2) / 36;
+      tickCount++;
+
+      if (tickCount % 6 === 0) {
+        audio.playSurveyorScannerBeep();
+      }
+
+      setScanProgress(Math.min(100, currentProg));
+      setScanFrequency(freq);
+
+      if (currentProg >= 100) {
+        clearInterval(scanIntervalRef.current);
+        scanIntervalRef.current = null;
+        setIsScanningActive(false);
+        isScanningActiveRef.current = false;
+
+        audio.playSurveyorInterface();
+        const updated = { ...stage2ScansRef.current, [key]: true };
+        stage2ScansRef.current = updated;
+        setStage2Scans(updated);
+
+        // Open Smithsonian Archival Dossier
+        setInvestigateTarget(target);
+
+        // Check if all 3 targets are scanned
+        if (Object.values(updated).every(Boolean) && !discoveryTriggeredRef.current) {
+          triggerDiscoverySequence();
+        }
+      }
+    }, 45);
+  };
+
+  const cancelInteractiveScan = () => {
+    if (scanIntervalRef.current) {
+      clearInterval(scanIntervalRef.current);
+      scanIntervalRef.current = null;
+    }
+    setIsScanningActive(false);
+    isScanningActiveRef.current = false;
+    setScanProgress(0);
+    scanningTargetRef.current = null;
+    setScanningTarget(null);
   };
 
   const skipCinematic = () => {
@@ -319,9 +457,15 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
         }
         setIsMissionEchoOpen(true);
       } else if (id && id.startsWith('surveyor_')) {
-        audio.playSurveyorScannerBeep();
-        setTimeout(() => audio.playSurveyorInterface(), 260);
-        setInvestigateTarget(nearInteractableRef.current);
+        const target = nearInteractableRef.current;
+        const key = target.id === 'surveyor_camera' ? 'camera' : target.id === 'surveyor_solar' ? 'solar' : target.id === 'surveyor_footpad' ? 'footpad' : null;
+        if (key && !stage2ScansRef.current[key]) {
+          startInteractiveScan(target, key);
+        } else {
+          audio.playSurveyorScannerBeep();
+          setTimeout(() => audio.playSurveyorInterface(), 260);
+          setInvestigateTarget(target);
+        }
       } else if (id === 'poi_mission_terminal' || id === 'poi_lunar_transport' || id === 'poi_route_marker_alpha') {
         if (id === 'poi_mission_terminal') {
           completeStage1Objective('activate_terminal');
@@ -1427,6 +1571,32 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
     );
     footpadMagnet.position.set(Math.cos((2 * Math.PI) / 3) * 3.6, 0.24, Math.sin((2 * Math.PI) / 3) * 3.6 + 0.3);
     surveyorGroup.add(footpadMagnet);
+
+    // L. Stage 2 Inspection Holographic Target Brackets & Optical Highlights
+    // Target 1: Vidicon Television Camera Gimbal Bracket
+    const targetMarkerCamera = new THREE.Mesh(
+      new THREE.TorusGeometry(0.38, 0.018, 12, 32),
+      new THREE.MeshBasicMaterial({ color: 0x06b6d4, transparent: true, opacity: 0.75 })
+    );
+    targetMarkerCamera.position.set(0.65, 3.2, -0.65);
+    surveyorGroup.add(targetMarkerCamera);
+
+    // Target 2: Solar Panel & Antenna Array Mast Bracket
+    const targetMarkerSolar = new THREE.Mesh(
+      new THREE.TorusGeometry(0.62, 0.02, 12, 32),
+      new THREE.MeshBasicMaterial({ color: 0x06b6d4, transparent: true, opacity: 0.75 })
+    );
+    targetMarkerSolar.position.set(0, 5.2, 0.2);
+    surveyorGroup.add(targetMarkerSolar);
+
+    // Target 3: Honeycomb Landing Footpad #2 & Regolith Trench Ring
+    const targetMarkerFootpad = new THREE.Mesh(
+      new THREE.RingGeometry(0.88, 0.98, 32),
+      new THREE.MeshBasicMaterial({ color: 0x06b6d4, side: THREE.DoubleSide, transparent: true, opacity: 0.75 })
+    );
+    targetMarkerFootpad.rotation.x = -Math.PI / 2;
+    targetMarkerFootpad.position.set(Math.cos((2 * Math.PI) / 3) * 3.6, 0.08, Math.sin((2 * Math.PI) / 3) * 3.6);
+    surveyorGroup.add(targetMarkerFootpad);
 
     scene.add(surveyorGroup);
 
@@ -3865,65 +4035,90 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
       // ================= ZONE 2: SURVEYOR 1 RECOVERY SITE =================
       {
         id: 'surveyor_camera',
-        title: 'Vidicon Television Camera Turret',
+        title: 'Target 1 — Television camera',
+        shortName: 'Television camera',
         position: new THREE.Vector3(0.65, surveyorTerrainY + 3.2, -0.65),
-        radius: 4.2,
+        radius: 3.8,
         sector: 'Zone 2 · Surveyor 1 Recovery Site',
         artifactAge: '160 Earth Years (1966 - 2126)',
         integrity: '92.4% Preserved Vacuum Patina',
-        telemetryStatus: 'Recovered · 11,237 Historic Frames',
+        telemetryStatus: 'Historic Vidicon Imaging Equipment',
         image: '/images/surveyor1_moon_earth.jpg',
-        description: 'Between June 2 and July 14, 1966, this motorized mirror television camera scanned the cratered plains of Oceanus Procellarum, proving that lunar dust would not swallow future Apollo astronauts.',
+        description: 'Historic Vidicon imaging equipment. The player scans the camera assembly. The interface identifies the spacecraft\'s historic imaging equipment. Between June 2 and July 14, 1966, this motorized mirror television camera scanned the cratered plains of Oceanus Procellarum, proving that lunar dust would not swallow future Apollo astronauts.',
         readings: {
-          'Lens Coating': 'Quartz / Fluoride (Solar Pitted)',
-          'Filter Wheel': 'Red / Green / Blue / Clear (Locked)',
-          'Frame Rate': '200 / 600 Scan Lines Vidicon',
-          'Radiation Degradation': '14.2% Beta Pitting'
+          'Imaging System': 'Vidicon Vacuum Tube (Variable Focal 25-100mm)',
+          'Optics Shroud': 'Quartz / Fluoride Mirror Gimbal',
+          'Filter Wheel': 'Clear, Red, Green, Blue Dichroic (Locked)',
+          'Resolution': '200 / 600 Scan Lines',
+          'Historic Frames': '11,237 Transmitted to DSN Goldstone',
+          'Radiation Status': '14.2% Beta Pitting (Structure Intact)'
         },
-        officerNote: 'Running my gloved fingers along the mirror shroud... 160 years ago, this camera was humanity’s only set of eyes on this world. We are walking where only radio waves once reached.'
-      },
-      {
-        id: 'surveyor_footpad',
-        title: 'Crushable Honeycomb Footpad #2',
-        position: new THREE.Vector3(Math.cos((2 * Math.PI) / 3) * 3.6, surveyorTerrainY + 0.5, Math.sin((2 * Math.PI) / 3) * 3.6),
-        radius: 4.0,
-        sector: 'Zone 2 · Surveyor 1 Soil Mechanics',
-        artifactAge: '160 Earth Years (1966)',
-        integrity: '100% Intact Structure',
-        telemetryStatus: 'Soil Compaction Validated',
-        image: '/images/moon_close_up_telescope.jpg',
-        description: 'Footpad 2 penetrated 5.2 cm into the lunar regolith at 3.05 m/s touchdown velocity. The displaced rim of powdery soil proved lunar maria could support human Apollo lunar modules.',
-        readings: {
-          'Regolith Bulk Density': '1.52 g/cm³',
-          'Bearing Strength': '0.55 bar @ 5cm depth',
-          'Grain Morphology': 'Agglutinate / Pyroxene shards',
-          'Thermal Inertia': '0.0025 cal/(cm² s K)'
-        },
-        officerNote: 'The soil trench is as crisp today as when it touched down on June 2, 1966. No wind, no rain, no erosion—just timeless lunar silence.'
+        historicalFacts: [
+          'First Eyes on the Moon: Surveyor 1 carried a single steerable Vidicon television camera with a variable-focal-length lens and adjustable mirror.',
+          '11,237 Historic Photographs: Over 44 Earth days, it returned panoramic views of lunar craters, rocks, and the distant Earth, confirming surface firmness for Apollo.',
+          'Color Synthesis: By cycling through red, green, and blue optical filters, NASA produced the first true-color images taken on another planetary body.'
+        ],
+        officerNote: 'Running my scanner beam along the quartz mirror shroud... 160 years ago, this camera was humanity’s only set of eyes on this world. We are walking where only radio waves once reached.'
       },
       {
         id: 'surveyor_solar',
-        title: 'Planar Solar Array Panel',
+        title: 'Target 2 — Solar panel and antenna',
+        shortName: 'Solar panel and antenna',
         position: new THREE.Vector3(0, surveyorTerrainY + 5.2, 0.2),
-        radius: 4.5,
-        sector: 'Zone 2 · Surveyor 1 Power Mast',
+        radius: 4.2,
+        sector: 'Zone 2 · Surveyor 1 Power & Communications',
         artifactAge: '160 Earth Years (1966)',
         integrity: '84.8% (Cosmic Darkened)',
-        telemetryStatus: 'Photovoltaic Array',
-        description: '792 silicon solar cells producing 89 Watts under full sunlight. Micrometeorite patina and cosmic ray tracking have darkened the protective covers.',
+        telemetryStatus: 'Energy & Communication Hardware',
+        image: '/images/moon_close_up_telescope.jpg',
+        description: 'The player inspects the energy and communication hardware. The interface displays component information. 792 single-crystal silicon solar cells producing 89 Watts under full sunlight, mounted alongside a planar high-gain directional antenna that beamed 2295 MHz S-band telemetry to Deep Space Stations on Earth.',
         readings: {
-          'Cell Technology': 'N-on-P Silicon Single Crystal',
-          'Micrometeorite Pits': '38.4 pits/m² (>10µm)',
-          'Solar Output (Peak)': '89.2 W (June 1966)',
-          'Modern Voltage': '0.00 V (Circuits Dormant)'
+          'Photovoltaic Array': '792 Single-Crystal N-on-P Silicon Cells',
+          'Peak Power Output': '89.2 Watts @ Direct Insolation',
+          'Downlink Frequency': '2295 MHz S-Band Transponder',
+          'Directional Gain': 'Planar High-Gain Directional Reflector',
+          'Omni Whips': 'Dual Outrigger Dipole Low-Gain Antennas',
+          'Circuits': 'Dormant (0.00 V Solar Wind Residual)'
         },
-        officerNote: 'The solar panel is still turned toward the low sun, faithful to the last telemetry command sent from Goldstone Deep Space Station.'
+        historicalFacts: [
+          'Autonomous Sun & Earth Tracking: Both the planar array and high-gain antenna were motorized on independent gimbals.',
+          'Surviving the Lunar Night: Withstood drastic temperatures from +120°C in sunlight to -130°C in two-week lunar darkness.',
+          'Lifeline to Earth: Maintained unbroken microwave telemetry with Goldstone, Canberra, and Madrid tracking stations.'
+        ],
+        officerNote: 'The solar panel is still turned toward the low sun, faithful to the last telemetry command sent from Goldstone Deep Space Station over a century and a half ago.'
+      },
+      {
+        id: 'surveyor_footpad',
+        title: 'Target 3 — Landing leg and footpad',
+        shortName: 'Landing leg and footpad',
+        position: new THREE.Vector3(Math.cos((2 * Math.PI) / 3) * 3.6, surveyorTerrainY + 0.5, Math.sin((2 * Math.PI) / 3) * 3.6),
+        radius: 3.8,
+        sector: 'Zone 2 · Surveyor 1 Soil Mechanics',
+        artifactAge: '160 Earth Years (1966)',
+        integrity: '100% Intact Structure',
+        telemetryStatus: 'Landing Hardware & Soil Trench',
+        image: '/images/moon_close_up_telescope.jpg',
+        description: 'The player scans the landing hardware and examines the ground around it. Crushable aluminum honeycomb footpad #2 absorbed touchdown impact at 3.05 m/s, penetrating 5.2 cm into the dark lunar regolith. The undisturbed displacement trench provided the critical proof that the lunar maria could support human Apollo lunar modules.',
+        readings: {
+          'Shock Attenuator': 'Crushable Honeycomb Aluminum Alloy',
+          'Touchdown Velocity': '3.05 m/s (10.0 ft/s) Soft Landing',
+          'Soil Penetration': '5.2 cm Displacement Trench in Regolith',
+          'Regolith Density': '1.52 g/cm³ Bulk Specific Gravity',
+          'Bearing Strength': '0.55 bar @ 5 cm Depth',
+          'Trench Morphology': 'Pristine Powdery Rim (Zero Weathering)'
+        },
+        historicalFacts: [
+          'Historic First Soft Landing: Proved that a spacecraft could navigate and land gently on another celestial body.',
+          'Quicksand Myth Dispelled: Before Surveyor 1, some astronomers feared lunar dust might be meters deep. The footpad proved solid bearing capacity.',
+          'Untouched Rim: In the vacuum of the Moon, the soil particles displaced by this footpad on June 2, 1966, remain completely unaltered.'
+        ],
+        officerNote: 'The soil trench is as crisp today as when it touched down on June 2, 1966. No wind, no rain, no erosion—just timeless lunar silence.'
       },
       {
         id: 'surveyor_core',
         title: 'Surveyor 1 Lander Spaceframe & Subsurface Anomaly',
         position: new THREE.Vector3(0, surveyorTerrainY + 1.8, 0),
-        radius: 4.8,
+        radius: 3.2,
         sector: 'Zone 2 · Surveyor 1 Recovery Site',
         artifactAge: '160 Earth Years (1966)',
         integrity: 'Preserved Landmark',
@@ -4237,6 +4432,14 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
 
       // Scanner Trigger [Q] (Primary) and [F] (Alternate)
       if (code === 'KeyQ' || code === 'KeyF') {
+        if (nearInteractableRef.current && nearInteractableRef.current.id.startsWith('surveyor_')) {
+          const target = nearInteractableRef.current;
+          const key = target.id === 'surveyor_camera' ? 'camera' : target.id === 'surveyor_solar' ? 'solar' : target.id === 'surveyor_footpad' ? 'footpad' : null;
+          if (key && !stage2ScansRef.current[key]) {
+            startInteractiveScan(target, key);
+            return;
+          }
+        }
         triggerScannerPulse();
       }
 
@@ -4665,7 +4868,39 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
       } else {
         // Faint blue/cyan pulses for the alien structure
         if (alienGlowLight) alienGlowLight.intensity = 1.2 + Math.sin(time * 1.5) * 0.5;
-        if (conduitMat) conduitMat.emissiveIntensity = 0.45 + Math.sin(time * 3.0) * 0.2;
+        const conduitBoost = hasSignalTrackerRef.current ? 0.45 : 0;
+        if (conduitMat) conduitMat.emissiveIntensity = 0.45 + conduitBoost + Math.sin(time * 3.5) * 0.25;
+      }
+
+      // Animate Stage 2 Target Holographic Brackets on Surveyor 1
+      if (targetMarkerCamera) {
+        targetMarkerCamera.rotation.y += delta * 0.9;
+        targetMarkerCamera.rotation.x += delta * 0.5;
+        const isScanned = stage2ScansRef.current.camera;
+        targetMarkerCamera.material.color.setHex(isScanned ? 0x10b981 : 0x06b6d4);
+        targetMarkerCamera.material.opacity = isScanned ? 0.35 : (0.55 + Math.sin(time * 3.0) * 0.25);
+      }
+      if (targetMarkerSolar) {
+        targetMarkerSolar.rotation.y += delta * 0.9;
+        targetMarkerSolar.rotation.z += delta * 0.4;
+        const isScanned = stage2ScansRef.current.solar;
+        targetMarkerSolar.material.color.setHex(isScanned ? 0x10b981 : 0x06b6d4);
+        targetMarkerSolar.material.opacity = isScanned ? 0.35 : (0.55 + Math.sin(time * 3.0) * 0.25);
+      }
+      if (targetMarkerFootpad) {
+        targetMarkerFootpad.rotation.z += delta * 0.7;
+        const isScanned = stage2ScansRef.current.footpad;
+        targetMarkerFootpad.material.color.setHex(isScanned ? 0x10b981 : 0x06b6d4);
+        targetMarkerFootpad.material.opacity = isScanned ? 0.35 : (0.55 + Math.sin(time * 3.0) * 0.25);
+      }
+
+      // Cancel active interactive scan if player moved away from target
+      if (isScanningActiveRef.current && scanningTargetRef.current && scanningTargetRef.current.position) {
+        const dTarget = Math.hypot(playerPos.x - scanningTargetRef.current.position.x, playerPos.z - scanningTargetRef.current.position.z);
+        if (dTarget > (scanningTargetRef.current.radius || 4.0) + 1.8) {
+          cancelInteractiveScan();
+          setHudNotice('SCAN CANCELED: Reticle lost target lock');
+        }
       }
 
       // Throttled HUD Telemetry Updates (5 Hz updates instead of 60 FPS state flooding)
@@ -4700,6 +4935,29 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
             targetX = 103.2;
             targetZ = 65.5;
           }
+        } else if (journeyStageIndex === 1) {
+          if (hasSignalTrackerRef.current) {
+            targetX = -75;
+            targetZ = -50;
+          } else if (distSurveyor < 16) {
+            // Point directly to next unscanned component
+            if (!stage2ScansRef.current.camera) {
+              targetX = 0.65;
+              targetZ = -0.65;
+            } else if (!stage2ScansRef.current.solar) {
+              targetX = 0;
+              targetZ = 0.2;
+            } else if (!stage2ScansRef.current.footpad) {
+              targetX = Math.cos((2 * Math.PI) / 3) * 3.6;
+              targetZ = Math.sin((2 * Math.PI) / 3) * 3.6;
+            } else {
+              targetX = 0;
+              targetZ = 0;
+            }
+          } else {
+            targetX = 0;
+            targetZ = 0;
+          }
         } else {
           const currentStageObj = JOURNEY_STAGES[journeyStageIndex] || JOURNEY_STAGES[0];
           targetX = currentStageObj?.targetCoords?.x || 0;
@@ -4729,7 +4987,7 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
           } else if (distLanding > 28 || distSurveyor < 65) {
             advanceJourneyStage(1);
           }
-        } else if (journeyStageIndex === 1 && (distCrater < 45 && distLanding > 60)) {
+        } else if (journeyStageIndex === 1 && hasSignalTrackerRef.current && (distCrater < 48 && distLanding > 60)) {
           advanceJourneyStage(2);
         } else if (journeyStageIndex === 2 && (distAlien < 38 || (playerPos.x < -60 && playerPos.z < -80))) {
           advanceJourneyStage(3);
@@ -4789,14 +5047,20 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
 
         // Check Nearby Interactable
         let foundInteract = null;
+        let minDist = Infinity;
         for (const item of interactables) {
           if (underground && item.id !== 'precursor_monolith_site') continue;
           if (!underground && item.id === 'precursor_monolith_site') continue;
 
+          // In Stage 2 before all 3 targets are scanned, surveyor_core should not override the 3 required targets
+          if (journeyStageIndex === 1 && item.id === 'surveyor_core' && !Object.values(stage2ScansRef.current).every(Boolean)) {
+            continue;
+          }
+
           const d = Math.hypot(playerPos.x - item.position.x, playerPos.z - item.position.z);
-          if (d < item.radius) {
+          if (d < item.radius && d < minDist) {
             foundInteract = item;
-            break;
+            minDist = d;
           }
         }
 
@@ -4915,6 +5179,7 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
       dracoLoader.dispose();
       triggerSparksRef.current = null;
       triggerScannerBeamRef.current = null;
+      if (scanIntervalRef.current) clearInterval(scanIntervalRef.current);
       renderer.dispose();
     };
   }, []);
@@ -4968,8 +5233,12 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
                 : 'w-2 h-2 border-cyan-400/80 bg-cyan-400/40'
             }`} />
             {nearInteractable && (
-              <div className="absolute -top-6 text-[10px] text-cyan-300 font-bold tracking-widest uppercase bg-black/80 px-2 py-0.5 rounded border border-cyan-400/40">
-                [E] INVESTIGATE
+              <div className="absolute -top-6 text-[10px] text-cyan-300 font-bold tracking-widest uppercase bg-black/80 px-2 py-0.5 rounded border border-cyan-400/40 whitespace-nowrap">
+                {nearInteractable.id.startsWith('surveyor_') && ['surveyor_camera', 'surveyor_solar', 'surveyor_footpad'].includes(nearInteractable.id)
+                  ? (stage2Scans[nearInteractable.id === 'surveyor_camera' ? 'camera' : nearInteractable.id === 'surveyor_solar' ? 'solar' : 'footpad']
+                      ? '[E] REVIEW DOSSIER'
+                      : '[Q / E] SCAN COMPONENT')
+                  : '[E] INVESTIGATE'}
               </div>
             )}
           </div>
@@ -5105,6 +5374,143 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
               </div>
             )}
 
+            {/* STAGE 2 — INSPECT SURVEYOR 1 OBJECTIVES */}
+            {journeyStageIndex === 1 && (
+              <div className="p-3.5 rounded-xl bg-slate-950/90 backdrop-blur-md border border-cyan-500/40 shadow-xl text-xs space-y-2">
+                <div className="flex items-center justify-between text-[10px] text-cyan-300 font-bold uppercase tracking-wider">
+                  <div className="flex items-center gap-1.5">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-cyan-400" />
+                    <span>Surveyor 1 Inspection (Stage 2)</span>
+                  </div>
+                  <span className="text-slate-400 font-mono">
+                    {Object.values(stage2Scans).filter(Boolean).length}/3 Scanned
+                  </span>
+                </div>
+
+                <div className="space-y-1.5 pt-1">
+                  {[
+                    {
+                      id: 'camera',
+                      targetId: 'surveyor_camera',
+                      title: 'Target 1 — Television camera',
+                      subtitle: 'Historic Vidicon imaging equipment'
+                    },
+                    {
+                      id: 'solar',
+                      targetId: 'surveyor_solar',
+                      title: 'Target 2 — Solar panel and antenna',
+                      subtitle: 'Energy & communication hardware'
+                    },
+                    {
+                      id: 'footpad',
+                      targetId: 'surveyor_footpad',
+                      title: 'Target 3 — Landing leg and footpad',
+                      subtitle: 'Landing hardware & soil trench'
+                    }
+                  ].map((tgt, i) => {
+                    const isDone = stage2Scans[tgt.id];
+                    const isNear = nearInteractable?.id === tgt.targetId;
+                    return (
+                      <div
+                        key={tgt.id}
+                        className={`p-2 rounded-lg text-[11px] transition-all border ${
+                          isDone
+                            ? 'bg-emerald-950/30 text-emerald-300 border-emerald-500/30'
+                            : isNear
+                            ? 'bg-cyan-950/60 text-cyan-200 border-cyan-400 animate-pulse'
+                            : 'bg-white/[0.03] text-slate-300 border-white/5'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            {isDone ? (
+                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
+                            ) : (
+                              <span className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center text-[9px] flex-shrink-0 font-mono ${
+                                isNear ? 'border-cyan-400 text-cyan-300 bg-cyan-900/50' : 'border-slate-500 text-slate-400'
+                              }`}>
+                                {i + 1}
+                              </span>
+                            )}
+                            <span className={`font-semibold ${isDone ? 'line-through opacity-85 text-emerald-200' : 'text-white'}`}>
+                              {tgt.title}
+                            </span>
+                          </div>
+                          <span className={`text-[9px] px-1.5 py-0.5 rounded font-mono font-bold ${
+                            isDone ? 'bg-emerald-900/40 text-emerald-300' : isNear ? 'bg-cyan-900/60 text-cyan-200' : 'text-slate-500'
+                          }`}>
+                            {isDone ? 'CALIBRATED' : isNear ? 'IN RANGE [E/Q]' : 'REQUIRED'}
+                          </span>
+                        </div>
+                        <div className="text-[10px] text-slate-400 mt-0.5 pl-5">
+                          {tgt.subtitle}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Stage 2 Status Bar / Instruction */}
+                <div className="pt-2 border-t border-white/10 flex items-center justify-between text-[10px] font-mono">
+                  <span className="text-slate-400">
+                    {Object.values(stage2Scans).every(Boolean)
+                      ? (hasSignalTracker ? 'Signal-Tracking Mode Active' : 'All 3 targets scanned')
+                      : 'Approach target & hold [Q] or [E] to calibrate'}
+                  </span>
+                  {Object.values(stage2Scans).every(Boolean) && (
+                    <span className="text-cyan-400 font-bold flex items-center gap-1 animate-pulse">
+                      <Radio className="w-3 h-3 text-cyan-400" />
+                      <span>ANOMALY DETECTED</span>
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* SCANNER SIGNAL-TRACKING MODE WIDGET (UNLOCKED REWARD) */}
+            {hasSignalTracker && (
+              <div className="p-3 rounded-xl bg-gradient-to-br from-indigo-950/90 via-slate-950/95 to-purple-950/90 backdrop-blur-md border border-cyan-400/60 shadow-xl space-y-2 text-xs font-mono">
+                <div className="flex items-center justify-between text-[10px] text-cyan-300 font-bold tracking-wider uppercase">
+                  <div className="flex items-center gap-1.5">
+                    <Compass className="w-3.5 h-3.5 text-cyan-400 animate-spin" style={{ animationDuration: '8s' }} />
+                    <span>SIGNAL-TRACKING MODE · ACTIVE</span>
+                  </div>
+                  <span className="px-1.5 py-0.5 rounded bg-cyan-900/60 text-cyan-200 border border-cyan-400/40 text-[9px]">
+                    0.00 MHz
+                  </span>
+                </div>
+
+                <div className="p-2 rounded-lg bg-black/50 border border-white/10 flex items-center justify-between">
+                  <div>
+                    <div className="text-[9px] text-slate-400 uppercase">Subsurface Target</div>
+                    <div className="text-white font-bold text-xs">Crater Epicenter (Zone 3)</div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-[9px] text-slate-400 uppercase">Proximity</div>
+                    <div className="text-cyan-300 font-bold font-mono text-xs">{distanceToCrater}m</div>
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <div className="flex justify-between text-[9px] text-slate-400">
+                    <span>Carrier: 432.06 Hz Sub-Harmonic</span>
+                    <span className="text-cyan-300 font-bold">{Math.max(25, Math.min(100, Math.round(100 - (distanceToCrater / 75) * 70)))}%</span>
+                  </div>
+                  <div className="w-full bg-black/70 rounded-full h-1.5 overflow-hidden border border-cyan-400/30">
+                    <div
+                      className="h-full bg-gradient-to-r from-cyan-500 via-indigo-500 to-pink-500 transition-all duration-300"
+                      style={{ width: `${Math.max(25, Math.min(100, Math.round(100 - (distanceToCrater / 75) * 70)))}%` }}
+                    />
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between text-[9px] text-slate-400 pt-0.5">
+                  <span>Vector: Azimuth 295° NW</span>
+                  <span className="text-amber-300 font-bold">Press [Q] to Ping Source</span>
+                </div>
+              </div>
+            )}
+
             {/* Handheld Scanner Anomaly Resonance Gauge */}
             <div className="p-2.5 rounded-xl bg-purple-950/80 backdrop-blur-md border border-purple-500/40 text-xs shadow-xl space-y-1">
               <div className="flex items-center justify-between text-[10px] text-purple-300 font-bold tracking-wider uppercase">
@@ -5192,7 +5598,13 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
                 className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 via-blue-600 to-indigo-600 text-white font-bold text-xs uppercase tracking-wider border border-cyan-400 shadow-xl shadow-cyan-500/40 hover:scale-105 active:scale-95 animate-bounce"
               >
                 <Crosshair className="w-4 h-4 text-cyan-200" />
-                <span>[E] {nearInteractable.title}</span>
+                <span>
+                  {['surveyor_camera', 'surveyor_solar', 'surveyor_footpad'].includes(nearInteractable.id)
+                    ? (stage2Scans[nearInteractable.id === 'surveyor_camera' ? 'camera' : nearInteractable.id === 'surveyor_solar' ? 'solar' : 'footpad']
+                        ? `[E] Review Dossier: ${nearInteractable.title}`
+                        : `[Q / E] Calibrate & Scan: ${nearInteractable.title}`)
+                    : `[E] ${nearInteractable.title}`}
+                </span>
               </button>
             )}
           </div>
@@ -5390,6 +5802,232 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
         </div>
       )}
 
+      {/* SCREEN CHROMATIC DISTORTION GLITCH OVERLAY */}
+      {isGlitching && (
+        <div className="fixed inset-0 z-50 pointer-events-none mix-blend-color-dodge animate-pulse">
+          <div className="w-full h-full bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-cyan-400/25 via-purple-600/20 to-red-600/30" />
+        </div>
+      )}
+
+      {/* INTERACTIVE SCANNER CALIBRATION RETICLE OVERLAY */}
+      {isScanningActive && scanningTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
+          <div className="relative p-6 rounded-2xl bg-slate-950/95 backdrop-blur-xl border-2 border-cyan-400 shadow-[0_0_60px_rgba(6,182,212,0.45)] flex flex-col items-center max-w-sm w-full mx-4 pointer-events-auto animate-scale-up font-mono">
+            
+            {/* Reticle Dial */}
+            <div className="relative w-28 h-28 flex items-center justify-center mb-3">
+              <div className="absolute inset-0 rounded-full border-2 border-dashed border-cyan-400/50 animate-spin" style={{ animationDuration: '6s' }} />
+              
+              <svg className="w-28 h-28 -rotate-90">
+                <circle
+                  cx="56"
+                  cy="56"
+                  r="48"
+                  className="stroke-slate-800"
+                  strokeWidth="6"
+                  fill="transparent"
+                />
+                <circle
+                  cx="56"
+                  cy="56"
+                  r="48"
+                  className="stroke-cyan-400 transition-all duration-100"
+                  strokeWidth="6"
+                  strokeDasharray={2 * Math.PI * 48}
+                  strokeDashoffset={2 * Math.PI * 48 * (1 - scanProgress / 100)}
+                  strokeLinecap="round"
+                  fill="transparent"
+                />
+              </svg>
+
+              <div className="absolute flex flex-col items-center">
+                <span className="text-xl font-bold text-white tracking-wider">{Math.round(scanProgress)}%</span>
+                <span className="text-[9px] text-cyan-300 uppercase font-bold">CALIBRATING</span>
+              </div>
+            </div>
+
+            {/* Target Title & Subtitle */}
+            <div className="text-center space-y-1 w-full">
+              <div className="text-[10px] text-cyan-400 tracking-widest uppercase font-bold flex items-center justify-center gap-1.5">
+                <Crosshair className="w-3.5 h-3.5 text-cyan-400 animate-spin" />
+                <span>MULTI-SPECTRAL OPTICAL SCAN</span>
+              </div>
+              <h3 className="text-sm font-bold text-white tracking-wide uppercase">
+                {scanningTarget.title}
+              </h3>
+            </div>
+
+            {/* Frequency Sweep Dial */}
+            <div className="w-full mt-3 p-2 rounded-xl bg-black/60 border border-cyan-500/30 flex items-center justify-between text-[11px]">
+              <span className="text-slate-400">Carrier Sweep:</span>
+              <span className="text-cyan-300 font-bold font-mono">
+                {scanFrequency.toFixed(1)} MHz {scanProgress > 80 ? '· S-BAND LOCK' : ''}
+              </span>
+            </div>
+
+            {/* Scan Stage Telemetry Log */}
+            <div className="mt-2 text-[10px] text-slate-300 text-center font-sans italic min-h-[30px] flex items-center justify-center">
+              {scanProgress < 30 && "Focusing sensor optics and establishing optical baseline..."}
+              {scanProgress >= 30 && scanProgress < 70 && "Auditing vacuum patina and micrometeorite pitting..."}
+              {scanProgress >= 70 && scanProgress < 100 && "Synchronizing NASA Smithsonian archival records..."}
+              {scanProgress >= 100 && "Calibration Complete · Archival Record Locked!"}
+            </div>
+
+            {/* Cancel Instruction */}
+            <div className="mt-2 text-[9px] text-slate-500 uppercase">
+              Hold [Q] / [E] · Step back to cancel
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* THE DISCOVERY: UNKNOWN TRANSMISSION MODAL / HUD ALERT CARD */}
+      {discoveryEvent && discoveryEvent.showModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fade-in font-mono select-none">
+          <div className="relative w-full max-w-xl rounded-2xl bg-slate-950/95 border-2 border-red-500/80 shadow-[0_0_60px_rgba(239,68,68,0.4)] overflow-hidden flex flex-col">
+            
+            {/* Warning Stripe */}
+            <div className="h-1.5 w-full bg-gradient-to-r from-red-500 via-amber-400 to-cyan-400 animate-pulse" />
+
+            {/* Header */}
+            <div className="p-5 pb-3 border-b border-red-500/30 bg-red-950/20 flex items-start justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-red-500/20 border border-red-500/50 text-red-400 animate-pulse">
+                  <Radio className="w-6 h-6" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="px-2 py-0.5 rounded bg-red-950/80 border border-red-500/50 text-[10px] text-red-300 font-bold tracking-widest uppercase">
+                      ANOMALOUS TRANSMISSION
+                    </span>
+                    <span className="text-[10px] text-cyan-400 font-bold uppercase">Unidentified</span>
+                  </div>
+                  <h2 className="text-lg sm:text-xl font-bold text-white tracking-wider uppercase mt-0.5">
+                    UNKNOWN TRANSMISSION
+                  </h2>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => dismissDiscoveryEvent()}
+                className="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-white/10 transition-colors"
+                title="Dismiss [Esc]"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="p-5 space-y-4 text-xs">
+              
+              {/* Illustrative Frequency Interface (0.00 MHz) with Oscilloscope Waveform */}
+              <div className="p-3.5 rounded-xl bg-black/70 border border-cyan-500/40 space-y-2">
+                <div className="flex items-center justify-between text-[11px]">
+                  <span className="text-slate-400 uppercase tracking-wider">Detected Carrier Frequency:</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xl font-bold text-cyan-300 tracking-wider">
+                      0.00 MHz
+                    </span>
+                    <span className="text-[10px] text-red-400 animate-pulse font-mono">[UNIDENTIFIED]</span>
+                  </div>
+                </div>
+
+                {/* Animated SVG Oscilloscope Waveform */}
+                <div className="relative w-full h-14 bg-slate-950 rounded-lg overflow-hidden border border-cyan-500/30 flex items-center justify-center">
+                  <svg className="w-full h-full" preserveAspectRatio="none" viewBox="0 0 400 60">
+                    <path
+                      d="M 0,30 Q 25,5 50,30 T 100,30 T 150,30 T 200,5 T 250,55 T 300,30 T 350,15 T 400,30"
+                      fill="none"
+                      stroke="#06b6d4"
+                      strokeWidth="2.5"
+                      className="animate-pulse"
+                    />
+                    <path
+                      d="M 0,30 Q 30,50 60,30 T 120,30 T 180,10 T 240,50 T 300,30 T 360,20 T 400,30"
+                      fill="none"
+                      stroke="#ef4444"
+                      strokeWidth="1.5"
+                      opacity="0.7"
+                    />
+                  </svg>
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-cyan-400/10 to-transparent pointer-events-none animate-pulse" />
+                  <div className="absolute top-1 right-2 text-[9px] text-cyan-400/80 font-mono">
+                    SUB-SURFACE HARMONIC · 432.06 Hz CARRIER
+                  </div>
+                </div>
+              </div>
+
+              {/* Signal Analysis Breakdown */}
+              <div className="space-y-1.5">
+                <div className="text-[10px] text-cyan-400 font-bold uppercase tracking-widest flex items-center gap-1.5">
+                  <Layers className="w-3.5 h-3.5 text-cyan-400" />
+                  <span>Signal Analysis</span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px]">
+                  <div className="p-2.5 rounded-lg bg-black/40 border border-white/10 flex justify-between items-center">
+                    <span className="text-slate-400">Source:</span>
+                    <span className="text-red-400 font-bold uppercase">Unknown</span>
+                  </div>
+                  <div className="p-2.5 rounded-lg bg-black/40 border border-white/10 flex justify-between items-center">
+                    <span className="text-slate-400">Pattern:</span>
+                    <span className="text-amber-300 font-bold">Repeating</span>
+                  </div>
+                  <div className="p-2.5 rounded-lg bg-black/40 border border-white/10 flex justify-between items-center">
+                    <span className="text-slate-400">Origin:</span>
+                    <span className="text-cyan-300 font-bold">Below surface</span>
+                  </div>
+                  <div className="p-2.5 rounded-lg bg-black/40 border border-white/10 flex justify-between items-center">
+                    <span className="text-slate-400">Connection:</span>
+                    <span className="text-indigo-300 font-bold">Surveyor 1 vicinity</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Scripted Comms Exchange Preview */}
+              <div className="space-y-2 p-3.5 rounded-xl bg-slate-900/60 border border-cyan-500/20 font-sans">
+                <div className="flex items-start gap-2.5 text-xs">
+                  <span className="px-1.5 py-0.5 rounded bg-cyan-950 border border-cyan-500/40 text-cyan-300 font-bold font-mono text-[9px]">
+                    MAYA
+                  </span>
+                  <p className="text-slate-200 leading-relaxed italic">
+                    “Captain, that's strange. The signal isn't coming from the lander's communication system. It's coming from somewhere below the surface.”
+                  </p>
+                </div>
+                <div className="flex items-start gap-2.5 text-xs pt-1.5 border-t border-white/5">
+                  <span className="px-1.5 py-0.5 rounded bg-indigo-950 border border-indigo-500/40 text-indigo-300 font-bold font-mono text-[9px]">
+                    ARIN
+                  </span>
+                  <p className="text-slate-200 leading-relaxed italic">
+                    “Then Surveyor isn't the source. It's connected to something else.”
+                  </p>
+                </div>
+              </div>
+
+            </div>
+
+            {/* Footer */}
+            <div className="p-4 border-t border-cyan-500/30 bg-black/60 flex flex-col sm:flex-row items-center justify-between gap-3">
+              <div className="text-[10px] text-cyan-400 flex items-center gap-1.5">
+                <Compass className="w-3.5 h-3.5 animate-pulse text-cyan-400" />
+                <span>Gameplay Reward: Scanner Signal-Tracking Mode Unlocked</span>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => dismissDiscoveryEvent()}
+                className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 via-blue-600 to-indigo-600 text-white font-bold text-xs uppercase tracking-wider shadow-lg shadow-cyan-500/30 hover:scale-105 active:scale-95 transition-all"
+              >
+                <Compass className="w-4 h-4 text-cyan-200" />
+                <span>Locate Transmission Source</span>
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+
       {/* INVESTIGATION DOSSIER MODAL */}
       {investigateTarget && (
         <InvestigationModal
@@ -5398,6 +6036,9 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
             if (investigateTarget?.id === 'poi_mission_terminal') {
               completeStage1Objective('read_briefing');
               setActiveObjective('Objective updated: Approach Route Marker Alpha leading West toward Surveyor 1');
+            }
+            if (Object.values(stage2ScansRef.current).every(Boolean) && !discoveryTriggeredRef.current) {
+              triggerDiscoverySequence();
             }
             setInvestigateTarget(null);
           }}
@@ -5411,7 +6052,15 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
             } else if (target.id === 'poi_maya_chen' || target.id === 'poi_leo_vance' || target.id === 'poi_lunar_transport') {
               // Crew debrief acknowledged
             } else if (target.id && target.id.startsWith('surveyor_')) {
-              advanceJourneyStage(2);
+              const key = target.id === 'surveyor_camera' ? 'camera' : target.id === 'surveyor_solar' ? 'solar' : target.id === 'surveyor_footpad' ? 'footpad' : null;
+              if (key) {
+                const updated = { ...stage2ScansRef.current, [key]: true };
+                stage2ScansRef.current = updated;
+                setStage2Scans(updated);
+                if (Object.values(updated).every(Boolean) && !discoveryTriggeredRef.current) {
+                  triggerDiscoverySequence();
+                }
+              }
             } else if (target.id === 'poi_crater_site_alpha' || target.id === 'poi_crater_site_beta' || target.id === 'poi_crater_site_gamma') {
               advanceJourneyStage(3);
             } else if (target.id === 'poi_alien_structure' || target.id === 'poi_data_conduit') {
