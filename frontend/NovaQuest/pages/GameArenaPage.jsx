@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { 
+  Archive,
   ArrowLeft, 
   Compass, 
   Radio, 
@@ -265,7 +266,7 @@ export default function GameArenaPage({ theme }) {
           clearInterval(interval);
           setIsScanning(false);
           setCompletedObjectives(o => [...o, 'Scan Surveyor 1 Antenna', 'Recover 1966 Lunar Telemetry']);
-          setHudMessage('Surveyor 1 telemetry decrypted! 11,237 archival lunar photos linked.');
+          setHudMessage('Surveyor 1 telemetry decrypted! 11,240 archival lunar photos linked.');
 
           // Update save game
           const currentSave = getSaveGame();
@@ -276,8 +277,13 @@ export default function GameArenaPage({ theme }) {
                 ...currentSave.player,
                 scanProgress: 100,
                 dataPacksCollected: 1
+              },
+              missionEcho: {
+                ...(currentSave.missionEcho || {}),
+                unlocked: true
               }
             });
+            setSave(getSaveGame());
           }
           return 100;
         }
@@ -301,6 +307,11 @@ export default function GameArenaPage({ theme }) {
   const handleReturnToMenu = () => {
     audio.playClick();
     navigate('/');
+  };
+
+  const handleOpenMissionEcho = () => {
+    audio.playClick();
+    navigate('/mission-echo');
   };
 
   return (
@@ -343,8 +354,25 @@ export default function GameArenaPage({ theme }) {
           <span>{hudMessage}</span>
         </div>
 
-        {/* Right: Quick Settings & Pause */}
+        {/* Right: Mission Echo, Quick Settings & Pause */}
         <div className="pointer-events-auto flex items-center gap-2">
+          <button
+            type="button"
+            onClick={handleOpenMissionEcho}
+            className={`flex items-center gap-1.5 rounded-xl border px-2.5 py-2 text-xs font-mono transition-all shadow-md ${
+              scanProgress >= 100
+                ? 'border-fuchsia-400/40 bg-fuchsia-500/15 text-fuchsia-200 hover:bg-fuchsia-500/25'
+                : 'border-white/10 bg-black/60 text-slate-300 hover:bg-slate-900 hover:text-white'
+            }`}
+            title="Open Stage 5: Mission Echo"
+          >
+            <Archive className="h-4 w-4" />
+            <span className="hidden sm:inline">Mission Echo</span>
+            {scanProgress >= 100 && (
+              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-fuchsia-300" />
+            )}
+          </button>
+
           <button
             type="button"
             onClick={() => { audio.playClick(); setIsSettingsOpen(true); }}

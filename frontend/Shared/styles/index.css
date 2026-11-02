@@ -120,3 +120,103 @@
 .animate-pulse-subtle {
   animation: pulseSubtle 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
+
+@keyframes novaFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: novaFadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes hologramFlicker {
+  0%, 100% { opacity: 0.95; }
+  48% { opacity: 0.95; }
+  50% { opacity: 0.72; }
+  52% { opacity: 0.95; }
+  74% { opacity: 0.88; }
+}
+
+.animate-hologram {
+  animation: hologramFlicker 5s ease-in-out infinite;
+}
+
+@keyframes scanSweep {
+  0% { transform: translateY(-120%); opacity: 0; }
+  15% { opacity: 0.75; }
+  85% { opacity: 0.45; }
+  100% { transform: translateY(120%); opacity: 0; }
+}
+
+.animate-scan-sweep {
+  animation: scanSweep 4.5s linear infinite;
+}
+
+@keyframes signalPulse {
+  0%, 100% { transform: scaleY(0.28); opacity: 0.45; }
+  50% { transform: scaleY(1); opacity: 1; }
+}
+
+.me-signal-bar {
+  transform-origin: center;
+  animation: signalPulse 1.6s ease-in-out infinite;
+}
+
+@keyframes meFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+.animate-me-float {
+  animation: meFloat 4.5s ease-in-out infinite;
+}
+
+@keyframes meShake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-5px); }
+  40% { transform: translateX(5px); }
+  60% { transform: translateX(-3px); }
+  80% { transform: translateX(3px); }
+}
+
+.animate-me-shake {
+  animation: meShake 0.38s ease-in-out;
+}
+
+/* Faint horizontal scanlines used by Mission Echo's holographic displays */
+.me-scanlines {
+  background-image: repeating-linear-gradient(
+    to bottom,
+    rgba(34, 211, 238, 0.08) 0px,
+    rgba(34, 211, 238, 0.08) 1px,
+    transparent 1px,
+    transparent 4px
+  );
+}
+
+.me-holo-grid {
+  background-image:
+    linear-gradient(rgba(34, 211, 238, 0.18) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(34, 211, 238, 0.18) 1px, transparent 1px);
+  background-size: 34px 34px;
+  transform: perspective(220px) rotateX(58deg);
+  transform-origin: bottom center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-in,
+  .animate-hologram,
+  .animate-scan-sweep,
+  .me-signal-bar,
+  .animate-me-float,
+  .animate-me-shake {
+    animation: none;
+  }
+}

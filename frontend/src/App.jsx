@@ -9,6 +9,7 @@ import SolarSystemPage from '../NovaMap/pages/SolarSystemPage';
 import MainMenuPage from '../NovaQuest/pages/MainMenuPage';
 import GameArenaPage from '../NovaQuest/pages/GameArenaPage';
 import ProloguePage from '../NovaQuest/pages/ProloguePage';
+import MissionEchoPage from '../NovaQuest/pages/MissionEchoPage';
 import { ArrowLeft, AlertCircle } from 'lucide-react';
 
 function NotFoundPage({ theme, onToggleTheme }) {
@@ -79,6 +80,8 @@ export default function App() {
       <Route path="/" element={<MainMenuPage theme={theme} onToggleTheme={handleToggleTheme} />} />
       <Route path="/prologue" element={<ProloguePage />} />
       <Route path="/play" element={<GameArenaPage theme={theme} onToggleTheme={handleToggleTheme} />} />
+      <Route path="/mission-echo" element={<MissionEchoPage />} />
+      <Route path="/stage-5" element={<Navigate to="/mission-echo" replace />} />
       <Route path="/novamap" element={<SolarSystemPage theme={theme} onToggleTheme={handleToggleTheme} />} />
       <Route path="/solar-system" element={<Navigate to="/novamap" replace />} />
       <Route path="/novabase" element={<ExplorerPage theme={theme} onToggleTheme={handleToggleTheme} />} />
