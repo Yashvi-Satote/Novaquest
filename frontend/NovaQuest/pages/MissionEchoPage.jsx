@@ -292,7 +292,7 @@ export default function MissionEchoPage() {
 
   const handleBack = () => {
     audio.playClick();
-    navigate('/');
+    navigate('/app');
   };
 
   const handleReturnToMission = () => {
