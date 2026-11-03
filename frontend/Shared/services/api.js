@@ -81,6 +81,42 @@ export async function fetchSpacecraftDetail(idOrSlug) {
   return fetchHardwareDetail(idOrSlug);
 }
 
+export async function fetchMapObjects(params = {}) {
+  const query = new URLSearchParams();
+  if (params.type && params.type !== 'all') query.set('type', params.type);
+  if (params.status && params.status !== 'all') query.set('status', params.status);
+  if (params.parent && params.parent !== 'all') query.set('parent', params.parent);
+  if (params.q) query.set('q', params.q);
+
+  const res = await fetch(`${API_BASE}/map/objects?${query.toString()}`);
+  if (!res.ok) throw new Error(`Failed to fetch map objects: ${res.statusText}`);
+  return await res.json();
+}
+
+export async function fetchMapFilters() {
+  const res = await fetch(`${API_BASE}/map/filters`);
+  if (!res.ok) throw new Error(`Failed to fetch map filters: ${res.statusText}`);
+  return await res.json();
+}
+
+export async function fetchSpacecraftMissions(idOrSlug) {
+  const res = await fetch(`${API_BASE}/spacecraft/${encodeURIComponent(idOrSlug)}/missions`);
+  if (!res.ok) throw new Error(`Failed to fetch missions for ${idOrSlug}: ${res.statusText}`);
+  return await res.json();
+}
+
+export async function fetchSpacecraftModel(idOrSlug) {
+  const res = await fetch(`${API_BASE}/spacecraft/${encodeURIComponent(idOrSlug)}/model`);
+  if (!res.ok) throw new Error(`Failed to fetch model for ${idOrSlug}: ${res.statusText}`);
+  return await res.json();
+}
+
+export async function fetchMissionSpacecraft(idOrSlug) {
+  const res = await fetch(`${API_BASE}/missions/${encodeURIComponent(idOrSlug)}/spacecraft`);
+  if (!res.ok) throw new Error(`Failed to fetch spacecraft for mission ${idOrSlug}: ${res.statusText}`);
+  return await res.json();
+}
+
 export async function fetchModels() {
   const res = await fetch(`${API_BASE}/models`);
   if (!res.ok) throw new Error(`Failed to fetch 3D models: ${res.statusText}`);

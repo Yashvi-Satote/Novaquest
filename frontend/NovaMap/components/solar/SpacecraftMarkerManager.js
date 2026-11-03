@@ -521,6 +521,80 @@ export class SpacecraftMarkerManager {
     this.setLayerVisibility('trajectories', visible);
   }
 
+  
+  /**
+   * Dynamically filters displayed 3D markers based on NovaBase active filters
+   */
+  applyFilters(filterState) {
+    if (!filterState) return;
+    const { objectTypes, statuses, search, selectedMissionSlug } = filterState;
+
+    this.markers.forEach((markerData, slug) => {
+      const craft = markerData.craft || {};
+      const rawType = (craft.object_type || craft.spacecraft_type || craft.type || 'spacecraft').toLowerCase();
+      const opStatus = (craft.operational_status || craft.status || 'Active').toLowerCase();
+
+      // Normalize to 1 of the 8 types: spacecraft, satellite, space_telescope, lander, rover, probe
+      let normType = 'spacecraft';
+      if (rawType.includes('telescope') || rawType.includes('observatory')) normType = 'space_telescope';
+      else if (rawType.includes('rover')) normType = 'rover';
+      else if (rawType.includes('lander')) normType = 'lander';
+      else if (rawType.includes('satellite')) normType = 'satellite';
+      else if (rawType.includes('probe') || rawType.includes('flyby')) normType = 'probe';
+
+      // 1. Type filter
+      let typeMatch = true;
+      if (objectTypes && objectTypes.size > 0) {
+        typeMatch = objectTypes.has(normType) || objectTypes.has('spacecraft');
+      }
+
+      // 2. Status filter
+      let statusMatch = true;
+      if (statuses && statuses.size > 0) {
+        statusMatch = Array.from(statuses).some(s => opStatus.includes(s.toLowerCase()));
+      }
+
+      // 3. Search query
+      let searchMatch = true;
+      if (search && search.trim()) {
+        const q = search.trim().toLowerCase();
+        const craftName = (craft.name || '').toLowerCase();
+        const missionName = (craft.mission || craft.mission_name || '').toLowerCase();
+        const agency = (craft.agency || '').toLowerCase();
+        searchMatch = craftName.includes(q) || missionName.includes(q) || agency.includes(q);
+      }
+
+      // 4. Mission highlight
+      if (selectedMissionSlug && markerData.haloSprite) {
+        const mSlug = (craft.mission_slug || craft.missionSlug || '').toLowerCase();
+        if (mSlug && mSlug === selectedMissionSlug.toLowerCase()) {
+          markerData.haloSprite.material.opacity = 0.95;
+          markerData.labelSprite.visible = true;
+        }
+      }
+
+      const isVisible = typeMatch && statusMatch && searchMatch;
+      markerData.group.visible = isVisible && this.visibleMarkers;
+      if (markerData.orbitLine) {
+        markerData.orbitLine.visible = isVisible && this.visibleTrajectories;
+      }
+    });
+
+    this.orbiters.forEach((orbiter, slug) => {
+      const markerData = this.markers.get(slug);
+      if (markerData) {
+        orbiter.group.visible = markerData.group.visible;
+      }
+    });
+
+    this.heliocentricProbes.forEach((probe, slug) => {
+      const markerData = this.markers.get(slug);
+      if (markerData) {
+        probe.group.visible = markerData.group.visible;
+      }
+    });
+  }
+
   setMarkersVisible(visible) {
     this.setLayerVisibility('markers', visible);
   }
