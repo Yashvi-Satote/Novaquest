@@ -1,34 +1,9 @@
 /**
- * Novaquest Game Save & Settings Manager
- * Handles local persistence of mission checkpoints, player state, and user preferences.
+ * Novaquest Game Save Manager
+ * Handles local persistence of mission checkpoints and player state.
  */
 
 const STORAGE_KEY_SAVE = 'novaquest_save_game';
-const STORAGE_KEY_SETTINGS = 'novaquest_game_settings';
-
-export const DEFAULT_SETTINGS = {
-  audio: {
-    masterVolume: 80,
-    musicVolume: 70,
-    sfxVolume: 85,
-    ambienceEnabled: true,
-    uiSoundsEnabled: true,
-    muted: false
-  },
-  graphics: {
-    qualityPreset: 'High', // Low, Medium, High, Ultra
-    particleDensity: 'High', // Off, Low, High
-    cosmicGlow: true,
-    lensShimmer: true,
-    targetFps: '60'
-  },
-  controls: {
-    invertY: false,
-    sensitivity: 5, // 1 - 10
-    flightModel: 'Assisted', // Assisted, Realistic
-    subtitles: true
-  }
-};
 
 export const DEFAULT_MISSION_ECHO = {
   unlocked: false,
@@ -159,37 +134,6 @@ export function deleteSaveGame() {
     return true;
   } catch (err) {
     console.error('Failed to clear save game:', err);
-    return false;
-  }
-}
-
-/**
- * Retrieves user settings with fallback to defaults.
- */
-export function getSettings() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY_SETTINGS);
-    if (!raw) return DEFAULT_SETTINGS;
-    const parsed = JSON.parse(raw);
-    return {
-      audio: { ...DEFAULT_SETTINGS.audio, ...(parsed.audio || {}) },
-      graphics: { ...DEFAULT_SETTINGS.graphics, ...(parsed.graphics || {}) },
-      controls: { ...DEFAULT_SETTINGS.controls, ...(parsed.controls || {}) }
-    };
-  } catch {
-    return DEFAULT_SETTINGS;
-  }
-}
-
-/**
- * Persists user settings.
- */
-export function saveSettings(settings) {
-  try {
-    localStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify(settings));
-    return true;
-  } catch (err) {
-    console.error('Failed to persist settings:', err);
     return false;
   }
 }

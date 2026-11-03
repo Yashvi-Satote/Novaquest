@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { ArrowRight, Loader2, Lock, Mail, Sparkles } from 'lucide-react';
+import { ArrowRight, Loader2, Lock, Mail, Sparkles, UserRound } from 'lucide-react';
 import AuthShell, { NovaUserMark } from '../components/AuthShell';
 import AuthToggle from '../components/AuthToggle';
 import GoogleButton from '../components/GoogleButton';
@@ -16,7 +16,7 @@ const initialValues = { email: '', password: '' };
 export default function SignInPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login, loginWithGoogle, authError } = useAuth();
+  const { login, loginWithGoogle, loginAsExampleUser, authError } = useAuth();
   const target = normalizeRedirectTarget(location.state?.from);
   const [values, setValues] = useState(initialValues);
   const [errors, setErrors] = useState({});
@@ -97,6 +97,21 @@ export default function SignInPage() {
     }
   };
 
+  const handleExampleSignIn = async () => {
+    if (submitting) return;
+    setSubmitting(true);
+    setFormError('');
+    setNotice('');
+    try {
+      await loginAsExampleUser();
+      navigate(target, { replace: true, state: { justSignedIn: true } });
+    } catch (error) {
+      handleAuthError(error);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const handleForgotPassword = async () => {
     if (sendingReset || submitting) return;
     setFormError('');
@@ -124,11 +139,11 @@ export default function SignInPage() {
       footer={
         <>
           By continuing you agree to our{' '}
-          <Link to="/novauser/terms" className="font-semibold text-violet-600 underline-offset-2 hover:underline">
+          <Link to="/novauser/terms" className="font-semibold text-violet-400 underline-offset-2 hover:underline">
             Terms
           </Link>{' '}
           and{' '}
-          <Link to="/novauser/privacy" className="font-semibold text-violet-600 underline-offset-2 hover:underline">
+          <Link to="/novauser/privacy" className="font-semibold text-violet-400 underline-offset-2 hover:underline">
             Privacy Policy
           </Link>
           .
@@ -139,16 +154,16 @@ export default function SignInPage() {
         <div className="flex items-center gap-3">
           <NovaUserMark />
           <div className="text-left">
-            <p className="text-lg font-bold tracking-tight text-slate-900">NovaUser</p>
-            <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-violet-500">
+            <p className="text-lg font-bold tracking-tight text-white">NovaUser</p>
+            <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-violet-400">
               Authentication
             </p>
           </div>
         </div>
-        <h1 className="mt-5 text-2xl font-bold tracking-tight text-slate-900 sm:text-[1.7rem]">
+        <h1 className="mt-5 text-2xl font-bold tracking-tight text-white sm:text-[1.7rem]">
           Welcome back
         </h1>
-        <p className="mt-1.5 max-w-xs text-sm leading-relaxed text-slate-500">
+        <p className="mt-1.5 max-w-xs text-sm leading-relaxed text-slate-400">
           Sign in to continue your journey across the cosmic timekeepers universe.
         </p>
       </div>
@@ -162,12 +177,26 @@ export default function SignInPage() {
           onClick={handleGoogleSignIn}
         />
 
+        <button
+          type="button"
+          onClick={handleExampleSignIn}
+          disabled={submitting}
+          aria-label="Sign in as example user"
+          className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-violet-500/40 bg-violet-500/5 px-4 py-3 text-sm font-semibold text-violet-200 transition hover:border-violet-400/70 hover:bg-violet-500/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          <UserRound className="h-4 w-4" aria-hidden="true" />
+          {submitting ? 'Signing in…' : 'Example User'}
+        </button>
+        <p className="text-center text-[11px] text-slate-500">
+          Temporary demo access — no account needed.
+        </p>
+
         <div className="flex items-center gap-3" aria-hidden="true">
-          <span className="h-px flex-1 bg-slate-200" />
+          <span className="h-px flex-1 bg-white/10" />
           <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">
             Or continue with email
           </span>
-          <span className="h-px flex-1 bg-slate-200" />
+          <span className="h-px flex-1 bg-white/10" />
         </div>
 
         <form onSubmit={handleSubmit} noValidate className="space-y-4">
@@ -207,7 +236,7 @@ export default function SignInPage() {
                 type="button"
                 onClick={handleForgotPassword}
                 disabled={sendingReset || submitting}
-                className="rounded text-xs font-semibold text-violet-600 underline-offset-2 transition hover:text-violet-800 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
+                className="rounded text-xs font-semibold text-violet-400 underline-offset-2 transition hover:text-violet-300 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {sendingReset ? 'Sending reset email…' : 'Forgot password?'}
               </button>
@@ -237,12 +266,12 @@ export default function SignInPage() {
           </button>
         </form>
 
-        <p className="flex items-center justify-center gap-1.5 pt-1 text-xs text-slate-500">
+        <p className="flex items-center justify-center gap-1.5 pt-1 text-xs text-slate-400">
           New to NovaUser?{' '}
           <Link
             to="/"
             state={location.state}
-            className="inline-flex items-center gap-1 font-semibold text-violet-600 underline-offset-2 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2"
+            className="inline-flex items-center gap-1 font-semibold text-violet-400 underline-offset-2 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2"
           >
             <Sparkles className="h-3 w-3" aria-hidden="true" />
             Create an account
