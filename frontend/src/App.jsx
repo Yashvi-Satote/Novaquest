@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Routes, Route, Link, Navigate } from 'react-router-dom';
-import Header from '../Shared/components/Header';
-import PlaceholderPage from '../Shared/pages/PlaceholderPage';
+import AppNavbar from '../Shared/components/layout/AppNavbar';
 import ExplorerPage from '../NovaBase/pages/ExplorerPage';
 import HardwareDetailPage from '../NovaBase/pages/HardwareDetailPage';
 import SpacecraftDetailPage from '../NovaMap/pages/SpacecraftDetailPage';
@@ -12,15 +11,15 @@ import ProloguePage from '../NovaQuest/pages/ProloguePage';
 import MissionEchoPage from '../NovaQuest/pages/MissionEchoPage';
 import SignInPage from '../NovaUser/pages/SignInPage';
 import RegisterPage from '../NovaUser/pages/RegisterPage';
-import AccountPage from '../NovaUser/pages/AccountPage';
 import LegalPage from '../NovaUser/pages/LegalPage';
+import SettingsPage from '../NovaUser/settings/SettingsPage';
 import { GuestOnly, RequireAuth } from '../NovaUser/components/RouteGuards';
 import { ArrowLeft, AlertCircle } from 'lucide-react';
 
-function NotFoundPage({ theme, onToggleTheme }) {
+function NotFoundPage() {
   return (
-    <div className={`min-h-screen ${theme === 'dark' ? 'dark' : ''} bg-slate-50 dark:bg-[#070b14] space-bg flex flex-col font-sans text-slate-800 dark:text-slate-100 transition-colors duration-200`}>
-      <Header theme={theme} onToggleTheme={onToggleTheme} />
+    <div className="min-h-screen bg-[#070b14] space-bg flex flex-col font-sans text-slate-100">
+      <AppNavbar />
 
       <main className="flex-1 flex items-center justify-center p-6">
         <div className="glass-panel rounded-2xl p-8 sm:p-12 text-center space-y-5 max-w-md w-full border border-slate-200 dark:border-white/10 bg-white/80 dark:bg-slate-900/60 shadow-xl">
@@ -49,36 +48,8 @@ function NotFoundPage({ theme, onToggleTheme }) {
 }
 
 export default function App() {
-  // Theme State (Dark / Light with localStorage persistence)
-  const [theme, setTheme] = useState(() => {
-    try {
-      const savedTheme = localStorage.getItem('novaquest_theme')
-        || localStorage.getItem('space_in_time_theme');
-      if (savedTheme) return savedTheme;
-      return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
-    } catch {
-      return 'dark';
-    }
-  });
-
-  // Apply theme to <html> element and persist
-  useEffect(() => {
-    const root = document.documentElement;
-    if (theme === 'dark') {
-      root.classList.add('dark');
-    } else {
-      root.classList.remove('dark');
-    }
-    try {
-      localStorage.setItem('novaquest_theme', theme);
-    } catch (e) {
-      console.warn('Failed to persist theme to localStorage:', e);
-    }
-  }, [theme]);
-
-  const handleToggleTheme = () => {
-    setTheme(prev => (prev === 'dark' ? 'light' : 'dark'));
-  };
+  // NovaQuest is dark-only. The `dark` class is set on <html> in index.html
+  // so there is no theme state, toggle, or localStorage preference to manage.
 
   const protect = (element) => <RequireAuth>{element}</RequireAuth>;
 
@@ -100,19 +71,19 @@ export default function App() {
       <Route path="/novauser/privacy" element={<LegalPage kind="privacy" />} />
 
       {/* Every application route requires a valid NovaUser session. */}
-      <Route path="/app" element={protect(<MainMenuPage theme={theme} onToggleTheme={handleToggleTheme} />)} />
+      <Route path="/app" element={protect(<MainMenuPage />)} />
       <Route path="/prologue" element={protect(<ProloguePage />)} />
-      <Route path="/play" element={protect(<GameArenaPage theme={theme} onToggleTheme={handleToggleTheme} />)} />
+      <Route path="/play" element={protect(<GameArenaPage />)} />
       <Route path="/mission-echo" element={protect(<MissionEchoPage />)} />
       <Route path="/stage-5" element={<Navigate to="/mission-echo" replace />} />
-      <Route path="/novauser/account" element={protect(<AccountPage />)} />
-      <Route path="/novamap" element={protect(<SolarSystemPage theme={theme} onToggleTheme={handleToggleTheme} />)} />
+      <Route path="/novauser/account" element={<Navigate to="/settings#account" replace />} />
+      <Route path="/novamap" element={protect(<SolarSystemPage />)} />
       <Route path="/solar-system" element={<Navigate to="/novamap" replace />} />
-      <Route path="/novabase" element={protect(<ExplorerPage theme={theme} onToggleTheme={handleToggleTheme} />)} />
-      <Route path="/settings" element={protect(<PlaceholderPage title="Settings" theme={theme} onToggleTheme={handleToggleTheme} />)} />
-      <Route path="/spacecraft/:slug" element={protect(<SpacecraftDetailPage theme={theme} onToggleTheme={handleToggleTheme} />)} />
-      <Route path="/hardware/:slug" element={protect(<HardwareDetailPage theme={theme} onToggleTheme={handleToggleTheme} />)} />
-      <Route path="*" element={protect(<NotFoundPage theme={theme} onToggleTheme={handleToggleTheme} />)} />
+      <Route path="/novabase" element={protect(<ExplorerPage />)} />
+      <Route path="/settings" element={protect(<SettingsPage />)} />
+      <Route path="/spacecraft/:slug" element={protect(<SpacecraftDetailPage />)} />
+      <Route path="/hardware/:slug" element={protect(<HardwareDetailPage />)} />
+      <Route path="*" element={protect(<NotFoundPage />)} />
     </Routes>
   );
 }

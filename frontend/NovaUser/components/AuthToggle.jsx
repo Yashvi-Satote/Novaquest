@@ -10,7 +10,7 @@ export default function AuthToggle({ active }) {
   return (
     <nav
       aria-label="Authentication mode"
-      className="grid grid-cols-2 gap-1 rounded-2xl border border-violet-100 bg-violet-50/80 p-1"
+      className="grid grid-cols-2 gap-1 rounded-2xl border border-violet-500/25 bg-violet-500/10 p-1"
     >
       <Link
         to="/novauser/signin"
@@ -18,8 +18,8 @@ export default function AuthToggle({ active }) {
         aria-current={signInActive ? 'page' : undefined}
         className={`${base} ${
           signInActive
-            ? 'bg-white text-violet-700 shadow-sm shadow-violet-900/10'
-            : 'text-violet-500/80 hover:bg-white/50 hover:text-violet-700'
+            ? 'bg-violet-500/20 text-violet-200 shadow-sm shadow-violet-950/20'
+            : 'text-violet-300/70 hover:bg-violet-500/10 hover:text-violet-200'
         }`}
       >
         Sign In
@@ -30,8 +30,8 @@ export default function AuthToggle({ active }) {
         aria-current={!signInActive ? 'page' : undefined}
         className={`${base} ${
           !signInActive
-            ? 'bg-white text-violet-700 shadow-sm shadow-violet-900/10'
-            : 'text-violet-500/80 hover:bg-white/50 hover:text-violet-700'
+            ? 'bg-violet-500/20 text-violet-200 shadow-sm shadow-violet-950/20'
+            : 'text-violet-300/70 hover:bg-violet-500/10 hover:text-violet-200'
         }`}
       >
         Register

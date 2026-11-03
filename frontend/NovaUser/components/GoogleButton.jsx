@@ -4,7 +4,7 @@ export default function GoogleButton({ label, onClick, disabled = false }) {
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="inline-flex w-full items-center justify-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-violet-200 hover:bg-violet-50/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
+      className="inline-flex w-full items-center justify-center gap-3 rounded-xl border border-white/10 bg-slate-900/80 px-4 py-3 text-sm font-semibold text-slate-200 shadow-sm transition hover:border-violet-500/40 hover:bg-violet-500/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
     >
       <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" aria-hidden="true">
         <path

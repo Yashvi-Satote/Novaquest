@@ -191,7 +191,8 @@ try {
   assert.equal(afterRegister.body.user.email_verified, false);
   const visibleCookies = await page.evaluate(() => document.cookie);
   assert.ok(!visibleCookies.includes('novauser_token'), 'JWT cookie must stay HTTP-only');
-  await waitForText('not verified yet');
+  await page.goto(`${BASE}/settings#account`, { waitUntil: 'domcontentloaded' });
+  await waitForText('Not verified');
   await page.screenshot({ path: join(SHOTS, 'authenticated-settings.png'), fullPage: true });
 
   console.log('6. Persisted session survives a full refresh');
@@ -207,9 +208,8 @@ try {
   await page.screenshot({ path: join(SHOTS, 'app-after-refresh.png'), fullPage: true });
 
   console.log('7. Logout clears the session and returns to Sign Up');
-  // The NovaQuest main menu is full-screen and has no shared header, so open a
-  // section with the header before using its sign-out control.
-  await page.goto(`${BASE}/settings`, { waitUntil: 'domcontentloaded' });
+  // Sign out now lives in the Settings Account section.
+  await page.goto(`${BASE}/settings#account`, { waitUntil: 'domcontentloaded' });
   await waitForPath('/settings');
   await page.waitForSelector('button[aria-label="Sign out of NovaUser"]');
   await page.click('button[aria-label="Sign out of NovaUser"]');
@@ -249,6 +249,9 @@ try {
   await waitForText('NovaQuest');
 
   console.log('12. Logout then protected URL redirects back to Sign Up');
+  await page.goto(`${BASE}/settings#account`, { waitUntil: 'domcontentloaded' });
+  await waitForPath('/settings');
+  await page.waitForSelector('button[aria-label="Sign out of NovaUser"]');
   await page.click('button[aria-label="Sign out of NovaUser"]');
   await waitForPath('/');
   await page.goto(`${BASE}/novabase`, { waitUntil: 'domcontentloaded' });

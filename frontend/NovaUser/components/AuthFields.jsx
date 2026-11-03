@@ -6,13 +6,13 @@ function describedBy(id, error, hint) {
 }
 
 const inputBase =
-  'w-full rounded-xl border bg-[#fbfaff] py-3 pl-11 pr-4 text-sm text-slate-800 shadow-sm outline-none transition placeholder:text-slate-400 focus:bg-white focus:ring-4 disabled:cursor-not-allowed disabled:opacity-60';
+  'w-full rounded-xl border bg-slate-900/80 py-3 pl-11 pr-4 text-sm text-slate-100 shadow-sm outline-none transition placeholder:text-slate-400 focus:bg-slate-900 focus:ring-4 disabled:cursor-not-allowed disabled:opacity-60';
 
 function inputClasses(error) {
   return `${inputBase} ${
     error
-      ? 'border-rose-300 focus:border-rose-400 focus:ring-rose-100'
-      : 'border-slate-200 hover:border-violet-200 focus:border-violet-400 focus:ring-violet-100'
+      ? 'border-rose-500/50 focus:border-rose-400 focus:ring-rose-500/20'
+      : 'border-white/10 hover:border-violet-500/50 focus:border-violet-400 focus:ring-violet-500/20'
   }`;
 }
 
@@ -27,7 +27,7 @@ export function TextField({
 }) {
   return (
     <div>
-      <label htmlFor={id} className="mb-1.5 block text-xs font-semibold text-slate-700">
+      <label htmlFor={id} className="mb-1.5 block text-xs font-semibold text-slate-300">
         {label}
       </label>
       <div className="relative">
@@ -47,12 +47,12 @@ export function TextField({
         />
       </div>
       {error ? (
-        <p id={`${id}-error`} className="mt-1.5 flex items-start gap-1.5 text-xs font-medium text-rose-600">
+        <p id={`${id}-error`} className="mt-1.5 flex items-start gap-1.5 text-xs font-medium text-rose-400">
           <AlertCircle className="mt-px h-3.5 w-3.5 shrink-0" aria-hidden="true" />
           {error}
         </p>
       ) : hint ? (
-        <p id={`${id}-hint`} className="mt-1.5 text-[11px] text-slate-500">
+        <p id={`${id}-hint`} className="mt-1.5 text-[11px] text-slate-400">
           {hint}
         </p>
       ) : null}
@@ -74,7 +74,7 @@ export function PasswordField({
 
   return (
     <div>
-      <label htmlFor={id} className="mb-1.5 block text-xs font-semibold text-slate-700">
+      <label htmlFor={id} className="mb-1.5 block text-xs font-semibold text-slate-300">
         {label}
       </label>
       <div className="relative">
@@ -99,7 +99,7 @@ export function PasswordField({
           onClick={() => setVisible((current) => !current)}
           aria-label={visible ? 'Hide password' : 'Show password'}
           aria-pressed={visible}
-          className="absolute right-1.5 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-lg text-slate-400 transition hover:bg-violet-50 hover:text-violet-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500"
+          className="absolute right-1.5 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-lg text-slate-400 transition hover:bg-violet-500/10 hover:text-violet-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500"
         >
           {visible ? (
             <EyeOff className="h-4 w-4" aria-hidden="true" />
@@ -109,12 +109,12 @@ export function PasswordField({
         </button>
       </div>
       {error ? (
-        <p id={`${id}-error`} className="mt-1.5 flex items-start gap-1.5 text-xs font-medium text-rose-600">
+        <p id={`${id}-error`} className="mt-1.5 flex items-start gap-1.5 text-xs font-medium text-rose-400">
           <AlertCircle className="mt-px h-3.5 w-3.5 shrink-0" aria-hidden="true" />
           {error}
         </p>
       ) : hint ? (
-        <p id={`${id}-hint`} className="mt-1.5 text-[11px] text-slate-500">
+        <p id={`${id}-hint`} className="mt-1.5 text-[11px] text-slate-400">
           {hint}
         </p>
       ) : null}
@@ -124,9 +124,9 @@ export function PasswordField({
 
 export function FormAlert({ tone = 'error', children }) {
   const styles = {
-    error: 'border-rose-200 bg-rose-50 text-rose-700',
-    success: 'border-emerald-200 bg-emerald-50 text-emerald-700',
-    info: 'border-violet-200 bg-violet-50 text-violet-700',
+    error: 'border-rose-500/30 bg-rose-500/10 text-rose-300',
+    success: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300',
+    info: 'border-violet-500/30 bg-violet-500/10 text-violet-300',
   };
   return (
     <div
@@ -159,12 +159,12 @@ export function PasswordRequirements({ password = '' }) {
           <li
             key={requirement.key}
             className={`flex items-center gap-1.5 text-[11px] font-medium ${
-              met ? 'text-emerald-600' : 'text-slate-500'
+              met ? 'text-emerald-400' : 'text-slate-400'
             }`}
           >
             <span
               className={`flex h-3.5 w-3.5 items-center justify-center rounded-full ${
-                met ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-400'
+                met ? 'bg-emerald-500/15 text-emerald-300' : 'bg-slate-800 text-slate-500'
               }`}
               aria-hidden="true"
             >
