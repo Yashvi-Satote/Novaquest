@@ -158,6 +158,7 @@ def create_schema() -> None:
     """Create the database (if needed), all tables, and incremental migrations."""
 
     from . import models  # noqa: F401  (register metadata)
+    from .settings import models as settings_models  # noqa: F401  (register metadata)
 
     ensure_database()
     try:

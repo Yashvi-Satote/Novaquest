@@ -13,6 +13,7 @@ from .database import DatabaseUnavailable, create_schema
 logger = logging.getLogger(__name__)
 
 _BLUEPRINT_NAME = "novauser_auth"
+_SETTINGS_BLUEPRINT_NAME = "novauser_settings"
 
 
 def _cors(app: Flask) -> None:
@@ -23,17 +24,21 @@ def _cors(app: Flask) -> None:
         supports_credentials=True,
         allow_headers=["Content-Type", "Authorization", "Accept"],
         expose_headers=["Content-Type"],
-        methods=["GET", "POST", "OPTIONS"],
+        methods=["GET", "POST", "PUT", "OPTIONS"],
         max_age=600,
     )
 
 
 def _register_blueprint(app: Flask) -> None:
-    if _BLUEPRINT_NAME in app.blueprints:
-        return
-    from .routes import bp
+    if _BLUEPRINT_NAME not in app.blueprints:
+        from .routes import bp
 
-    app.register_blueprint(bp)
+        app.register_blueprint(bp)
+
+    if _SETTINGS_BLUEPRINT_NAME not in app.blueprints:
+        from .settings.routes import bp as settings_bp
+
+        app.register_blueprint(settings_bp)
 
 
 def _register_error_handlers(app: Flask) -> None:

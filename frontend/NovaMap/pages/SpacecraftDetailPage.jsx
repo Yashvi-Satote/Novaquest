@@ -6,7 +6,7 @@ import * as TWEEN from '@tweenjs/tween.js';
 import { resolveSpacecraft } from '../components/solar/spacecraftResolver.js';
 import { loadSpacecraft3DModel } from '../components/solar/spacecraftModelRegistry.js';
 import { fetchHardwareDetail } from '../../Shared/services/api.js';
-import Header from '../../Shared/components/Header.jsx';
+import AppNavbar from '../../Shared/components/layout/AppNavbar.jsx';
 import {
   ArrowLeft,
   RotateCcw,
@@ -26,7 +26,7 @@ import {
   AlertTriangle
 } from 'lucide-react';
 
-export default function SpacecraftDetailPage({ theme, onToggleTheme }) {
+export default function SpacecraftDetailPage() {
   const { slug } = useParams();
   const navigate = useNavigate();
   const canvasContainerRef = useRef(null);
@@ -38,7 +38,6 @@ export default function SpacecraftDetailPage({ theme, onToggleTheme }) {
   const [isLoadingModel, setIsLoadingModel] = useState(true);
   const [modelLoadError, setModelLoadError] = useState(null);
   const [activeComponentId, setActiveComponentId] = useState(null);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Three.js scene refs
   const sceneRef = useRef(null);
@@ -255,14 +254,9 @@ export default function SpacecraftDetailPage({ theme, onToggleTheme }) {
   };
 
   return (
-    <div className={`min-h-screen ${theme === 'dark' ? 'dark' : ''} bg-[#040816] text-slate-100 flex flex-col font-sans select-none`}>
-      {/* Universal Header */}
-      <Header
-        theme={theme}
-        onToggleTheme={onToggleTheme}
-        mobileMenuOpen={mobileMenuOpen}
-        setMobileMenuOpen={setMobileMenuOpen}
-      />
+    <div className="min-h-screen bg-[#040816] text-slate-100 flex flex-col font-sans select-none">
+      {/* Shared application navigation */}
+      <AppNavbar />
 
       {/* Main Viewport Container */}
       <main className="flex-1 flex flex-col lg:flex-row overflow-hidden relative">

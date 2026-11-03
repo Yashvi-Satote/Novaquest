@@ -52,33 +52,33 @@ export default function LegalPage({ kind = 'terms' }) {
       <div className="mb-5 flex items-center gap-3">
         <NovaUserMark className="h-10 w-10" />
         <div>
-          <p className="text-sm font-bold text-slate-900">NovaUser</p>
+          <p className="text-sm font-bold text-white">NovaUser</p>
           <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-violet-500">Legal</p>
         </div>
       </div>
 
       <div className="flex items-start gap-3">
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-100 text-violet-600">
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-500/20 text-violet-300">
           <Icon className="h-5 w-5" aria-hidden="true" />
         </span>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">{content.title}</h1>
-          <p className="mt-1 text-sm text-slate-500">{content.intro}</p>
+          <h1 className="text-2xl font-bold tracking-tight text-white">{content.title}</h1>
+          <p className="mt-1 text-sm text-slate-400">{content.intro}</p>
         </div>
       </div>
 
       <div className="mt-5 space-y-4">
         {content.sections.map((section) => (
-          <section key={section.heading} className="rounded-2xl border border-slate-200 bg-white p-4">
-            <h2 className="text-sm font-bold text-slate-900">{section.heading}</h2>
-            <p className="mt-1.5 text-xs leading-relaxed text-slate-600">{section.body}</p>
+          <section key={section.heading} className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
+            <h2 className="text-sm font-bold text-white">{section.heading}</h2>
+            <p className="mt-1.5 text-xs leading-relaxed text-slate-300">{section.body}</p>
           </section>
         ))}
       </div>
 
       <Link
         to="/novauser/signin"
-        className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-violet-600 underline-offset-2 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2"
+        className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-violet-400 underline-offset-2 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2"
       >
         <ArrowLeft className="h-4 w-4" aria-hidden="true" />
         Back to sign in

@@ -113,6 +113,42 @@ export async function signInWithGoogle() {
   return { user: credential.user, verificationSent: false };
 }
 
+// TEMPORARY demo access: a shared example account for the sign-in page button.
+// Remove this helper (and the button that calls it) before production.
+const EXAMPLE_USER = {
+  fullName: 'Example User',
+  email: 'example.user@cosmictimekeepers.app',
+  password: 'ExampleUser9!',
+};
+
+export async function signInAsExampleUser() {
+  const firebaseAuth = requireAuth();
+  await ensureAuthPersistence();
+
+  let credential;
+  try {
+    credential = await signInWithEmailAndPassword(
+      firebaseAuth,
+      EXAMPLE_USER.email,
+      EXAMPLE_USER.password,
+    );
+  } catch (error) {
+    const missingAccount =
+      error?.code === 'auth/user-not-found' || error?.code === 'auth/invalid-credential';
+    if (!missingAccount) throw error;
+
+    credential = await createUserWithEmailAndPassword(
+      firebaseAuth,
+      EXAMPLE_USER.email,
+      EXAMPLE_USER.password,
+    );
+    await updateProfile(credential.user, { displayName: EXAMPLE_USER.fullName });
+    await credential.user.getIdToken(true);
+  }
+
+  return { user: credential.user, verificationSent: false };
+}
+
 export async function sendPasswordReset(email) {
   const firebaseAuth = requireAuth();
   await ensureAuthPersistence();
