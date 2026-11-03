@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { fetchHardwareDetail } from '../../Shared/services/api';
-import Header from '../../Shared/components/Header';
+import AppNavbar from '../../Shared/components/layout/AppNavbar';
 import ImageGallery from '../components/ImageGallery';
 import ImageModal from '../components/ImageModal';
 import { 
@@ -25,7 +25,7 @@ import {
   Tag,
 } from 'lucide-react';
 
-export default function HardwareDetailPage({ theme, onToggleTheme }) {
+export default function HardwareDetailPage() {
   const { slug } = useParams();
   const navigate = useNavigate();
 
@@ -130,9 +130,9 @@ export default function HardwareDetailPage({ theme, onToggleTheme }) {
   const officialUrl = hardware?.official_url || verifiedSources[0]?.source_url || null;
 
   return (
-    <div className={`min-h-screen ${theme === 'dark' ? 'dark' : ''} bg-slate-50 dark:bg-[#070b14] space-bg flex flex-col font-sans text-slate-800 dark:text-slate-100 transition-colors duration-200`}>
+    <div className="min-h-screen bg-[#070b14] space-bg flex flex-col font-sans text-slate-100">
       
-      <Header theme={theme} onToggleTheme={onToggleTheme} />
+      <AppNavbar />
 
       <main className="flex-1 w-full px-4 sm:px-6 lg:px-8 py-6 max-w-7xl mx-auto">
         <div className="mb-6 flex items-center justify-between gap-4">

@@ -253,7 +253,7 @@ export default function ProloguePage() {
             <div className="pointer-events-auto flex items-center gap-3 font-mono">
               <button
                 type="button"
-                onClick={() => navigate('/')}
+                onClick={() => navigate('/app')}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-black/60 hover:bg-black/90 border border-white/10 text-xs text-slate-300 hover:text-white transition-colors shadow-md"
               >
                 <ArrowLeft className="w-3.5 h-3.5" />

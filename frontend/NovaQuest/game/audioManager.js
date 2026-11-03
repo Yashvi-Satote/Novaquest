@@ -4,7 +4,7 @@
  * without relying on external MP3 downloads.
  */
 
-import { getSettings } from './saveManager';
+import { getSettings } from '../../NovaUser/settings/store/settingsStore';
 
 class AudioManager {
   constructor() {
@@ -40,10 +40,15 @@ class AudioManager {
     return { master, sfx, music };
   }
 
+  uiSoundsEnabled() {
+    return getSettings().audio.uiSoundsEnabled !== false;
+  }
+
   /**
    * Hover sound: Subtle, high-tech electronic blip
    */
   playHover() {
+    if (!this.uiSoundsEnabled()) return;
     const ctx = this.ensureContext();
     if (!ctx) return;
     const { sfx } = this.getVolumes();
@@ -73,6 +78,7 @@ class AudioManager {
    * Click sound: Crisp resonant sci-fi confirm chirp
    */
   playClick() {
+    if (!this.uiSoundsEnabled()) return;
     const ctx = this.ensureContext();
     if (!ctx) return;
     const { sfx } = this.getVolumes();
@@ -102,6 +108,7 @@ class AudioManager {
    * Start Game: Rising resonant sweep with sub-bass pulse
    */
   playStartGame() {
+    if (!this.uiSoundsEnabled()) return;
     const ctx = this.ensureContext();
     if (!ctx) return;
     const { sfx } = this.getVolumes();
@@ -155,6 +162,8 @@ class AudioManager {
    */
   startAmbience() {
     if (this.isAmbiencePlaying) return;
+    const settings = getSettings();
+    if (settings.audio.muted || settings.audio.ambienceEnabled === false) return;
     const ctx = this.ensureContext();
     if (!ctx) return;
 
@@ -211,8 +220,31 @@ class AudioManager {
 
   updateAmbienceVolume() {
     if (!this.isAmbiencePlaying || !this.ambienceGain || !this.ctx) return;
-    const { music } = this.getVolumes();
+    const settings = getSettings();
+    const { music } =
+      settings.audio.muted || settings.audio.ambienceEnabled === false
+        ? { music: 0 }
+        : this.getVolumes();
     this.ambienceGain.gain.setValueAtTime(music * 0.12, this.ctx.currentTime);
+  }
+
+  /**
+   * Apply a settings snapshot to the running audio engine.
+   *
+   * Called after the Settings page changes audio values so the ambience starts,
+   * stops or changes volume without requiring a reload.
+   */
+  applySettings(settings = getSettings()) {
+    const audioSettings = settings?.audio || {};
+    if (audioSettings.muted || audioSettings.ambienceEnabled === false) {
+      this.stopAmbience();
+      return;
+    }
+    if (this.isAmbiencePlaying) {
+      this.updateAmbienceVolume();
+    } else {
+      this.startAmbience();
+    }
   }
 }
 
