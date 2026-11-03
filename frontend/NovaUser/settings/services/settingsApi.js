@@ -6,6 +6,7 @@
  */
 
 const API_BASE = '/api/novauser/settings';
+const REQUEST_TIMEOUT_MS = 10000;
 
 export class SettingsApiError extends Error {
   constructor(message, { code = 'request_failed', status = 0, fields = {} } = {}) {
@@ -18,12 +19,15 @@ export class SettingsApiError extends Error {
 }
 
 async function request(path, { method = 'GET', body } = {}) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
   let response;
 
   try {
     response = await fetch(`${API_BASE}${path}`, {
       method,
       credentials: 'include',
+      signal: controller.signal,
       headers: body
         ? { 'Content-Type': 'application/json', Accept: 'application/json' }
         : { Accept: 'application/json' },
@@ -34,6 +38,8 @@ async function request(path, { method = 'GET', body } = {}) {
       'Unable to reach the settings service. Your changes are saved on this device.',
       { code: 'network_error' },
     );
+  } finally {
+    clearTimeout(timer);
   }
 
   let payload = null;
@@ -58,12 +64,26 @@ async function request(path, { method = 'GET', body } = {}) {
   return payload;
 }
 
+function toRecord(payload) {
+  return {
+    settings: payload?.settings ?? null,
+    updatedAt: payload?.updated_at ?? null,
+    exists: Boolean(payload?.exists ?? payload?.updated_at),
+  };
+}
+
+export async function fetchGameSettingsRecord() {
+  return toRecord(await request('/game'));
+}
+
+export async function saveGameSettingsRecord(settings) {
+  return toRecord(await request('/game', { method: 'PUT', body: { settings } }));
+}
+
 export async function fetchGameSettings() {
-  const payload = await request('/game');
-  return payload?.settings ?? null;
+  return (await fetchGameSettingsRecord()).settings;
 }
 
 export async function saveGameSettings(settings) {
-  const payload = await request('/game', { method: 'PUT', body: { settings } });
-  return payload?.settings ?? settings;
+  return (await saveGameSettingsRecord(settings)).settings ?? settings;
 }

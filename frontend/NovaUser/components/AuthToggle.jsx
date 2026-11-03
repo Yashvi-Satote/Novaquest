@@ -25,7 +25,7 @@ export default function AuthToggle({ active }) {
         Sign In
       </Link>
       <Link
-        to="/"
+        to="/novauser/register"
         state={location.state}
         aria-current={!signInActive ? 'page' : undefined}
         className={`${base} ${

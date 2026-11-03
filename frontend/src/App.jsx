@@ -13,7 +13,7 @@ import SignInPage from '../NovaUser/pages/SignInPage';
 import RegisterPage from '../NovaUser/pages/RegisterPage';
 import LegalPage from '../NovaUser/pages/LegalPage';
 import SettingsPage from '../NovaUser/settings/SettingsPage';
-import { GuestOnly, RequireAuth } from '../NovaUser/components/RouteGuards';
+import { GuestOnly } from '../NovaUser/components/RouteGuards';
 import { ArrowLeft, AlertCircle } from 'lucide-react';
 
 function NotFoundPage() {
@@ -50,19 +50,37 @@ function NotFoundPage() {
 export default function App() {
   // NovaQuest is dark-only. The `dark` class is set on <html> in index.html
   // so there is no theme state, toggle, or localStorage preference to manage.
-
-  const protect = (element) => <RequireAuth>{element}</RequireAuth>;
+  //
+  // Every application route is public. Signing in is optional and only adds
+  // account-backed settings and progress.
 
   return (
     <Routes>
-      {/* Authentication is the default entry point. */}
-      <Route path="/" element={<GuestOnly><RegisterPage /></GuestOnly>} />
-      <Route path="/register" element={<Navigate to="/" replace />} />
-      <Route path="/signup" element={<Navigate to="/" replace />} />
+      {/* The app opens directly on the NovaQuest hub for guests and members. */}
+      <Route path="/" element={<Navigate to="/app" replace />} />
+
+      {/* Optional NovaUser destinations. Nothing redirects here automatically. */}
+      <Route path="/register" element={<Navigate to="/novauser/register" replace />} />
+      <Route path="/signup" element={<Navigate to="/novauser/register" replace />} />
       <Route path="/novauser" element={<Navigate to="/novauser/signin" replace />} />
-      <Route path="/novauser/register" element={<GuestOnly><RegisterPage /></GuestOnly>} />
+      <Route path="/novauser/auth" element={<Navigate to="/novauser/signin" replace />} />
+      <Route
+        path="/novauser/register"
+        element={
+          <GuestOnly>
+            <RegisterPage />
+          </GuestOnly>
+        }
+      />
       <Route path="/novauser/signup" element={<Navigate to="/novauser/register" replace />} />
-      <Route path="/novauser/signin" element={<GuestOnly><SignInPage /></GuestOnly>} />
+      <Route
+        path="/novauser/signin"
+        element={
+          <GuestOnly>
+            <SignInPage />
+          </GuestOnly>
+        }
+      />
       <Route path="/novauser/login" element={<Navigate to="/novauser/signin" replace />} />
       <Route path="/login" element={<Navigate to="/novauser/signin" replace />} />
 
@@ -70,20 +88,20 @@ export default function App() {
       <Route path="/novauser/terms" element={<LegalPage kind="terms" />} />
       <Route path="/novauser/privacy" element={<LegalPage kind="privacy" />} />
 
-      {/* Every application route requires a valid NovaUser session. */}
-      <Route path="/app" element={protect(<MainMenuPage />)} />
-      <Route path="/prologue" element={protect(<ProloguePage />)} />
-      <Route path="/play" element={protect(<GameArenaPage />)} />
-      <Route path="/mission-echo" element={protect(<MissionEchoPage />)} />
+      {/* Public application routes: guests have full access. */}
+      <Route path="/app" element={<MainMenuPage />} />
+      <Route path="/prologue" element={<ProloguePage />} />
+      <Route path="/play" element={<GameArenaPage />} />
+      <Route path="/mission-echo" element={<MissionEchoPage />} />
       <Route path="/stage-5" element={<Navigate to="/mission-echo" replace />} />
       <Route path="/novauser/account" element={<Navigate to="/settings#account" replace />} />
-      <Route path="/novamap" element={protect(<SolarSystemPage />)} />
+      <Route path="/novamap" element={<SolarSystemPage />} />
       <Route path="/solar-system" element={<Navigate to="/novamap" replace />} />
-      <Route path="/novabase" element={protect(<ExplorerPage />)} />
-      <Route path="/settings" element={protect(<SettingsPage />)} />
-      <Route path="/spacecraft/:slug" element={protect(<SpacecraftDetailPage />)} />
-      <Route path="/hardware/:slug" element={protect(<HardwareDetailPage />)} />
-      <Route path="*" element={protect(<NotFoundPage />)} />
+      <Route path="/novabase" element={<ExplorerPage />} />
+      <Route path="/settings" element={<SettingsPage />} />
+      <Route path="/spacecraft/:slug" element={<SpacecraftDetailPage />} />
+      <Route path="/hardware/:slug" element={<HardwareDetailPage />} />
+      <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );
 }

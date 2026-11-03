@@ -310,6 +310,18 @@ class FirebaseApiTests(unittest.TestCase):
         )
         self.assertEqual(self.client.get("/api/novauser/auth/me").status_code, 401)
 
+    def test_logout_is_idempotent_without_a_session(self):
+        first = self.client.post("/api/novauser/auth/logout")
+        second = self.client.post("/api/novauser/auth/logout")
+        self.assertEqual(first.status_code, 200, first.get_json())
+        self.assertEqual(second.status_code, 200, second.get_json())
+        self.assertEqual(second.get_json()["message"], "Signed out successfully.")
+
+    def test_logout_ignores_an_invalid_cookie(self):
+        self.client.set_cookie(self.settings.cookie_name, "not-a-valid-jwt")
+        response = self.client.post("/api/novauser/auth/logout")
+        self.assertEqual(response.status_code, 200, response.get_json())
+
     def test_expired_jwt_is_rejected(self):
         now = datetime.now(timezone.utc)
         payload = {
