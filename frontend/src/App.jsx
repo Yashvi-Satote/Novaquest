@@ -10,6 +10,11 @@ import MainMenuPage from '../NovaQuest/pages/MainMenuPage';
 import GameArenaPage from '../NovaQuest/pages/GameArenaPage';
 import ProloguePage from '../NovaQuest/pages/ProloguePage';
 import MissionEchoPage from '../NovaQuest/pages/MissionEchoPage';
+import SignInPage from '../NovaUser/pages/SignInPage';
+import RegisterPage from '../NovaUser/pages/RegisterPage';
+import AccountPage from '../NovaUser/pages/AccountPage';
+import LegalPage from '../NovaUser/pages/LegalPage';
+import { GuestOnly, RequireAuth } from '../NovaUser/components/RouteGuards';
 import { ArrowLeft, AlertCircle } from 'lucide-react';
 
 function NotFoundPage({ theme, onToggleTheme }) {
@@ -30,11 +35,11 @@ function NotFoundPage({ theme, onToggleTheme }) {
           </div>
           <div className="pt-2">
             <Link
-              to="/novabase"
+              to="/app"
               className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs sm:text-sm font-semibold shadow-md shadow-cyan-600/20 transition-all"
             >
               <ArrowLeft className="w-4 h-4" />
-              Return to Novabase
+              Return to NovaQuest
             </Link>
           </div>
         </div>
@@ -75,20 +80,39 @@ export default function App() {
     setTheme(prev => (prev === 'dark' ? 'light' : 'dark'));
   };
 
+  const protect = (element) => <RequireAuth>{element}</RequireAuth>;
+
   return (
     <Routes>
-      <Route path="/" element={<MainMenuPage theme={theme} onToggleTheme={handleToggleTheme} />} />
-      <Route path="/prologue" element={<ProloguePage />} />
-      <Route path="/play" element={<GameArenaPage theme={theme} onToggleTheme={handleToggleTheme} />} />
-      <Route path="/mission-echo" element={<MissionEchoPage />} />
+      {/* Authentication is the default entry point. */}
+      <Route path="/" element={<GuestOnly><RegisterPage /></GuestOnly>} />
+      <Route path="/register" element={<Navigate to="/" replace />} />
+      <Route path="/signup" element={<Navigate to="/" replace />} />
+      <Route path="/novauser" element={<Navigate to="/novauser/signin" replace />} />
+      <Route path="/novauser/register" element={<GuestOnly><RegisterPage /></GuestOnly>} />
+      <Route path="/novauser/signup" element={<Navigate to="/novauser/register" replace />} />
+      <Route path="/novauser/signin" element={<GuestOnly><SignInPage /></GuestOnly>} />
+      <Route path="/novauser/login" element={<Navigate to="/novauser/signin" replace />} />
+      <Route path="/login" element={<Navigate to="/novauser/signin" replace />} />
+
+      {/* Public legal documents linked from the auth screens. */}
+      <Route path="/novauser/terms" element={<LegalPage kind="terms" />} />
+      <Route path="/novauser/privacy" element={<LegalPage kind="privacy" />} />
+
+      {/* Every application route requires a valid NovaUser session. */}
+      <Route path="/app" element={protect(<MainMenuPage theme={theme} onToggleTheme={handleToggleTheme} />)} />
+      <Route path="/prologue" element={protect(<ProloguePage />)} />
+      <Route path="/play" element={protect(<GameArenaPage theme={theme} onToggleTheme={handleToggleTheme} />)} />
+      <Route path="/mission-echo" element={protect(<MissionEchoPage />)} />
       <Route path="/stage-5" element={<Navigate to="/mission-echo" replace />} />
-      <Route path="/novamap" element={<SolarSystemPage theme={theme} onToggleTheme={handleToggleTheme} />} />
+      <Route path="/novauser/account" element={protect(<AccountPage />)} />
+      <Route path="/novamap" element={protect(<SolarSystemPage theme={theme} onToggleTheme={handleToggleTheme} />)} />
       <Route path="/solar-system" element={<Navigate to="/novamap" replace />} />
-      <Route path="/novabase" element={<ExplorerPage theme={theme} onToggleTheme={handleToggleTheme} />} />
-      <Route path="/settings" element={<PlaceholderPage title="Settings" theme={theme} onToggleTheme={handleToggleTheme} />} />
-      <Route path="/spacecraft/:slug" element={<SpacecraftDetailPage theme={theme} onToggleTheme={handleToggleTheme} />} />
-      <Route path="/hardware/:slug" element={<HardwareDetailPage theme={theme} onToggleTheme={handleToggleTheme} />} />
-      <Route path="*" element={<NotFoundPage theme={theme} onToggleTheme={handleToggleTheme} />} />
+      <Route path="/novabase" element={protect(<ExplorerPage theme={theme} onToggleTheme={handleToggleTheme} />)} />
+      <Route path="/settings" element={protect(<PlaceholderPage title="Settings" theme={theme} onToggleTheme={handleToggleTheme} />)} />
+      <Route path="/spacecraft/:slug" element={protect(<SpacecraftDetailPage theme={theme} onToggleTheme={handleToggleTheme} />)} />
+      <Route path="/hardware/:slug" element={protect(<HardwareDetailPage theme={theme} onToggleTheme={handleToggleTheme} />)} />
+      <Route path="*" element={protect(<NotFoundPage theme={theme} onToggleTheme={handleToggleTheme} />)} />
     </Routes>
   );
 }

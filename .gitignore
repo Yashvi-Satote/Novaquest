@@ -67,3 +67,10 @@ __pycache__/
 .env
 .env.*
 !.env.example
+
+# Local portable PostgreSQL runtime (binaries, data, logs)
+backend/NovaUser/.pg/
+.tmp/
+
+# NovaUser browser-test artifacts
+frontend/NovaUser/tests/screenshots/
