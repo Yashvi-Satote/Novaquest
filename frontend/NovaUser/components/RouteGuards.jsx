@@ -1,9 +1,11 @@
 import { Loader2 } from 'lucide-react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/authContext';
+import { AUTH_STATUS } from '../services/authSession';
+import { normalizeRedirectTarget } from '../utils/redirect';
 import { NovaUserMark } from './AuthShell';
 
-export function FullPageAuthLoader({ label = 'Validating your session…' }) {
+export function AuthRouteLoader({ label = 'Checking your session…' }) {
   return (
     <div className="novauser-auth-bg flex min-h-screen flex-col items-center justify-center gap-4 px-6 text-center font-sans text-slate-100">
       <NovaUserMark />
@@ -12,54 +14,26 @@ export function FullPageAuthLoader({ label = 'Validating your session…' }) {
         {label}
       </div>
       <p className="max-w-xs text-xs text-violet-300/60">
-        Cosmic Timekeepers secures every route with your NovaUser session.
+        Already signed in? We are returning you to the app.
       </p>
     </div>
   );
 }
 
-export function normalizeRedirectTarget(from, fallback = '/app') {
-  if (typeof from === 'string' && from.startsWith('/') && !from.startsWith('//')) {
-    return from;
-  }
-  if (from && typeof from.pathname === 'string' && from.pathname.startsWith('/')) {
-    return `${from.pathname}${from.search || ''}${from.hash || ''}`;
-  }
-  return fallback;
-}
-
-/** Wrap authenticated application routes. */
-export function RequireAuth({ children }) {
-  const { status } = useAuth();
-  const location = useLocation();
-
-  if (status === 'loading') {
-    return <FullPageAuthLoader />;
-  }
-
-  if (status !== 'authenticated') {
-    return (
-      <Navigate
-        to="/"
-        replace
-        state={{ from: `${location.pathname}${location.search}${location.hash}` }}
-      />
-    );
-  }
-
-  return children;
-}
-
-/** Wrap auth pages: authenticated users skip straight into the application. */
+/**
+ * Auth pages stay optional destinations. Signed-in users who visit them are
+ * returned to the app, but the application routes themselves are never
+ * guarded. Guests are always allowed to browse the auth page.
+ */
 export function GuestOnly({ children }) {
   const { status } = useAuth();
   const location = useLocation();
 
-  if (status === 'loading') {
-    return <FullPageAuthLoader label="Checking your session…" />;
+  if (status === AUTH_STATUS.LOADING) {
+    return <AuthRouteLoader />;
   }
 
-  if (status === 'authenticated') {
+  if (status === AUTH_STATUS.AUTHENTICATED) {
     return <Navigate to={normalizeRedirectTarget(location.state?.from)} replace />;
   }
 

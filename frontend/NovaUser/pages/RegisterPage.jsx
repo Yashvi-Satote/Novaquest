@@ -4,11 +4,11 @@ import { ArrowRight, Loader2, Lock, Mail, User } from 'lucide-react';
 import AuthShell, { NovaUserMark } from '../components/AuthShell';
 import AuthToggle from '../components/AuthToggle';
 import GoogleButton from '../components/GoogleButton';
-import { normalizeRedirectTarget } from '../components/RouteGuards';
 import { FormAlert, PasswordField, PasswordRequirements, TextField } from '../components/AuthFields';
 import { useAuth } from '../context/authContext';
 import { AuthApiError } from '../services/authApi';
 import { friendlyFirebaseError } from '../services/firebase';
+import { getRedirectTarget } from '../utils/redirect';
 import { mapServerFieldErrors, validateRegistration } from '../utils/validation';
 
 const initialValues = { fullName: '', email: '', password: '' };
@@ -17,7 +17,7 @@ export default function RegisterPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { register, loginWithGoogle, authError } = useAuth();
-  const target = normalizeRedirectTarget(location.state?.from);
+  const target = getRedirectTarget(location);
   const [values, setValues] = useState(initialValues);
   const [errors, setErrors] = useState({});
   const [formError, setFormError] = useState('');
@@ -126,7 +126,8 @@ export default function RegisterPage() {
           Create account
         </h1>
         <p className="mt-1.5 max-w-xs text-sm leading-relaxed text-slate-400">
-          Join Cosmic Timekeepers and unlock NovaQuest, NovaMap and NovaBase in one account.
+          Create an optional account to sync NovaQuest, NovaMap and NovaBase progress across your
+          devices. You can keep exploring as a guest too.
         </p>
       </div>
 

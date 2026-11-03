@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { exchangeFirebaseToken, fetchCurrentUser, signOut as signOutRequest } from '../services/authApi';
+import { AUTH_STATUS, setAuthSession } from '../services/authSession';
 import {
   getIdToken,
   isFirebaseConfigured,
@@ -15,19 +16,28 @@ import {
 import { AuthContext } from './authContext';
 
 /**
- * Firebase is the source of truth for identity.  After Firebase authenticates
+ * Firebase is the source of truth for identity. After Firebase authenticates
  * the user, its ID token is exchanged for an HTTP-only NovaUser JWT cookie.
- * The JWT is never stored by the browser.
+ *
+ * Authentication is optional: the app renders immediately and treats a null
+ * user as a fully capable guest. A failed background check never logs the user
+ * out, shows an app-wide error, or retries in a loop.
  */
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [firebaseUser, setFirebaseUser] = useState(null);
-  const [status, setStatus] = useState('loading'); // loading | authenticated | anonymous
+  const [status, setStatus] = useState(AUTH_STATUS.LOADING);
   const [authError, setAuthError] = useState('');
   const mounted = useRef(true);
   const explicitAuth = useRef(false);
-  const hasSeenFirebaseUser = useRef(false);
   const exchanges = useRef(new Map());
+
+  const applyGuest = useCallback((message = '') => {
+    setUser(null);
+    setAuthSession(AUTH_STATUS.GUEST, null);
+    setStatus(AUTH_STATUS.GUEST);
+    setAuthError(message);
+  }, []);
 
   const establishSession = useCallback((fbUser, { forceRefresh = false } = {}) => {
     if (!fbUser) return Promise.reject(new Error('No Firebase user is signed in.'));
@@ -41,9 +51,10 @@ export function AuthProvider({ children }) {
       const token = await getIdToken(fbUser, forceRefresh);
       const data = await exchangeFirebaseToken(token);
       if (mounted.current) {
+        setAuthSession(AUTH_STATUS.AUTHENTICATED, data.user);
         setUser(data.user);
         setFirebaseUser(fbUser);
-        setStatus('authenticated');
+        setStatus(AUTH_STATUS.AUTHENTICATED);
         setAuthError('');
       }
       return data;
@@ -55,25 +66,22 @@ export function AuthProvider({ children }) {
     return promise;
   }, []);
 
-  const failSession = useCallback(async (error) => {
-    if (mounted.current) {
-      setUser(null);
-      setStatus('anonymous');
-      setAuthError(error?.message || 'Authentication failed. Please try again.');
-    }
-    // Never leave a half-authenticated Firebase user behind when the backend
-    // session could not be established.
-    await Promise.allSettled([signOutFirebase(), signOutRequest()]);
-  }, []);
+  const failSession = useCallback(
+    (error, { silent = false } = {}) => {
+      if (!mounted.current) return;
+      applyGuest(silent ? '' : error?.message || 'Authentication failed. Please try again.');
+      // Never call /auth/logout here: guests must not trigger logout requests,
+      // and a temporary backend outage must not destroy a valid Firebase login.
+    },
+    [applyGuest],
+  );
 
   useEffect(() => {
     mounted.current = true;
 
     if (!isFirebaseConfigured) {
-      setStatus('anonymous');
-      setAuthError(
-        'Firebase is not configured. Add the VITE_FIREBASE_* values to frontend/.env and rebuild.',
-      );
+      setFirebaseUser(null);
+      applyGuest('');
       return () => {
         mounted.current = false;
       };
@@ -84,33 +92,19 @@ export function AuthProvider({ children }) {
       setFirebaseUser(fbUser);
 
       if (!fbUser) {
-        // On the very first anonymous callback, clear any stale backend cookie.
-        // Later sign-outs are handled by logout()/failSession() so an in-flight
-        // sign-in cannot have its fresh cookie removed by an old callback.
-        if (!explicitAuth.current && !hasSeenFirebaseUser.current) {
-          try {
-            await signOutRequest();
-          } catch {
-            // Network failures should not prevent the local signed-out state.
-          }
-        }
-        if (!mounted.current) return;
-        setUser(null);
-        setStatus('anonymous');
+        if (!explicitAuth.current) applyGuest('');
         return;
       }
 
-      hasSeenFirebaseUser.current = true;
-
       // Explicit sign-in/register methods perform their own exchange so they
-      // can update the Firebase profile first and avoid duplicate exchanges.
+      // can surface validation errors on the auth page.
       if (explicitAuth.current) return;
 
-      setStatus('loading');
+      setStatus(AUTH_STATUS.LOADING);
       try {
         await establishSession(fbUser, { forceRefresh: true });
       } catch (error) {
-        await failSession(error);
+        if (mounted.current) failSession(error, { silent: true });
       }
     });
 
@@ -118,7 +112,7 @@ export function AuthProvider({ children }) {
       mounted.current = false;
       unsubscribe();
     };
-  }, [establishSession, failSession]);
+  }, [applyGuest, establishSession, failSession]);
 
   const login = useCallback(
     async (credentials) => {
@@ -129,7 +123,7 @@ export function AuthProvider({ children }) {
         const data = await establishSession(result.user, { forceRefresh: true });
         return { ...data, verificationSent: result.verificationSent };
       } catch (error) {
-        await failSession(error);
+        failSession(error);
         throw error;
       } finally {
         explicitAuth.current = false;
@@ -147,7 +141,7 @@ export function AuthProvider({ children }) {
         const data = await establishSession(result.user, { forceRefresh: true });
         return { ...data, verificationSent: result.verificationSent };
       } catch (error) {
-        await failSession(error);
+        failSession(error);
         throw error;
       } finally {
         explicitAuth.current = false;
@@ -164,7 +158,7 @@ export function AuthProvider({ children }) {
       const data = await establishSession(result.user, { forceRefresh: true });
       return data;
     } catch (error) {
-      await failSession(error);
+      failSession(error);
       throw error;
     } finally {
       explicitAuth.current = false;
@@ -179,7 +173,7 @@ export function AuthProvider({ children }) {
       const data = await establishSession(result.user, { forceRefresh: true });
       return data;
     } catch (error) {
-      await failSession(error);
+      failSession(error);
       throw error;
     } finally {
       explicitAuth.current = false;
@@ -187,17 +181,14 @@ export function AuthProvider({ children }) {
   }, [establishSession, failSession]);
 
   const logout = useCallback(async () => {
-    try {
-      await Promise.allSettled([signOutRequest(), signOutFirebase()]);
-    } finally {
-      if (mounted.current) {
-        setUser(null);
-        setFirebaseUser(null);
-        setStatus('anonymous');
-        setAuthError('');
-      }
-    }
-  }, []);
+    // This is the explicit, user-initiated sign out in Settings > Account.
+    // Drop local identity immediately so the UI is usable as a guest even if
+    // the backend is unreachable; clear the server cookie in the background.
+    setFirebaseUser(null);
+    applyGuest('');
+    await signOutFirebase().catch(() => {});
+    void signOutRequest().catch(() => {});
+  }, [applyGuest]);
 
   const resendVerificationEmail = useCallback(async () => {
     await sendVerificationEmailFor(firebaseUser);
@@ -215,6 +206,8 @@ export function AuthProvider({ children }) {
     return data;
   }, []);
 
+  const clearAuthError = useCallback(() => setAuthError(''), []);
+
   const value = useMemo(
     () => ({
       user,
@@ -229,7 +222,9 @@ export function AuthProvider({ children }) {
       resendVerificationEmail,
       refreshSession,
       refreshUserFromBackend,
-      isAuthenticated: status === 'authenticated',
+      clearAuthError,
+      isAuthenticated: status === AUTH_STATUS.AUTHENTICATED,
+      isGuest: status === AUTH_STATUS.GUEST,
       isFirebaseConfigured,
     }),
     [
@@ -245,6 +240,7 @@ export function AuthProvider({ children }) {
       resendVerificationEmail,
       refreshSession,
       refreshUserFromBackend,
+      clearAuthError,
     ],
   );
 
