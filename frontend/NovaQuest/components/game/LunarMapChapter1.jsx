@@ -141,17 +141,17 @@ export const JOURNEY_STAGES = [
     stepIndex: 5,
     id: 'recover_surveyor',
     name: 'Stage 6 — Recover Surveyor 1',
-    durationEst: 'Approx. 3 minutes',
-    zoneName: 'ZONE 6 · RECOVERY & EXTRACTION',
+    durationEst: 'Approx. 2 minutes',
+    zoneName: 'ZONE 6 · RECOVERY SITE',
     targetCoords: { x: 0, z: 0 },
-    waypointLabel: 'Surveyor 1 Recovery Rig',
-    objective: 'Player disconnects the fictional alien feed, secures the archive and prepares the spacecraft for recovery.',
-    narrative: 'With the mystery transmission identified, Arin returns to Surveyor 1 to disconnect the alien feed, lock the 11,240 historic frames into the archive vault, and brace the spacecraft on the extraction sled.',
-    instructions: 'Return to Surveyor 1 where the recovery team has deployed the heavy robotic rig. Sever the alien feed, lock the 11,240 historic frames into the Quantum Archive, and prep the spacecraft for recovery.',
+    waypointLabel: 'Surveyor 1 Recovery Site',
+    objective: 'Disconnect the unknown transmission without destroying the historic archive.',
+    narrative: 'Arin returns to Surveyor 1 where the structure remains connected through the alien conduit. Arin must stabilise the interface, isolate the anomalous feed while preserving the 11,240 frames, and activate the portable data-storage unit.',
+    instructions: '1. Use scanner [Q] to identify conduit connection point at Footpad 2. 2. Interact with Recovery Rig [E] to isolate anomalous transmission. 3. Activate portable data-storage unit [E] to secure archive.',
     commsCallout: {
-      callsign: 'VANCE-OPS',
-      speaker: 'Officer Leo Vance',
-      text: 'The alien conduit is vibrating! Return to Surveyor 1, sever the alien connection, lock all 11,240 frames into the vault, and prep the spacecraft for recovery.'
+      callsign: 'CHEN-SCIENCE',
+      speaker: 'Specialist Maya Chen',
+      text: 'Surveyor 1 is still tethered to the conduit! Scan the connection point to stabilise the interface, then isolate the transmission without corrupting the historical archive.'
     }
   },
   {
@@ -301,6 +301,20 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
   const interfaceActivationProgressRef = useRef(0);
   const isActivatingInterfaceRef = useRef(false);
   const interfaceActivationIntervalRef = useRef(null);
+
+  // Stage 6 — Recover Surveyor 1 State
+  const [stage6Steps, setStage6Steps] = useState({
+    stabilized: false, // Step 1: Scanner identifies conduit connection point
+    isolated: false,   // Step 2: Interface choice: Isolate transmission & preserve archive
+    secured: false     // Step 3: Activate portable data-storage unit
+  });
+  const stage6StepsRef = useRef({
+    stabilized: false,
+    isolated: false,
+    secured: false
+  });
+  const [showIsolateModal, setShowIsolateModal] = useState(false);
+  const [showRecoveryReport, setShowRecoveryReport] = useState(false);
 
   // Opening Cinematic & Pause State
   const [isOpeningCinematic, setIsOpeningCinematic] = useState(true);
@@ -554,6 +568,78 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
     }, 15500);
   };
 
+  // Stage 6 — Helper Functions
+  const completeStage6Step = (stepKey) => {
+    if (stage6StepsRef.current[stepKey]) return;
+    const updated = { ...stage6StepsRef.current, [stepKey]: true };
+    stage6StepsRef.current = updated;
+    setStage6Steps(updated);
+    audio.playInteract();
+
+    if (stepKey === 'stabilized') {
+      audio.playSurveyorScannerBeep();
+      setHudNotice('STEP 1 COMPLETE: Interface stabilised. Conduit connection point locked at Footpad 2.');
+      setActiveObjective('Step 2: Interact with Recovery Rig [E] to isolate anomalous transmission while preserving archive.');
+    } else if (stepKey === 'isolated') {
+      audio.playAnomalyHarmonic();
+      setHudNotice('STEP 2 COMPLETE: Transmission isolated. Conduit feed severed from Vidicon bus.');
+      setActiveObjective('Step 3: Activate the portable data-storage unit [E] to secure the archive.');
+    } else if (stepKey === 'secured') {
+      triggerRecoveryReportSequence();
+    }
+  };
+
+  const triggerRecoveryReportSequence = () => {
+    setShowRecoveryReport(true);
+    audio.playMissionEchoActivation();
+    setHudNotice('RECOVERY COMPLETED: Historic archive secured. Fragment coordinates recovered.');
+
+    // Scripted Dialogue Sequence
+    // 1. Maya: "The connection is isolated. We have the archive."
+    setActiveComms({
+      callsign: 'CHEN-SCIENCE',
+      speaker: 'Specialist Maya Chen',
+      text: "The connection is isolated. We have the archive."
+    });
+    audio.playRadioCommsChatter('chen');
+
+    // 2. Arin: "And the signal?" (at 3.8s)
+    setTimeout(() => {
+      setActiveComms({
+        callsign: 'RAO-COMMAND',
+        speaker: 'Captain Arin Rao',
+        text: "And the signal?"
+      });
+      audio.playEquipmentFeedback();
+    }, 3800);
+
+    // 3. Maya: "I recovered a fragment. It contains coordinates, but they don't match any location in our current mission database." (at 7.2s)
+    setTimeout(() => {
+      setActiveComms({
+        callsign: 'CHEN-SCIENCE',
+        speaker: 'Specialist Maya Chen',
+        text: "I recovered a fragment. It contains coordinates, but they don't match any location in our current mission database."
+      });
+      audio.playRadioCommsChatter('chen');
+    }, 7200);
+
+    // 4. Arin: "Send them to the command ship." (at 12.0s)
+    setTimeout(() => {
+      setActiveComms({
+        callsign: 'RAO-COMMAND',
+        speaker: 'Captain Arin Rao',
+        text: "Send them to the command ship."
+      });
+      audio.playEquipmentFeedback();
+    }, 12000);
+
+    // 5. Advance to Stage 7 (at 16.0s)
+    setTimeout(() => {
+      advanceJourneyStage(6);
+      setActiveObjective('Approach the Extraction Sled to review coordinates and conclude Chapter 1.');
+    }, 16000);
+  };
+
   const startInteractiveScan = (target, key) => {
     if (isScanningActiveRef.current) return;
     setIsScanningActive(true);
@@ -702,6 +788,17 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
     if (journeyStageIndex === 2 || hasSignalTracker) {
       setHudNotice(`SIGNAL TRACKER: ${scannerReadingRef.current.strength}% [${scannerReadingRef.current.tier}] · Direction: ${scannerReadingRef.current.direction}`);
     }
+
+    // Stage 6 Step 1: Scanner identifies and stabilises conduit connection point at Footpad 2
+    if (journeyStageIndex === 5 && !stage6StepsRef.current.stabilized) {
+      if ((nearInteractableRef.current && (
+        nearInteractableRef.current.id === 'poi_conduit_coupling' ||
+        nearInteractableRef.current.id === 'poi_recovery_rig' ||
+        nearInteractableRef.current.id.startsWith('surveyor_')
+      )) || distanceToSurveyor < 18) {
+        completeStage6Step('stabilized');
+      }
+    }
   };
 
   const triggerInvestigation = () => {
@@ -761,6 +858,24 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
         completeStage4Objective('inspectedConduit');
         audio.playAnomalyHarmonic();
         setInvestigateTarget(nearInteractableRef.current);
+      } else if (id === 'poi_conduit_coupling') {
+        if (journeyStageIndex === 5 && !stage6StepsRef.current.stabilized) {
+          completeStage6Step('stabilized');
+        } else {
+          setInvestigateTarget(nearInteractableRef.current);
+        }
+      } else if (id === 'poi_recovery_rig') {
+        if (journeyStageIndex === 5 && stage6StepsRef.current.stabilized && !stage6StepsRef.current.isolated) {
+          setShowIsolateModal(true);
+        } else {
+          setInvestigateTarget(nearInteractableRef.current);
+        }
+      } else if (id === 'poi_quantum_storage_unit') {
+        if (journeyStageIndex === 5 && stage6StepsRef.current.isolated && !stage6StepsRef.current.secured) {
+          completeStage6Step('secured');
+        } else {
+          setInvestigateTarget(nearInteractableRef.current);
+        }
       } else if (id === 'poi_alien_structure' || id === 'poi_data_conduit') {
         audio.playAnomalyHarmonic();
         setInvestigateTarget(nearInteractableRef.current);
@@ -4834,40 +4949,75 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
 
       // ================= ZONE 6: RECOVERY AND EXTRACTION AREA =================
       {
+        id: 'poi_conduit_coupling',
+        title: 'Alien Conduit Connection Coupling',
+        shortName: 'Conduit Coupling',
+        position: new THREE.Vector3(0.8, surveyorTerrainY + 0.5, 0.4),
+        radius: 4.2,
+        sector: 'Zone 6 · Surveyor 1 Footpad 2',
+        artifactAge: 'Alien Data Conduit Terminus',
+        integrity: 'Active Conduit Link',
+        telemetryStatus: 'Point Scanner [Q] to Stabilise Interface',
+        image: '/images/moon_close_up_telescope.jpg',
+        description: 'The narrow alien conduit locks directly onto Surveyor 1\'s footpad and telemetry bus. Use your scanner [Q] to identify and stabilise the connection point.',
+        readings: {
+          'Coupling Status': 'Locked on Vidicon Signal Bus',
+          'Carrier Frequency': '432.06 Hz Continuous',
+          'Action Required': 'Scan [Q] to Stabilise Connection'
+        },
+        historicalFacts: [
+          'Conduit Attachment: The conduit tether siphons signal frames directly before transmitter amplification.',
+          'Isolation Safety: Stabilising the interface prevents power surges from wiping the magnetic drum storage.'
+        ],
+        officerNote: 'The conduit coupling is right here at footpad 2. Scanner lock required to stabilise before isolation.'
+      },
+      {
         id: 'poi_recovery_rig',
         title: 'Artemis/Aegis Robotic Recovery Rig',
+        shortName: 'Recovery Rig',
         position: new THREE.Vector3(1.8, surveyorTerrainY + 1.8, 0.5),
         radius: 5.2,
         sector: 'Zone 6 · Surveyor 1 Recovery Site',
         artifactAge: 'Current Expedition (2126)',
         integrity: '100% Operational',
-        telemetryStatus: 'Surveyor 1 Braced & Stabilized',
-        description: 'Hydraulic carbon-fiber gantry arms deployed by Leo Vance to brace Surveyor 1. The dark alien conduit has powered down, leaving the historic lander secured for NASA preservation.',
+        telemetryStatus: 'Interact [E] to Isolate Transmission',
+        image: '/images/moon_close_up_telescope.jpg',
+        description: 'Hydraulic carbon-fiber gantry arms deployed to brace Surveyor 1. Interact with the console to isolate the anomalous feed while preserving the 11,240-frame historical archive.',
         readings: {
           'Stabilizer Load': '294 kg Neutral Support',
-          'Alien Conduit State': 'Dormant (0.0 V Residual)',
-          'Structural Integrity': '100% Protected',
+          'Alien Conduit State': 'Ready for Feed Isolation',
+          'Historic Archive': '11,240 Frames Preserved',
           'Heritage Tag': 'NASA Permanent Historic Monument'
         },
-        officerNote: 'The recovery rig is locked in place. Surveyor 1 survived 160 years of cosmic vacuum, and now its place in history is permanently protected.'
+        historicalFacts: [
+          'Preservation Protocol: Disconnecting the alien feed cleanly leaves Surveyor 1 structurally protected for transport.',
+          'Heritage Safeguard: Preserves 100% of historical optical telemetry.'
+        ],
+        officerNote: 'Interact with the interface [E] to isolate the anomalous feed while preserving the archive.'
       },
       {
         id: 'poi_quantum_storage_unit',
         title: 'Quantum Archive Vault (Q-SSD)',
+        shortName: 'Quantum Vault',
         position: new THREE.Vector3(-1.2, surveyorTerrainY + 1.6, -1.0),
         radius: 4.2,
         sector: 'Zone 6 · Surveyor 1 Recovery Site',
         artifactAge: 'Current Expedition (2126)',
-        integrity: '100% Data Transfer Complete',
-        telemetryStatus: '11,240 Frames Archived',
-        description: 'Radiation-hardened solid-state quantum vault clamped to the lander\'s mast. Successfully captured and archived all 11,240 historic frames and decoded signal packets.',
+        integrity: '100% Data Transfer Ready',
+        telemetryStatus: 'Activate Unit [E] to Secure Archive',
+        image: '/images/moon_close_up_telescope.jpg',
+        description: 'Radiation-hardened portable data-storage unit clamped to the lander\'s mast. Activate it to lock the 11,240 historic frames and extract the recovered mystery coordinates.',
         readings: {
           'Archive Download': '11,240 Frames (100% Verified)',
-          'Harmonic Signal': 'Decrypted & Extracted',
+          'Unknown Signal': 'Fragment Recovered (Encrypted Vector)',
           'Orbital Downlink': 'Beamed to Carrier Aegis',
-          'Status': 'Vault Sealed'
+          'Status': 'Press [E] to Secure'
         },
-        officerNote: 'Every scan line, every pixel humanity transmitted in 1966 is now safe in this vault—along with the decoded precursor signal.'
+        historicalFacts: [
+          'Cryo-Optical Storage: Solid-state quantum drive retains petabytes of mission logs under extreme thermal cycling.',
+          'Coordinate Isolation: The alien signal fragment is secured separately from historical NASA archives.'
+        ],
+        officerNote: 'Activate the portable data-storage unit [E] to permanently secure the archive and signal fragment.'
       },
       {
         id: 'poi_extraction_pallet',
@@ -4981,6 +5131,15 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
 
       // Scanner Trigger [Q] (Primary) and [F] (Alternate)
       if (code === 'KeyQ' || code === 'KeyF') {
+        if (journeyStageIndex === 5 && !stage6StepsRef.current.stabilized) {
+          if ((nearInteractableRef.current && (
+            nearInteractableRef.current.id === 'poi_conduit_coupling' ||
+            nearInteractableRef.current.id === 'poi_recovery_rig' ||
+            nearInteractableRef.current.id.startsWith('surveyor_')
+          )) || distanceToSurveyor < 18) {
+            completeStage6Step('stabilized');
+          }
+        }
         if (nearInteractableRef.current && (nearInteractableRef.current.id === 'poi_exposed_structure' || nearInteractableRef.current.id === 'poi_alien_structure')) {
           completeStage4Objective('scannedStructure');
           audio.playSurveyorScannerBeep();
@@ -4999,6 +5158,20 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
 
       // Interaction Trigger [E]
       if (code === 'KeyE') {
+        if (journeyStageIndex === 5) {
+          if (nearInteractableRef.current?.id === 'poi_conduit_coupling' && !stage6StepsRef.current.stabilized) {
+            completeStage6Step('stabilized');
+            return;
+          }
+          if (nearInteractableRef.current?.id === 'poi_recovery_rig' && stage6StepsRef.current.stabilized && !stage6StepsRef.current.isolated) {
+            setShowIsolateModal(true);
+            return;
+          }
+          if (nearInteractableRef.current?.id === 'poi_quantum_storage_unit' && stage6StepsRef.current.isolated && !stage6StepsRef.current.secured) {
+            completeStage6Step('secured');
+            return;
+          }
+        }
         if (nearInteractableRef.current && (nearInteractableRef.current.id === 'poi_central_interface' || nearInteractableRef.current.id === 'poi_scanning_panel')) {
           if (!stage4ObjectivesRef.current.activatedInterface) {
             startInterfaceActivation();
@@ -5420,7 +5593,7 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
       }
 
       // Dynamic Zone 4 & 6 state responsiveness (lighting & conduit)
-      if (isMissionEchoCompletedRef.current) {
+      if (stage6StepsRef.current.isolated) {
         if (alienGlowLight) alienGlowLight.intensity = 0.35;
         if (energyBeam) energyBeam.visible = false;
         if (conduitMat) {
@@ -5587,6 +5760,20 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
           } else {
             targetX = -77.2;
             targetZ = -53.2; // Central Alien Interface Console
+          }
+        } else if (journeyStageIndex === 5) {
+          if (!stage6StepsRef.current.stabilized) {
+            targetX = 0.8;
+            targetZ = 0.4; // Footpad 2 Conduit Coupling
+          } else if (!stage6StepsRef.current.isolated) {
+            targetX = 1.8;
+            targetZ = 0.5; // Interface / Recovery Rig
+          } else if (!stage6StepsRef.current.secured) {
+            targetX = -1.2;
+            targetZ = -1.0; // Portable Storage Vault (Q-SSD)
+          } else {
+            targetX = 3.8;
+            targetZ = -2.6; // Extraction Pallet
           }
         } else {
           const currentStageObj = JOURNEY_STAGES[journeyStageIndex] || JOURNEY_STAGES[0];
@@ -6377,6 +6564,170 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
               </div>
             )}
 
+            {/* STAGE 5 — MISSION ECHO OBJECTIVES */}
+            {journeyStageIndex === 4 && (
+              <div className="p-3.5 rounded-xl bg-slate-950/90 backdrop-blur-md border border-cyan-500/40 shadow-xl text-xs space-y-2">
+                <div className="flex items-center justify-between text-[10px] text-cyan-300 font-bold uppercase tracking-wider">
+                  <div className="flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />
+                    <span>Mission Echo (Stage 5)</span>
+                  </div>
+                  <span className="text-slate-400 font-mono">
+                    {isMissionEchoCompleted ? '3/3 Solved' : 'In Progress'}
+                  </span>
+                </div>
+
+                <div className="space-y-1.5 pt-1">
+                  {[
+                    { title: 'Puzzle A — The descent sequence', desc: '4-stage controlled lunar landing timeline' },
+                    { title: 'Puzzle B — Reading the lunar surface', desc: 'Match 3 historic soil observations' },
+                    { title: 'Puzzle C — The image archive', desc: 'Reconstruct 3x3 tiles (11,240 frames)' }
+                  ].map((pz, idx) => (
+                    <div
+                      key={idx}
+                      className={`p-2 rounded-lg text-[11px] border ${
+                        isMissionEchoCompleted
+                          ? 'bg-cyan-950/30 text-cyan-300 border-cyan-500/30'
+                          : 'bg-white/[0.03] text-slate-300 border-white/5'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          {isMissionEchoCompleted ? (
+                            <CheckCircle2 className="w-3.5 h-3.5 text-cyan-400 flex-shrink-0" />
+                          ) : (
+                            <span className="w-3.5 h-3.5 rounded-full border border-cyan-500/50 flex items-center justify-center text-[9px] text-cyan-400 font-mono">
+                              {idx + 1}
+                            </span>
+                          )}
+                          <span className={`font-semibold ${isMissionEchoCompleted ? 'line-through text-cyan-200' : 'text-white'}`}>
+                            {pz.title}
+                          </span>
+                        </div>
+                        <span className="text-[9px] px-1.5 py-0.5 rounded font-mono font-bold text-cyan-300 bg-cyan-900/50">
+                          {isMissionEchoCompleted ? 'SOLVED' : 'ACTIVE'}
+                        </span>
+                      </div>
+                      <div className="text-[10px] text-slate-400 mt-0.5 pl-5">
+                        {pz.desc}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="pt-2 border-t border-white/10 flex items-center justify-between text-[10px] font-mono">
+                  <span className="text-slate-400">
+                    Interact with Central Interface [E]
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setIsMissionEchoOpen(true)}
+                    className="text-cyan-400 font-bold hover:underline"
+                  >
+                    OPEN ECHO CONSOLE
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* STAGE 6 — RECOVER SURVEYOR 1 OBJECTIVES */}
+            {journeyStageIndex === 5 && (
+              <div className="p-3.5 rounded-xl bg-slate-950/90 backdrop-blur-md border border-cyan-500/40 shadow-xl text-xs space-y-2">
+                <div className="flex items-center justify-between text-[10px] text-cyan-300 font-bold uppercase tracking-wider">
+                  <div className="flex items-center gap-1.5">
+                    <Shield className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />
+                    <span>Recover Surveyor 1 (Stage 6)</span>
+                  </div>
+                  <span className="text-slate-400 font-mono">
+                    {Object.values(stage6Steps).filter(Boolean).length}/3 Steps
+                  </span>
+                </div>
+
+                <div className="space-y-1.5 pt-1">
+                  {[
+                    {
+                      key: 'stabilized',
+                      targetId: 'poi_conduit_coupling',
+                      title: 'Step 1 — Stabilise the interface',
+                      desc: 'Use scanner [Q] to identify conduit connection point at Footpad 2',
+                      actionHint: 'SCAN [Q]'
+                    },
+                    {
+                      key: 'isolated',
+                      targetId: 'poi_recovery_rig',
+                      title: 'Step 2 — Isolate the transmission',
+                      desc: 'Interact with Recovery Rig [E] to isolate anomalous feed while preserving archive',
+                      actionHint: 'ISOLATE [E]'
+                    },
+                    {
+                      key: 'secured',
+                      targetId: 'poi_quantum_storage_unit',
+                      title: 'Step 3 — Secure the archive',
+                      desc: 'Activate portable data-storage unit [E] to seal 11,240 frames & signal fragment',
+                      actionHint: 'SECURE [E]'
+                    }
+                  ].map((step, idx) => {
+                    const isDone = stage6Steps[step.key];
+                    const isNear = nearInteractable?.id === step.targetId;
+                    const isCurrent = !isDone && (idx === 0 || stage6Steps[Object.keys(stage6Steps)[idx - 1]]);
+                    return (
+                      <div
+                        key={step.key}
+                        className={`p-2 rounded-lg text-[11px] transition-all border ${
+                          isDone
+                            ? 'bg-emerald-950/30 text-emerald-300 border-emerald-500/30'
+                            : isNear
+                            ? 'bg-cyan-900/60 text-white border-cyan-400 animate-pulse'
+                            : isCurrent
+                            ? 'bg-white/[0.06] text-white border-cyan-500/30'
+                            : 'bg-white/[0.02] text-slate-400 border-white/5 opacity-60'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            {isDone ? (
+                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
+                            ) : (
+                              <span className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center text-[9px] flex-shrink-0 font-mono ${
+                                isNear ? 'border-cyan-400 text-cyan-300 bg-cyan-900/60' : 'border-slate-500 text-slate-400'
+                              }`}>
+                                {idx + 1}
+                              </span>
+                            )}
+                            <span className={`font-semibold ${isDone ? 'line-through opacity-85 text-emerald-200' : 'text-white'}`}>
+                              {step.title}
+                            </span>
+                          </div>
+                          <span className={`text-[9px] px-1.5 py-0.5 rounded font-mono font-bold ${
+                            isDone ? 'bg-emerald-900/50 text-emerald-300' : isNear ? 'bg-cyan-900/80 text-cyan-200 border border-cyan-400/50' : 'text-slate-500'
+                          }`}>
+                            {isDone ? 'COMPLETED' : isNear ? 'IN RANGE' : step.actionHint}
+                          </span>
+                        </div>
+                        <div className="text-[10px] text-slate-400 mt-0.5 pl-5">
+                          {step.desc}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Stage 6 Telemetry Footer */}
+                <div className="pt-2 border-t border-white/10 flex items-center justify-between text-[10px] font-mono">
+                  <span className="text-slate-400">
+                    {stage6Steps.secured
+                      ? 'Archive secured · Recovery authorised'
+                      : stage6Steps.isolated
+                      ? 'Feed isolated · Activate portable storage'
+                      : stage6Steps.stabilized
+                      ? 'Interface stabilised · Ready for feed isolation'
+                      : 'Scan conduit connection point near Footpad 2'}
+                  </span>
+                  <span className="text-cyan-400 font-bold">11,240 FRAMES</span>
+                </div>
+              </div>
+            )}
+
             {/* SIGNAL TRACKER HUD CARD (STAGE 3 SPECIFICATION) */}
             {(hasSignalTracker || journeyStageIndex === 2) && (
               <div className="p-3.5 rounded-xl bg-slate-950/95 backdrop-blur-md border border-cyan-400/60 shadow-[0_0_35px_rgba(6,182,212,0.3)] space-y-2.5 text-xs font-mono">
@@ -7088,8 +7439,18 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
               startInterfaceActivation();
             } else if (target.id === 'poi_alien_structure' || target.id === 'poi_data_conduit') {
               advanceJourneyStage(4);
-            } else if (target.id === 'poi_recovery_rig' || target.id === 'poi_quantum_storage_unit') {
-              advanceJourneyStage(6);
+            } else if (target.id === 'poi_conduit_coupling') {
+              if (journeyStageIndex === 5 && !stage6StepsRef.current.stabilized) {
+                completeStage6Step('stabilized');
+              }
+            } else if (target.id === 'poi_recovery_rig') {
+              if (journeyStageIndex === 5 && stage6StepsRef.current.stabilized && !stage6StepsRef.current.isolated) {
+                setShowIsolateModal(true);
+              }
+            } else if (target.id === 'poi_quantum_storage_unit') {
+              if (journeyStageIndex === 5 && stage6StepsRef.current.isolated && !stage6StepsRef.current.secured) {
+                completeStage6Step('secured');
+              }
             } else if (target.id === 'poi_extraction_pallet') {
               setShowChapter1Completion(true);
             } else {
@@ -7109,6 +7470,212 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
           advanceJourneyStage(5);
         }}
       />
+
+      {/* STAGE 6 — TRANSMISSION ISOLATION CONSOLE MODAL */}
+      {showIsolateModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/85 backdrop-blur-md animate-fade-in font-mono select-none">
+          <div className="relative w-full max-w-2xl rounded-2xl bg-slate-950 border-2 border-cyan-500/60 shadow-[0_0_60px_rgba(6,182,212,0.35)] p-6 space-y-5 text-left">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between border-b border-cyan-500/20 pb-3">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-cyan-950/80 border border-cyan-400/40 text-cyan-400">
+                  <Shield className="w-6 h-6 animate-pulse" />
+                </div>
+                <div>
+                  <div className="text-[10px] text-cyan-400 font-bold tracking-widest uppercase">
+                    STAGE 6 · RECOVERY RIG CONSOLE
+                  </div>
+                  <h3 className="text-lg sm:text-xl font-bold text-white tracking-wide">
+                    Transmission Feed Isolation Demux
+                  </h3>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => { audio.playClick(); setShowIsolateModal(false); }}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Description & Objective */}
+            <div className="p-3 rounded-xl bg-white/[0.03] border border-white/10 text-xs text-slate-300 font-sans leading-relaxed">
+              <strong className="text-cyan-300 font-mono">Mission Objective:</strong> Disconnect the unknown transmission without destroying the historic archive. 
+              The alien conduit siphons raw Vidicon imaging packets directly from Surveyor 1's Footpad 2 coupling. 
+              Selecting <strong>Isolate Feed</strong> will sever the carrier tether and route the decoded 11,240-frame archive to the quantum storage vault.
+            </div>
+
+            {/* Side-by-Side Channel Comparison */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+              {/* Channel A: Historic Archive */}
+              <div className="p-3.5 rounded-xl bg-emerald-950/30 border border-emerald-500/40 space-y-2">
+                <div className="flex items-center justify-between text-[11px] font-bold text-emerald-300">
+                  <span className="flex items-center gap-1.5">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                    <span>Historic Archive</span>
+                  </span>
+                  <span className="px-1.5 py-0.5 rounded bg-emerald-900/60 text-[9px] uppercase">
+                    100% Intact
+                  </span>
+                </div>
+                <div className="space-y-1 text-[11px] text-slate-300">
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Frames:</span>
+                    <span className="text-white font-bold">11,240 Images</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Payload:</span>
+                    <span className="text-emerald-300">Vidicon Telemetry</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Status:</span>
+                    <span className="text-emerald-400 font-bold">Preserve & Lock</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Channel B: Anomalous Transmission */}
+              <div className="p-3.5 rounded-xl bg-cyan-950/40 border border-cyan-500/40 space-y-2">
+                <div className="flex items-center justify-between text-[11px] font-bold text-cyan-300">
+                  <span className="flex items-center gap-1.5">
+                    <Radio className="w-4 h-4 text-cyan-400 animate-pulse" />
+                    <span>Anomalous Feed</span>
+                  </span>
+                  <span className="px-1.5 py-0.5 rounded bg-cyan-900/60 text-[9px] uppercase text-cyan-200">
+                    Siphoning
+                  </span>
+                </div>
+                <div className="space-y-1 text-[11px] text-slate-300">
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Frequency:</span>
+                    <span className="text-cyan-300 font-bold">432.06 Hz Precursor</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Tether:</span>
+                    <span className="text-white">Footpad 2 Conduit</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Action:</span>
+                    <span className="text-amber-400 font-bold">Sever & Decouple</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Comms Callout */}
+            <div className="p-3 rounded-xl bg-cyan-950/30 border border-cyan-500/30 text-xs font-sans text-cyan-200">
+              <span className="font-mono text-cyan-300 font-bold">Specialist Maya Chen:</span> "Interface is stabilised, Arin. Trigger the isolation switch on your console. We'll capture the mystery frequency packet without letting it wipe Surveyor 1's magnetic drum storage."
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex flex-col sm:flex-row justify-end gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => { audio.playClick(); setShowIsolateModal(false); }}
+                className="px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 font-bold text-xs uppercase tracking-wider transition-all"
+              >
+                Abort
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowIsolateModal(false);
+                  completeStage6Step('isolated');
+                }}
+                className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-cyan-600 via-indigo-600 to-purple-600 hover:from-cyan-500 hover:to-purple-500 text-white font-bold text-xs uppercase tracking-wider shadow-lg shadow-cyan-600/30 transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-2"
+              >
+                <Shield className="w-4 h-4 text-cyan-300" />
+                <span>Isolate Anomalous Feed & Preserve Archive</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* STAGE 6 — RECOVERY REPORT CONFIRMATION MODAL */}
+      {showRecoveryReport && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/90 backdrop-blur-xl animate-fade-in font-mono select-none">
+          <div className="relative w-full max-w-lg rounded-2xl bg-slate-950 border-2 border-emerald-500/70 shadow-[0_0_80px_rgba(16,185,129,0.35)] p-6 text-center space-y-5">
+            {/* Success Icon */}
+            <div className="inline-flex p-3 rounded-2xl bg-emerald-500/20 border border-emerald-400/40 text-emerald-300">
+              <CheckCircle2 className="w-8 h-8 text-emerald-400 animate-pulse" />
+            </div>
+
+            {/* Exact Required Report Title & Status */}
+            <div className="space-y-1">
+              <h2 className="text-xl sm:text-2xl font-bold text-white tracking-widest uppercase">
+                RECOVERY REPORT
+              </h2>
+              <div className="inline-block px-3 py-0.5 rounded-full bg-emerald-950/80 border border-emerald-500/50 text-xs text-emerald-300 font-bold uppercase tracking-wider">
+                Completed
+              </div>
+            </div>
+
+            {/* Exact Required 4 Confirmation Items */}
+            <div className="p-4 rounded-xl bg-black/60 border border-emerald-500/30 text-left text-xs sm:text-sm font-mono space-y-2.5">
+              <div className="flex items-center justify-between border-b border-white/10 pb-2">
+                <span className="text-slate-300 font-sans">Historic archive:</span>
+                <span className="text-emerald-400 font-bold uppercase tracking-wide flex items-center gap-1.5">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                  Secured
+                </span>
+              </div>
+              <div className="flex items-center justify-between border-b border-white/10 pb-2">
+                <span className="text-slate-300 font-sans">Anomalous transmission:</span>
+                <span className="text-cyan-400 font-bold uppercase tracking-wide flex items-center gap-1.5">
+                  <CheckCircle2 className="w-4 h-4 text-cyan-400" />
+                  Isolated
+                </span>
+              </div>
+              <div className="flex items-center justify-between border-b border-white/10 pb-2">
+                <span className="text-slate-300 font-sans">Surveyor 1:</span>
+                <span className="text-emerald-400 font-bold uppercase tracking-wide flex items-center gap-1.5">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                  Recovery authorised
+                </span>
+              </div>
+              <div className="flex items-center justify-between pt-0.5">
+                <span className="text-slate-300 font-sans">Unknown signal:</span>
+                <span className="text-purple-300 font-bold uppercase tracking-wide flex items-center gap-1.5">
+                  <Sparkles className="w-4 h-4 text-purple-400" />
+                  Fragment recovered
+                </span>
+              </div>
+            </div>
+
+            {/* Scripted Comms Dialogue Callout */}
+            <div className="p-3.5 rounded-xl bg-slate-900/90 border border-cyan-500/30 text-left text-xs space-y-2 font-sans">
+              <div className="text-[10px] text-cyan-400 font-mono font-bold uppercase tracking-wider border-b border-white/10 pb-1">
+                Suit Radio Link · Mission Comms
+              </div>
+              <div className="text-slate-300 space-y-1.5">
+                <p><strong className="text-cyan-300 font-mono">Maya:</strong> "The connection is isolated. We have the archive."</p>
+                <p><strong className="text-amber-300 font-mono">Arin:</strong> "And the signal?"</p>
+                <p><strong className="text-cyan-300 font-mono">Maya:</strong> "I recovered a fragment. It contains coordinates, but they don't match any location in our current mission database."</p>
+                <p><strong className="text-amber-300 font-mono">Arin:</strong> "Send them to the command ship."</p>
+              </div>
+            </div>
+
+            {/* Action Button to Advance to Stage 7 */}
+            <div className="pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  audio.playClick();
+                  setShowRecoveryReport(false);
+                  advanceJourneyStage(6);
+                  setActiveObjective('Approach the Extraction Sled to review coordinates and conclude Chapter 1.');
+                }}
+                className="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-600 via-cyan-600 to-indigo-600 hover:from-emerald-500 hover:to-cyan-500 text-white font-bold text-xs uppercase tracking-widest shadow-lg shadow-emerald-600/30 transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2"
+              >
+                <span>Proceed to Final Extraction Coordinates (Stage 7)</span>
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* CHAPTER 1 MISSION ACCOMPLISHED BANNER (END — NEXT SIGNAL) */}
       {showChapter1Completion && (
