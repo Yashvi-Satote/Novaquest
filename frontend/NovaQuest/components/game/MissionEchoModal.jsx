@@ -1,8 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   X, 
-  Shield, 
-  Radio, 
   CheckCircle2, 
   Cpu, 
   Layers, 
@@ -12,38 +10,99 @@ import {
   Sparkles, 
   Zap,
   ArrowRight,
-  RotateCcw
+  RotateCcw,
+  Radio,
+  Eye,
+  AlertTriangle,
+  Info,
+  Check,
+  Compass
 } from 'lucide-react';
 import { audio } from '../../game/audioManager';
 
 /**
- * MissionEchoModal — Zone 5 Interactive Historical Simulation Interface
+ * Stage 5 — Mission Echo: Reconstructing Surveyor 1
  * 
- * Reconstructs the 1966 Surveyor 1 mission sequence via 3 interactive simulation puzzles:
- * 1. Controlled Descent Sequence (Retro-burn & Vernier throttle to achieve 3.05 m/s soft touchdown)
- * 2. Lunar Surface Observation (Vidicon mirror angle & filter calibration for 360° panorama)
- * 3. Historic Archive Restoration (432.06 Hz harmonic notch filter to decode stellar coordinates)
+ * Mission Echo is a fictional reconstruction system that uses recovered telemetry, 
+ * images, and archived records to recreate parts of Surveyor 1's historic 1966 mission.
+ * It is not time travel. It is a reconstruction of historical events.
+ * 
+ * The player completes three separate challenges:
+ * Puzzle A — The descent sequence (Controlled braking & touchdown sequence)
+ * Puzzle B — Reading the lunar surface (Matching surface observations to interpretations)
+ * Puzzle C — Restore the image archive (3x3 tile restoration of the 11,240 historical photos)
+ * Followed by The Mystery Clue: Uncovering the anomalous transmission attached to the archive.
  */
+
+// Available landing stages for Puzzle A
+const DESCENT_STAGES = [
+  {
+    id: 'stage_retro',
+    stepNumber: 1,
+    title: 'Main Retro-Rocket Ignition',
+    description: 'Solid propellant rocket burns at 75 km altitude, canceling 2,600 m/s approach velocity.'
+  },
+  {
+    id: 'stage_jettison',
+    stepNumber: 2,
+    title: 'Jettison Burned Retromotor & Radar Altimeter Lock',
+    description: 'Empty solid motor casing is ejected at 11 km as RADVS Doppler radar locks onto lunar terrain.'
+  },
+  {
+    id: 'stage_vernier',
+    stepNumber: 3,
+    title: 'Three Vernier Engines Controlled Deceleration',
+    description: 'Throttleable liquid engines stabilize attitude and bring descent rate smoothly down to 1.5 m/s.'
+  },
+  {
+    id: 'stage_cutoff',
+    stepNumber: 4,
+    title: 'Engine Cutoff at 3.4m & Honeycomb Footpad Touchdown',
+    description: 'Vernier thrusters shut down at 3.4 meters to prevent dust blast; freefall to crushable footpads.'
+  }
+];
+
+// Initial scrambled tile order for Puzzle C (3x3 grid)
+const INITIAL_SCRAMBLED_TILES = [4, 0, 7, 1, 6, 2, 8, 3, 5];
+
 export default function MissionEchoModal({ isOpen, onClose, onCompleteEcho }) {
   const [currentStep, setCurrentStep] = useState(1);
 
-  // Puzzle 1 State: Controlled Descent
-  const [burnDuration, setBurnDuration] = useState(38.0); // Target ~40.2s
-  const [vernierThrottle, setVernierThrottle] = useState(65); // Target ~74%
-  const [descentCompleted, setDescentCompleted] = useState(false);
-  const [descentFeedback, setDescentFeedback] = useState('');
+  // ==========================================
+  // PUZZLE A: THE DESCENT SEQUENCE STATE
+  // ==========================================
+  const [selectedStages, setSelectedStages] = useState({
+    step1: '',
+    step2: '',
+    step3: '',
+    step4: ''
+  });
+  const [descentSolved, setDescentSolved] = useState(false);
+  const [descentFeedback, setDescentFeedback] = useState(null);
+  const [isSimulatingDescent, setIsSimulatingDescent] = useState(false);
+  const [descentAltitude, setDescentAltitude] = useState(75.0);
 
-  // Puzzle 2 State: Surface Observation
-  const [mirrorElevation, setMirrorElevation] = useState(12.0); // Target 18.5°
-  const [selectedFilter, setSelectedFilter] = useState('Red'); // Target Clear
-  const [observationCompleted, setObservationCompleted] = useState(false);
-  const [observationFeedback, setObservationFeedback] = useState('');
+  // ==========================================
+  // PUZZLE B: READING THE LUNAR SURFACE STATE
+  // ==========================================
+  const [surfaceAnswers, setSurfaceAnswers] = useState({
+    footpad: '',
+    rocks: '',
+    slope: ''
+  });
+  const [surfaceSolved, setSurfaceSolved] = useState(false);
+  const [surfaceFeedback, setSurfaceFeedback] = useState(null);
 
-  // Puzzle 3 State: Archive Restoration
-  const [notchFilterFreq, setNotchFilterFreq] = useState(410.0); // Target 432.06 Hz
-  const [archiveCompleted, setArchiveCompleted] = useState(false);
-  const [archiveFeedback, setArchiveFeedback] = useState('');
+  // ==========================================
+  // PUZZLE C: RESTORE THE IMAGE ARCHIVE STATE
+  // ==========================================
+  const [tiles, setTiles] = useState(INITIAL_SCRAMBLED_TILES);
+  const [selectedTileIdx, setSelectedTileIdx] = useState(null);
+  const [archiveSolved, setArchiveSolved] = useState(false);
+  const [showMysteryClue, setShowMysteryClue] = useState(false);
+  const [clueDialogueStep, setClueDialogueStep] = useState(0);
 
+  // Handle ESC key to close
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') onClose();
@@ -52,55 +111,198 @@ export default function MissionEchoModal({ isOpen, onClose, onCompleteEcho }) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [onClose]);
 
+  // Dialogue steps for the Mystery Clue
+  const MYSTERY_DIALOGUE = [
+    {
+      speaker: 'Specialist Maya Chen',
+      callsign: 'CHEN-SCIENCE',
+      text: "Captain, the recovered records are intact. But there is something else hidden in the interface."
+    },
+    {
+      speaker: 'Captain Arin Rao',
+      callsign: 'RAO-COMMAND',
+      text: "What is it?"
+    },
+    {
+      speaker: 'Specialist Maya Chen',
+      callsign: 'CHEN-SCIENCE',
+      text: "A transmission pattern. It appears to have been attached to the archive."
+    },
+    {
+      speaker: 'Captain Arin Rao',
+      callsign: 'RAO-COMMAND',
+      text: "Can you trace it?"
+    },
+    {
+      speaker: 'Specialist Maya Chen',
+      callsign: 'CHEN-SCIENCE',
+      text: "Not yet. I need the structure's connection to be disconnected first."
+    }
+  ];
+
+  // Auto-progress Mystery Dialogue when unlocked
+  useEffect(() => {
+    if (!showMysteryClue) return;
+    setClueDialogueStep(0);
+    audio.playGlitchBurst();
+
+    const timers = [
+      setTimeout(() => {
+        setClueDialogueStep(1);
+        audio.playEquipmentFeedback();
+      }, 4000),
+      setTimeout(() => {
+        setClueDialogueStep(2);
+        audio.playRadioCommsChatter('chen');
+      }, 7500),
+      setTimeout(() => {
+        setClueDialogueStep(3);
+        audio.playEquipmentFeedback();
+      }, 11500),
+      setTimeout(() => {
+        setClueDialogueStep(4);
+        audio.playRadioCommsChatter('chen');
+      }, 15000)
+    ];
+
+    return () => timers.forEach(t => clearTimeout(t));
+  }, [showMysteryClue]);
+
   if (!isOpen) return null;
 
-  // Puzzle 1 Validation: Compute Touchdown Velocity
-  const calculatedVelocity = +(3.05 + Math.abs(burnDuration - 40.2) * 1.8 + Math.abs(vernierThrottle - 74) * 0.12).toFixed(2);
-  const isDescentNominal = Math.abs(calculatedVelocity - 3.05) <= 0.35;
-
-  const handleExecuteDescent = () => {
+  // ==========================================
+  // PUZZLE A LOGIC
+  // ==========================================
+  const handleCheckDescent = () => {
     audio.playClick();
-    if (isDescentNominal) {
+    const { step1, step2, step3, step4 } = selectedStages;
+
+    if (!step1 || !step2 || !step3 || !step4) {
+      setDescentFeedback({
+        type: 'error',
+        message: 'Incomplete sequence. Please select a stage for all 4 steps before checking.'
+      });
+      return;
+    }
+
+    const isCorrect = 
+      step1 === 'stage_retro' &&
+      step2 === 'stage_jettison' &&
+      step3 === 'stage_vernier' &&
+      step4 === 'stage_cutoff';
+
+    if (isCorrect) {
       audio.playInteract();
-      setDescentCompleted(true);
-      setDescentFeedback('SUCCESS: Main Retro Burn and Vernier throttle nominal. Soft touchdown validated at 3.05 m/s into Oceanus Procellarum.');
+      setIsSimulatingDescent(true);
+      setDescentFeedback({
+        type: 'success',
+        message: 'SEQUENCE VERIFIED: Main retro-rocket ignition cancels velocity, radar altimeter tracks descent, Vernier thrusters decelerate to 1.5 m/s, and engine cutoff at 3.4m ensures clean regolith touchdown.'
+      });
+
+      // Animate simulated descent from 75km to touchdown
+      let alt = 75.0;
+      const interval = setInterval(() => {
+        alt -= 4.2;
+        if (alt <= 0) {
+          alt = 0;
+          clearInterval(interval);
+          setIsSimulatingDescent(false);
+          setDescentSolved(true);
+          audio.playMissionEchoActivation();
+        }
+        setDescentAltitude(Math.max(0, +alt.toFixed(1)));
+      }, 65);
     } else {
-      setDescentFeedback(`WARNING: Touchdown velocity ${calculatedVelocity} m/s exceeds 3.05 m/s limit. Adjust burn duration (~40.2s) and Vernier throttle (~74%).`);
+      setDescentFeedback({
+        type: 'error',
+        message: 'SEQUENCE MISMATCH: Lunar landing requires progressive deceleration: Main retro-rocket burn must occur first, followed by motor jettison/radar lock, Vernier terminal throttle, and finally 3.4m cutoff before footpad touchdown.'
+      });
     }
   };
 
-  // Puzzle 2 Validation: Mirror Angle & Filter
-  const isObservationNominal = Math.abs(mirrorElevation - 18.5) <= 1.5 && selectedFilter === 'Clear';
-
-  const handleCalibrateCamera = () => {
+  // ==========================================
+  // PUZZLE B LOGIC
+  // ==========================================
+  const handleVerifySurfaceObservations = () => {
     audio.playClick();
-    if (isObservationNominal) {
+    const { footpad, rocks, slope } = surfaceAnswers;
+
+    if (!footpad || !rocks || !slope) {
+      setSurfaceFeedback({
+        type: 'error',
+        message: 'Please select an interpretation for all 3 highlighted surface observations.'
+      });
+      return;
+    }
+
+    const isFootpadCorrect = footpad === 'contact';
+    const isRocksCorrect = rocks === 'terrain';
+    const isSlopeCorrect = slope === 'stability';
+
+    if (isFootpadCorrect && isRocksCorrect && isSlopeCorrect) {
       audio.playInteract();
-      setObservationCompleted(true);
-      setObservationFeedback('SUCCESS: Vidicon mirror elevation locked at 18.5°. Clear/UV-Pass filter active. 360° panoramic mosaic reconstructed.');
+      setSurfaceSolved(true);
+      setSurfaceFeedback({
+        type: 'success',
+        message: 'SURFACE ANALYSIS CONFIRMED: Footpad impressions proved lunar soil had sufficient bearing strength (~35 kPa) to support heavy spacecraft. Rock distributions documented impact ejecta blankets, and the 1.2° slope verified tripod landing stability.'
+      });
     } else {
-      let hints = [];
-      if (Math.abs(mirrorElevation - 18.5) > 1.5) hints.push('Mirror elevation requires ~18.5°');
-      if (selectedFilter !== 'Clear') hints.push('Optical filter requires Clear / UV-Pass');
-      setObservationFeedback(`CALIBRATION DRIFT: ${hints.join(', ')}.`);
+      const errors = [];
+      if (!isFootpadCorrect) errors.push('Footpad impression');
+      if (!isRocksCorrect) errors.push('Rock distribution');
+      if (!isSlopeCorrect) errors.push('Surface slope');
+      setSurfaceFeedback({
+        type: 'error',
+        message: `Incorrect match for: ${errors.join(', ')}. Review the geological principles and try again.`
+      });
     }
   };
 
-  // Puzzle 3 Validation: 432.06 Hz Filter
-  const isArchiveNominal = Math.abs(notchFilterFreq - 432.06) <= 2.5;
-
-  const handleRestoreArchive = () => {
+  // ==========================================
+  // PUZZLE C LOGIC
+  // ==========================================
+  const handleTileClick = (index) => {
+    if (archiveSolved) return;
     audio.playClick();
-    if (isArchiveNominal) {
-      audio.playAnomalyHarmonic();
-      setArchiveCompleted(true);
-      setArchiveFeedback('EPICENTER DECODED: 432.06 Hz harmonic isolated! Corrupted scan lines synthesized. 11,237 historic frames restored. Decrypted stellar coordinates unlocked.');
+
+    if (selectedTileIdx === null) {
+      setSelectedTileIdx(index);
     } else {
-      setArchiveFeedback(`HARMONIC NOISE PERSISTS: Current frequency ${notchFilterFreq.toFixed(1)} Hz. Resonance peak is at 432.06 Hz.`);
+      if (selectedTileIdx === index) {
+        setSelectedTileIdx(null);
+        return;
+      }
+      // Swap tiles
+      const newTiles = [...tiles];
+      const temp = newTiles[selectedTileIdx];
+      newTiles[selectedTileIdx] = newTiles[index];
+      newTiles[index] = temp;
+      setTiles(newTiles);
+      setSelectedTileIdx(null);
+
+      // Check if solved (0, 1, 2, 3, 4, 5, 6, 7, 8)
+      const isSolved = newTiles.every((val, idx) => val === idx);
+      if (isSolved) {
+        audio.playAnomalyHarmonic();
+        setArchiveSolved(true);
+        setTimeout(() => {
+          setShowMysteryClue(true);
+        }, 1800);
+      }
     }
   };
 
-  const handleFinishSimulation = () => {
+  const handleAutoSolveArchive = () => {
+    audio.playInteract();
+    setTiles([0, 1, 2, 3, 4, 5, 6, 7, 8]);
+    setSelectedTileIdx(null);
+    setArchiveSolved(true);
+    setTimeout(() => {
+      setShowMysteryClue(true);
+    }, 1800);
+  };
+
+  const handleFinishMissionEcho = () => {
     audio.playInteract();
     if (onCompleteEcho) {
       onCompleteEcho();
@@ -109,11 +311,11 @@ export default function MissionEchoModal({ isOpen, onClose, onCompleteEcho }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/85 backdrop-blur-lg animate-fade-in font-mono select-none">
-      <div className="relative w-full max-w-3xl rounded-2xl bg-slate-950/95 border-2 border-cyan-500/60 shadow-[0_0_60px_rgba(6,182,212,0.35)] overflow-hidden flex flex-col max-h-[92vh]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/85 backdrop-blur-lg animate-fade-in font-mono select-none">
+      <div className="relative w-full max-w-3xl rounded-2xl bg-slate-950/95 border-2 border-cyan-500/60 shadow-[0_0_60px_rgba(6,182,212,0.35)] overflow-hidden flex flex-col max-h-[94vh]">
         
         {/* Holographic Header */}
-        <header className="flex items-center justify-between px-6 py-4 border-b border-cyan-500/40 bg-gradient-to-r from-cyan-950/60 via-slate-950 to-indigo-950/60">
+        <header className="flex items-center justify-between px-5 py-3.5 border-b border-cyan-500/40 bg-gradient-to-r from-cyan-950/60 via-slate-950 to-indigo-950/60">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-xl bg-cyan-500/20 border border-cyan-400/50 text-cyan-300">
               <Cpu className="w-5 h-5 text-cyan-400 animate-pulse" />
@@ -124,7 +326,7 @@ export default function MissionEchoModal({ isOpen, onClose, onCompleteEcho }) {
                 <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping" />
               </div>
               <h2 className="text-base sm:text-lg font-bold text-white tracking-wide uppercase">
-                Historical Telemetry Reconstruction (1966)
+                Stage 5 — Mission Echo: Reconstructing Surveyor 1
               </h2>
             </div>
           </div>
@@ -139,332 +341,579 @@ export default function MissionEchoModal({ isOpen, onClose, onCompleteEcho }) {
           </button>
         </header>
 
-        {/* Multi-Step Simulation Navigation Tabs */}
+        {/* Narrative Context Banner */}
+        <div className="px-5 py-2 bg-cyan-950/20 border-b border-cyan-500/20 text-[11px] text-slate-300 flex items-center gap-2">
+          <Info className="w-4 h-4 text-cyan-400 flex-shrink-0" />
+          <span className="font-sans">
+            <strong>Historical Reconstruction:</strong> Uses recovered telemetry, imagery and archived records to reconstruct parts of Surveyor 1's historic 1966 lunar mission.
+          </span>
+        </div>
+
+        {/* Multi-Step Challenge Navigation Tabs */}
         <div className="flex border-b border-cyan-500/30 bg-black/40 text-xs">
           <button
             type="button"
             onClick={() => { audio.playClick(); setCurrentStep(1); }}
-            className={`flex-1 py-3 px-4 flex items-center justify-center gap-2 font-bold tracking-wider uppercase transition-colors border-r border-cyan-500/20 ${
+            className={`flex-1 py-3 px-3 sm:px-4 flex items-center justify-center gap-1.5 sm:gap-2 font-bold tracking-wider uppercase transition-colors border-r border-cyan-500/20 ${
               currentStep === 1 
                 ? 'bg-cyan-500/20 text-cyan-300 border-b-2 border-b-cyan-400' 
-                : descentCompleted ? 'text-emerald-400 hover:bg-white/5' : 'text-slate-400 hover:bg-white/5'
+                : descentSolved ? 'text-emerald-400 hover:bg-white/5' : 'text-slate-400 hover:bg-white/5'
             }`}
           >
-            {descentCompleted ? <CheckCircle2 className="w-4 h-4 text-emerald-400" /> : <span>1.</span>}
-            <span className="hidden sm:inline">Controlled</span> Descent
+            {descentSolved ? <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" /> : <span className="font-mono text-cyan-400">A.</span>}
+            <span className="truncate">Descent Sequence</span>
           </button>
 
           <button
             type="button"
             onClick={() => { audio.playClick(); setCurrentStep(2); }}
-            className={`flex-1 py-3 px-4 flex items-center justify-center gap-2 font-bold tracking-wider uppercase transition-colors border-r border-cyan-500/20 ${
+            className={`flex-1 py-3 px-3 sm:px-4 flex items-center justify-center gap-1.5 sm:gap-2 font-bold tracking-wider uppercase transition-colors border-r border-cyan-500/20 ${
               currentStep === 2 
                 ? 'bg-cyan-500/20 text-cyan-300 border-b-2 border-b-cyan-400' 
-                : observationCompleted ? 'text-emerald-400 hover:bg-white/5' : 'text-slate-400 hover:bg-white/5'
+                : surfaceSolved ? 'text-emerald-400 hover:bg-white/5' : 'text-slate-400 hover:bg-white/5'
             }`}
           >
-            {observationCompleted ? <CheckCircle2 className="w-4 h-4 text-emerald-400" /> : <span>2.</span>}
-            <span className="hidden sm:inline">Surface</span> Observation
+            {surfaceSolved ? <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" /> : <span className="font-mono text-cyan-400">B.</span>}
+            <span className="truncate">Lunar Surface</span>
           </button>
 
           <button
             type="button"
             onClick={() => { audio.playClick(); setCurrentStep(3); }}
-            className={`flex-1 py-3 px-4 flex items-center justify-center gap-2 font-bold tracking-wider uppercase transition-colors ${
+            className={`flex-1 py-3 px-3 sm:px-4 flex items-center justify-center gap-1.5 sm:gap-2 font-bold tracking-wider uppercase transition-colors ${
               currentStep === 3 
                 ? 'bg-cyan-500/20 text-cyan-300 border-b-2 border-b-cyan-400' 
-                : archiveCompleted ? 'text-emerald-400 hover:bg-white/5' : 'text-slate-400 hover:bg-white/5'
+                : archiveSolved ? 'text-emerald-400 hover:bg-white/5' : 'text-slate-400 hover:bg-white/5'
             }`}
           >
-            {archiveCompleted ? <CheckCircle2 className="w-4 h-4 text-emerald-400" /> : <span>3.</span>}
-            <span className="hidden sm:inline">Archive</span> Restoration
+            {archiveSolved ? <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" /> : <span className="font-mono text-cyan-400">C.</span>}
+            <span className="truncate">Image Archive</span>
           </button>
         </div>
 
         {/* Content Body */}
-        <main className="p-6 space-y-5 overflow-y-auto custom-scrollbar text-xs">
+        <main className="p-5 sm:p-6 space-y-4 overflow-y-auto custom-scrollbar text-xs">
           
-          {/* STEP 1: CONTROLLED DESCENT SEQUENCE */}
+          {/* ========================================================= */}
+          {/* PUZZLE A — THE DESCENT SEQUENCE                           */}
+          {/* ========================================================= */}
           {currentStep === 1 && (
             <div className="space-y-4 animate-fade-in">
               <div className="p-3.5 rounded-xl bg-cyan-950/30 border border-cyan-500/30 space-y-1">
-                <div className="text-[11px] font-bold text-cyan-300 uppercase flex items-center gap-2">
-                  <Sliders className="w-4 h-4 text-cyan-400" />
-                  <span>Phase 1 · Terminal Descent Throttle Calibration</span>
+                <div className="text-[11px] font-bold text-cyan-300 uppercase flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Sliders className="w-4 h-4 text-cyan-400" />
+                    <span>Puzzle A — The Descent Sequence</span>
+                  </div>
+                  <span className="text-[10px] text-amber-300/80 font-normal">
+                    Objective: Understand controlled lunar landing
+                  </span>
                 </div>
-                <p className="text-slate-300 text-xs font-sans">
-                  On June 2, 1966, Surveyor 1 engaged its solid retromotor at 75 km altitude, decelerating from 2,600 m/s. 
-                  Adjust the Main Retro Burn duration and Vernier thruster throttle to achieve a nominal <strong>3.05 m/s</strong> touchdown.
+                <p className="text-slate-300 text-xs font-sans leading-relaxed">
+                  Arrange the simplified 4-stage landing sequence into the correct order. 
+                  Controlled braking and deceleration are essential—a spacecraft cannot simply drop onto the Moon.
                 </p>
+                <div className="text-[10px] text-slate-500 italic font-mono pt-0.5">
+                  * Prototype puzzle demonstration. The simplified sequence is not an exact reproduction of Surveyor 1 flight software.
+                </div>
               </div>
 
-              {/* Sliders Controls */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="p-4 rounded-xl bg-black/60 border border-white/10 space-y-2">
-                  <div className="flex justify-between items-center text-xs">
-                    <span className="text-slate-400">Main Retro Burn:</span>
-                    <span className="text-cyan-300 font-bold">{burnDuration.toFixed(1)} s</span>
+              {/* Holographic Descent Telemetry Visualization */}
+              <div className="p-4 rounded-xl bg-black/70 border border-cyan-500/30 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="relative w-12 h-12 rounded-xl bg-cyan-950/50 border border-cyan-400/40 flex items-center justify-center">
+                    <Zap className={`w-6 h-6 text-cyan-400 ${isSimulatingDescent ? 'animate-bounce' : ''}`} />
                   </div>
-                  <input 
-                    type="range"
-                    min="30.0"
-                    max="50.0"
-                    step="0.2"
-                    value={burnDuration}
-                    onChange={(e) => setBurnDuration(parseFloat(e.target.value))}
-                    className="w-full accent-cyan-400 cursor-pointer"
-                  />
-                  <div className="flex justify-between text-[10px] text-slate-500">
-                    <span>30.0s (Under-burn)</span>
-                    <span>50.0s (Over-burn)</span>
+                  <div>
+                    <div className="text-[10px] text-slate-400 uppercase tracking-wider">Holographic Descent Simulation</div>
+                    <div className="text-lg font-bold text-white font-mono flex items-center gap-2">
+                      <span>ALTITUDE: {descentAltitude.toFixed(1)} km</span>
+                      {descentSolved && <span className="text-xs px-2 py-0.5 rounded bg-emerald-950 border border-emerald-500/40 text-emerald-300 uppercase">TOUCHDOWN CONFIRMED</span>}
+                    </div>
                   </div>
                 </div>
 
-                <div className="p-4 rounded-xl bg-black/60 border border-white/10 space-y-2">
-                  <div className="flex justify-between items-center text-xs">
-                    <span className="text-slate-400">Vernier Engine Throttle:</span>
-                    <span className="text-cyan-300 font-bold">{vernierThrottle}%</span>
-                  </div>
-                  <input 
-                    type="range"
-                    min="40"
-                    max="100"
-                    step="1"
-                    value={vernierThrottle}
-                    onChange={(e) => setVernierThrottle(parseInt(e.target.value))}
-                    className="w-full accent-cyan-400 cursor-pointer"
-                  />
-                  <div className="flex justify-between text-[10px] text-slate-500">
-                    <span>40% (Hard Drop)</span>
-                    <span>100% (Fuel Exhaustion)</span>
+                <div className="text-right text-[11px] font-mono">
+                  <div className="text-slate-400">DESCENT RATE</div>
+                  <div className={`font-bold ${descentSolved ? 'text-emerald-400' : 'text-cyan-300'}`}>
+                    {descentSolved ? '3.05 m/s (Soft Touchdown)' : '2,600 -> 1.5 m/s Profile'}
                   </div>
                 </div>
               </div>
 
-              {/* Velocity Meter */}
-              <div className="p-4 rounded-xl bg-black/80 border border-cyan-500/30 flex items-center justify-between">
-                <div>
-                  <div className="text-[10px] text-slate-400 uppercase">Calculated Touchdown Velocity</div>
-                  <div className={`text-xl font-bold font-mono ${isDescentNominal ? 'text-emerald-400' : 'text-amber-400'}`}>
-                    {calculatedVelocity} m/s
-                  </div>
-                </div>
-                <div className="text-right">
-                  <div className="text-[10px] text-slate-400 uppercase">Target Velocity Tolerance</div>
-                  <div className="text-cyan-300 font-bold">3.05 m/s (±0.35)</div>
-                </div>
+              {/* 4-Step Descent Selector */}
+              <div className="space-y-2.5">
+                {[1, 2, 3, 4].map((stepNum) => {
+                  const key = `step${stepNum}`;
+                  return (
+                    <div key={key} className="p-3 rounded-xl bg-black/50 border border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5">
+                      <div className="flex items-center gap-2 font-bold text-white min-w-[100px]">
+                        <span className="w-6 h-6 rounded-lg bg-cyan-950/80 border border-cyan-500/40 flex items-center justify-center text-xs text-cyan-300">
+                          {stepNum}
+                        </span>
+                        <span>Step {stepNum}</span>
+                      </div>
+
+                      <select
+                        value={selectedStages[key]}
+                        onChange={(e) => setSelectedStages({ ...selectedStages, [key]: e.target.value })}
+                        disabled={descentSolved}
+                        className="w-full sm:w-auto flex-1 bg-slate-900 border border-cyan-500/40 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-cyan-400 cursor-pointer disabled:opacity-75 disabled:cursor-not-allowed"
+                      >
+                        <option value="">Select a stage...</option>
+                        {DESCENT_STAGES.map((stg) => (
+                          <option key={stg.id} value={stg.id}>
+                            {stg.title}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  );
+                })}
               </div>
 
+              {/* Feedback Alert */}
               {descentFeedback && (
-                <div className={`p-3 rounded-xl border text-xs font-sans ${
-                  descentCompleted ? 'bg-emerald-950/40 border-emerald-500/40 text-emerald-200' : 'bg-amber-950/40 border-amber-500/40 text-amber-200'
+                <div className={`p-3 rounded-xl border text-xs font-sans leading-relaxed ${
+                  descentFeedback.type === 'success' 
+                    ? 'bg-emerald-950/40 border-emerald-500/40 text-emerald-200' 
+                    : 'bg-amber-950/40 border-amber-500/40 text-amber-200'
                 }`}>
-                  {descentFeedback}
+                  {descentFeedback.message}
                 </div>
               )}
 
-              <div className="flex justify-end gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={handleExecuteDescent}
-                  className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold tracking-wider uppercase text-xs shadow-lg shadow-cyan-600/30 transition-all hover:scale-105 active:scale-95 flex items-center gap-2"
-                >
-                  <Zap className="w-4 h-4" />
-                  <span>Execute Descent Simulation</span>
-                </button>
-                {descentCompleted && (
-                  <button
-                    type="button"
-                    onClick={() => { audio.playClick(); setCurrentStep(2); }}
-                    className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold tracking-wider uppercase text-xs flex items-center gap-2 shadow-lg shadow-emerald-600/30"
-                  >
-                    <span>Proceed to Phase 2</span>
-                    <ArrowRight className="w-4 h-4" />
-                  </button>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* STEP 2: SURFACE OBSERVATION */}
-          {currentStep === 2 && (
-            <div className="space-y-4 animate-fade-in">
-              <div className="p-3.5 rounded-xl bg-cyan-950/30 border border-cyan-500/30 space-y-1">
-                <div className="text-[11px] font-bold text-cyan-300 uppercase flex items-center gap-2">
-                  <Camera className="w-4 h-4 text-cyan-400" />
-                  <span>Phase 2 · Vidicon Optical Mirror & Filter Calibration</span>
-                </div>
-                <p className="text-slate-300 text-xs font-sans">
-                  The motorized quartz mirror camera scanned the horizon across red, green, and blue spectral bands. 
-                  Align the mirror elevation to <strong>18.5°</strong> and select the <strong>Clear / UV-Pass</strong> filter to stitch the historical panorama.
-                </p>
-              </div>
-
-              {/* Mirror Elevation */}
-              <div className="p-4 rounded-xl bg-black/60 border border-white/10 space-y-2">
-                <div className="flex justify-between items-center text-xs">
-                  <span className="text-slate-400">Vidicon Mirror Elevation:</span>
-                  <span className="text-cyan-300 font-bold">{mirrorElevation.toFixed(1)}°</span>
-                </div>
-                <input 
-                  type="range"
-                  min="0.0"
-                  max="45.0"
-                  step="0.5"
-                  value={mirrorElevation}
-                  onChange={(e) => setMirrorElevation(parseFloat(e.target.value))}
-                  className="w-full accent-cyan-400 cursor-pointer"
-                />
-                <div className="flex justify-between text-[10px] text-slate-500">
-                  <span>0.0° (Ground Nadir)</span>
-                  <span>45.0° (Deep Space Zenith)</span>
-                </div>
-              </div>
-
-              {/* Optical Filter Selector */}
-              <div className="space-y-2">
-                <div className="text-[11px] text-slate-400 uppercase">Optical Filter Wheel:</div>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                  {['Red', 'Green', 'Blue', 'Clear'].map((filterName) => (
-                    <button
-                      key={filterName}
-                      type="button"
-                      onClick={() => { audio.playClick(); setSelectedFilter(filterName); }}
-                      className={`p-3 rounded-xl border text-xs font-bold uppercase transition-all ${
-                        selectedFilter === filterName
-                          ? 'bg-cyan-500/30 border-cyan-400 text-cyan-200 shadow-md shadow-cyan-500/20'
-                          : 'bg-black/50 border-white/10 text-slate-400 hover:text-white hover:bg-white/5'
-                      }`}
-                    >
-                      {filterName}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {observationFeedback && (
-                <div className={`p-3 rounded-xl border text-xs font-sans ${
-                  observationCompleted ? 'bg-emerald-950/40 border-emerald-500/40 text-emerald-200' : 'bg-amber-950/40 border-amber-500/40 text-amber-200'
-                }`}>
-                  {observationFeedback}
+              {/* What the player learned callout */}
+              {descentSolved && (
+                <div className="p-3.5 rounded-xl bg-emerald-950/30 border border-emerald-500/40 space-y-1 text-emerald-200 text-xs font-sans">
+                  <div className="font-bold flex items-center gap-1.5 text-emerald-300">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                    <span>Principle Verified: Controlled Lunar Braking</span>
+                  </div>
+                  <p>
+                    <strong>What the player learns:</strong> Lunar landing requires controlled braking, descent and surface contact—not simply dropping onto the Moon.
+                  </p>
                 </div>
               )}
 
+              {/* Action Buttons */}
               <div className="flex justify-end gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={handleCalibrateCamera}
-                  className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold tracking-wider uppercase text-xs shadow-lg shadow-cyan-600/30 transition-all hover:scale-105 active:scale-95 flex items-center gap-2"
-                >
-                  <Camera className="w-4 h-4" />
-                  <span>Stitch 360° Panorama</span>
-                </button>
-                {observationCompleted && (
+                {!descentSolved ? (
                   <button
                     type="button"
-                    onClick={() => { audio.playClick(); setCurrentStep(3); }}
-                    className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold tracking-wider uppercase text-xs flex items-center gap-2 shadow-lg shadow-emerald-600/30"
+                    onClick={handleCheckDescent}
+                    className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold tracking-wider uppercase text-xs shadow-lg shadow-cyan-600/30 transition-all hover:scale-105 active:scale-95 flex items-center gap-2"
                   >
-                    <span>Proceed to Phase 3</span>
-                    <ArrowRight className="w-4 h-4" />
-                  </button>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* STEP 3: ARCHIVE RESTORATION & SIGNAL EXTRACTION */}
-          {currentStep === 3 && (
-            <div className="space-y-4 animate-fade-in">
-              <div className="p-3.5 rounded-xl bg-cyan-950/30 border border-cyan-500/30 space-y-1">
-                <div className="text-[11px] font-bold text-cyan-300 uppercase flex items-center gap-2">
-                  <FileSearch className="w-4 h-4 text-cyan-400" />
-                  <span>Phase 3 · Harmonic Carrier Filtering & Archive Synthesis</span>
-                </div>
-                <p className="text-slate-300 text-xs font-sans">
-                  The alien conduit has been piggybacking on Surveyor 1's vidicon scanlines. 
-                  Tune the notch filter to the resonant harmonic frequency (<strong>432.06 Hz</strong>) to eliminate interference and synthesize the 11,237 archived frames.
-                </p>
-              </div>
-
-              {/* Frequency Tuning */}
-              <div className="p-4 rounded-xl bg-black/60 border border-white/10 space-y-2">
-                <div className="flex justify-between items-center text-xs">
-                  <span className="text-slate-400">Harmonic Notch Frequency:</span>
-                  <span className="text-purple-300 font-bold font-mono">{notchFilterFreq.toFixed(2)} Hz</span>
-                </div>
-                <input 
-                  type="range"
-                  min="400.0"
-                  max="460.0"
-                  step="0.05"
-                  value={notchFilterFreq}
-                  onChange={(e) => setNotchFilterFreq(parseFloat(e.target.value))}
-                  className="w-full accent-purple-400 cursor-pointer"
-                />
-                <div className="flex justify-between text-[10px] text-slate-500">
-                  <span>400.0 Hz</span>
-                  <span className="text-purple-300 font-bold">Resonance Zone (~432 Hz)</span>
-                  <span>460.0 Hz</span>
-                </div>
-              </div>
-
-              {/* Historical Photo Preview */}
-              <div className="relative rounded-xl overflow-hidden border border-cyan-500/40 max-h-48 group">
-                <img 
-                  src="/images/surveyor1_moon_earth.jpg" 
-                  alt="Surveyor 1 Lunar Frame" 
-                  className={`w-full h-full object-cover transition-all duration-700 ${
-                    archiveCompleted ? 'filter-none scale-105' : 'blur-[2px] contrast-125 hue-rotate-30'
-                  }`}
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent pointer-events-none" />
-                <div className="absolute bottom-2 left-3 text-[10px] text-cyan-300 font-mono">
-                  {archiveCompleted ? 'FRAME #0942 · 100% DECRYPTED · STELLAR VECTOR ATTACHED' : 'SCANLINE INTERFERENCE ACTIVE · 432 HZ CARRIER DETECTED'}
-                </div>
-              </div>
-
-              {archiveFeedback && (
-                <div className={`p-3 rounded-xl border text-xs font-sans ${
-                  archiveCompleted ? 'bg-purple-950/40 border-purple-500/40 text-purple-200' : 'bg-amber-950/40 border-amber-500/40 text-amber-200'
-                }`}>
-                  {archiveFeedback}
-                </div>
-              )}
-
-              <div className="flex justify-end gap-3 pt-2">
-                {!archiveCompleted ? (
-                  <button
-                    type="button"
-                    onClick={handleRestoreArchive}
-                    className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold tracking-wider uppercase text-xs shadow-lg shadow-purple-600/30 transition-all hover:scale-105 active:scale-95 flex items-center gap-2"
-                  >
-                    <Sparkles className="w-4 h-4" />
-                    <span>Filter Harmonic & Decrypt</span>
+                    <Zap className="w-4 h-4" />
+                    <span>Check sequence</span>
                   </button>
                 ) : (
                   <button
                     type="button"
-                    onClick={handleFinishSimulation}
-                    className="px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-600 via-cyan-600 to-indigo-600 hover:from-emerald-500 hover:to-indigo-500 text-white font-bold tracking-wider uppercase text-xs shadow-xl shadow-cyan-600/40 transition-all hover:scale-105 active:scale-95 flex items-center gap-2 animate-bounce"
+                    onClick={() => { audio.playClick(); setCurrentStep(2); }}
+                    className="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold tracking-wider uppercase text-xs flex items-center gap-2 shadow-lg shadow-emerald-600/30 transition-all hover:scale-105"
                   >
-                    <CheckCircle2 className="w-4 h-4 text-emerald-200" />
-                    <span>Complete Mission Echo & Return to Surveyor 1</span>
+                    <span>Proceed to Puzzle B — Reading Lunar Surface</span>
+                    <ArrowRight className="w-4 h-4" />
                   </button>
                 )}
               </div>
+            </div>
+          )}
+
+          {/* ========================================================= */}
+          {/* PUZZLE B — READING THE LUNAR SURFACE                      */}
+          {/* ========================================================= */}
+          {currentStep === 2 && (
+            <div className="space-y-4 animate-fade-in">
+              <div className="p-3.5 rounded-xl bg-cyan-950/30 border border-cyan-500/30 space-y-1">
+                <div className="text-[11px] font-bold text-cyan-300 uppercase flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Camera className="w-4 h-4 text-cyan-400" />
+                    <span>Puzzle B — Reading the Lunar Surface</span>
+                  </div>
+                  <span className="text-[10px] text-amber-300/80 font-normal">
+                    Objective: Interpret surface evidence
+                  </span>
+                </div>
+                <p className="text-slate-300 text-xs font-sans leading-relaxed">
+                  Match each reconstructed observation with its scientific interpretation. 
+                  Surveyor 1 proved whether the Moon was safe for future Apollo human missions.
+                </p>
+              </div>
+
+              {/* Surface Observation Reconstructed Photo */}
+              <div className="relative rounded-2xl overflow-hidden border-2 border-cyan-500/40 max-h-52 group">
+                <img 
+                  src="/images/moon_close_up_telescope.jpg" 
+                  alt="Surveyor 1 Lunar Surface Observation"
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30 pointer-events-none" />
+                
+                {/* Visual Pins */}
+                <div className="absolute bottom-3 left-4 flex items-center gap-2 text-[10px] font-mono text-cyan-300 bg-black/75 px-3 py-1 rounded-full border border-cyan-400/50">
+                  <Eye className="w-3.5 h-3.5 text-cyan-400" />
+                  <span>RECONSTRUCTED OBSERVATION: OCEANUS PROCELLARUM SOIL SURVEY</span>
+                </div>
+              </div>
+
+              {/* 3 Questions Grid */}
+              <div className="space-y-3">
+                
+                {/* 1. Footpad Impression */}
+                <div className="p-3.5 rounded-xl bg-black/60 border border-white/10 space-y-2">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-bold text-white flex items-center gap-2">
+                      <span className="w-5 h-5 rounded-md bg-cyan-950 border border-cyan-500/40 text-cyan-300 flex items-center justify-center text-[10px]">1</span>
+                      <span>Observation: Landing footpad impressions</span>
+                    </span>
+                    <span className="text-[10px] text-slate-400">Match Interpretation</span>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+                    {[
+                      { val: 'erosion', label: 'Atmospheric erosion mark' },
+                      { val: 'contact', label: 'Evidence of surface contact' },
+                      { val: 'exhaust', label: 'Chemical exhaust corrosion' }
+                    ].map((opt) => (
+                      <button
+                        key={opt.val}
+                        type="button"
+                        onClick={() => { audio.playClick(); setSurfaceAnswers({ ...surfaceAnswers, footpad: opt.val }); }}
+                        disabled={surfaceSolved}
+                        className={`p-2.5 rounded-lg border text-left transition-all text-[11px] ${
+                          surfaceAnswers.footpad === opt.val
+                            ? 'bg-cyan-500/20 border-cyan-400 text-cyan-200 font-bold'
+                            : 'bg-slate-900/60 border-white/5 text-slate-400 hover:text-white hover:bg-white/5'
+                        }`}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 2. Rock Distribution */}
+                <div className="p-3.5 rounded-xl bg-black/60 border border-white/10 space-y-2">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-bold text-white flex items-center gap-2">
+                      <span className="w-5 h-5 rounded-md bg-cyan-950 border border-cyan-500/40 text-cyan-300 flex items-center justify-center text-[10px]">2</span>
+                      <span>Observation: Nearby rocks & boulder distribution</span>
+                    </span>
+                    <span className="text-[10px] text-slate-400">Match Interpretation</span>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+                    {[
+                      { val: 'water', label: 'Indicates sub-surface water ice' },
+                      { val: 'terrain', label: 'Helps describe local terrain' },
+                      { val: 'volcanic', label: 'Evidence of recent lunar volcano' }
+                    ].map((opt) => (
+                      <button
+                        key={opt.val}
+                        type="button"
+                        onClick={() => { audio.playClick(); setSurfaceAnswers({ ...surfaceAnswers, rocks: opt.val }); }}
+                        disabled={surfaceSolved}
+                        className={`p-2.5 rounded-lg border text-left transition-all text-[11px] ${
+                          surfaceAnswers.rocks === opt.val
+                            ? 'bg-cyan-500/20 border-cyan-400 text-cyan-200 font-bold'
+                            : 'bg-slate-900/60 border-white/5 text-slate-400 hover:text-white hover:bg-white/5'
+                        }`}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 3. Surface Slope */}
+                <div className="p-3.5 rounded-xl bg-black/60 border border-white/10 space-y-2">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-bold text-white flex items-center gap-2">
+                      <span className="w-5 h-5 rounded-md bg-cyan-950 border border-cyan-500/40 text-cyan-300 flex items-center justify-center text-[10px]">3</span>
+                      <span>Observation: Surface slope & regolith texture</span>
+                    </span>
+                    <span className="text-[10px] text-slate-400">Match Interpretation</span>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+                    {[
+                      { val: 'magnetic', label: 'Determines solar magnetic field' },
+                      { val: 'radio', label: 'Controls radio transmission rate' },
+                      { val: 'stability', label: 'Relevant to landing stability' }
+                    ].map((opt) => (
+                      <button
+                        key={opt.val}
+                        type="button"
+                        onClick={() => { audio.playClick(); setSurfaceAnswers({ ...surfaceAnswers, slope: opt.val }); }}
+                        disabled={surfaceSolved}
+                        className={`p-2.5 rounded-lg border text-left transition-all text-[11px] ${
+                          surfaceAnswers.slope === opt.val
+                            ? 'bg-cyan-500/20 border-cyan-400 text-cyan-200 font-bold'
+                            : 'bg-slate-900/60 border-white/5 text-slate-400 hover:text-white hover:bg-white/5'
+                        }`}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+              </div>
+
+              {/* Surface Feedback / Observation Report */}
+              {surfaceFeedback && (
+                <div className={`p-3 rounded-xl border text-xs font-sans leading-relaxed ${
+                  surfaceFeedback.type === 'success' 
+                    ? 'bg-emerald-950/40 border-emerald-500/40 text-emerald-200' 
+                    : 'bg-amber-950/40 border-amber-500/40 text-amber-200'
+                }`}>
+                  {surfaceFeedback.message}
+                </div>
+              )}
+
+              {/* What the player learned callout */}
+              {surfaceSolved && (
+                <div className="p-3.5 rounded-xl bg-emerald-950/30 border border-emerald-500/40 space-y-1 text-emerald-200 text-xs font-sans">
+                  <div className="font-bold flex items-center gap-1.5 text-emerald-300">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                    <span>Scientific Observation Report Restored</span>
+                  </div>
+                  <p>
+                    <strong>What the player learns:</strong> The Surveyor programme helped investigate lunar surface conditions, which was important for planning future human lunar exploration.
+                  </p>
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              <div className="flex justify-end gap-3 pt-2">
+                {!surfaceSolved ? (
+                  <button
+                    type="button"
+                    onClick={handleVerifySurfaceObservations}
+                    className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold tracking-wider uppercase text-xs shadow-lg shadow-cyan-600/30 transition-all hover:scale-105 active:scale-95 flex items-center gap-2"
+                  >
+                    <Check className="w-4 h-4" />
+                    <span>Verify Surface Interpretations</span>
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => { audio.playClick(); setCurrentStep(3); }}
+                    className="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold tracking-wider uppercase text-xs flex items-center gap-2 shadow-lg shadow-emerald-600/30 transition-all hover:scale-105"
+                  >
+                    <span>Proceed to Puzzle C — Restore Image Archive</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* ========================================================= */}
+          {/* PUZZLE C — RESTORE THE IMAGE ARCHIVE                      */}
+          {/* ========================================================= */}
+          {currentStep === 3 && (
+            <div className="space-y-4 animate-fade-in">
+              <div className="p-3.5 rounded-xl bg-cyan-950/30 border border-cyan-500/30 space-y-1">
+                <div className="text-[11px] font-bold text-cyan-300 uppercase flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <FileSearch className="w-4 h-4 text-cyan-400" />
+                    <span>Puzzle C — Restore the Image Archive</span>
+                  </div>
+                  <span className="text-[10px] text-amber-300/80 font-normal">
+                    Objective: Restore damaged archive records
+                  </span>
+                </div>
+                <p className="text-slate-300 text-xs font-sans leading-relaxed">
+                  The alien interface contains fragments of Surveyor 1's historical image archive. 
+                  Click two tiles to swap their positions and reconstruct the 3 × 3 damaged image.
+                </p>
+              </div>
+
+              {/* 3x3 Tile Puzzle Area */}
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-6 p-4 rounded-2xl bg-black/70 border border-cyan-500/30">
+                
+                {/* 3x3 Grid */}
+                <div className="grid grid-cols-3 gap-1.5 p-2 bg-slate-900/90 rounded-2xl border-2 border-cyan-500/50 shadow-[0_0_30px_rgba(6,182,212,0.25)]">
+                  {tiles.map((tilePos, idx) => {
+                    const isSelected = selectedTileIdx === idx;
+                    // Calculate background position based on tile original target (0 to 8)
+                    const row = Math.floor(tilePos / 3);
+                    const col = tilePos % 3;
+                    const posX = col * 50; // 0%, 50%, 100%
+                    const posY = row * 50; // 0%, 50%, 100%
+
+                    return (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => handleTileClick(idx)}
+                        disabled={archiveSolved}
+                        className={`relative w-20 h-20 sm:w-24 sm:h-24 rounded-lg overflow-hidden transition-all duration-150 ${
+                          isSelected 
+                            ? 'ring-4 ring-cyan-400 scale-105 z-10 brightness-125' 
+                            : archiveSolved
+                            ? 'border border-emerald-400/50 cursor-default'
+                            : 'border border-cyan-400/30 hover:border-cyan-300 hover:scale-[1.02] cursor-pointer'
+                        }`}
+                        style={{
+                          backgroundImage: `url('/images/surveyor1_moon_earth.jpg')`,
+                          backgroundSize: '300% 300%',
+                          backgroundPosition: `${posX}% ${posY}%`
+                        }}
+                      >
+                        {!archiveSolved && (
+                          <div className="absolute top-1 left-1.5 text-[10px] font-mono text-cyan-300/90 bg-black/60 px-1 rounded">
+                            {idx + 1}
+                          </div>
+                        )}
+                        {isSelected && (
+                          <div className="absolute inset-0 bg-cyan-400/20 animate-pulse" />
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Instructions & Reference Thumbnail */}
+                <div className="flex flex-col items-center sm:items-start space-y-3 max-w-xs text-center sm:text-left">
+                  <div className="text-[11px] text-slate-400">
+                    {archiveSolved ? (
+                      <span className="text-emerald-400 font-bold flex items-center gap-1">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                        <span>3 × 3 Tiles Aligned Nominally</span>
+                      </span>
+                    ) : (
+                      <span>Click tile A, then click tile B to swap positions.</span>
+                    )}
+                  </div>
+
+                  <div className="space-y-1">
+                    <div className="text-[10px] text-slate-500 uppercase tracking-wider">Historical Target Frame:</div>
+                    <div className="w-24 h-24 rounded-xl overflow-hidden border border-white/20 shadow-md">
+                      <img 
+                        src="/images/surveyor1_moon_earth.jpg" 
+                        alt="Reference Frame" 
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  </div>
+
+                  {!archiveSolved && (
+                    <button
+                      type="button"
+                      onClick={handleAutoSolveArchive}
+                      className="px-3 py-1 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 text-[10px] text-slate-400 hover:text-white transition-colors"
+                    >
+                      Quick Calibrate (Auto-Align)
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Archive Restored Official Card (Exact Required Text) */}
+              {archiveSolved && (
+                <div className="p-5 rounded-2xl bg-slate-950 border-2 border-emerald-500/70 shadow-[0_0_40px_rgba(16,185,129,0.3)] space-y-3 animate-fade-in font-mono">
+                  <div className="flex items-center justify-between border-b border-emerald-500/30 pb-2">
+                    <div className="text-[11px] text-emerald-400 font-bold tracking-widest uppercase flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                      <span>ARCHIVE RESTORED</span>
+                    </div>
+                    <span className="text-xs text-emerald-300 font-bold">100% SYNTHESIS</span>
+                  </div>
+
+                  <div className="flex items-baseline gap-3">
+                    <span className="text-4xl font-bold text-white tracking-tight">11,240</span>
+                    <span className="text-xs text-slate-300 uppercase tracking-wider">Surveyor 1 images</span>
+                  </div>
+
+                  <div className="space-y-1 pt-1">
+                    <div className="text-[10px] text-emerald-400 uppercase font-bold tracking-wider">
+                      Historical mission result
+                    </div>
+                    <div className="text-xs text-slate-200 space-y-1 font-sans">
+                      <div className="font-semibold text-white">Mission record recovered:</div>
+                      <ul className="list-disc list-inside space-y-0.5 text-slate-300 pl-1">
+                        <li>Successful lunar soft landing.</li>
+                        <li>Lunar surface imaging.</li>
+                        <li>Scientific observations.</li>
+                        <li>Historic engineering achievement.</li>
+                      </ul>
+                    </div>
+                  </div>
+                  <div className="text-[10px] text-slate-500 italic pt-1 border-t border-white/10">
+                    * The number of images is a historical reference. The fictional recovery process and alien connection are story elements.
+                  </div>
+                </div>
+              )}
+
+              {/* ========================================================= */}
+              {/* THE MYSTERY CLUE: ANOMALOUS TRANSMISSION PATTERN          */}
+              {/* ========================================================= */}
+              {showMysteryClue && (
+                <div className="p-5 rounded-2xl bg-purple-950/60 border-2 border-purple-500/70 shadow-[0_0_50px_rgba(168,85,247,0.4)] space-y-4 animate-scale-up font-mono">
+                  
+                  {/* Warning Header */}
+                  <div className="flex items-center justify-between border-b border-purple-500/40 pb-2">
+                    <div className="flex items-center gap-2 text-purple-300 font-bold text-xs tracking-widest uppercase">
+                      <Radio className="w-4 h-4 text-purple-400 animate-pulse" />
+                      <span>THE MYSTERY CLUE · UNIDENTIFIED SIGNAL PATTERN</span>
+                    </div>
+                    <span className="text-[10px] px-2 py-0.5 rounded bg-purple-900/60 border border-purple-400/40 text-purple-200 animate-ping">
+                      ACTIVE FEED
+                    </span>
+                  </div>
+
+                  <p className="text-xs text-purple-200/90 font-sans leading-relaxed">
+                    A separate signal pattern is embedded in the data interface. It does not match the historical image archive.
+                  </p>
+
+                  {/* Scripted Comms Exchange */}
+                  <div className="space-y-2 p-3 rounded-xl bg-black/70 border border-purple-500/30">
+                    {MYSTERY_DIALOGUE.slice(0, clueDialogueStep + 1).map((line, idx) => (
+                      <div key={idx} className="text-xs leading-relaxed animate-fade-in font-sans">
+                        <span className={`font-bold font-mono text-[11px] mr-2 ${
+                          line.callsign.includes('CHEN') ? 'text-cyan-300' : 'text-amber-300'
+                        }`}>
+                          {line.speaker}:
+                        </span>
+                        <span className="text-white italic">"{line.text}"</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Advance to Recovery Stage Button */}
+                  {clueDialogueStep >= 4 && (
+                    <div className="flex justify-end pt-2 animate-fade-in">
+                      <button
+                        type="button"
+                        onClick={handleFinishMissionEcho}
+                        className="px-6 py-3 rounded-xl bg-gradient-to-r from-purple-600 via-indigo-600 to-cyan-600 hover:from-purple-500 hover:to-cyan-500 text-white font-bold tracking-wider uppercase text-xs shadow-xl shadow-purple-600/40 transition-all hover:scale-105 active:scale-95 flex items-center gap-2 animate-bounce font-mono"
+                      >
+                        <span>Proceed to Stage 6 — Recover Surveyor 1</span>
+                        <ArrowRight className="w-4 h-4" />
+                      </button>
+                    </div>
+                  )}
+
+                </div>
+              )}
+
             </div>
           )}
 
         </main>
 
         {/* Footer */}
-        <footer className="p-4 border-t border-cyan-500/30 bg-black/70 flex items-center justify-between text-[10px] text-slate-500">
+        <footer className="p-3.5 px-6 border-t border-cyan-500/30 bg-black/80 flex items-center justify-between text-[10px] text-slate-500 font-mono">
           <div>
-            HISTORICAL MISSION ECHO RECONSTRUCTION · NASA ARCHIVE
+            HISTORICAL MISSION ECHO RECONSTRUCTION · 1966 ARCHIVE
           </div>
-          <div className="flex items-center gap-2 text-cyan-400">
-            <span>PHASE {currentStep} OF 3</span>
+          <div className="flex items-center gap-3 text-cyan-400">
+            <span>CHALLENGE {currentStep} OF 3</span>
+            {archiveSolved && <span className="text-emerald-400 font-bold">11,240 RECOVERED</span>}
           </div>
         </footer>
 
@@ -472,4 +921,3 @@ export default function MissionEchoModal({ isOpen, onClose, onCompleteEcho }) {
     </div>
   );
 }
-

@@ -123,35 +123,35 @@ export const JOURNEY_STAGES = [
   {
     stepIndex: 4,
     id: 'solve_echo',
-    name: 'Solve — Mission Echo',
-    durationEst: 'Approx. 7–10 minutes',
+    name: 'Stage 5 — Mission Echo: Reconstructing Surveyor 1',
+    durationEst: 'Approx. 7 minutes',
     zoneName: 'ZONE 5 · MISSION ECHO INTERFACE',
-    targetCoords: { x: -116, z: -72 },
-    waypointLabel: 'Mission Echo Array',
-    objective: 'Player completes the three historical reconstruction puzzles.',
-    narrative: 'Interfacing with the alien array projects a volumetric simulation of Surveyor 1\'s 1966 mission. Arin reconstructs the flight telemetry, optical panorama, and frequency archives.',
-    instructions: 'Interact with the Mission Echo terminal [E]. Calibrate the 1966 Controlled Descent retro-burn, stitch the Vidicon 360° panoramic surface observation, and apply the 432.06 Hz harmonic notch filter to restore the corrupted telemetry archive.',
+    targetCoords: { x: -77.2, z: -53.2 },
+    waypointLabel: 'Mission Echo Central Console',
+    objective: 'Complete the three historical reconstruction puzzles to recover Surveyor 1\'s mission records.',
+    narrative: 'Mission Echo is a fictional reconstruction system that uses recovered telemetry, images and archived records to recreate parts of Surveyor 1\'s historic mission. Arin enters three challenges: the descent sequence, reading the lunar surface, and restoring the image archive.',
+    instructions: 'Open the Mission Echo console [E]. (A) Sequence the 4-stage controlled descent, (B) Match surface observations with interpretations, and (C) Reconstruct the 3x3 damaged image archive to uncover the mystery clue.',
     commsCallout: {
-      callsign: 'GOLDSTONE-COMMS',
-      speaker: 'Flight Director (Aegis Base)',
-      text: 'The alien interface is parsing Surveyor’s historical flight records. Complete the descent telemetry, align the Vidicon optics, and apply the 432 Hz notch filter to restore the archive.'
+      callsign: 'CHEN-SCIENCE',
+      speaker: 'Specialist Maya Chen',
+      text: 'Mission Echo interface is online. Reconstruct the controlled descent sequence, verify the surface soil observations, and restore the 11,240 image archive.'
     }
   },
   {
     stepIndex: 5,
     id: 'recover_surveyor',
-    name: 'Recover — Surveyor 1',
+    name: 'Stage 6 — Recover Surveyor 1',
     durationEst: 'Approx. 3 minutes',
     zoneName: 'ZONE 6 · RECOVERY & EXTRACTION',
     targetCoords: { x: 0, z: 0 },
     waypointLabel: 'Surveyor 1 Recovery Rig',
     objective: 'Player disconnects the fictional alien feed, secures the archive and prepares the spacecraft for recovery.',
-    narrative: 'With the alien interface solved, the dark conduit powers down. Arin returns to Surveyor 1 to disconnect the alien feed, lock the 11,237 restored frames into the Quantum Archive, and prep the recovery rig.',
-    instructions: 'Return to Surveyor 1 where the recovery team has deployed the heavy robotic rig. Inspect the Recovery Rig to sever the alien feed, lock the 11,237 historic frames into the Quantum Archive Vault, and brace the lander on the extraction sled.',
+    narrative: 'With the mystery transmission identified, Arin returns to Surveyor 1 to disconnect the alien feed, lock the 11,240 historic frames into the archive vault, and brace the spacecraft on the extraction sled.',
+    instructions: 'Return to Surveyor 1 where the recovery team has deployed the heavy robotic rig. Sever the alien feed, lock the 11,240 historic frames into the Quantum Archive, and prep the spacecraft for recovery.',
     commsCallout: {
       callsign: 'VANCE-OPS',
       speaker: 'Officer Leo Vance',
-      text: 'The alien conduit has powered down! Recovery rig is deployed at the landing site. Disconnect the alien link, lock the 11,237 restored frames into the Quantum Archive, and prep the sled.'
+      text: 'The alien conduit is vibrating! Return to Surveyor 1, sever the alien connection, lock all 11,240 frames into the vault, and prep the spacecraft for recovery.'
     }
   },
   {
@@ -4505,12 +4505,12 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
           'Optics Shroud': 'Quartz / Fluoride Mirror Gimbal',
           'Filter Wheel': 'Clear, Red, Green, Blue Dichroic (Locked)',
           'Resolution': '200 / 600 Scan Lines',
-          'Historic Frames': '11,237 Transmitted to DSN Goldstone',
+          'Historic Frames': '11,240 Transmitted to DSN Goldstone',
           'Radiation Status': '14.2% Beta Pitting (Structure Intact)'
         },
         historicalFacts: [
           'First Eyes on the Moon: Surveyor 1 carried a single steerable Vidicon television camera with a variable-focal-length lens and adjustable mirror.',
-          '11,237 Historic Photographs: Over 44 Earth days, it returned panoramic views of lunar craters, rocks, and the distant Earth, confirming surface firmness for Apollo.',
+          '11,240 Historic Photographs: Over 44 Earth days, it returned panoramic views of lunar craters, rocks, and the distant Earth, confirming surface firmness for Apollo.',
           'Color Synthesis: By cycling through red, green, and blue optical filters, NASA produced the first true-color images taken on another planetary body.'
         ],
         officerNote: 'Running my scanner beam along the quartz mirror shroud... 160 years ago, this camera was humanity’s only set of eyes on this world. We are walking where only radio waves once reached.'
@@ -4808,7 +4808,7 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
         readings: {
           'Phase 1': 'Terminal Descent Calibration (3.05 m/s)',
           'Phase 2': 'Vidicon 360° Panorama Stitching',
-          'Phase 3': 'Historic Archive Decryption (11,237 Frames)',
+          'Phase 3': 'Historic Archive Decryption (11,240 Frames)',
           'System Status': 'Interactive Simulation Online'
         },
         officerNote: 'A holographic wireframe of Surveyor 1 floating right here on the Moon... It’s reconstructing the descent telemetry frame by frame!'
@@ -4859,10 +4859,10 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
         sector: 'Zone 6 · Surveyor 1 Recovery Site',
         artifactAge: 'Current Expedition (2126)',
         integrity: '100% Data Transfer Complete',
-        telemetryStatus: '11,237 Frames Archived',
-        description: 'Radiation-hardened solid-state quantum vault clamped to the lander\'s mast. Successfully captured and archived all 11,237 historic frames and decoded signal packets.',
+        telemetryStatus: '11,240 Frames Archived',
+        description: 'Radiation-hardened solid-state quantum vault clamped to the lander\'s mast. Successfully captured and archived all 11,240 historic frames and decoded signal packets.',
         readings: {
-          'Archive Download': '11,237 Frames (100% Verified)',
+          'Archive Download': '11,240 Frames (100% Verified)',
           'Harmonic Signal': 'Decrypted & Extracted',
           'Orbital Downlink': 'Beamed to Carrier Aegis',
           'Status': 'Vault Sealed'
@@ -7128,7 +7128,7 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
             </div>
 
             <p className="text-slate-300 text-xs sm:text-sm font-sans leading-relaxed">
-              Surveyor 1 has been braced with robotic stabilizers and all 11,237 historic Vidicon frames are secured in the quantum vault. 
+              Surveyor 1 has been braced with robotic stabilizers and all 11,240 historic Vidicon frames are secured in the quantum vault. 
               The alien conduit has powered down, leaving its decrypted transmission vector pointing to an ancient subterranean complex deep beneath the lunar crust: <strong>Vault Zero</strong>.
             </p>
 
@@ -7155,7 +7155,7 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
               </div>
               <div className="flex justify-between text-slate-400">
                 <span>Phase 6 — Recover Surveyor 1:</span>
-                <span className="text-emerald-300 font-bold">Alien Feed Severed · 11,237 Frames</span>
+                <span className="text-emerald-300 font-bold">Alien Feed Severed · 11,240 Frames</span>
               </div>
               <div className="flex justify-between text-slate-400">
                 <span>Phase 7 — End Next Signal:</span>
