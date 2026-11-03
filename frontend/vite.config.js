@@ -9,12 +9,27 @@ export default defineConfig({
     tailwindcss(),
   ],
   server: {
-    port: 5173,
+    host: '0.0.0.0',
+    port: 80,
     proxy: {
       '/api': {
-        target: process.env.VITE_API_TARGET || 'http://localhost:5000',
+        target: process.env.VITE_API_TARGET || 'http://localhost:300',
         changeOrigin: true,
       }
     }
+  },
+  preview: {
+    host: '0.0.0.0',
+    port: 80,
+    proxy: {
+      '/api': {
+        target: process.env.VITE_API_TARGET || 'http://localhost:300',
+        changeOrigin: true,
+      }
+    }
+  },
+  optimizeDeps: {
+    noDiscovery: true,
+    include: [],
   }
 })
