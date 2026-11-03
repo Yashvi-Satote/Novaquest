@@ -1,13 +1,13 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Header from '../../Shared/components/Header';
+import AppNavbar from '../../Shared/components/layout/AppNavbar';
 import SolarCanvas from '../components/solar/SolarCanvas';
 import SolarControlsHUD from '../components/solar/SolarControlsHUD';
 import MissionExplorerSidebar from '../components/solar/MissionExplorerSidebar';
 import MissionDetailDrawer from '../components/solar/MissionDetailDrawer';
 import CelestialDetailDrawer from '../components/solar/CelestialDetailDrawer';
 
-export default function SolarSystemPage({ theme, onToggleTheme }) {
+export default function SolarSystemPage() {
   const navigate = useNavigate();
   const canvasRef = useRef(null);
 
@@ -23,7 +23,6 @@ export default function SolarSystemPage({ theme, onToggleTheme }) {
   const [activeSurfaceCraft, setActiveSurfaceCraft] = useState(null);
   const [hoveredItemInfo, setHoveredItemInfo] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // NASA Eyes-inspired Display Controls
   const [lightingMode, setLightingMode] = useState('natural'); // 'natural' | 'flood'
@@ -185,17 +184,12 @@ export default function SolarSystemPage({ theme, onToggleTheme }) {
   };
 
   return (
-    <div className={`min-h-screen ${theme === 'dark' ? 'dark' : ''} bg-[#060412] text-slate-100 flex flex-col font-sans overflow-hidden select-none`}>
-      {/* Universal Novaquest Header */}
-      <Header 
-        theme={theme}
-        onToggleTheme={onToggleTheme}
-        mobileMenuOpen={mobileMenuOpen}
-        setMobileMenuOpen={setMobileMenuOpen}
-      />
+    <div className="h-screen bg-[#060412] text-slate-100 flex flex-col font-sans overflow-hidden select-none">
+      {/* Shared application navigation */}
+      <AppNavbar />
 
       {/* 3D Deep Space Viewport & HUD Overlay Container */}
-      <main className="relative flex-1 w-full h-[calc(100vh-61px)] overflow-hidden">
+      <main className="relative flex-1 min-h-0 w-full overflow-hidden">
         
         {/* Left Drawer: 250+ Mission Catalogue Explorer */}
         <MissionExplorerSidebar

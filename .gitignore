@@ -59,6 +59,9 @@ Thumbs.db
 *.log
 *.err
 
+# Generated logs and diagnostic output
+logging/
+
 # Python cache
 __pycache__/
 *.py[cod]
@@ -71,3 +74,9 @@ __pycache__/
 # External 3D model asset junction
 frontend/public/models/spacecraft-models/
 
+backend/NovaUser/.pg/
+.venv/
+__pycache__/
+.tmp/
+
+frontend/NovaUser/tests/screenshots/

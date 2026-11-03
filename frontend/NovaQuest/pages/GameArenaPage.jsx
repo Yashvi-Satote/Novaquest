@@ -3,32 +3,26 @@ import { useNavigate } from 'react-router-dom';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { 
+  Archive,
   ArrowLeft, 
   Compass, 
   Radio, 
   Fuel, 
-  Shield, 
   Target, 
   Scan, 
-  RotateCcw, 
-  Sliders, 
-  CheckCircle2, 
-  AlertCircle,
-  Pause,
-  Play
+  Sliders
 } from 'lucide-react';
-import { getSaveGame, saveGame, getSettings } from '../game/saveManager';
+import { getSaveGame, saveGame } from '../game/saveManager';
 import { audio } from '../game/audioManager';
-import SettingsModal from '../components/game/SettingsModal';
+import AppNavbar from '../../Shared/components/layout/AppNavbar';
 
-export default function GameArenaPage({ theme }) {
+export default function GameArenaPage() {
   const navigate = useNavigate();
   const mountRef = useRef(null);
 
   // Game state
   const [save, setSave] = useState(() => getSaveGame());
   const [isPaused, setIsPaused] = useState(false);
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [scanProgress, setScanProgress] = useState(save?.player?.scanProgress || 0);
   const [distanceToSurveyor, setDistanceToSurveyor] = useState(1420); // meters
   const [fuel, setFuel] = useState(save?.player?.fuelCapacity || 100);
@@ -265,7 +259,7 @@ export default function GameArenaPage({ theme }) {
           clearInterval(interval);
           setIsScanning(false);
           setCompletedObjectives(o => [...o, 'Scan Surveyor 1 Antenna', 'Recover 1966 Lunar Telemetry']);
-          setHudMessage('Surveyor 1 telemetry decrypted! 11,237 archival lunar photos linked.');
+          setHudMessage('Surveyor 1 telemetry decrypted! 11,240 archival lunar photos linked.');
 
           // Update save game
           const currentSave = getSaveGame();
@@ -276,8 +270,13 @@ export default function GameArenaPage({ theme }) {
                 ...currentSave.player,
                 scanProgress: 100,
                 dataPacksCollected: 1
+              },
+              missionEcho: {
+                ...(currentSave.missionEcho || {}),
+                unlocked: true
               }
             });
+            setSave(getSaveGame());
           }
           return 100;
         }
@@ -300,12 +299,19 @@ export default function GameArenaPage({ theme }) {
 
   const handleReturnToMenu = () => {
     audio.playClick();
-    navigate('/');
+    navigate('/app');
+  };
+
+  const handleOpenMissionEcho = () => {
+    audio.playClick();
+    navigate('/mission-echo');
   };
 
   return (
-    <div className="relative h-screen w-screen overflow-hidden bg-black font-sans text-slate-100 select-none">
-      
+    <div className="flex h-screen w-screen flex-col overflow-hidden bg-black font-sans text-slate-100 select-none">
+      <AppNavbar />
+
+      <div className="relative flex-1 min-h-0 overflow-hidden">
       {/* 3D WebGL Viewport Container */}
       <div ref={mountRef} className="absolute inset-0 z-0 cursor-grab active:cursor-grabbing" />
 
@@ -343,11 +349,31 @@ export default function GameArenaPage({ theme }) {
           <span>{hudMessage}</span>
         </div>
 
-        {/* Right: Quick Settings & Pause */}
+        {/* Right: Mission Echo, Quick Settings & Pause */}
         <div className="pointer-events-auto flex items-center gap-2">
           <button
             type="button"
-            onClick={() => { audio.playClick(); setIsSettingsOpen(true); }}
+            onClick={handleOpenMissionEcho}
+            className={`flex items-center gap-1.5 rounded-xl border px-2.5 py-2 text-xs font-mono transition-all shadow-md ${
+              scanProgress >= 100
+                ? 'border-fuchsia-400/40 bg-fuchsia-500/15 text-fuchsia-200 hover:bg-fuchsia-500/25'
+                : 'border-white/10 bg-black/60 text-slate-300 hover:bg-slate-900 hover:text-white'
+            }`}
+            title="Open Stage 5: Mission Echo"
+          >
+            <Archive className="h-4 w-4" />
+            <span className="hidden sm:inline">Mission Echo</span>
+            {scanProgress >= 100 && (
+              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-fuchsia-300" />
+            )}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              audio.playClick();
+              navigate('/settings#game');
+            }}
             className="p-2 rounded-xl bg-black/60 hover:bg-slate-900 border border-white/10 text-slate-300 hover:text-white transition-colors"
             title="Game Settings"
           >
@@ -420,13 +446,7 @@ export default function GameArenaPage({ theme }) {
         </div>
       </div>
 
-      {/* Settings Modal */}
-      <SettingsModal
-        isOpen={isSettingsOpen}
-        onClose={() => setIsSettingsOpen(false)}
-        onSaveChanged={() => setSave(getSaveGame())}
-      />
-
+      </div>
     </div>
   );
 }
