@@ -68,9 +68,6 @@ __pycache__/
 .env.*
 !.env.example
 
-# Local portable PostgreSQL runtime (binaries, data, logs)
-backend/NovaUser/.pg/
-.tmp/
+# External 3D model asset junction
+frontend/public/models/spacecraft-models/
 
-# NovaUser browser-test artifacts
-frontend/NovaUser/tests/screenshots/
