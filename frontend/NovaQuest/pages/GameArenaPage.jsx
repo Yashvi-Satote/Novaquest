@@ -306,7 +306,7 @@ export default function GameArenaPage({ theme }) {
 
   const handleReturnToMenu = () => {
     audio.playClick();
-    navigate('/');
+    navigate('/app');
   };
 
   const handleOpenMissionEcho = () => {
