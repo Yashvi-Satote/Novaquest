@@ -7,6 +7,7 @@
  */
 
 const API_BASE = '/api/novauser';
+const REQUEST_TIMEOUT_MS = 10000;
 
 export class AuthApiError extends Error {
   constructor(message, { code = 'request_failed', status = 0, fields = {} } = {}) {
@@ -19,12 +20,15 @@ export class AuthApiError extends Error {
 }
 
 async function request(path, { method = 'GET', body } = {}) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
   let response;
 
   try {
     response = await fetch(`${API_BASE}${path}`, {
       method,
       credentials: 'include',
+      signal: controller.signal,
       headers: body ? { 'Content-Type': 'application/json', Accept: 'application/json' } : { Accept: 'application/json' },
       body: body ? JSON.stringify(body) : undefined,
     });
@@ -32,6 +36,8 @@ async function request(path, { method = 'GET', body } = {}) {
     throw new AuthApiError('Unable to reach the account service. Check your connection and try again.', {
       code: 'network_error',
     });
+  } finally {
+    clearTimeout(timer);
   }
 
   const contentType = response.headers.get('content-type') || '';

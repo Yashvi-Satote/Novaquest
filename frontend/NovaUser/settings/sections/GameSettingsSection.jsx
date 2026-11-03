@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   AlertTriangle,
   Check,
@@ -19,6 +19,10 @@ import {
   getSaveGame,
   hasSaveGame,
 } from '../../../NovaQuest/game/saveManager';
+import {
+  getProgressSyncNotice,
+  subscribeProgress,
+} from '../../../NovaQuest/game/progressRepository';
 import { useSettings } from '../context/settingsContext';
 
 const TABS = [
@@ -60,10 +64,26 @@ export default function GameSettingsSection() {
   } = useSettings();
 
   const [activeTab, setActiveTab] = useState('audio');
-  const [saveExists, setSaveExists] = useState(() => hasSaveGame());
+  const [saveState, setSaveState] = useState(() => ({
+    exists: hasSaveGame(),
+    data: getSaveGame(),
+    notice: getProgressSyncNotice(),
+  }));
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
-  const currentSave = saveExists ? getSaveGame() : null;
+  const refreshSaveState = () => {
+    setSaveState({
+      exists: hasSaveGame(),
+      data: getSaveGame(),
+      notice: getProgressSyncNotice(),
+    });
+  };
+
+  useEffect(() => subscribeProgress(refreshSaveState), []);
+
+  const saveExists = saveState.exists;
+  const currentSave = saveExists ? saveState.data : null;
+  const progressNotice = saveState.notice;
   const isDirty = JSON.stringify(settings) !== JSON.stringify(savedSettings);
   const saving = saveStatus === 'saving';
 
@@ -113,8 +133,8 @@ export default function GameSettingsSection() {
   const handleDeleteSaveFile = () => {
     audio.playClick();
     deleteSaveGame();
-    setSaveExists(false);
     setShowDeleteConfirm(false);
+    refreshSaveState();
   };
 
   const feedbackTone =
@@ -484,6 +504,7 @@ export default function GameSettingsSection() {
               aria-labelledby="game-settings-tab-data"
               className="space-y-5"
             >
+              {progressNotice ? <Feedback tone="info">{progressNotice}</Feedback> : null}
               <div className="space-y-3 rounded-xl border border-white/10 bg-white/[0.03] p-4">
                 <div className="flex items-center justify-between gap-3">
                   <div className="font-mono text-xs uppercase text-slate-400">Save Slot Status</div>

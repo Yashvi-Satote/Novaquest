@@ -35,3 +35,18 @@ ALTER TABLE users ALTER COLUMN email_verified SET NOT NULL;
 ALTER TABLE users ALTER COLUMN password_hash DROP NOT NULL;
 CREATE UNIQUE INDEX IF NOT EXISTS ux_users_firebase_uid
     ON users (firebase_uid) WHERE firebase_uid IS NOT NULL;
+
+-- Per-user NovaQuest data.
+CREATE TABLE IF NOT EXISTS user_game_settings (
+    user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    settings JSONB NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS user_game_progress (
+    user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    progress JSONB NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);

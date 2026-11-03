@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '../../context/authContext';
-import { fetchGameSettings, saveGameSettings } from '../services/settingsApi';
+import { AUTH_STATUS } from '../../services/authSession';
+import { loadSettingsSnapshot, persistSettingsSnapshot } from '../services/settingsRepository';
 import {
   createDefaultSettings,
   getSettings,
   normaliseSettings,
+  readStoredSettings,
   saveSettings as persistLocalSettings,
 } from '../store/settingsStore';
 import { SettingsContext } from './settingsContext';
@@ -12,10 +14,9 @@ import { SettingsContext } from './settingsContext';
 /**
  * Owns the central game-settings state.
  *
- * localStorage is read synchronously on first render (so audio and the game
- * work offline).  When a NovaUser session is available the backend copy is
- * fetched and becomes the source of truth; saves write locally first and then
- * sync to the account.
+ * The repository picks the source: localStorage for guests, the account API
+ * for signed-in users. local is always written first so the game remains fully
+ * usable offline.
  */
 export function SettingsProvider({ children }) {
   const { status, user } = useAuth();
@@ -34,23 +35,35 @@ export function SettingsProvider({ children }) {
   }, []);
 
   useEffect(() => {
-    if (status !== 'authenticated' || !user?.id) return undefined;
+    if (status === AUTH_STATUS.LOADING) return undefined;
+
+    if (status !== AUTH_STATUS.AUTHENTICATED || !user?.id) {
+      const local = readStoredSettings();
+      setSettings(local);
+      setSavedSettings(local);
+      setSyncStatus('idle');
+      setSaveStatus('idle');
+      setMessage('');
+      return undefined;
+    }
 
     let cancelled = false;
     setSyncStatus('loading');
     setMessage('');
 
-    fetchGameSettings()
-      .then((remote) => {
-        if (cancelled || !mounted.current || !remote) return;
-        const normalised = normaliseSettings(remote);
-        setSettings(normalised);
-        setSavedSettings(normalised);
-        persistLocalSettings(normalised);
+    loadSettingsSnapshot()
+      .then((snapshot) => {
+        if (cancelled || !mounted.current) return;
+        setSettings(snapshot.settings);
+        setSavedSettings(snapshot.savedSettings);
         setSyncStatus('ready');
+        setMessage(snapshot.notice || '');
       })
       .catch((error) => {
         if (cancelled || !mounted.current) return;
+        const local = readStoredSettings();
+        setSettings(local);
+        setSavedSettings(local);
         setSyncStatus('error');
         setMessage(
           error?.status === 401
@@ -93,21 +106,15 @@ export function SettingsProvider({ children }) {
     setMessage('');
 
     try {
-      let stored = snapshot;
-      if (status === 'authenticated') {
-        stored = normaliseSettings(await saveGameSettings(snapshot));
-        setSettings(stored);
-        persistLocalSettings(stored);
-      }
-      setSavedSettings(stored);
+      const result = await persistSettingsSnapshot(snapshot);
+      if (!mounted.current) return true;
+      setSettings(result.settings);
+      setSavedSettings(result.settings);
       setSaveStatus('saved');
-      setMessage(
-        status === 'authenticated'
-          ? 'Game settings saved to your account.'
-          : 'Game settings saved on this device.',
-      );
+      setMessage(result.notice);
       return true;
     } catch (error) {
+      if (!mounted.current) return false;
       setSaveStatus('error');
       setMessage(
         error?.message ||
@@ -115,7 +122,7 @@ export function SettingsProvider({ children }) {
       );
       return false;
     }
-  }, [settings, status]);
+  }, [settings]);
 
   const resetDefaults = useCallback(() => {
     const defaults = createDefaultSettings();

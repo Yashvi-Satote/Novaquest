@@ -1,17 +1,26 @@
 import { Link, useLocation } from 'react-router-dom';
 import { Layers, Menu, Orbit, Rocket, Settings, X } from 'lucide-react';
 import { useAuth } from '../../../NovaUser/context/authContext';
+import { AUTH_STATUS } from '../../../NovaUser/services/authSession';
 
 /**
  * Shared application navbar.
  *
  * NovaQuest is dark-only, so the navbar no longer renders a theme toggle.
- * Account details and sign-out live on the Settings page, which is still
- * reachable from the Settings link below.
+ * Signing in is optional: guests see a Sign in button and signed-in users see
+ * an initials avatar linking to Settings > Account, where sign-out lives.
  */
 export default function AppNavbar({ mobileMenuOpen, setMobileMenuOpen }) {
-  const { pathname } = useLocation();
-  const { user } = useAuth();
+  const location = useLocation();
+  const { pathname, search, hash } = location;
+  const { user, status } = useAuth();
+  const returnTarget = `${pathname}${search}${hash}`;
+  const initials = (user?.full_name || '')
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join('');
 
   const isNovaMap =
     pathname.startsWith('/novamap') ||
@@ -83,14 +92,29 @@ export default function AppNavbar({ mobileMenuOpen, setMobileMenuOpen }) {
             <span>Settings</span>
           </Link>
 
-          {!user ? (
+          {status === AUTH_STATUS.LOADING ? (
+            <span
+              className="h-8 w-8 animate-pulse rounded-full border border-white/10 bg-white/5"
+              aria-hidden="true"
+            />
+          ) : user ? (
+            <Link
+              to="/settings#account"
+              className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-cyan-500 to-indigo-600 text-xs font-bold text-white shadow-md shadow-cyan-500/25 ring-1 ring-cyan-400/30 transition hover:from-cyan-400 hover:to-indigo-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
+              aria-label={`Account settings for ${user.full_name || user.email}`}
+              title={user.full_name || user.email}
+            >
+              {initials || 'NU'}
+            </Link>
+          ) : (
             <Link
               to="/novauser/signin"
+              state={{ from: returnTarget }}
               className="rounded-lg border border-violet-500/40 bg-violet-500/10 px-2.5 py-1.5 text-xs font-semibold text-violet-300 transition-colors hover:bg-violet-500/20"
             >
               Sign in
             </Link>
-          ) : null}
+          )}
         </div>
       </div>
     </header>

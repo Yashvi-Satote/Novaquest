@@ -1,12 +1,15 @@
 /**
  * Central NovaQuest game-settings store.
  *
- * The backend is the source of truth for signed-in users.  localStorage is
- * kept as an offline/pre-hydration fallback so the audio engine and the game
- * can read settings synchronously during the first render.
+ * localStorage is the source of truth for guests and the offline/pre-hydration
+ * cache for signed-in users.  settingsRepository decides when the account copy
+ * should be read or written; components only talk to SettingsProvider.
  */
 
+import { getLocalStorage, readRaw, removeRaw, writeRaw } from '../../../Shared/services/localStore.js';
+
 export const SETTINGS_STORAGE_KEY = 'novaquest_game_settings';
+export const SETTINGS_UPDATED_AT_KEY = 'novaquest_game_settings_updated_at';
 
 export const DEFAULT_GAME_SETTINGS = {
   audio: {
@@ -109,34 +112,58 @@ export function normaliseSettings(raw) {
   };
 }
 
-function browserStorage() {
-  if (typeof window === 'undefined') return null;
+export function readStoredSettings(storage = getLocalStorage()) {
+  const raw = readRaw(SETTINGS_STORAGE_KEY, storage);
+  if (!raw) return createDefaultSettings();
   try {
-    return window.localStorage || null;
-  } catch {
-    return null;
-  }
-}
-
-export function readStoredSettings(storage = browserStorage()) {
-  if (!storage) return createDefaultSettings();
-  try {
-    const raw = storage.getItem(SETTINGS_STORAGE_KEY);
-    if (!raw) return createDefaultSettings();
     return normaliseSettings(JSON.parse(raw));
   } catch {
     return createDefaultSettings();
   }
 }
 
-export function writeStoredSettings(settings, storage = browserStorage()) {
-  if (!storage) return false;
-  try {
-    storage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(normaliseSettings(settings)));
-    return true;
-  } catch {
-    return false;
+export function readStoredSettingsUpdatedAt(storage = getLocalStorage()) {
+  const raw = readRaw(SETTINGS_UPDATED_AT_KEY, storage);
+  if (!raw) return null;
+  const numeric = Number(raw);
+  return Number.isFinite(numeric) ? numeric : null;
+}
+
+/**
+ * Persist a normalised snapshot. ``updatedAt`` lets the repository record the
+ * server timestamp when it hydrates account settings into the local cache.
+ */
+export function writeStoredSettings(
+  settings,
+  storage = getLocalStorage(),
+  { updatedAt = Date.now() } = {},
+) {
+  const ok = writeRaw(
+    SETTINGS_STORAGE_KEY,
+    JSON.stringify(normaliseSettings(settings)),
+    storage,
+  );
+  if (ok && Number.isFinite(updatedAt)) {
+    writeRaw(SETTINGS_UPDATED_AT_KEY, String(updatedAt), storage);
   }
+  return ok;
+}
+
+export function hasStoredSettings(storage = getLocalStorage()) {
+  return readRaw(SETTINGS_STORAGE_KEY, storage) !== null;
+}
+
+export function clearStoredSettings(storage = getLocalStorage()) {
+  removeRaw(SETTINGS_STORAGE_KEY, storage);
+  removeRaw(SETTINGS_UPDATED_AT_KEY, storage);
+}
+
+export function readStoredSettingsSnapshot(storage = getLocalStorage()) {
+  return {
+    exists: hasStoredSettings(storage),
+    settings: readStoredSettings(storage),
+    updatedAt: readStoredSettingsUpdatedAt(storage),
+  };
 }
 
 /** Synchronous read used by the audio engine and first render. */

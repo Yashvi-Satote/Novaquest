@@ -159,6 +159,7 @@ def create_schema() -> None:
 
     from . import models  # noqa: F401  (register metadata)
     from .settings import models as settings_models  # noqa: F401  (register metadata)
+    from .progress import models as progress_models  # noqa: F401  (register metadata)
 
     ensure_database()
     try:

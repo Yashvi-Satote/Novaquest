@@ -4,11 +4,11 @@ import { ArrowRight, Loader2, Lock, Mail, Sparkles, UserRound } from 'lucide-rea
 import AuthShell, { NovaUserMark } from '../components/AuthShell';
 import AuthToggle from '../components/AuthToggle';
 import GoogleButton from '../components/GoogleButton';
-import { normalizeRedirectTarget } from '../components/RouteGuards';
 import { FormAlert, PasswordField, TextField } from '../components/AuthFields';
 import { useAuth } from '../context/authContext';
 import { AuthApiError } from '../services/authApi';
 import { friendlyFirebaseError, sendPasswordReset } from '../services/firebase';
+import { getRedirectTarget } from '../utils/redirect';
 import { mapServerFieldErrors, validateEmail, validateLogin } from '../utils/validation';
 
 const initialValues = { email: '', password: '' };
@@ -17,7 +17,7 @@ export default function SignInPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { login, loginWithGoogle, loginAsExampleUser, authError } = useAuth();
-  const target = normalizeRedirectTarget(location.state?.from);
+  const target = getRedirectTarget(location);
   const [values, setValues] = useState(initialValues);
   const [errors, setErrors] = useState({});
   const [formError, setFormError] = useState('');
@@ -164,7 +164,8 @@ export default function SignInPage() {
           Welcome back
         </h1>
         <p className="mt-1.5 max-w-xs text-sm leading-relaxed text-slate-400">
-          Sign in to continue your journey across the cosmic timekeepers universe.
+          Sign in to save your progress and settings across devices. You can also continue as a
+          guest.
         </p>
       </div>
 
@@ -269,7 +270,7 @@ export default function SignInPage() {
         <p className="flex items-center justify-center gap-1.5 pt-1 text-xs text-slate-400">
           New to NovaUser?{' '}
           <Link
-            to="/"
+            to="/novauser/register"
             state={location.state}
             className="inline-flex items-center gap-1 font-semibold text-violet-400 underline-offset-2 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2"
           >
