@@ -106,18 +106,18 @@ export const JOURNEY_STAGES = [
   {
     stepIndex: 3,
     id: 'discover_alien',
-    name: 'Discover — Alien structure',
-    durationEst: 'Approx. 2 minutes',
-    zoneName: 'ZONE 4 · ALIEN STRUCTURE DISCOVERY',
-    targetCoords: { x: -120, z: -75 },
-    waypointLabel: 'Precursor Monolith',
-    objective: 'Player finds the structure and activates its interface.',
-    narrative: 'Beyond the crater rim along the basalt ridge, Arin discovers a partially buried geometric obsidian structure humming with synthetic vibration and glowing conduit lines.',
-    instructions: 'Follow the exposed conduit northwest toward the basalt ridge to find the partially buried obsidian structure. Feel the bedrock synthetic vibration through your suit boots. Approach the Central Scanning Panel to interface with the array.',
+    name: 'Stage 4 — Discover the alien structure',
+    durationEst: 'Approx. 3 minutes',
+    zoneName: 'ZONE 4 · CRATER FLOOR & UNKNOWN STRUCTURE',
+    targetCoords: { x: -78, z: -54 },
+    waypointLabel: 'Exposed Alien Structure & Interface',
+    objective: 'Scan the exposed structure, inspect the conduit, locate the interface, and activate it.',
+    narrative: 'As Arin approaches the buried fragment on the crater floor, a section of the ground shifts, exposing the upper part of an unfamiliar structure emitting faint cyan light. A narrow conduit extends from it toward Surveyor 1.',
+    instructions: 'Scan the exposed structure [Q], inspect the conduit leading toward Surveyor 1, locate the central interface on the console, and point your scanner while holding [E] to activate it.',
     commsCallout: {
       callsign: 'CHEN-SCIENCE',
       speaker: 'Specialist Maya Chen',
-      text: 'Good lord... Arin, do you see that? An obsidian geometric monolith buried in the lunar regolith. It’s drawing power directly from Surveyor’s landing site. Access the central scanning panel!'
+      text: 'Captain, the ground is shifting! Look at the crater floor—an unfamiliar structure is emerging, emitting cyan light with a conduit tethered directly to Surveyor 1!'
     }
   },
   {
@@ -276,6 +276,32 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
   const [isPointCDiscovered, setIsPointCDiscovered] = useState(false);
   const isPointCDiscoveredRef = useRef(false);
 
+  // Stage 4 — Discover the Alien Structure State
+  const [stage4Objectives, setStage4Objectives] = useState({
+    scannedStructure: false,
+    inspectedConduit: false,
+    locatedInterface: false,
+    activatedInterface: false
+  });
+  const stage4ObjectivesRef = useRef({
+    scannedStructure: false,
+    inspectedConduit: false,
+    locatedInterface: false,
+    activatedInterface: false
+  });
+
+  const [groundShiftProgress, setGroundShiftProgress] = useState(0);
+  const groundShiftProgressRef = useRef(0);
+  const isGroundShiftTriggeredRef = useRef(false);
+
+  const [isHologramActive, setIsHologramActive] = useState(false);
+  const isHologramActiveRef = useRef(false);
+
+  const [interfaceActivationProgress, setInterfaceActivationProgress] = useState(0);
+  const interfaceActivationProgressRef = useRef(0);
+  const isActivatingInterfaceRef = useRef(false);
+  const interfaceActivationIntervalRef = useRef(null);
+
   // Opening Cinematic & Pause State
   const [isOpeningCinematic, setIsOpeningCinematic] = useState(true);
   const isOpeningCinematicRef = useRef(true);
@@ -364,9 +390,11 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
       audio.playEquipmentFeedback();
     }, 4800);
 
-    // Update active objective after dialogue
+    // Update active objective after dialogue & trigger ground shift into Stage 4
     setTimeout(() => {
-      setActiveObjective('Precursor fragment uncovered. Follow conduit northwest to the basalt ridge fissure.');
+      setActiveObjective('Precursor fragment uncovered. The crater floor is shifting...');
+      advanceJourneyStage(3);
+      triggerGroundShift();
     }, 9500);
   };
 
@@ -380,6 +408,150 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
     if (pointId === 'pointC') {
       triggerPointCDiscovery();
     }
+  };
+
+  // Stage 4 — Helper Functions
+  const completeStage4Objective = (key) => {
+    if (stage4ObjectivesRef.current[key]) return;
+    const updated = { ...stage4ObjectivesRef.current, [key]: true };
+    stage4ObjectivesRef.current = updated;
+    setStage4Objectives(updated);
+    audio.playInteract();
+  };
+
+  const triggerGroundShift = () => {
+    if (isGroundShiftTriggeredRef.current) return;
+    isGroundShiftTriggeredRef.current = true;
+
+    audio.playCraterInterference(1.0);
+    audio.playAnomalyHarmonic();
+    setHudNotice('SEISMIC TREMOR: Ground shifting at crater floor! Structure emerging...');
+
+    setIsGlitching(true);
+    setTimeout(() => setIsGlitching(false), 2400);
+
+    setActiveComms({
+      callsign: 'CHEN-SCIENCE',
+      speaker: 'Specialist Maya Chen',
+      text: 'Captain, the ground is shifting! Look at the crater floor—an unfamiliar structure is emerging, emitting cyan light with a conduit tethered directly to Surveyor 1!'
+    });
+    audio.playRadioCommsChatter('chen');
+
+    let startTime = performance.now();
+    const animGround = (now) => {
+      const elapsed = (now - startTime) / 3200;
+      const t = Math.min(1, Math.max(0, elapsed));
+      const ease = 1 - Math.pow(1 - t, 3);
+      groundShiftProgressRef.current = ease;
+      setGroundShiftProgress(ease);
+
+      if (t < 1) {
+        requestAnimationFrame(animGround);
+      } else {
+        setHudNotice('OBJECTIVE: Scan the exposed structure [Q] & inspect the conduit to Surveyor 1');
+      }
+    };
+    requestAnimationFrame(animGround);
+  };
+
+  const startInterfaceActivation = () => {
+    if (stage4ObjectivesRef.current.activatedInterface || isActivatingInterfaceRef.current) return;
+    isActivatingInterfaceRef.current = true;
+    completeStage4Objective('locatedInterface');
+
+    let prog = 0;
+    if (interfaceActivationIntervalRef.current) clearInterval(interfaceActivationIntervalRef.current);
+
+    audio.playSurveyorScannerBeep();
+    triggerScannerBeamRef.current?.();
+
+    interfaceActivationIntervalRef.current = setInterval(() => {
+      prog += 3.5;
+      interfaceActivationProgressRef.current = Math.min(100, prog);
+      setInterfaceActivationProgress(Math.min(100, prog));
+
+      if (Math.round(prog) % 15 === 0) {
+        audio.playCraterScannerPulse();
+      }
+
+      if (prog >= 100) {
+        clearInterval(interfaceActivationIntervalRef.current);
+        interfaceActivationIntervalRef.current = null;
+        isActivatingInterfaceRef.current = false;
+        triggerInterfaceReaction();
+      }
+    }, 45);
+  };
+
+  const cancelInterfaceActivation = () => {
+    if (stage4ObjectivesRef.current.activatedInterface) return;
+    if (interfaceActivationIntervalRef.current) {
+      clearInterval(interfaceActivationIntervalRef.current);
+      interfaceActivationIntervalRef.current = null;
+    }
+    isActivatingInterfaceRef.current = false;
+    interfaceActivationProgressRef.current = 0;
+    setInterfaceActivationProgress(0);
+  };
+
+  const triggerInterfaceReaction = () => {
+    completeStage4Objective('activatedInterface');
+    setIsHologramActive(true);
+    isHologramActiveRef.current = true;
+
+    audio.playMissionEchoActivation();
+    audio.playAnomalyHarmonic();
+    if (triggerSparksRef.current) {
+      triggerSparksRef.current(new THREE.Vector3(-77.2, getTerrainHeight(-78, -54) + 1.6, -53.2));
+    }
+    setHudNotice('INTERFACE SYNCHRONIZED: Holographic Surveyor 1 projection active');
+
+    // Scripted Dialogue Sequence
+    // 1. Maya: "That structure is reading the spacecraft's data."
+    setActiveComms({
+      callsign: 'CHEN-SCIENCE',
+      speaker: 'Specialist Maya Chen',
+      text: "That structure is reading the spacecraft's data."
+    });
+    audio.playRadioCommsChatter('chen');
+
+    // 2. Arin: "Can you identify the system?" (at 4.2s)
+    setTimeout(() => {
+      setActiveComms({
+        callsign: 'RAO-COMMAND',
+        speaker: 'Captain Arin Rao',
+        text: "Can you identify the system?"
+      });
+      audio.playEquipmentFeedback();
+    }, 4200);
+
+    // 3. Maya: "No. But it appears to have been collecting something from the lander." (at 8.0s)
+    setTimeout(() => {
+      setActiveComms({
+        callsign: 'CHEN-SCIENCE',
+        speaker: 'Specialist Maya Chen',
+        text: "No. But it appears to have been collecting something from the lander."
+      });
+      audio.playRadioCommsChatter('chen');
+    }, 8000);
+
+    // 4. Arin: "Then let's see what it collected." (at 12.2s)
+    setTimeout(() => {
+      setActiveComms({
+        callsign: 'RAO-COMMAND',
+        speaker: 'Captain Arin Rao',
+        text: "Then let's see what it collected."
+      });
+      audio.playEquipmentFeedback();
+    }, 12200);
+
+    // 5. Interface activates Mission Echo (at 15.5s)
+    setTimeout(() => {
+      audio.playMissionEchoArchivalAudio();
+      setHudNotice('MISSION ECHO ACTIVATED: Historical flight reconstruction initialized');
+      setIsMissionEchoOpen(true);
+      advanceJourneyStage(4);
+    }, 15500);
   };
 
   const startInteractiveScan = (target, key) => {
@@ -574,6 +746,20 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
         if (id === 'poi_crater_site_alpha') inspectStage3Point('pointA');
         else if (id === 'poi_crater_site_beta') inspectStage3Point('pointB');
         else if (id === 'poi_crater_site_gamma') inspectStage3Point('pointC');
+        setInvestigateTarget(nearInteractableRef.current);
+      } else if (id === 'poi_central_interface' || id === 'poi_scanning_panel') {
+        if (!stage4ObjectivesRef.current.activatedInterface) {
+          startInterfaceActivation();
+        } else {
+          setIsMissionEchoOpen(true);
+        }
+      } else if (id === 'poi_exposed_structure') {
+        completeStage4Objective('scannedStructure');
+        audio.playSurveyorScannerBeep();
+        setInvestigateTarget(nearInteractableRef.current);
+      } else if (id === 'poi_crater_conduit') {
+        completeStage4Objective('inspectedConduit');
+        audio.playAnomalyHarmonic();
         setInvestigateTarget(nearInteractableRef.current);
       } else if (id === 'poi_alien_structure' || id === 'poi_data_conduit') {
         audio.playAnomalyHarmonic();
@@ -2702,41 +2888,221 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
       craterInvestigationGroup.add(rock);
     }
 
-    // C. Partially Buried Metallic Precursor Object (Embedded in lower wall/floor at X: -78, Z: -54)
+    // C. Partially Buried Metallic Precursor Object & Stage 4 Exposed Alien Structure
     const buriedObjGroup = new THREE.Group();
     const buriedWorldY = getTerrainHeight(-78, -54);
     buriedObjGroup.position.set(-3.0, buriedWorldY - craterCenterY, -4.0);
-    buriedObjGroup.rotation.set(0.42, -0.65, 0.28); // Protruding at an angle from the regolith
 
-    // Alien Non-Human Precursor Geometric Prismatic Monolith Core
-    const buriedMonolithGeo = new THREE.CylinderGeometry(0.9, 1.4, 4.8, 8);
-    const buriedMonolithMat = new THREE.MeshStandardMaterial({
+    // 1. Shiftable Lunar Crust Slabs (covering the structure, parting when ground shifts)
+    const shiftSlabsGroup = new THREE.Group();
+    const slabMeshes = [];
+    for (let s = 0; s < 4; s++) {
+      const slabGeo = new THREE.BoxGeometry(1.8, 0.24, 1.8);
+      const slabMesh = new THREE.Mesh(slabGeo, regolithRockMat);
+      const angle = (s * Math.PI) / 2 + 0.35;
+      const rad = 1.35;
+      slabMesh.position.set(Math.cos(angle) * rad, 0.08, Math.sin(angle) * rad);
+      slabMesh.rotation.set((Math.random() - 0.5) * 0.15, angle, (Math.random() - 0.5) * 0.15);
+      slabMesh.castShadow = true;
+      slabMesh.receiveShadow = true;
+      shiftSlabsGroup.add(slabMesh);
+      slabMeshes.push({ mesh: slabMesh, basePos: slabMesh.position.clone(), angle });
+    }
+    buriedObjGroup.add(shiftSlabsGroup);
+
+    // 2. Emerging Unfamiliar Alien Structure (Rises vertically as ground shifts)
+    const exposedStructureGroup = new THREE.Group();
+    exposedStructureGroup.position.y = -2.2; // Starts recessed under lunar regolith
+
+    // Polyhedral Octagonal Carapace Plinth
+    const alienPlinthMat = new THREE.MeshStandardMaterial({
       map: alienGlyphMap,
-      color: 0x0e1122,
-      emissive: 0x818cf8,
-      emissiveIntensity: 0.65,
+      color: 0x05070e,
+      emissive: 0x06b6d4,
+      emissiveIntensity: 0.55,
       metalness: 0.98,
-      roughness: 0.12
+      roughness: 0.10
     });
-    const buriedMonolith = new THREE.Mesh(buriedMonolithGeo, buriedMonolithMat);
-    buriedMonolith.position.y = 1.4;
-    buriedMonolith.castShadow = true;
-    buriedObjGroup.add(buriedMonolith);
+    const structurePlinth = new THREE.Mesh(
+      new THREE.CylinderGeometry(2.2, 2.7, 1.6, 8),
+      alienPlinthMat
+    );
+    structurePlinth.position.y = 0.8;
+    structurePlinth.castShadow = true;
+    structurePlinth.receiveShadow = true;
+    exposedStructureGroup.add(structurePlinth);
 
-    // Anomalous 432 Hz Resonant Purple Light
-    const buriedObjectLight = new THREE.PointLight(0xa855f7, 4.5, 22);
-    buriedObjectLight.position.set(0, 2.5, 0);
-    buriedObjGroup.add(buriedObjectLight);
+    // Stepped Upper Prism Tower
+    const structureCrown = new THREE.Mesh(
+      new THREE.CylinderGeometry(1.4, 2.0, 2.4, 8),
+      alienPlinthMat
+    );
+    structureCrown.position.y = 2.4;
+    structureCrown.castShadow = true;
+    exposedStructureGroup.add(structureCrown);
 
-    // Glowing Geometric Ring Emitting from Soil Breach
+    // Glowing Cyan Circuit Ribs
+    const cyanCircuitMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8 });
+    for (let r = 0; r < 8; r++) {
+      const a = (r * Math.PI * 2) / 8;
+      const rib = new THREE.Mesh(new THREE.BoxGeometry(0.04, 2.2, 0.04), cyanCircuitMat);
+      rib.position.set(Math.cos(a) * 1.65, 2.4, Math.sin(a) * 1.65);
+      exposedStructureGroup.add(rib);
+    }
+
+    // Faint Cyan Structure Light (Emits faint cyan illumination as required)
+    const cyanStructureLight = new THREE.PointLight(0x06b6d4, 0.8, 24);
+    cyanStructureLight.position.set(0, 3.2, 0);
+    exposedStructureGroup.add(cyanStructureLight);
+
+    // Retain legacy handles for backwards animation compatibility
+    const buriedMonolithMat = alienPlinthMat;
+    const buriedObjectLight = cyanStructureLight;
     const groundBreachRing = new THREE.Mesh(
       new THREE.RingGeometry(1.6, 2.6, 32),
-      new THREE.MeshBasicMaterial({ color: 0x818cf8, side: THREE.DoubleSide, transparent: true, opacity: 0.8 })
+      new THREE.MeshBasicMaterial({ color: 0x06b6d4, side: THREE.DoubleSide, transparent: true, opacity: 0.8 })
     );
     groundBreachRing.rotation.x = -Math.PI / 2;
     groundBreachRing.position.y = 0.08;
     buriedObjGroup.add(groundBreachRing);
 
+    // Levitating Apex Crystal Shards
+    const shardGroup = new THREE.Group();
+    shardGroup.position.y = 4.0;
+    for (let sh = 0; sh < 4; sh++) {
+      const sa = (sh * Math.PI * 2) / 4;
+      const shard = new THREE.Mesh(
+        new THREE.OctahedronGeometry(0.24, 0),
+        new THREE.MeshStandardMaterial({ color: 0x04060c, emissive: 0x38bdf8, emissiveIntensity: 0.9, metalness: 0.99, roughness: 0.05 })
+      );
+      shard.position.set(Math.cos(sa) * 0.85, 0, Math.sin(sa) * 0.85);
+      shardGroup.add(shard);
+    }
+    exposedStructureGroup.add(shardGroup);
+
+    // 3. Central Alien Interface Console
+    const interfaceConsoleGroup = new THREE.Group();
+    interfaceConsoleGroup.position.set(1.4, 1.2, 0.8);
+    interfaceConsoleGroup.rotation.y = -Math.PI / 4;
+
+    // Angled Console Pedestal
+    const consolePillar = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.35, 0.45, 1.1, 6),
+      new THREE.MeshStandardMaterial({ color: 0x0a0e1a, metalness: 0.95, roughness: 0.15 })
+    );
+    consolePillar.position.y = 0.55;
+    interfaceConsoleGroup.add(consolePillar);
+
+    // Slanted Touch Interface Panel
+    const panelGeo = new THREE.BoxGeometry(0.72, 0.06, 0.72);
+    const panelMat = new THREE.MeshStandardMaterial({
+      color: 0x050c18,
+      emissive: 0x06b6d4,
+      emissiveIntensity: 0.85,
+      metalness: 0.95,
+      roughness: 0.12
+    });
+    const consolePanel = new THREE.Mesh(panelGeo, panelMat);
+    consolePanel.position.set(0, 1.15, 0);
+    consolePanel.rotation.x = -0.42;
+    interfaceConsoleGroup.add(consolePanel);
+
+    // Glowing Interface Reticle Ring
+    const reticleRing = new THREE.Mesh(
+      new THREE.RingGeometry(0.16, 0.28, 24),
+      new THREE.MeshBasicMaterial({ color: 0x38bdf8, side: THREE.DoubleSide })
+    );
+    reticleRing.position.set(0, 1.19, 0.01);
+    reticleRing.rotation.x = -0.42 - Math.PI / 2;
+    interfaceConsoleGroup.add(reticleRing);
+
+    // Console Point Light
+    const consoleLight = new THREE.PointLight(0x06b6d4, 1.8, 6);
+    consoleLight.position.set(0, 1.4, 0);
+    interfaceConsoleGroup.add(consoleLight);
+
+    exposedStructureGroup.add(interfaceConsoleGroup);
+
+    // 4. Volumetric Holographic Projection of Surveyor 1 (Appears above the interface)
+    const surveyorHoloGroup = new THREE.Group();
+    surveyorHoloGroup.position.set(1.4, 2.6, 0.8);
+    surveyorHoloGroup.visible = false; // Hidden until interface is activated!
+
+    const interfaceHoloWireMat = new THREE.MeshBasicMaterial({
+      color: 0x38bdf8,
+      wireframe: true,
+      transparent: true,
+      opacity: 0.85
+    });
+    const interfaceHoloGlowMat = new THREE.MeshBasicMaterial({
+      color: 0x06b6d4,
+      transparent: true,
+      opacity: 0.35,
+      side: THREE.DoubleSide
+    });
+
+    // Upward Conical Holographic Projection Beam
+    const projBeam = new THREE.Mesh(
+      new THREE.ConeGeometry(0.9, 1.8, 16, 1, true),
+      interfaceHoloGlowMat
+    );
+    projBeam.position.y = -0.2;
+    surveyorHoloGroup.add(projBeam);
+
+    // Holographic Surveyor 1 Spaceframe
+    const holoChassis = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.45, 0.7, 0.6, 3, 1, true),
+      interfaceHoloWireMat
+    );
+    holoChassis.position.y = 0.5;
+    surveyorHoloGroup.add(holoChassis);
+
+    // Holographic Solar Mast & Planar Antenna
+    const holoMast = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 1.1, 6), interfaceHoloWireMat);
+    holoMast.position.set(0, 1.1, 0);
+    surveyorHoloGroup.add(holoMast);
+
+    const holoPanel = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.65, 0.03), interfaceHoloWireMat);
+    holoPanel.position.set(0, 1.4, 0.1);
+    surveyorHoloGroup.add(holoPanel);
+
+    const holoDish = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.24, 0.03, 12), interfaceHoloWireMat);
+    holoDish.position.set(0.28, 1.15, 0);
+    holoDish.rotation.z = Math.PI / 4;
+    surveyorHoloGroup.add(holoDish);
+
+    // 3 Holographic Landing Legs
+    for (let hl = 0; hl < 3; hl++) {
+      const hla = (hl * Math.PI * 2) / 3;
+      const hleg = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.85, 6), interfaceHoloWireMat);
+      hleg.position.set(Math.cos(hla) * 0.45, 0.25, Math.sin(hla) * 0.45);
+      hleg.rotation.x = Math.sin(hla) * 0.55;
+      hleg.rotation.z = -Math.cos(hla) * 0.55;
+      surveyorHoloGroup.add(hleg);
+
+      const hfoot = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.04, 8), interfaceHoloWireMat);
+      hfoot.position.set(Math.cos(hla) * 0.75, 0.02, Math.sin(hla) * 0.75);
+      surveyorHoloGroup.add(hfoot);
+    }
+
+    // Holographic Vidicon Camera
+    const holoCam = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.35, 8), interfaceHoloWireMat);
+    holoCam.position.set(0.3, 0.7, 0.2);
+    holoCam.rotation.x = 0.35;
+    surveyorHoloGroup.add(holoCam);
+
+    // Rotating Horizontal Scan Ring
+    const holoScanRing = new THREE.Mesh(
+      new THREE.RingGeometry(0.65, 0.82, 32),
+      new THREE.MeshBasicMaterial({ color: 0x38bdf8, side: THREE.DoubleSide, transparent: true, opacity: 0.65 })
+    );
+    holoScanRing.rotation.x = Math.PI / 2;
+    holoScanRing.position.y = 0.5;
+    surveyorHoloGroup.add(holoScanRing);
+
+    exposedStructureGroup.add(surveyorHoloGroup);
+
+    buriedObjGroup.add(exposedStructureGroup);
     craterInvestigationGroup.add(buriedObjGroup);
 
     // D. 3 Survey Pylon Markers for the 3-Location Handheld Scanner Puzzle
@@ -3061,17 +3427,17 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
 
     scene.add(alienStructureGroup);
 
-    // H. Dark Subterranean Data Conduit Cable with In-line Quantum Repeaters
+    // H. Narrow Data Conduit extending from Crater Floor Structure toward Surveyor 1
     const conduitPoints = [
-      new THREE.Vector3(-120, getTerrainHeight(-120, -75) + 0.14, -75),
-      new THREE.Vector3(-96, getTerrainHeight(-96, -62) + 0.14, -62),
-      new THREE.Vector3(-75, getTerrainHeight(-75, -50) + 0.14, -50),
+      new THREE.Vector3(-78, getTerrainHeight(-78, -54) + 0.14, -54),
+      new THREE.Vector3(-74, getTerrainHeight(-74, -48) + 0.14, -48),
+      new THREE.Vector3(-66, getTerrainHeight(-66, -42) + 0.14, -42),
       new THREE.Vector3(-42, getTerrainHeight(-42, -28) + 0.14, -28),
       new THREE.Vector3(-18, getTerrainHeight(-18, -12) + 0.14, -12),
       new THREE.Vector3(0, surveyorTerrainY + 0.14, 0)
     ];
     const conduitCurve = new THREE.CatmullRomCurve3(conduitPoints);
-    const conduitTubeGeo = new THREE.TubeGeometry(conduitCurve, 84, 0.20, 10, false);
+    const conduitTubeGeo = new THREE.TubeGeometry(conduitCurve, 96, 0.14, 10, false);
     const conduitMat = new THREE.MeshStandardMaterial({
       color: 0x070912,
       emissive: 0x06b6d4,
@@ -4299,13 +4665,38 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
         officerNote: 'Look at those glowing edges... This is what was transmitting into Surveyor 1! A buried alien fragment right here under the lunar dust. Arin: “Mark the location. I\'m going in.”'
       },
 
-      // ================= ZONE 4: ALIEN STRUCTURE DISCOVERY =================
+      // ================= ZONE 4: EXPOSED ALIEN STRUCTURE DISCOVERY =================
+      {
+        id: 'poi_exposed_structure',
+        title: 'Exposed Alien Structure',
+        shortName: 'Alien Structure',
+        position: new THREE.Vector3(-78, getTerrainHeight(-78, -54) + 2.0, -54),
+        radius: 6.2,
+        sector: 'Zone 4 · Crater Floor',
+        artifactAge: 'Unknown Non-Human Epoch',
+        integrity: '100% Intact / Active Field',
+        telemetryStatus: 'Faint Cyan Luminescence Active',
+        image: '/images/moon_close_up_telescope.jpg',
+        description: 'The upper part of an unfamiliar geometric structure exposed by the shifting lunar regolith on the crater floor. It emits a faint cyan light, with energy circuits pulsing along its crystalline obsidian facets.',
+        readings: {
+          'Material Lattice': 'Anomalous Carbon-Titanium Superlattice',
+          'Surface Seams': 'Zero (Monolithic Construction)',
+          'Emission Color': 'Faint Cyan (488 nm)',
+          'Conduit Link': 'Tethered directly to Surveyor 1'
+        },
+        historicalFacts: [
+          'Precursor Archaeology: The structure appears to predate human lunar exploration, having lain dormant beneath the regolith.',
+          'Active Telemetry Extraction: Multi-spectral sensors detect data packet exchange synchronized with Surveyor 1’s receiver.'
+        ],
+        officerNote: 'Maya: “Captain, that alloy is completely unknown. Non-terrestrial crystalline structure, but its internal circuits are active.”'
+      },
       {
         id: 'poi_alien_structure',
         title: 'Precursor Geometric Monolith',
+        shortName: 'Precursor Monolith',
         position: new THREE.Vector3(-120, alienTerrainY + 2.5, -75),
         radius: 7.0,
-        sector: 'Zone 4 · Alien Structure Discovery',
+        sector: 'Zone 4 · Basalt Ridge',
         artifactAge: 'Unknown Extraterrestrial Epoch',
         integrity: '100% Intact / Active Field',
         telemetryStatus: 'Carrier Frequency Locked',
@@ -4317,6 +4708,30 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
           'Conduit Link': 'Broadcasting toward Surveyor 1'
         },
         officerNote: 'Unbelievable... it contrasts so starkly with Surveyor 1. One is 1966 aluminum and cables; this is pure alien geometry. And look at that dark conduit running all the way back to the lander!'
+      },
+      {
+        id: 'poi_crater_conduit',
+        title: 'Narrow Data Conduit',
+        shortName: 'Data Conduit',
+        position: new THREE.Vector3(-66, getTerrainHeight(-66, -42) + 0.6, -42),
+        radius: 4.8,
+        sector: 'Zone 4 · Crater Rim Network',
+        artifactAge: 'Synchronized with Lander Touchdown',
+        integrity: 'Active Carrier Wave',
+        telemetryStatus: 'Narrow Conduit Stream',
+        image: '/images/moon_close_up_telescope.jpg',
+        description: 'A narrow, glassy data conduit extending from the exposed structure on the crater floor across the lunar regolith toward Surveyor 1. Rhythmic cyan light pulses travel along its length.',
+        readings: {
+          'Transmission Frequency': '432.06 Hz Continuous',
+          'Packet Flux': '1.42 Tbps Harmonic Stream',
+          'Conduit Path': 'Crater Floor (-78, -54) -> Surveyor 1 (0, 0)',
+          'Conduit State': 'Active Handshake'
+        },
+        historicalFacts: [
+          'Subterranean Tethers: The narrow conduit functions as an optoelectronic waveguide, bridging lunar bedrock directly to spacecraft landing gear.',
+          'Continuous Siphoning: Data flows unidirectionally from Surveyor 1’s memory into the alien structure interface.'
+        ],
+        officerNote: 'The conduit has been tapping Surveyor 1 for decades, monitoring humanity’s earliest robotic footprint. It’s a physical data tether.'
       },
       {
         id: 'poi_data_conduit',
@@ -4335,6 +4750,30 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
           'Conduit State': 'Active Handshake'
         },
         officerNote: 'The conduit has been tapping Surveyor 1 for decades, monitoring humanity\'s earliest robotic footprint. It’s like an extraterrestrial listening post.'
+      },
+      {
+        id: 'poi_central_interface',
+        title: 'Central Alien Interface',
+        shortName: 'Central Interface',
+        position: new THREE.Vector3(-77.2, getTerrainHeight(-78, -54) + 1.6, -53.2),
+        radius: 3.8,
+        sector: 'Zone 4 · Crater Floor Console',
+        artifactAge: 'Interactive Precursor Console',
+        integrity: '100% Responsive to Scanner',
+        telemetryStatus: 'Point Scanner & Hold [E] to Activate',
+        image: '/images/moon_close_up_telescope.jpg',
+        description: 'A glowing cyan console on the exposed structure responding to the scanner. Pointing the scanner and holding [E] initiates the optoelectronic handshake, projecting a volumetric hologram of Surveyor 1.',
+        readings: {
+          'Interface Protocol': 'Optoelectronic Resonance Handshake',
+          'Handshake Carrier': '432.06 Hz Sine Carrier',
+          'Interaction Required': 'Point Scanner & Hold [E]',
+          'Target Output': 'Surveyor 1 Volumetric Telemetry Hologram'
+        },
+        historicalFacts: [
+          'Bio-Resonant Interface: The interface console detects electromagnetic radiation from the handheld scanner, aligning its internal logic gates.',
+          'Volumetric Projection: The upper emitter arrays can synthesize high-density optical projections of remote assets.'
+        ],
+        officerNote: 'The interface is reacting to the scanner carrier! Point the scanner and hold [E] to initiate the handshake.'
       },
       {
         id: 'poi_scanning_panel',
@@ -4542,6 +4981,11 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
 
       // Scanner Trigger [Q] (Primary) and [F] (Alternate)
       if (code === 'KeyQ' || code === 'KeyF') {
+        if (nearInteractableRef.current && (nearInteractableRef.current.id === 'poi_exposed_structure' || nearInteractableRef.current.id === 'poi_alien_structure')) {
+          completeStage4Objective('scannedStructure');
+          audio.playSurveyorScannerBeep();
+          setHudNotice('STRUCTURE SCANNED: Non-terrestrial crystalline carbon-silicide metamaterial');
+        }
         if (nearInteractableRef.current && nearInteractableRef.current.id.startsWith('surveyor_')) {
           const target = nearInteractableRef.current;
           const key = target.id === 'surveyor_camera' ? 'camera' : target.id === 'surveyor_solar' ? 'solar' : target.id === 'surveyor_footpad' ? 'footpad' : null;
@@ -4555,12 +4999,21 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
 
       // Interaction Trigger [E]
       if (code === 'KeyE') {
+        if (nearInteractableRef.current && (nearInteractableRef.current.id === 'poi_central_interface' || nearInteractableRef.current.id === 'poi_scanning_panel')) {
+          if (!stage4ObjectivesRef.current.activatedInterface) {
+            startInterfaceActivation();
+            return;
+          }
+        }
         triggerInvestigation();
       }
     };
 
     const onKeyUp = (e) => {
       const code = e.code;
+      if (code === 'KeyE') {
+        cancelInterfaceActivation();
+      }
       if (code === 'KeyW' || code === 'ArrowUp') keys.w = false;
       if (code === 'KeyS' || code === 'ArrowDown') keys.s = false;
       if (code === 'KeyA' || code === 'ArrowLeft') keys.a = false;
@@ -5004,20 +5457,45 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
         targetMarkerFootpad.material.opacity = isScanned ? 0.35 : (0.55 + Math.sin(time * 3.0) * 0.25);
       }
 
-      // Animate Point C Buried Geometric Fragment & Soil Breach Ring
-      if (buriedMonolithMat && groundBreachRing && buriedObjectLight) {
-        if (isPointCDiscoveredRef.current) {
-          buriedMonolithMat.emissiveIntensity = 0.95 + Math.sin(time * 4.0) * 0.45;
-          buriedObjectLight.intensity = 5.2 + Math.sin(time * 4.0) * 2.2;
-          groundBreachRing.material.opacity = 0.85 + Math.sin(time * 3.0) * 0.15;
-          groundBreachRing.rotation.z += delta * 0.6;
-        } else {
-          // Subtle visual pulse when player gets close (within 35m of Point C)
-          const distToC = Math.hypot(playerPos.x - (-78), playerPos.z - (-54));
-          const closeGlow = Math.max(0, 1 - distToC / 35);
-          buriedMonolithMat.emissiveIntensity = 0.28 + closeGlow * 0.55 + Math.sin(time * 2.5) * 0.15;
-          buriedObjectLight.intensity = 2.0 + closeGlow * 2.8;
-          groundBreachRing.material.opacity = 0.35 + closeGlow * 0.5;
+      // Animate Stage 4 Ground Shift, Exposed Structure & Surveyor 1 Hologram
+      if (typeof exposedStructureGroup !== 'undefined' && exposedStructureGroup) {
+        const shiftProg = groundShiftProgressRef.current;
+        exposedStructureGroup.position.y = -2.2 + shiftProg * 2.2;
+
+        if (typeof slabMeshes !== 'undefined' && Array.isArray(slabMeshes)) {
+          slabMeshes.forEach(({ mesh, basePos, angle }) => {
+            const shiftDist = shiftProg * 1.8;
+            mesh.position.x = basePos.x + Math.cos(angle) * shiftDist;
+            mesh.position.z = basePos.z + Math.sin(angle) * shiftDist;
+            mesh.rotation.x = shiftProg * 0.25;
+          });
+        }
+
+        if (typeof cyanStructureLight !== 'undefined' && cyanStructureLight) {
+          cyanStructureLight.intensity = (0.6 + shiftProg * 2.6) + Math.sin(time * 2.0) * 0.4;
+        }
+
+        if (typeof shardGroup !== 'undefined' && shardGroup) {
+          shardGroup.rotation.y += delta * 0.5;
+        }
+
+        if (typeof surveyorHoloGroup !== 'undefined' && surveyorHoloGroup) {
+          surveyorHoloGroup.visible = isHologramActiveRef.current;
+          if (isHologramActiveRef.current) {
+            surveyorHoloGroup.rotation.y += delta * 0.45;
+            if (typeof holoScanRing !== 'undefined' && holoScanRing) {
+              holoScanRing.position.y = 0.5 + Math.sin(time * 3.0) * 0.35;
+            }
+          }
+        }
+      }
+
+      // Cancel interface activation if player moved out of range
+      if (isActivatingInterfaceRef.current) {
+        const dInterface = Math.hypot(playerPos.x - (-77.2), playerPos.z - (-53.2));
+        if (dInterface > 5.5) {
+          cancelInterfaceActivation();
+          setHudNotice('HANDSHAKE CANCELED: Moved out of range');
         }
       }
 
@@ -5087,8 +5565,8 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
           }
         } else if (journeyStageIndex === 2) {
           if (isPointCDiscoveredRef.current) {
-            targetX = -120;
-            targetZ = -75; // Advance toward Precursor Monolith & Basalt Ridge Fissure
+            targetX = -78;
+            targetZ = -54; // Precursor fragment on crater floor
           } else if (!stage3InspectionsRef.current.pointA) {
             targetX = -68;
             targetZ = -40; // Point A (Rock formation)
@@ -5098,6 +5576,17 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
           } else {
             targetX = -78;
             targetZ = -54; // Point C (Crater floor)
+          }
+        } else if (journeyStageIndex === 3) {
+          if (!stage4ObjectivesRef.current.scannedStructure) {
+            targetX = -78;
+            targetZ = -54; // Exposed Alien Structure
+          } else if (!stage4ObjectivesRef.current.inspectedConduit) {
+            targetX = -66;
+            targetZ = -42; // Narrow Data Conduit
+          } else {
+            targetX = -77.2;
+            targetZ = -53.2; // Central Alien Interface Console
           }
         } else {
           const currentStageObj = JOURNEY_STAGES[journeyStageIndex] || JOURNEY_STAGES[0];
@@ -5199,10 +5688,20 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
           }
         } else if (journeyStageIndex === 1 && hasSignalTrackerRef.current && (distCrater < 48 && distLanding > 60)) {
           advanceJourneyStage(2);
-        } else if (journeyStageIndex === 2 && isPointCDiscoveredRef.current && (distAlien < 38 || (playerPos.x < -60 && playerPos.z < -80))) {
+        } else if (journeyStageIndex === 2 && isPointCDiscoveredRef.current && distBuried < 14.0) {
           advanceJourneyStage(3);
         } else if (journeyStageIndex === 3 && (distEcho < 20 || isMissionEchoOpen)) {
           advanceJourneyStage(4);
+        }
+
+        // Stage 4 Proximity & Ground Shift check
+        if (journeyStageIndex === 3) {
+          if (distBuried < 16.0 && !isGroundShiftTriggeredRef.current) {
+            triggerGroundShift();
+          }
+          if (Math.hypot(playerPos.x - (-77.2), playerPos.z - (-53.2)) < 4.2) {
+            completeStage4Objective('locatedInterface');
+          }
         }
 
         // Dynamic 432 Hz Signal Resonance Calculation based on proximity & Mission Echo state
@@ -5773,6 +6272,111 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
               </div>
             )}
 
+            {/* STAGE 4 — DISCOVER THE ALIEN STRUCTURE OBJECTIVES */}
+            {journeyStageIndex === 3 && (
+              <div className="p-3.5 rounded-xl bg-slate-950/90 backdrop-blur-md border border-cyan-500/40 shadow-xl text-xs space-y-2">
+                <div className="flex items-center justify-between text-[10px] text-cyan-300 font-bold uppercase tracking-wider">
+                  <div className="flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />
+                    <span>Discover Alien Structure (Stage 4)</span>
+                  </div>
+                  <span className="text-slate-400 font-mono">
+                    {Object.values(stage4Objectives).filter(Boolean).length}/4 Complete
+                  </span>
+                </div>
+
+                <div className="space-y-1.5 pt-1">
+                  {[
+                    {
+                      id: 'scannedStructure',
+                      targetId: 'poi_exposed_structure',
+                      title: '1. Scan exposed structure',
+                      desc: 'Scan emerging obsidian carapace with [Q]',
+                      actionHint: 'SCAN [Q]'
+                    },
+                    {
+                      id: 'inspectedConduit',
+                      targetId: 'poi_crater_conduit',
+                      title: '2. Inspect narrow conduit',
+                      desc: 'Examine data conduit tethered to Surveyor 1',
+                      actionHint: 'INSPECT [E]'
+                    },
+                    {
+                      id: 'locatedInterface',
+                      targetId: 'poi_central_interface',
+                      title: '3. Locate central interface',
+                      desc: 'Approach the glowing console on structure',
+                      actionHint: 'APPROACH'
+                    },
+                    {
+                      id: 'activatedInterface',
+                      targetId: 'poi_central_interface',
+                      title: '4. Activate the interface',
+                      desc: 'Point scanner and hold [E] on console',
+                      actionHint: 'HOLD [E]'
+                    }
+                  ].map((obj, i) => {
+                    const isDone = stage4Objectives[obj.id];
+                    const isNear = nearInteractable?.id === obj.targetId;
+                    return (
+                      <div
+                        key={obj.id}
+                        className={`p-2 rounded-lg text-[11px] transition-all border ${
+                          isDone
+                            ? 'bg-cyan-950/30 text-cyan-300 border-cyan-500/30'
+                            : isNear
+                            ? 'bg-cyan-900/60 text-white border-cyan-400 animate-pulse'
+                            : 'bg-white/[0.03] text-slate-300 border-white/5'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            {isDone ? (
+                              <CheckCircle2 className="w-3.5 h-3.5 text-cyan-400 flex-shrink-0" />
+                            ) : (
+                              <span className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center text-[9px] flex-shrink-0 font-mono ${
+                                isNear ? 'border-cyan-400 text-cyan-300 bg-cyan-900/60' : 'border-slate-500 text-slate-400'
+                              }`}>
+                                {i + 1}
+                              </span>
+                            )}
+                            <span className={`font-semibold ${isDone ? 'line-through opacity-85 text-cyan-200' : 'text-white'}`}>
+                              {obj.title}
+                            </span>
+                          </div>
+                          <span className={`text-[9px] px-1.5 py-0.5 rounded font-mono font-bold ${
+                            isDone ? 'bg-cyan-900/50 text-cyan-300' : isNear ? 'bg-cyan-900/80 text-cyan-200 border border-cyan-400/50' : 'text-slate-500'
+                          }`}>
+                            {isDone ? 'COMPLETED' : isNear ? 'IN RANGE' : obj.actionHint}
+                          </span>
+                        </div>
+                        <div className="text-[10px] text-slate-400 mt-0.5 pl-5">
+                          {obj.desc}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Stage 4 Status Footer */}
+                <div className="pt-2 border-t border-white/10 flex items-center justify-between text-[10px] font-mono">
+                  <span className="text-slate-400">
+                    {isHologramActive
+                      ? 'Surveyor 1 Holographic Projection Active'
+                      : groundShiftProgress > 0.8
+                      ? 'Structure exposed on crater floor'
+                      : 'Approach buried fragment to reveal structure'}
+                  </span>
+                  {isHologramActive && (
+                    <span className="text-cyan-400 font-bold flex items-center gap-1 animate-pulse">
+                      <Sparkles className="w-3 h-3 text-cyan-400" />
+                      <span>HOLO STREAM ACTIVE</span>
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
+
             {/* SIGNAL TRACKER HUD CARD (STAGE 3 SPECIFICATION) */}
             {(hasSignalTracker || journeyStageIndex === 2) && (
               <div className="p-3.5 rounded-xl bg-slate-950/95 backdrop-blur-md border border-cyan-400/60 shadow-[0_0_35px_rgba(6,182,212,0.3)] space-y-2.5 text-xs font-mono">
@@ -6217,6 +6821,60 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
         </div>
       )}
 
+      {/* STAGE 4 — INTERFACE ACTIVATION HOLDING RETICLE */}
+      {interfaceActivationProgress > 0 && !stage4Objectives.activatedInterface && (
+        <div className="fixed inset-0 pointer-events-none flex items-center justify-center z-40 select-none font-mono">
+          <div className="p-6 rounded-2xl bg-black/90 backdrop-blur-xl border-2 border-cyan-400/80 shadow-[0_0_60px_rgba(6,182,212,0.6)] text-center space-y-3 max-w-sm w-full mx-4">
+            <div className="flex items-center justify-center gap-2 text-cyan-400 font-bold text-xs tracking-widest uppercase animate-pulse">
+              <Sparkles className="w-4 h-4 text-cyan-400" />
+              <span>CENTRAL INTERFACE HANDSHAKE</span>
+            </div>
+            
+            {/* Calibration Ring Dial */}
+            <div className="relative w-24 h-24 mx-auto flex items-center justify-center">
+              <div className="absolute inset-0 rounded-full border-2 border-dashed border-cyan-400/40 animate-spin" style={{ animationDuration: '4s' }} />
+              <svg className="w-24 h-24 -rotate-90">
+                <circle cx="48" cy="48" r="40" className="stroke-slate-800" strokeWidth="5" fill="transparent" />
+                <circle
+                  cx="48"
+                  cy="48"
+                  r="40"
+                  className="stroke-cyan-400 transition-all duration-75"
+                  strokeWidth="5"
+                  strokeDasharray={2 * Math.PI * 40}
+                  strokeDashoffset={2 * Math.PI * 40 * (1 - interfaceActivationProgress / 100)}
+                  strokeLinecap="round"
+                  fill="transparent"
+                />
+              </svg>
+              <div className="absolute text-sm font-bold text-cyan-300 font-mono">
+                {Math.round(interfaceActivationProgress)}%
+              </div>
+            </div>
+
+            <div className="w-full bg-black/80 rounded-full h-2.5 border border-cyan-500/50 overflow-hidden p-0.5">
+              <div
+                className="h-full bg-gradient-to-r from-cyan-500 via-teal-400 to-emerald-400 rounded-full transition-all duration-75"
+                style={{ width: `${interfaceActivationProgress}%` }}
+              />
+            </div>
+            <div className="text-[11px] text-slate-300">
+              HOLDING [E] · SYNCHRONIZING SCANNER CARRIER
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* STAGE 4 — SURVEYOR 1 HOLOGRAM NOTIFICATION PILL */}
+      {isHologramActive && (
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 pointer-events-none z-30 select-none font-mono animate-fade-in">
+          <div className="px-4 py-1.5 rounded-full bg-cyan-950/90 backdrop-blur-md border border-cyan-400/70 shadow-[0_0_30px_rgba(6,182,212,0.45)] flex items-center gap-2 text-xs text-cyan-300 font-bold tracking-wider uppercase">
+            <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
+            <span>HOLOGRAPHIC PROJECTION: SURVEYOR 1 TELEMETRY FEED (ACTIVE)</span>
+          </div>
+        </div>
+      )}
+
       {/* THE DISCOVERY: UNKNOWN TRANSMISSION MODAL / HUD ALERT CARD */}
       {discoveryEvent && discoveryEvent.showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fade-in font-mono select-none">
@@ -6382,6 +7040,12 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
               inspectStage3Point('pointB');
             } else if (investigateTarget?.id === 'poi_crater_site_gamma') {
               inspectStage3Point('pointC');
+            } else if (investigateTarget?.id === 'poi_exposed_structure') {
+              completeStage4Objective('scannedStructure');
+            } else if (investigateTarget?.id === 'poi_crater_conduit') {
+              completeStage4Objective('inspectedConduit');
+            } else if (investigateTarget?.id === 'poi_central_interface') {
+              completeStage4Objective('locatedInterface');
             }
             setInvestigateTarget(null);
           }}
@@ -6413,6 +7077,15 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
             } else if (target.id === 'poi_crater_site_gamma') {
               inspectStage3Point('pointC');
               setActiveObjective('Point C inspected: Strong signal. Buried geometric fragment uncovered.');
+            } else if (target.id === 'poi_exposed_structure') {
+              completeStage4Objective('scannedStructure');
+              setActiveObjective('Structure scanned. Inspect the narrow conduit leading toward Surveyor 1.');
+            } else if (target.id === 'poi_crater_conduit') {
+              completeStage4Objective('inspectedConduit');
+              setActiveObjective('Conduit inspected. Locate the central interface console on the structure.');
+            } else if (target.id === 'poi_central_interface') {
+              completeStage4Objective('locatedInterface');
+              startInterfaceActivation();
             } else if (target.id === 'poi_alien_structure' || target.id === 'poi_data_conduit') {
               advanceJourneyStage(4);
             } else if (target.id === 'poi_recovery_rig' || target.id === 'poi_quantum_storage_unit') {
