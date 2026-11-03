@@ -2,9 +2,13 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
   DEFAULT_GAME_SETTINGS,
+  SETTINGS_UPDATED_AT_KEY,
+  clearStoredSettings,
   createDefaultSettings,
   normaliseSettings,
   readStoredSettings,
+  readStoredSettingsSnapshot,
+  readStoredSettingsUpdatedAt,
   writeStoredSettings,
 } from '../store/settingsStore.js';
 
@@ -72,4 +76,42 @@ test('writeStoredSettings persists a normalised snapshot', () => {
   const stored = JSON.parse(storage.getItem('novaquest_game_settings'));
   assert.equal(stored.audio.masterVolume, 100);
   assert.equal(stored.graphics.qualityPreset, 'High');
+});
+
+test('writeStoredSettings records the snapshot timestamp', () => {
+  const storage = memoryStorage();
+  writeStoredSettings({ audio: { muted: true } }, storage, { updatedAt: 123456 });
+  assert.equal(readStoredSettingsUpdatedAt(storage), 123456);
+  assert.equal(storage.getItem(SETTINGS_UPDATED_AT_KEY), '123456');
+});
+
+test('readStoredSettingsSnapshot reports existence, values and timestamp', () => {
+  const empty = readStoredSettingsSnapshot(memoryStorage());
+  assert.equal(empty.exists, false);
+  assert.equal(empty.updatedAt, null);
+  assert.deepEqual(empty.settings, createDefaultSettings());
+
+  const storage = memoryStorage();
+  writeStoredSettings({ controls: { invertY: true } }, storage, { updatedAt: 9000 });
+  const snapshot = readStoredSettingsSnapshot(storage);
+  assert.equal(snapshot.exists, true);
+  assert.equal(snapshot.settings.controls.invertY, true);
+  assert.equal(snapshot.updatedAt, 9000);
+});
+
+test('readStoredSettingsUpdatedAt ignores malformed timestamps', () => {
+  assert.equal(
+    readStoredSettingsUpdatedAt(memoryStorage({ [SETTINGS_UPDATED_AT_KEY]: 'not-a-number' })),
+    null,
+  );
+});
+
+test('clearStoredSettings removes both settings and timestamp', () => {
+  const storage = memoryStorage({
+    novaquest_game_settings: JSON.stringify({ audio: { muted: true } }),
+    [SETTINGS_UPDATED_AT_KEY]: '1',
+  });
+  clearStoredSettings(storage);
+  assert.equal(storage.getItem('novaquest_game_settings'), null);
+  assert.equal(storage.getItem(SETTINGS_UPDATED_AT_KEY), null);
 });

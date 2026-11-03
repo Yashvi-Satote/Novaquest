@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
+  ArrowLeft,
   BadgeCheck,
   CalendarDays,
   Loader2,
@@ -12,6 +13,7 @@ import {
   UserRound,
 } from 'lucide-react';
 import { useAuth } from '../../context/authContext';
+import { AUTH_STATUS } from '../../services/authSession';
 import { friendlyFirebaseError } from '../../services/firebase';
 
 function formatDate(value) {
@@ -63,7 +65,7 @@ export default function AccountSettingsSection() {
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
 
-  if (status === 'loading') {
+  if (status === AUTH_STATUS.LOADING) {
     return (
       <section
         aria-labelledby="account-settings-heading"
@@ -71,29 +73,72 @@ export default function AccountSettingsSection() {
         role="status"
       >
         <Loader2 className="h-6 w-6 animate-spin" aria-hidden="true" />
-        <p className="text-sm font-medium">Loading your account…</p>
+        <p className="text-sm font-medium">Checking your account…</p>
       </section>
     );
   }
 
-  if (status !== 'authenticated' || !user) {
+  if (status !== AUTH_STATUS.AUTHENTICATED || !user) {
+    const returnTarget = `${location.pathname}${location.search}${location.hash}`;
     return (
       <section
         aria-labelledby="account-settings-heading"
-        className="rounded-2xl border border-white/10 bg-[#090e1c]/90 p-6 text-sm text-slate-300"
+        className="overflow-hidden rounded-2xl border border-violet-500/25 bg-[#090e1c]/90 shadow-xl shadow-cyan-950/20"
       >
-        <h2 id="account-settings-heading" className="font-mono text-lg font-bold uppercase tracking-wider text-white">
-          Account
-        </h2>
-        <p className="mt-2 text-xs text-slate-400">
-          Your NovaUser session is not active. Sign in to manage your account.
-        </p>
-        <Link
-          to="/novauser/signin"
-          className="mt-4 inline-flex items-center gap-2 rounded-xl border border-cyan-500/40 bg-cyan-500/10 px-4 py-2 text-xs font-semibold text-cyan-200 transition hover:bg-cyan-500/20"
-        >
-          Sign in
-        </Link>
+        <div className="border-b border-white/10 bg-gradient-to-r from-violet-500/10 via-cyan-500/5 to-transparent p-6">
+          <div className="flex items-center gap-4">
+            <div
+              className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-violet-400/30 bg-violet-500/15 text-violet-200"
+              aria-hidden="true"
+            >
+              <UserRound className="h-7 w-7" />
+            </div>
+            <div>
+              <span className="inline-flex items-center rounded-full border border-violet-400/30 bg-violet-500/10 px-2.5 py-0.5 font-mono text-[10px] uppercase tracking-widest text-violet-300">
+                Guest mode
+              </span>
+              <h2
+                id="account-settings-heading"
+                className="mt-2 font-mono text-lg font-bold uppercase tracking-wider text-white"
+              >
+                You&apos;re playing as a guest
+              </h2>
+            </div>
+          </div>
+          <p className="mt-4 max-w-xl text-sm leading-relaxed text-slate-300">
+            Everything in NovaQuest, NovaMap and Novabase works without an account. Your game
+            settings and Continue progress are saved on this device only.
+          </p>
+          <p className="mt-2 max-w-xl text-xs leading-relaxed text-slate-400">
+            Sign in to save your progress and settings across devices and to see your account
+            details here.
+          </p>
+          <div className="mt-5 flex flex-col gap-2 sm:flex-row">
+            <Link
+              to="/novauser/signin"
+              state={{ from: returnTarget }}
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-cyan-500/40 bg-cyan-500/10 px-4 py-2.5 text-sm font-semibold text-cyan-200 transition hover:bg-cyan-500/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
+            >
+              Sign in
+            </Link>
+            <Link
+              to="/novauser/register"
+              state={{ from: returnTarget }}
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-violet-500/40 bg-violet-500/10 px-4 py-2.5 text-sm font-semibold text-violet-200 transition hover:bg-violet-500/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-400"
+            >
+              Create account
+            </Link>
+          </div>
+        </div>
+        <div className="p-6">
+          <Link
+            to="/app"
+            className="inline-flex items-center gap-2 text-xs font-semibold text-slate-300 transition hover:text-white"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
+            Back to NovaQuest
+          </Link>
+        </div>
       </section>
     );
   }
@@ -114,7 +159,7 @@ export default function AccountSettingsSection() {
     setError('');
     try {
       await logout();
-      navigate('/', { replace: true });
+      navigate('/app', { replace: true });
     } catch {
       setError('Could not sign out. Please try again.');
       setSigningOut(false);

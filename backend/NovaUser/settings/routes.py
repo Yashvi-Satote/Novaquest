@@ -35,8 +35,11 @@ def _user_id() -> UUID:
     return UUID(g.current_user["id"])
 
 
-def _settings_response(settings: dict, updated_at=None, status: int = 200):
-    body = {"settings": normalise_settings(settings)}
+def _settings_response(settings: dict, updated_at=None, status: int = 200, exists: bool = True):
+    body = {
+        "settings": normalise_settings(settings),
+        "exists": exists,
+    }
     if updated_at is not None:
         body["updated_at"] = updated_at.isoformat() if hasattr(updated_at, "isoformat") else updated_at
     response = jsonify(body)
@@ -54,7 +57,7 @@ def get_game_settings():
     try:
         row = session.get(UserGameSettings, _user_id())
         if row is None:
-            return _settings_response(create_default_settings())
+            return _settings_response(create_default_settings(), exists=False)
         return _settings_response(row.settings, row.updated_at)
     except (ValueError, TypeError):
         return _error("invalid_token", "The authentication token is invalid.", 401)

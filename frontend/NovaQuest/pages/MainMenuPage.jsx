@@ -11,6 +11,7 @@ import AppNavbar from '../../Shared/components/layout/AppNavbar';
 import MenuDustCanvas from '../components/game/MenuDustCanvas';
 import NewGameModal from '../components/game/NewGameModal';
 import { hasSaveGame, getSaveGame } from '../game/saveManager';
+import { subscribeProgress } from '../game/progressRepository';
 import { audio } from '../game/audioManager';
 
 export default function MainMenuPage() {
@@ -31,6 +32,7 @@ export default function MainMenuPage() {
 
   useEffect(() => {
     refreshSaveStatus();
+    return subscribeProgress(refreshSaveStatus);
   }, []);
 
   // Continue Game handler

@@ -1,5 +1,5 @@
 /**
- * NovaUser Firebase authentication end-to-end browser test.
+ * NovaQuest guest-first authentication end-to-end browser test.
  *
  * Prereqs:
  *   backend:  python backend/app.py
@@ -8,10 +8,11 @@
  * Run from frontend/:
  *   node NovaUser/tests/e2e_auth.mjs
  *
- * The test creates a temporary Firebase email/password account through the
- * public Identity Toolkit REST API, exercises the complete UI flow, and deletes
- * the Firebase account afterwards.  It also leaves the temporary PostgreSQL row
- * for the standard test cleanup (email prefix ``ui.e2e.``).
+ * The test exercises the guest experience first, then creates a temporary
+ * Firebase email/password account through the public Identity Toolkit REST API,
+ * checks optional sign-in, and deletes the Firebase account afterwards. It also
+ * leaves the temporary PostgreSQL row for the standard test cleanup (email
+ * prefix ``ui.e2e.``).
  */
 
 import assert from 'node:assert/strict';
@@ -111,13 +112,23 @@ const waitForPath = (path) =>
   page.waitForFunction((value) => location.pathname === value, {}, path);
 const currentPath = () => page.evaluate(() => location.pathname);
 const h1Text = () => page.$eval('h1', (node) => node.textContent.trim());
-const clearInput = async (selector) => {
-  await page.click(selector);
-  await page.keyboard.down('Control');
-  await page.keyboard.press('A');
-  await page.keyboard.up('Control');
-  await page.keyboard.press('Backspace');
+const clickText = async (selector, text) => {
+  await page.evaluate(
+    ({ selector: targetSelector, text: targetText }) => {
+      const element = [...document.querySelectorAll(targetSelector)].find((node) =>
+        node.textContent.trim().includes(targetText),
+      );
+      if (!element) throw new Error(`No ${targetSelector} containing "${targetText}"`);
+      element.click();
+    },
+    { selector, text },
+  );
 };
+const storedSettings = () =>
+  page.evaluate(() => {
+    const raw = localStorage.getItem('novaquest_game_settings');
+    return raw ? JSON.parse(raw) : null;
+  });
 const session = () =>
   page.evaluate(async () => {
     const response = await fetch('/api/novauser/auth/me', { credentials: 'include' });
@@ -131,57 +142,87 @@ const session = () =>
   });
 
 let cleanupMessage = '';
+let cleanedUp = false;
 
 try {
   await page.setViewport({ width: 1280, height: 1000, deviceScaleFactor: 1 });
 
-  console.log('1. Sign Up is the default entry point');
+  console.log('1. The app opens on /app as a guest');
   await page.goto(`${BASE}/`, { waitUntil: 'domcontentloaded' });
-  await waitForPath('/');
-  await page.waitForSelector('h1');
-  assert.equal(await h1Text(), 'Create account');
-  assert.equal(await page.$('a[href="/novamap"]'), null, 'App navigation must be hidden before auth');
-  assert.equal(await page.$('a[href="/novabase"]'), null, 'App navigation must be hidden before auth');
-  await page.screenshot({ path: join(SHOTS, 'register-default.png'), fullPage: true });
+  await waitForPath('/app');
+  await waitForText('NEW GAME');
+  assert.ok(await page.$('a[href="/novamap"]'), 'Guest must see NovaMap navigation');
+  assert.ok(await page.$('a[href="/novabase"]'), 'Guest must see Novabase navigation');
+  assert.ok(
+    await page.$('a[href="/novauser/signin"]'),
+    'Guest must see the optional Sign in link',
+  );
+  await page.screenshot({ path: join(SHOTS, 'guest-app.png'), fullPage: true });
 
-  console.log('2. Sign Up / Sign In toggle works');
-  await page.click('nav[aria-label="Authentication mode"] a[href="/novauser/signin"]');
+  console.log('2. Guests can open NovaMap, Novabase and Settings directly');
+  await page.goto(`${BASE}/novamap`, { waitUntil: 'domcontentloaded' });
+  await waitForPath('/novamap');
+  await waitForText('NovaMap');
+  await page.goto(`${BASE}/novabase`, { waitUntil: 'domcontentloaded' });
+  await waitForPath('/novabase');
+  await waitForText('Novabase');
+  await page.goto(`${BASE}/settings#account`, { waitUntil: 'domcontentloaded' });
+  await waitForPath('/settings');
+  await waitForText("YOU'RE PLAYING AS A GUEST");
+  assert.ok(
+    await page.$('section a[href="/novauser/signin"]'),
+    'Guest account card must offer sign in',
+  );
+  assert.ok(
+    await page.$('section a[href="/novauser/register"]'),
+    'Guest account card must offer account creation',
+  );
+  await page.screenshot({ path: join(SHOTS, 'guest-settings-account.png'), fullPage: true });
+
+  console.log('3. Guest settings persist on this device');
+  await page.goto(`${BASE}/settings#game`, { waitUntil: 'domcontentloaded' });
+  await waitForPath('/settings');
+  await waitForText('Game Settings');
+  await clickText('button[role="tab"]', 'Graphics');
+  await clickText('button', 'Ultra');
+  await clickText('button', 'Save Changes');
+  await waitForText('saved on this device');
+  assert.equal((await storedSettings())?.graphics?.qualityPreset, 'Ultra');
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await waitForText('Game Settings');
+  assert.equal((await storedSettings())?.graphics?.qualityPreset, 'Ultra');
+  await page.screenshot({ path: join(SHOTS, 'guest-settings-game.png'), fullPage: true });
+
+  console.log('4. Sign-in is optional and can return to the app');
+  await page.goto(`${BASE}/settings#account`, { waitUntil: 'domcontentloaded' });
+  await clickText('section a[href="/novauser/signin"]', 'Sign in');
   await waitForPath('/novauser/signin');
-  await page.waitForSelector('h1');
-  assert.equal(await h1Text(), 'Welcome back');
-  await page.click('nav[aria-label="Authentication mode"] a[href="/"]');
-  await waitForPath('/');
-  await page.waitForSelector('h1');
-  assert.equal(await h1Text(), 'Create account');
+  await waitForText('Welcome back');
+  assert.ok(await page.$('a[href="/app"]'), 'Auth page must offer Back to NovaQuest');
+  await clickText('a[href="/app"]', 'Continue as guest');
+  await waitForPath('/app');
+  await waitForText('NEW GAME');
+  await page.goto(`${BASE}/novauser/signin?redirect=%2Fnovabase`, {
+    waitUntil: 'domcontentloaded',
+  });
+  await waitForPath('/novauser/signin');
+  await clickText('a[href="/app"]', 'Back to NovaQuest');
+  await waitForPath('/app');
+  assert.equal((await storedSettings())?.graphics?.qualityPreset, 'Ultra', 'Guest data must survive auth-page visits');
 
-  console.log('3. Unauthenticated protected URL redirects to Sign Up');
-  await page.goto(`${BASE}/settings`, { waitUntil: 'domcontentloaded' });
-  await waitForPath('/');
-  await page.waitForSelector('h1');
-  assert.equal(await h1Text(), 'Create account');
-
-  console.log('4. Password visibility toggle and client validation');
-  await page.type('#register-password', PASSWORD);
-  await page.click('button[aria-label="Show password"]');
-  assert.equal(await page.$eval('#register-password', (node) => node.type), 'text');
-  await page.click('button[aria-label="Hide password"]');
-  assert.equal(await page.$eval('#register-password', (node) => node.type), 'password');
-  await clearInput('#register-password');
-  await page.click('button[type="submit"]');
-  await waitForText('Full name is required.');
-  const validationText = await page.evaluate(() => document.body.innerText);
-  assert.match(validationText, /Email address is required\./);
-  assert.match(validationText, /Password is required\./);
-  assert.equal(await currentPath(), '/');
-
-  console.log('5. Register a new Firebase account and return to the protected URL');
+  console.log('5. Register a new account from the guest settings card');
+  await page.goto(`${BASE}/settings#account`, { waitUntil: 'domcontentloaded' });
+  await waitForText("YOU'RE PLAYING AS A GUEST");
+  await clickText('section a[href="/novauser/register"]', 'Create account');
+  await waitForPath('/novauser/register');
+  await waitForText('Create account');
   await page.type('#register-fullName', NAME);
   await page.type('#register-email', EMAIL);
   await page.type('#register-password', PASSWORD);
   await page.click('button[type="submit"]');
   await waitForPath('/settings');
-  await waitForText('Settings');
-  await waitForText('NovaQuest');
+  await waitForText('Account');
+  await waitForText(EMAIL);
 
   const afterRegister = await session();
   assert.equal(afterRegister.status, 200, JSON.stringify(afterRegister.body));
@@ -191,35 +232,49 @@ try {
   assert.equal(afterRegister.body.user.email_verified, false);
   const visibleCookies = await page.evaluate(() => document.cookie);
   assert.ok(!visibleCookies.includes('novauser_token'), 'JWT cookie must stay HTTP-only');
-  await page.goto(`${BASE}/settings#account`, { waitUntil: 'domcontentloaded' });
-  await waitForText('Not verified');
+  assert.equal(
+    (await storedSettings())?.graphics?.qualityPreset,
+    'Ultra',
+    'Signing in must not replace local settings with defaults',
+  );
   await page.screenshot({ path: join(SHOTS, 'authenticated-settings.png'), fullPage: true });
 
-  console.log('6. Persisted session survives a full refresh');
-  await page.click('header a[href="/app"]');
+  console.log('6. Signed-in users see an initials avatar and the account card');
+  await page.goto(`${BASE}/app`, { waitUntil: 'domcontentloaded' });
   await waitForPath('/app');
   await waitForText('NEW GAME');
+  await page.waitForSelector('a[aria-label^="Account settings for"]');
+  const avatar = await page.$('a[aria-label^="Account settings for"]');
+  assert.ok(avatar, 'Signed-in users must see an account avatar');
+  assert.equal(await avatar.evaluate((node) => node.getAttribute('href')), '/settings#account');
+  assert.equal(await avatar.evaluate((node) => node.textContent.trim()), 'UE');
+  await page.screenshot({ path: join(SHOTS, 'authenticated-app.png'), fullPage: true });
+
+  console.log('7. A persisted session survives a full refresh');
   await page.reload({ waitUntil: 'domcontentloaded' });
   await waitForPath('/app');
   await waitForText('NEW GAME');
   const afterRefresh = await session();
   assert.equal(afterRefresh.status, 200, JSON.stringify(afterRefresh.body));
   assert.equal(afterRefresh.body.user.email, EMAIL);
-  await page.screenshot({ path: join(SHOTS, 'app-after-refresh.png'), fullPage: true });
 
-  console.log('7. Logout clears the session and returns to Sign Up');
-  // Sign out now lives in the Settings Account section.
+  console.log('8. Signing out returns to /app as a guest and keeps local data');
   await page.goto(`${BASE}/settings#account`, { waitUntil: 'domcontentloaded' });
   await waitForPath('/settings');
   await page.waitForSelector('button[aria-label="Sign out of NovaUser"]');
   await page.click('button[aria-label="Sign out of NovaUser"]');
-  await waitForPath('/');
-  await page.waitForSelector('h1');
-  assert.equal(await h1Text(), 'Create account');
+  await waitForPath('/app');
+  await waitForText('NEW GAME');
+  assert.ok(await page.$('a[href="/novauser/signin"]'), 'Signed-out users must see Sign in again');
   const afterLogout = await session();
   assert.equal(afterLogout.status, 401);
+  assert.equal(
+    (await storedSettings())?.graphics?.qualityPreset,
+    'Ultra',
+    'Signing out must not wipe local guest data',
+  );
 
-  console.log('8. Invalid credentials show a friendly Firebase error');
+  console.log('9. Invalid credentials show a friendly Firebase error');
   await page.goto(`${BASE}/novauser/signin`, { waitUntil: 'domcontentloaded' });
   await page.waitForSelector('#signin-email');
   await page.type('#signin-email', EMAIL);
@@ -228,46 +283,41 @@ try {
   await waitForText('Email address or password is incorrect.');
   assert.equal(await currentPath(), '/novauser/signin');
 
-  console.log('9. Existing user signs in with Firebase email/password');
-  await clearInput('#signin-password');
+  console.log('10. Signing in from Settings returns to Settings');
+  await page.goto(`${BASE}/settings#account`, { waitUntil: 'domcontentloaded' });
+  await waitForText("YOU'RE PLAYING AS A GUEST");
+  await clickText('section a[href="/novauser/signin"]', 'Sign in');
+  await waitForPath('/novauser/signin');
+  await page.type('#signin-email', EMAIL);
   await page.type('#signin-password', PASSWORD);
   await page.click('button[type="submit"]');
-  await waitForPath('/app');
-  await waitForText('NEW GAME');
+  await waitForPath('/settings');
+  await waitForText(EMAIL);
+  assert.equal(await page.evaluate(() => location.hash), '#account');
   const afterSignIn = await session();
   assert.equal(afterSignIn.status, 200);
   assert.equal(afterSignIn.body.user.email, EMAIL);
 
-  console.log('10. Authenticated users skip the auth pages');
+  console.log('11. Signed-in users skip optional auth pages');
   await page.goto(`${BASE}/novauser/signin`, { waitUntil: 'domcontentloaded' });
   await waitForPath('/app');
   await waitForText('NEW GAME');
 
-  console.log('11. Authenticated users can open any protected section directly');
-  await page.goto(`${BASE}/novabase`, { waitUntil: 'domcontentloaded' });
-  await waitForPath('/novabase');
-  await waitForText('NovaQuest');
-
-  console.log('12. Logout then protected URL redirects back to Sign Up');
+  console.log('12. Sign out again to test duplicate registration');
   await page.goto(`${BASE}/settings#account`, { waitUntil: 'domcontentloaded' });
-  await waitForPath('/settings');
   await page.waitForSelector('button[aria-label="Sign out of NovaUser"]');
   await page.click('button[aria-label="Sign out of NovaUser"]');
-  await waitForPath('/');
-  await page.goto(`${BASE}/novabase`, { waitUntil: 'domcontentloaded' });
-  await waitForPath('/');
-  await page.waitForSelector('h1');
-  assert.equal(await h1Text(), 'Create account');
-
-  console.log('13. Duplicate Firebase registration is rejected');
+  await waitForPath('/app');
+  await page.goto(`${BASE}/novauser/register`, { waitUntil: 'domcontentloaded' });
+  await page.waitForSelector('#register-email');
   await page.type('#register-fullName', NAME);
   await page.type('#register-email', EMAIL);
   await page.type('#register-password', PASSWORD);
   await page.click('button[type="submit"]');
   await waitForText('already exists');
-  assert.equal(await currentPath(), '/');
+  assert.equal(await currentPath(), '/novauser/register');
 
-  console.log('14. Sign-in page remains responsive on mobile');
+  console.log('13. Sign-in page remains responsive on mobile');
   await page.setViewport({ width: 390, height: 844, deviceScaleFactor: 1 });
   await page.goto(`${BASE}/novauser/signin`, { waitUntil: 'domcontentloaded' });
   await waitForPath('/novauser/signin');
@@ -284,7 +334,11 @@ try {
   cleanupMessage = (await deleteFirebaseAccount())
     ? 'Firebase test account deleted.'
     : 'Firebase test account could not be deleted automatically.';
+  cleanedUp = true;
   console.log(`\nAll browser checks passed. ${cleanupMessage} Screenshots: ${SHOTS}`);
 } finally {
   await browser.close();
+  if (!cleanedUp) {
+    await deleteFirebaseAccount();
+  }
 }

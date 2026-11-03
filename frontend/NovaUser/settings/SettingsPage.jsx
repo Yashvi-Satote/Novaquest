@@ -48,7 +48,8 @@ export default function SettingsPage() {
               Settings
             </h1>
             <p className="mt-1 max-w-2xl text-xs text-slate-400 sm:text-sm">
-              Tune your NovaQuest experience and manage the NovaUser account it is linked to.
+              Tune your NovaQuest experience. Guests save settings on this device; signing in adds
+              cloud sync and account details.
             </p>
           </div>
         </header>

@@ -1,9 +1,18 @@
 /**
  * Novaquest Game Save Manager
- * Handles local persistence of mission checkpoints and player state.
+ * Handles mission checkpoints and player state.
+ *
+ * progressRepository chooses the storage source: localStorage for guests and
+ * the NovaUser account for signed-in users (with localStorage as an offline
+ * cache). Components keep using this synchronous API.
  */
 
-const STORAGE_KEY_SAVE = 'novaquest_save_game';
+import {
+  deleteProgress,
+  getProgress,
+  hasProgress,
+  saveProgress,
+} from './progressRepository';
 
 export const DEFAULT_MISSION_ECHO = {
   unlocked: false,
@@ -50,35 +59,17 @@ export const INITIAL_MISSION_STATE = {
   difficulty: 'Commander'
 };
 
-/**
- * Checks whether an active game save exists.
- */
+/** Checks whether an active game save exists. */
 export function hasSaveGame() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY_SAVE);
-    return raw !== null && raw.length > 10;
-  } catch {
-    return false;
-  }
+  return hasProgress();
 }
 
-/**
- * Retrieves the current game save data, or null if none exists.
- */
+/** Retrieves the current game save data, or null if none exists. */
 export function getSaveGame() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY_SAVE);
-    if (!raw) return null;
-    return JSON.parse(raw);
-  } catch (err) {
-    console.error('Failed to parse save game:', err);
-    return null;
-  }
+  return getProgress();
 }
 
-/**
- * Initializes a brand new game state and persists it.
- */
+/** Initializes a brand new game state and persists it. */
 export function createNewGame(options = {}) {
   const gender = options.gender || 'male';
   const isFemale = gender === 'female';
@@ -108,32 +99,12 @@ export function createNewGame(options = {}) {
   return newSave;
 }
 
-/**
- * Persists updated game state to localStorage.
- */
+/** Persists updated game state locally and to the account when signed in. */
 export function saveGame(saveData) {
-  try {
-    const dataWithTimestamp = {
-      ...saveData,
-      timestamp: Date.now()
-    };
-    localStorage.setItem(STORAGE_KEY_SAVE, JSON.stringify(dataWithTimestamp));
-    return true;
-  } catch (err) {
-    console.error('Failed to save game state:', err);
-    return false;
-  }
+  return saveProgress(saveData);
 }
 
-/**
- * Deletes existing save game (resetting progress).
- */
+/** Deletes existing save game (resetting progress). */
 export function deleteSaveGame() {
-  try {
-    localStorage.removeItem(STORAGE_KEY_SAVE);
-    return true;
-  } catch (err) {
-    console.error('Failed to clear save game:', err);
-    return false;
-  }
+  return deleteProgress();
 }

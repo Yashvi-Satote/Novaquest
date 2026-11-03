@@ -14,6 +14,7 @@ logger = logging.getLogger(__name__)
 
 _BLUEPRINT_NAME = "novauser_auth"
 _SETTINGS_BLUEPRINT_NAME = "novauser_settings"
+_PROGRESS_BLUEPRINT_NAME = "novauser_progress"
 
 
 def _cors(app: Flask) -> None:
@@ -24,7 +25,7 @@ def _cors(app: Flask) -> None:
         supports_credentials=True,
         allow_headers=["Content-Type", "Authorization", "Accept"],
         expose_headers=["Content-Type"],
-        methods=["GET", "POST", "PUT", "OPTIONS"],
+        methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
         max_age=600,
     )
 
@@ -39,6 +40,11 @@ def _register_blueprint(app: Flask) -> None:
         from .settings.routes import bp as settings_bp
 
         app.register_blueprint(settings_bp)
+
+    if _PROGRESS_BLUEPRINT_NAME not in app.blueprints:
+        from .progress.routes import bp as progress_bp
+
+        app.register_blueprint(progress_bp)
 
 
 def _register_error_handlers(app: Flask) -> None:
