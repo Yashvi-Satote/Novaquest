@@ -96,6 +96,16 @@ const SolarCanvas = forwardRef(function SolarCanvas({
       if (engineRef.current) {
         engineRef.current.setLayerVisibility(layer, visible);
       }
+    },
+    applyFilters: (filterState) => {
+      if (engineRef.current) {
+        engineRef.current.applyFilters(filterState);
+      }
+    },
+    setMapObjects: (objects) => {
+      if (engineRef.current) {
+        engineRef.current.setMapObjects(objects);
+      }
     }
   }), []);
 

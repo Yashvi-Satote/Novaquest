@@ -34,7 +34,7 @@ export class SolarEngine {
     this.onDateChange = options.onDateChange || null;
 
     // Simulation states
-    this.isPlaying = true;
+    this.isPlaying = false;
     this.speedMultiplier = 1.0;
     this.simulationDate = new Date();
     this.daysPerSecond = 5.0; // Base time flow rate in live motion
@@ -719,6 +719,40 @@ export class SolarEngine {
       this.ambientLight.color.setHex(0x1e293b);
       this.ambientLight.intensity = 0.65;
       this.floodLight.intensity = 0.0;
+    }
+  }
+
+  
+  setMapObjects(objects) {
+    if (this.markers && typeof this.markers.setDatabaseObjects === 'function') {
+      this.markers.setDatabaseObjects(objects);
+    }
+  }
+
+  applyFilters(filterState) {
+    if (!filterState) return;
+
+    // 1. Planet visibility
+    const showPlanets = !filterState.objectTypes || filterState.objectTypes.has('planet');
+    this.planetBodies.forEach(body => {
+      body.mesh.visible = showPlanets;
+      if (body.orbitLine) body.orbitLine.visible = showPlanets && this.layerVisibility.orbits;
+      if (body.labelSprite) body.labelSprite.visible = showPlanets && this.layerVisibility.labels;
+    });
+
+    // 2. Moon visibility
+    const showMoons = !filterState.objectTypes || filterState.objectTypes.has('moon');
+    this.planetBodies.forEach(body => {
+      if (body.moons) {
+        body.moons.forEach(m => {
+          m.mesh.visible = showMoons;
+        });
+      }
+    });
+
+    // 3. Spacecraft markers filtering
+    if (this.markers && typeof this.markers.applyFilters === 'function') {
+      this.markers.applyFilters(filterState);
     }
   }
 
