@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import Header from '../../Shared/components/Header';
+import AppNavbar from '../../Shared/components/layout/AppNavbar';
 import Sidebar from '../components/Sidebar';
 import FilterBar from '../components/FilterBar';
 import HardwareCard from '../components/HardwareCard';
@@ -17,7 +17,7 @@ import {
   Compass
 } from 'lucide-react';
 
-export default function ExplorerPage({ theme, onToggleTheme }) {
+export default function ExplorerPage() {
   // Hierarchy Tree for Sidebar
   const [hierarchy, setHierarchy] = useState([]);
 
@@ -146,16 +146,12 @@ export default function ExplorerPage({ theme, onToggleTheme }) {
   }, [mobileMenuOpen]);
 
   return (
-    <div className={`min-h-screen ${theme === 'dark' ? 'dark' : ''} bg-slate-50 dark:bg-[#070b14] space-bg flex flex-col font-sans text-slate-800 dark:text-slate-100 transition-colors duration-200`}>
+    <div className="min-h-screen bg-[#070b14] space-bg flex flex-col font-sans text-slate-100">
       
-      {/* 1. Global Header (Flush full-width) */}
-      <Header
-        theme={theme}
-        onToggleTheme={onToggleTheme}
+      {/* 1. Shared application navigation (flush full-width) */}
+      <AppNavbar
         mobileMenuOpen={mobileMenuOpen}
         setMobileMenuOpen={setMobileMenuOpen}
-        searchQuery={searchQuery}
-        setSearchQuery={setSearchQuery}
       />
 
       {/* 2. Main Layout Area (Sidebar flush against absolute left edge + full-width main content) */}

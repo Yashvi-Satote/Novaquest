@@ -7,6 +7,7 @@ import {
   registerWithEmail,
   refreshCurrentUser,
   sendVerificationEmailFor,
+  signInAsExampleUser,
   signInWithEmail,
   signInWithGoogle,
   signOutFirebase,
@@ -170,6 +171,21 @@ export function AuthProvider({ children }) {
     }
   }, [establishSession, failSession]);
 
+  const loginAsExampleUser = useCallback(async () => {
+    explicitAuth.current = true;
+    setAuthError('');
+    try {
+      const result = await signInAsExampleUser();
+      const data = await establishSession(result.user, { forceRefresh: true });
+      return data;
+    } catch (error) {
+      await failSession(error);
+      throw error;
+    } finally {
+      explicitAuth.current = false;
+    }
+  }, [establishSession, failSession]);
+
   const logout = useCallback(async () => {
     try {
       await Promise.allSettled([signOutRequest(), signOutFirebase()]);
@@ -208,6 +224,7 @@ export function AuthProvider({ children }) {
       login,
       register,
       loginWithGoogle,
+      loginAsExampleUser,
       logout,
       resendVerificationEmail,
       refreshSession,
@@ -223,6 +240,7 @@ export function AuthProvider({ children }) {
       login,
       register,
       loginWithGoogle,
+      loginAsExampleUser,
       logout,
       resendVerificationEmail,
       refreshSession,
