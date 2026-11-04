@@ -1143,6 +1143,165 @@ class AudioManager {
   }
 
   /**
+   * Tactile Sonar Sweep: Rich high-tech downward sonar pulse with reverberant echo
+   */
+  playTactileSonarSweep() {
+    const ctx = this.ensureContext();
+    if (!ctx) return;
+    const { sfx } = this.getVolumes();
+    if (sfx <= 0.001) return;
+
+    try {
+      const now = ctx.currentTime;
+      // High-to-mid frequency chirp
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(2200, now);
+      osc.frequency.exponentialRampToValueAtTime(360, now + 0.45);
+
+      gain.gain.setValueAtTime(sfx * 0.22, now);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.52);
+
+      // Low resonant thud
+      const thudOsc = ctx.createOscillator();
+      const thudGain = ctx.createGain();
+      thudOsc.type = 'triangle';
+      thudOsc.frequency.setValueAtTime(110, now);
+      thudOsc.frequency.exponentialRampToValueAtTime(45, now + 0.35);
+
+      thudGain.gain.setValueAtTime(sfx * 0.28, now);
+      thudGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.38);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      thudOsc.connect(thudGain);
+      thudGain.connect(ctx.destination);
+
+      osc.start(now);
+      osc.stop(now + 0.55);
+      thudOsc.start(now);
+      thudOsc.stop(now + 0.40);
+    } catch {}
+  }
+
+  /**
+   * Target Lock Ping: High-tech lock-on acquisition tone
+   */
+  playTargetLockPing() {
+    const ctx = this.ensureContext();
+    if (!ctx) return;
+    const { sfx } = this.getVolumes();
+    if (sfx <= 0.001) return;
+
+    try {
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(1350, now);
+      osc.frequency.setValueAtTime(1880, now + 0.045);
+
+      gain.gain.setValueAtTime(sfx * 0.18, now);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.12);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.13);
+    } catch {}
+  }
+
+  /**
+   * Boundary Warning Alarm: Urgent dual-tone suit telemetry alarm
+   */
+  playBoundaryWarningAlarm() {
+    const ctx = this.ensureContext();
+    if (!ctx) return;
+    const { sfx } = this.getVolumes();
+    if (sfx <= 0.001) return;
+
+    try {
+      const now = ctx.currentTime;
+      const oscA = ctx.createOscillator();
+      const oscB = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      oscA.type = 'sawtooth';
+      oscB.type = 'sine';
+      oscA.frequency.setValueAtTime(880, now);
+      oscA.frequency.setValueAtTime(660, now + 0.08);
+      oscB.frequency.setValueAtTime(440, now);
+      oscB.frequency.setValueAtTime(330, now + 0.08);
+
+      const filter = ctx.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(1400, now);
+
+      gain.gain.setValueAtTime(sfx * 0.16, now);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.18);
+
+      oscA.connect(filter);
+      oscB.connect(filter);
+      filter.connect(gain);
+      gain.connect(ctx.destination);
+
+      oscA.start(now);
+      oscB.start(now);
+      oscA.stop(now + 0.20);
+      oscB.stop(now + 0.20);
+    } catch {}
+  }
+
+  /**
+   * Boundary Blackout Static & Auto-recalibration Chime
+   */
+  playBoundaryBlackoutStatic() {
+    const ctx = this.ensureContext();
+    if (!ctx) return;
+    const { sfx } = this.getVolumes();
+    if (sfx <= 0.001) return;
+
+    try {
+      const now = ctx.currentTime;
+      const noise = this.createNoiseBuffer(0.6);
+      if (noise) {
+        const noiseNode = ctx.createBufferSource();
+        noiseNode.buffer = noise;
+        const noiseGain = ctx.createGain();
+        noiseGain.gain.setValueAtTime(sfx * 0.25, now);
+        noiseGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.55);
+
+        const filter = ctx.createBiquadFilter();
+        filter.type = 'bandpass';
+        filter.frequency.setValueAtTime(800, now);
+        filter.Q.setValueAtTime(1.5, now);
+
+        noiseNode.connect(filter);
+        filter.connect(noiseGain);
+        noiseGain.connect(ctx.destination);
+        noiseNode.start(now);
+        noiseNode.stop(now + 0.6);
+      }
+
+      // Reboot chime
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(320, now + 0.2);
+      osc.frequency.linearRampToValueAtTime(640, now + 0.45);
+      gain.gain.setValueAtTime(0.0001, now + 0.2);
+      gain.gain.linearRampToValueAtTime(sfx * 0.2, now + 0.35);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.65);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now + 0.2);
+      osc.stop(now + 0.7);
+    } catch {}
+  }
+
+  /**
    * Stop all persistent audio loops upon level exit or pause
    */
   stopAllLoops() {

@@ -562,18 +562,20 @@ export function createCarbonFiberTexture(width = 256, height = 256) {
 /**
  * Creates High-Detail Tactical First-Person Scanner HUD Display Screen Texture
  */
-export function createScannerHUDTexture(width = 512, height = 512) {
-  const canvas = document.createElement('canvas');
-  canvas.width = width;
-  canvas.height = height;
+/**
+ * Dynamically draws the high-tech animated tactical LIDAR/radar HUD on the canvas
+ */
+export function updateScannerHUDCanvas(canvas, { time = 0, isScanning = false, signalStrength = 0, targetName = '', distance = 0 } = {}) {
   const ctx = canvas.getContext('2d');
+  const width = canvas.width;
+  const height = canvas.height;
 
   // Deep cyan-black glass backdrop
-  ctx.fillStyle = '#041527';
+  ctx.fillStyle = '#031122';
   ctx.fillRect(0, 0, width, height);
 
   // Grid lines
-  ctx.strokeStyle = 'rgba(6, 182, 212, 0.15)';
+  ctx.strokeStyle = 'rgba(6, 182, 212, 0.12)';
   ctx.lineWidth = 1;
   for (let i = 32; i < width; i += 32) {
     ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, height); ctx.stroke();
@@ -581,45 +583,93 @@ export function createScannerHUDTexture(width = 512, height = 512) {
   }
 
   // Circular radar reticle
-  ctx.strokeStyle = '#06b6d4';
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.arc(width / 2, height / 2, 120, 0, Math.PI * 2);
-  ctx.stroke();
-
+  const cx = width / 2;
+  const cy = height / 2 + 10;
   ctx.strokeStyle = 'rgba(6, 182, 212, 0.4)';
+  ctx.lineWidth = 1.5;
   ctx.beginPath();
-  ctx.arc(width / 2, height / 2, 70, 0, Math.PI * 2);
+  ctx.arc(cx, cy, 115, 0, Math.PI * 2);
   ctx.stroke();
 
-  // Oscilloscope wave
-  ctx.strokeStyle = '#38bdf8';
-  ctx.lineWidth = 3;
-  ctx.shadowColor = '#38bdf8';
-  ctx.shadowBlur = 8;
+  ctx.strokeStyle = 'rgba(6, 182, 212, 0.25)';
   ctx.beginPath();
-  for (let x = 40; x < width - 40; x += 4) {
-    const y = height / 2 + Math.sin(x * 0.045) * 35 * Math.sin(x * 0.012);
-    if (x === 40) ctx.moveTo(x, y);
+  ctx.arc(cx, cy, 65, 0, Math.PI * 2);
+  ctx.stroke();
+
+  // Rotating Radar Sweep Needle
+  const sweepAngle = time * 2.8;
+  ctx.strokeStyle = isScanning ? '#22d3ee' : 'rgba(56, 189, 248, 0.7)';
+  ctx.lineWidth = isScanning ? 3 : 2;
+  ctx.beginPath();
+  ctx.moveTo(cx, cy);
+  ctx.lineTo(cx + Math.cos(sweepAngle) * 115, cy + Math.sin(sweepAngle) * 115);
+  ctx.stroke();
+
+  // Radar Sweep Gradient Arc Trail
+  ctx.fillStyle = isScanning ? 'rgba(34, 211, 238, 0.18)' : 'rgba(6, 182, 212, 0.08)';
+  ctx.beginPath();
+  ctx.moveTo(cx, cy);
+  ctx.arc(cx, cy, 115, sweepAngle - 0.5, sweepAngle);
+  ctx.closePath();
+  ctx.fill();
+
+  // Dynamic Oscilloscope FFT Wave
+  ctx.strokeStyle = isScanning ? '#00f0ff' : '#38bdf8';
+  ctx.lineWidth = isScanning ? 3 : 2;
+  ctx.shadowColor = isScanning ? '#00f0ff' : '#38bdf8';
+  ctx.shadowBlur = isScanning ? 10 : 4;
+  ctx.beginPath();
+  const freqMult = isScanning ? 0.08 : 0.045;
+  const amp = isScanning ? 38 : 20 + Math.sin(time * 3) * 6;
+  for (let x = 30; x < width - 30; x += 4) {
+    const wave = Math.sin((x + time * 140) * freqMult) * Math.cos(x * 0.015) * amp;
+    const y = cy + wave;
+    if (x === 30) ctx.moveTo(x, y);
     else ctx.lineTo(x, y);
   }
   ctx.stroke();
   ctx.shadowBlur = 0;
 
-  // Telemetry typography
+  // Header Telemetry
   ctx.fillStyle = '#06b6d4';
-  ctx.font = 'bold 22px monospace';
-  ctx.fillText('LIDAR TEL: 432.06 MHz', 40, 50);
+  ctx.font = 'bold 20px monospace';
+  ctx.fillText('LIDAR TEL: 432.06 MHz', 32, 42);
 
-  ctx.fillStyle = '#38bdf8';
-  ctx.font = '16px monospace';
-  ctx.fillText('RESONANCE: 99.4% [ANOMALOUS]', 40, 80);
-  ctx.fillText('RANGE: 124.8m | WNW', 40, 105);
+  // Status & Target Lock readout
+  ctx.font = '14px monospace';
+  if (targetName) {
+    ctx.fillStyle = '#38bdf8';
+    ctx.fillText(`LOCK: ${targetName.slice(0, 22).toUpperCase()}`, 32, 72);
+    ctx.fillStyle = '#93c5fd';
+    ctx.fillText(`DIST: ${distance > 0 ? distance.toFixed(1) + 'm' : 'IN RANGE'}`, 32, 94);
+  } else {
+    ctx.fillStyle = '#64748b';
+    ctx.fillText('STATUS: SEARCHING CARRIER...', 32, 72);
+    ctx.fillText(`GRID: ${signalStrength > 0 ? signalStrength + '% LOCK' : 'SCAN READY'}`, 32, 94);
+  }
 
-  ctx.fillStyle = '#10b981';
-  ctx.fillText('SUIT LINK: OPTIMAL', 40, height - 40);
+  // Signal Strength Bars
+  ctx.fillStyle = 'rgba(6, 182, 212, 0.2)';
+  ctx.fillRect(width - 140, 32, 108, 14);
+  const barWidth = Math.min(108, Math.max(8, (signalStrength / 100) * 108));
+  ctx.fillStyle = isScanning ? '#22d3ee' : '#0284c7';
+  ctx.fillRect(width - 140, 32, barWidth, 14);
+
+  // Footer status
+  ctx.fillStyle = isScanning ? '#22d3ee' : '#10b981';
+  ctx.font = 'bold 15px monospace';
+  ctx.fillText(isScanning ? '>>> SCAN PULSE ACTIVE <<<' : 'SUIT LINK: OPTIMAL', 32, height - 28);
+}
+
+export function createScannerHUDTexture(width = 512, height = 512) {
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+
+  updateScannerHUDCanvas(canvas, { time: 0, isScanning: false, signalStrength: 0 });
 
   const texture = new THREE.CanvasTexture(canvas);
+  texture.userData = { canvas };
   return texture;
 }
 

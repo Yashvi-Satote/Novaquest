@@ -28,7 +28,11 @@ import {
   Gamepad2,
   Database,
   AlertTriangle,
-  Lightbulb
+  Lightbulb,
+  RefreshCw,
+  Target,
+  RadioTower,
+  ChevronsUp
 } from 'lucide-react';
 import { audio } from '../../game/audioManager';
 import InvestigationModal from './InvestigationModal';
@@ -50,6 +54,7 @@ import {
   createHazardStripeTexture,
   createCarbonFiberTexture,
   createScannerHUDTexture,
+  updateScannerHUDCanvas,
   createSpacesuitFabricTexture
 } from '../../game/lunarTextures';
 
@@ -346,11 +351,18 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
     });
   };
 
-  // Situation 1: Soft boundary warning state
+  // Situation 1: Soft boundary warning state & Auto-Recalibration protocol
   const [boundaryWarning, setBoundaryWarning] = useState(null);
   const boundaryWarningRef = useRef(null);
   const lastBoundaryCommsTimeRef = useRef(0);
   const lastBoundaryAudioTimeRef = useRef(0);
+  const [isRecalibrating, setIsRecalibrating] = useState(false);
+  const isRecalibratingRef = useRef(false);
+
+  // Tactical Screen-Space POI Lock-On Brackets (System B Scanner)
+  const [screenPOIs, setScreenPOIs] = useState([]);
+  const screenPOIsRef = useRef([]);
+  const triggerSonarWaveRef = useRef(null);
 
   // Situation 3: Signal Assistance State (Direction becomes more informative)
   const [isSignalAssisted, setIsSignalAssisted] = useState(false);
@@ -1083,13 +1095,15 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
 
   // Component-scoped triggers accessible both from keydown and HUD buttons
   const triggerScannerPulse = () => {
-    if (activeZone && activeZone.includes('CRATER')) {
-      audio.playCraterScannerPulse();
-    } else {
-      audio.playScannerPing();
+    // Tactile Sonar Sweep Audio & Dual Visual Waves (LIDAR fan + 3D concentric terrain wave)
+    audio.playTactileSonarSweep();
+    if (nearInteractableRef.current) {
+      setTimeout(() => audio.playTargetLockPing(), 180);
     }
+
     setScanPulseActive(true);
     triggerScannerBeamRef.current?.();
+    triggerSonarWaveRef.current?.();
     setTimeout(() => setScanPulseActive(false), 2400);
 
     // Situation 2: Player scans the wrong object / empty terrain -> Scanner says no relevant signal
@@ -4985,9 +4999,9 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
       nextDustIndex = (nextDustIndex + count) % MAX_DUST;
     };
 
-    // 15. 3D SURFACE SCANNER BEAM (LASER FAN TRAVELING OVER TERRAIN)
-    // Dynamic fan ribbon that sweeps across lunar terrain in front of the astronaut
-    const scanBeamSegments = 24;
+    // 15. 3D SURFACE SCANNER BEAM & HOLOGRAPHIC SONAR GROUND WAVE (METROID PRIME / DEEP ROCK GALACTIC PING)
+    // Forward directional LIDAR fan ribbon
+    const scanBeamSegments = 28;
     const scanBeamGeo = new THREE.BufferGeometry();
     const scanBeamPositions = new Float32Array((scanBeamSegments + 1) * 2 * 3);
     const scanBeamIndices = [];
@@ -5018,6 +5032,56 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
     triggerScannerBeamRef.current = () => {
       scanBeamProgress = 0.01;
       scanBeamMesh.visible = true;
+    };
+
+    // 15B. 3D CONCENTRIC HOLOGRAPHIC SONAR GROUND WAVE (Topographic Contours)
+    const sonarWaveRings = 3;
+    const sonarWaveSegments = 48;
+    const totalSonarPoints = sonarWaveRings * (sonarWaveSegments + 1);
+    const sonarWaveGeo = new THREE.BufferGeometry();
+    const sonarWavePositions = new Float32Array(totalSonarPoints * 3);
+    const sonarWaveColors = new Float32Array(totalSonarPoints * 3);
+
+    for (let r = 0; r < sonarWaveRings; r++) {
+      for (let s = 0; s <= sonarWaveSegments; s++) {
+        const idx = (r * (sonarWaveSegments + 1) + s) * 3;
+        sonarWavePositions[idx] = 0;
+        sonarWavePositions[idx + 1] = -999;
+        sonarWavePositions[idx + 2] = 0;
+
+        const alpha = 1.0 - (r * 0.28);
+        sonarWaveColors[idx] = 0.0;
+        sonarWaveColors[idx + 1] = 0.94 * alpha;
+        sonarWaveColors[idx + 2] = 1.0 * alpha;
+      }
+    }
+    sonarWaveGeo.setAttribute('position', new THREE.BufferAttribute(sonarWavePositions, 3));
+    sonarWaveGeo.setAttribute('color', new THREE.BufferAttribute(sonarWaveColors, 3));
+
+    const sonarWaveMat = new THREE.LineBasicMaterial({
+      vertexColors: true,
+      transparent: true,
+      opacity: 0.0,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false
+    });
+
+    const sonarIndices = [];
+    for (let r = 0; r < sonarWaveRings; r++) {
+      const ringOffset = r * (sonarWaveSegments + 1);
+      for (let s = 0; s < sonarWaveSegments; s++) {
+        sonarIndices.push(ringOffset + s, ringOffset + s + 1);
+      }
+    }
+    sonarWaveGeo.setIndex(sonarIndices);
+    const sonarWaveMesh = new THREE.LineSegments(sonarWaveGeo, sonarWaveMat);
+    sonarWaveMesh.visible = false;
+    scene.add(sonarWaveMesh);
+
+    let sonarWaveProgress = 0;
+    triggerSonarWaveRef.current = () => {
+      sonarWaveProgress = 0.01;
+      sonarWaveMesh.visible = true;
     };
 
     // 16. ELECTRICAL SPARK DISCHARGE SYSTEM (TRANSIENT INTERACTION SPARKS)
@@ -5750,7 +5814,7 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
         return;
       }
 
-      if (isPausedRef.current) return;
+      if (isPausedRef.current || isRecalibratingRef.current) return;
 
       if (code === 'KeyW' || code === 'ArrowUp') keys.w = true;
       if (code === 'KeyS' || code === 'ArrowDown') keys.s = true;
@@ -6141,11 +6205,37 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
       if (underground) {
         targetGroundY = CAVERN_Y; // Cavern floor level
       } else {
-        // Natural boundary clamp (r <= 205m so player cannot walk over outer crater rims into unmodeled void)
+        // Natural boundary clamp with Auto-Recalibration protocol
         const distFromCenter = Math.hypot(playerPos.x, playerPos.z);
-        if (distFromCenter > 205) {
-          playerPos.x = (playerPos.x / distFromCenter) * 205;
-          playerPos.z = (playerPos.z / distFromCenter) * 205;
+        if (distFromCenter >= 215 && !isRecalibratingRef.current) {
+          isRecalibratingRef.current = true;
+          setIsRecalibrating(true);
+          audio.playBoundaryBlackoutStatic();
+          keys.w = false;
+          keys.s = false;
+          keys.a = false;
+          keys.d = false;
+          playerVelocityY = 0;
+
+          setTimeout(() => {
+            const curAngle = Math.atan2(playerPos.z, playerPos.x);
+            playerPos.x = Math.cos(curAngle) * 165;
+            playerPos.z = Math.sin(curAngle) * 165;
+            yaw = curAngle + Math.PI; // Face inward toward Surveyor 1
+            pitch = 0;
+            setIsRecalibrating(false);
+            isRecalibratingRef.current = false;
+
+            setActiveComms({
+              callsign: 'CHEN-SCIENCE',
+              speaker: 'Specialist Maya Chen',
+              text: 'Suit autonav recovered your telemetry vector, Captain. Telemetry link re-anchored. Please remain within the primary mission sector.'
+            });
+            audio.playRadioCommsChatter('chen');
+          }, 1500);
+        } else if (distFromCenter > 220) {
+          playerPos.x = (playerPos.x / distFromCenter) * 220;
+          playerPos.z = (playerPos.z / distFromCenter) * 220;
         }
         targetGroundY = getTerrainHeight(playerPos.x, playerPos.z);
       }
@@ -6198,6 +6288,21 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
           scannerSpot.intensity = 0.9 + Math.sin(time * 2.2) * 0.25;
           emitterLensMat.color.setHex(0x0284c7);
         }
+
+        // Live dynamic tactical canvas animation on handheld scanner display screen
+        if (scannerScreenMap && scannerScreenMap.userData?.canvas) {
+          if (Math.floor(time * 30) % 2 === 0) {
+            const curTarget = nearInteractableRef.current;
+            updateScannerHUDCanvas(scannerScreenMap.userData.canvas, {
+              time,
+              isScanning: scanPulseActive,
+              signalStrength: scannerReadingRef.current?.strength || 0,
+              targetName: curTarget?.title || (scanPulseActive ? 'SWEEPING REGOLITH...' : ''),
+              distance: curTarget ? camera.position.distanceTo(curTarget.position) : 0
+            });
+            scannerScreenMap.needsUpdate = true;
+          }
+        }
       }
 
       // Dynamic ballistic regolith dust physics (Lunar gravity g = 1.62 m/s^2, zero drag)
@@ -6229,14 +6334,14 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
         dPos.needsUpdate = true;
       }
 
-      // Animate 3D Scanner Surface Beam Travelling Across Terrain
+      // Animate 3D Scanner Forward Surface Fan Traveling Across Terrain
       if (scanPulseActive && scanBeamMesh) {
         scanBeamProgress = Math.min(1.0, scanBeamProgress + delta * 0.42);
         scanBeamMesh.visible = true;
         scanBeamMat.opacity = Math.sin(scanBeamProgress * Math.PI) * 0.82;
 
-        const currentRadius = Math.max(1.5, scanBeamProgress * 38);
-        const innerRadius = Math.max(0.5, currentRadius - 1.8);
+        const currentRadius = Math.max(1.5, scanBeamProgress * 42);
+        const innerRadius = Math.max(0.5, currentRadius - 2.2);
         const fovAngle = Math.PI / 3; // 60 degree scan fan
         const baseAngle = -yaw - Math.PI / 2;
 
@@ -6261,6 +6366,75 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
         scanBeamProgress = 0;
         scanBeamMesh.visible = false;
         scanBeamMat.opacity = 0;
+      }
+
+      // Animate 3D Concentric Holographic Sonar Ground Wave
+      if (sonarWaveProgress > 0 && sonarWaveMesh) {
+        sonarWaveProgress = Math.min(1.0, sonarWaveProgress + delta * 0.45);
+        sonarWaveMesh.visible = true;
+        sonarWaveMat.opacity = Math.sin(sonarWaveProgress * Math.PI) * 0.95;
+
+        const baseRadius = sonarWaveProgress * 48;
+        const posAttr = sonarWaveGeo.attributes.position;
+        let pIdx = 0;
+
+        for (let r = 0; r < sonarWaveRings; r++) {
+          const ringRad = Math.max(0, baseRadius - r * 8.5);
+          for (let s = 0; s <= sonarWaveSegments; s++) {
+            const angle = (s / sonarWaveSegments) * Math.PI * 2;
+            const wx = playerPos.x + Math.cos(angle) * ringRad;
+            const wz = playerPos.z + Math.sin(angle) * ringRad;
+            const wy = (underground ? CAVERN_Y : getTerrainHeight(wx, wz)) + 0.12;
+            posAttr.setXYZ(pIdx++, wx, wy, wz);
+          }
+        }
+        posAttr.needsUpdate = true;
+
+        if (sonarWaveProgress >= 1.0) {
+          sonarWaveProgress = 0;
+          sonarWaveMesh.visible = false;
+          sonarWaveMat.opacity = 0;
+        }
+      }
+
+      // Tactical Screen-Space POI Projection for Metroid Prime / Deep Rock Galactic Style Lock Reticles
+      if (isScannerVisorActiveRef.current || scanPulseActive) {
+        const visiblePOIs = [];
+        const projVec = new THREE.Vector3();
+
+        for (const poi of interactables) {
+          if (underground && poi.id !== 'precursor_monolith_site') continue;
+          if (!underground && poi.id === 'precursor_monolith_site') continue;
+
+          projVec.copy(poi.position);
+          projVec.y += 0.9;
+          const dist = camera.position.distanceTo(projVec);
+          if (dist > 52) continue;
+
+          projVec.project(camera);
+          if (projVec.z < 1.0 && projVec.x >= -0.92 && projVec.x <= 0.92 && projVec.y >= -0.88 && projVec.y <= 0.88) {
+            const screenX = (projVec.x * 0.5 + 0.5) * 100;
+            const screenY = (-projVec.y * 0.5 + 0.5) * 100;
+            const isCenterAimed = Math.hypot(projVec.x, projVec.y) < 0.22;
+
+            visiblePOIs.push({
+              id: poi.id,
+              title: poi.title,
+              sector: poi.sector,
+              distance: dist.toFixed(1),
+              screenX,
+              screenY,
+              isCenterAimed,
+              isNear: nearInteractableRef.current?.id === poi.id,
+              signalStatus: poi.id.startsWith('surveyor_') ? 'SURVEYOR 1' : poi.id.includes('alien') ? '432 Hz CARRIER' : 'SCANNABLE'
+            });
+          }
+        }
+        screenPOIsRef.current = visiblePOIs;
+        setScreenPOIs(visiblePOIs);
+      } else if (screenPOIsRef.current.length > 0) {
+        screenPOIsRef.current = [];
+        setScreenPOIs([]);
       }
 
       // Animate Electrical Sparks
@@ -6480,21 +6654,27 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
             else if (relAngle >= 150 && relAngle <= 210) returnDir = 'BEHIND';
             else if (relAngle > 210 && relAngle < 330) returnDir = 'LEFT';
 
-            const isCrit = distFromCenter > 180;
+            const isCrit = distFromCenter > 185;
+            const intensity = Math.min(1.0, (distFromCenter - 150) / 55);
             const warningObj = {
               active: true,
               distance: Math.round(distFromCenter),
               excess,
               bearing: returnBearing,
               returnDir,
-              level: isCrit ? 'critical' : 'advisory'
+              level: isCrit ? 'critical' : 'advisory',
+              intensity
             };
             boundaryWarningRef.current = warningObj;
             setBoundaryWarning(warningObj);
 
             // Audio telemetry warning tone (throttled)
-            if (time - lastBoundaryAudioTimeRef.current > (isCrit ? 4.5 : 7.0)) {
-              audio.playBoundaryWarning();
+            if (time - lastBoundaryAudioTimeRef.current > (isCrit ? 2.4 : 5.5)) {
+              if (isCrit) {
+                audio.playBoundaryWarningAlarm();
+              } else {
+                audio.playBoundaryWarning();
+              }
               lastBoundaryAudioTimeRef.current = time;
             }
 
@@ -6931,6 +7111,8 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
       earthAtmosphereMat.dispose();
       scanBeamGeo.dispose();
       scanBeamMat.dispose();
+      sonarWaveGeo.dispose();
+      sonarWaveMat.dispose();
       dustGeo.dispose();
       dustMat.dispose();
       sparkGeo.dispose();
@@ -7001,6 +7183,39 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
             )}
           </div>
         </div>
+
+        {/* SITUATION 1: ELECTROMAGNETIC STATIC NOISE VIGNETTE */}
+        {boundaryWarning && boundaryWarning.active && (
+          <div
+            className="absolute inset-0 pointer-events-none z-20 transition-opacity duration-300"
+            style={{ opacity: boundaryWarning.level === 'critical' ? 0.82 : 0.42 }}
+          >
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_32%,rgba(244,63,94,0.28)_72%,rgba(15,23,42,0.94)_100%)]" />
+            <div className="absolute inset-0 opacity-40 mix-blend-overlay bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.65)_50%)] bg-[length:100%_4px]" />
+          </div>
+        )}
+
+        {/* SITUATION 1: SUIT AUTONAV REBOOT & AUTO-RECALIBRATION OVERLAY */}
+        {isRecalibrating && (
+          <div className="fixed inset-0 z-50 bg-black/95 flex flex-col items-center justify-center font-mono text-center p-6 select-none animate-fadeIn">
+            <div className="w-16 h-16 rounded-2xl bg-cyan-950/80 border border-cyan-400 flex items-center justify-center text-cyan-300 mb-6 shadow-[0_0_35px_rgba(6,182,212,0.6)]">
+              <RefreshCw className="w-8 h-8 animate-spin" />
+            </div>
+            <div className="text-rose-400 font-bold text-xs sm:text-sm tracking-widest uppercase mb-2 animate-pulse flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4 text-rose-400" />
+              <span>OUT OF MISSION ENVELOPE · TELEMETRY BLACKOUT PREVENTED</span>
+            </div>
+            <h2 className="text-xl sm:text-2xl font-bold text-white tracking-wider mb-3">
+              AUTONAV RE-ENGAGING TO MISSION GRID
+            </h2>
+            <p className="text-xs text-slate-400 max-w-md leading-relaxed mb-6 font-sans">
+              Suit attitude thrusters and inertial guidance have re-anchored your coordinate fix to the Surveyor 1 exploration envelope. Re-establishing telemetry downlink with Carrier Aegis...
+            </p>
+            <div className="w-64 h-1.5 rounded-full bg-slate-800 overflow-hidden">
+              <div className="h-full bg-gradient-to-r from-cyan-400 to-blue-500 animate-[pulse_0.8s_ease-in-out_infinite] w-full" />
+            </div>
+          </div>
+        )}
 
         {/* SITUATION 1: SOFT BOUNDARY WARNING OVERLAY (EXPLORATION SAFETY ENVELOPE) */}
         {boundaryWarning && boundaryWarning.active && (
@@ -9261,6 +9476,56 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
             </div>
           </div>
 
+          {/* Tactical 3D-to-2D Scannable Target Lock Reticles (Metroid Prime / Deep Rock Galactic Style) */}
+          <div className="absolute inset-0 pointer-events-none overflow-hidden">
+            {screenPOIs.map((poi) => (
+              <div
+                key={poi.id}
+                className={`absolute -translate-x-1/2 -translate-y-1/2 pointer-events-none transition-transform duration-100 ${
+                  poi.isCenterAimed ? 'scale-110 z-40' : 'scale-95 z-30 opacity-80'
+                }`}
+                style={{ left: `${poi.screenX}%`, top: `${poi.screenY}%` }}
+              >
+                {/* Tactical Reticle Bracket Box */}
+                <div className={`relative w-20 h-20 flex items-center justify-center transition-all ${
+                  poi.isCenterAimed
+                    ? 'border border-cyan-400 bg-cyan-950/20 shadow-[0_0_20px_rgba(6,182,212,0.4)]'
+                    : 'border border-cyan-500/30'
+                }`}>
+                  {/* 4 Corner Markers */}
+                  <div className="absolute -top-1 -left-1 w-3 h-3 border-t-2 border-l-2 border-cyan-400" />
+                  <div className="absolute -top-1 -right-1 w-3 h-3 border-t-2 border-r-2 border-cyan-400" />
+                  <div className="absolute -bottom-1 -left-1 w-3 h-3 border-b-2 border-l-2 border-cyan-400" />
+                  <div className="absolute -bottom-1 -right-1 w-3 h-3 border-b-2 border-r-2 border-cyan-400" />
+
+                  {/* Aim Dot / Ping */}
+                  <div className={`w-2 h-2 rounded-full ${
+                    poi.isCenterAimed ? 'bg-cyan-300 shadow-[0_0_8px_#22d3ee] animate-ping' : 'bg-cyan-500/60'
+                  }`} />
+
+                  {/* Target Header & Distance Badge */}
+                  <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 whitespace-nowrap flex flex-col items-center gap-0.5">
+                    <div className="px-2 py-0.5 rounded bg-black/90 border border-cyan-400/80 text-[10px] text-cyan-300 font-bold tracking-wider flex items-center gap-1.5 shadow-lg">
+                      <Target className="w-3 h-3 text-cyan-400" />
+                      <span>{poi.title.toUpperCase()}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-[9px] font-mono text-slate-300 bg-black/85 px-2 py-0.5 rounded border border-white/10">
+                      <span className="text-cyan-400 font-bold">{poi.distance}m</span>
+                      <span className="opacity-40">|</span>
+                      <span className="text-purple-300">{poi.signalStatus}</span>
+                      {poi.isNear && (
+                        <>
+                          <span className="opacity-40">|</span>
+                          <span className="text-amber-300 font-bold animate-pulse">[PRESS E / Q]</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
           {/* Bottom Visor Bar: Signal Tracker & Instructions */}
           <div className="flex items-center justify-between px-4 py-2 rounded-xl bg-slate-950/85 backdrop-blur-md border border-cyan-400/50 text-xs">
             <div className="flex items-center gap-4">
@@ -9278,6 +9543,40 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
               Aim at target & hold [Q] to scan · [Tab] opens Mission Database
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Quick Pulse Target Lock Reticles (Shown during Q Pulse even if Visor mode is not toggled) */}
+      {!isScannerVisorActive && scanPulseActive && screenPOIs.length > 0 && (
+        <div className="fixed inset-0 pointer-events-none z-30 overflow-hidden font-mono">
+          {screenPOIs.map((poi) => (
+            <div
+              key={poi.id}
+              className={`absolute -translate-x-1/2 -translate-y-1/2 pointer-events-none transition-transform duration-100 ${
+                poi.isCenterAimed ? 'scale-110' : 'scale-95 opacity-80'
+              }`}
+              style={{ left: `${poi.screenX}%`, top: `${poi.screenY}%` }}
+            >
+              <div className="relative w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center border border-cyan-400/80 shadow-[0_0_15px_rgba(34,211,238,0.5)]">
+                <div className="absolute -top-1 -left-1 w-2.5 h-2.5 border-t-2 border-l-2 border-cyan-400" />
+                <div className="absolute -top-1 -right-1 w-2.5 h-2.5 border-t-2 border-r-2 border-cyan-400" />
+                <div className="absolute -bottom-1 -left-1 w-2.5 h-2.5 border-b-2 border-l-2 border-cyan-400" />
+                <div className="absolute -bottom-1 -right-1 w-2.5 h-2.5 border-b-2 border-r-2 border-cyan-400" />
+
+                <div className="w-1.5 h-1.5 rounded-full bg-cyan-300 animate-ping" />
+
+                <div className="absolute top-full mt-1.5 left-1/2 -translate-x-1/2 whitespace-nowrap flex flex-col items-center">
+                  <div className="px-2 py-0.5 rounded bg-black/90 border border-cyan-400/70 text-[9px] text-cyan-300 font-bold tracking-wider flex items-center gap-1 shadow-md">
+                    <Target className="w-2.5 h-2.5 text-cyan-400" />
+                    <span>{poi.title.toUpperCase()}</span>
+                  </div>
+                  <div className="text-[8px] font-mono text-cyan-400 bg-black/80 px-1.5 py-0.5 rounded mt-0.5 border border-white/10">
+                    {poi.distance}m · {poi.signalStatus}
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       )}
 
