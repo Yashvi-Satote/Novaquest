@@ -32,6 +32,12 @@ venv.bak/
 backend/*.db
 space_hardware.db
 
+# Database dumps and provider caches
+*.dump
+*.sql.gz
+backend/NovaBase/data/cache/
+.pytest_cache/
+
 # Build outputs
 dist/
 dist-ssr/
