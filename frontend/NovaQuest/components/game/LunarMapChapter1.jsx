@@ -25,11 +25,13 @@ import {
   X,
   Wifi,
   Pause,
-  Gamepad2
+  Gamepad2,
+  Database
 } from 'lucide-react';
 import { audio } from '../../game/audioManager';
 import InvestigationModal from './InvestigationModal';
 import MissionEchoModal from './MissionEchoModal';
+import EvidenceDatabaseModal, { INITIAL_EVIDENCE_DATABASE } from './EvidenceDatabaseModal';
 import { 
   createLunarRegolithTexture,
   createLunarBumpTexture,
@@ -61,6 +63,7 @@ export const JOURNEY_STAGES = [
     targetCoords: { x: 103.2, z: 65.5 },
     waypointLabel: 'Mission Terminal & Route Marker',
     objective: 'Exit transport vehicle, activate mission terminal, review historical briefing, and approach the route marker.',
+    hint: 'Exit the transport vehicle and activate the illuminated mission terminal [E].',
     narrative: 'The transport vehicle has landed. Arin opens the hatch and steps onto the lunar surface to debrief with the recovery team and inspect the historic mission parameters before advancing toward Surveyor 1.',
     instructions: 'Use [WASD] to move, [Mouse] to look around, [E] to interact with the mission terminal, and [Q] to activate the scanner.',
     commsCallout: {
@@ -78,6 +81,7 @@ export const JOURNEY_STAGES = [
     targetCoords: { x: 0, z: 0 },
     waypointLabel: 'Surveyor 1 Lander',
     objective: 'Investigate the condition of Surveyor 1.',
+    hint: 'Approach Surveyor 1 and aim scanner [Q] at the Vidicon camera, solar mast, or landing footpad.',
     narrative: 'Arin approaches the historic Surveyor 1 lander resting in Oceanus Procellarum since June 2, 1966. Using the handheld scanner, Arin conducts interactive telemetry audits on three critical components: the Vidicon television camera assembly, the solar panel and antenna mast, and the crushable honeycomb landing footpad.',
     instructions: 'Approach Surveyor 1. Locate and scan the 3 required targets: (1) Television camera, (2) Solar panel and antenna, and (3) Landing leg and footpad. Complete calibration on all three to assess the lander.',
     commsCallout: {
@@ -95,6 +99,7 @@ export const JOURNEY_STAGES = [
     targetCoords: { x: -75, z: -50 },
     waypointLabel: 'Investigation Crater & Rock Field',
     objective: 'Track the signal across the rock field and inspect three locations around the crater: Point A (Rock formation), Point B (Crater edge), and Point C (Crater floor).',
+    hint: 'Activate scanner [Q] to monitor signal strength. Follow the rising % toward the crater bowl.',
     narrative: 'Arin tracks the mysterious 432 Hz carrier across the rock field toward the 24-meter impact crater. Using the signal scanner, Arin measures signal strength across three key investigation points—the outer rock formation, the crater edge, and the crater floor.',
     instructions: 'Activate the signal scanner with [Q]. Follow the direction and signal strength indicator to inspect Point A (Rock formation), Point B (Crater edge), and Point C (Crater floor).',
     commsCallout: {
@@ -112,6 +117,7 @@ export const JOURNEY_STAGES = [
     targetCoords: { x: -78, z: -54 },
     waypointLabel: 'Exposed Alien Structure & Interface',
     objective: 'Scan the exposed structure, inspect the conduit, locate the interface, and activate it.',
+    hint: 'Scan the exposed structure on the crater floor, then point scanner at the central interface [E].',
     narrative: 'As Arin approaches the buried fragment on the crater floor, a section of the ground shifts, exposing the upper part of an unfamiliar structure emitting faint cyan light. A narrow conduit extends from it toward Surveyor 1.',
     instructions: 'Scan the exposed structure [Q], inspect the conduit leading toward Surveyor 1, locate the central interface on the console, and point your scanner while holding [E] to activate it.',
     commsCallout: {
@@ -129,6 +135,7 @@ export const JOURNEY_STAGES = [
     targetCoords: { x: -77.2, z: -53.2 },
     waypointLabel: 'Mission Echo Central Console',
     objective: 'Complete the three historical reconstruction puzzles to recover Surveyor 1\'s mission records.',
+    hint: 'Open the Mission Echo console [E] to reconstruct descent sequence, soil data, and image tiles.',
     narrative: 'Mission Echo is a fictional reconstruction system that uses recovered telemetry, images and archived records to recreate parts of Surveyor 1\'s historic mission. Arin enters three challenges: the descent sequence, reading the lunar surface, and restoring the image archive.',
     instructions: 'Open the Mission Echo console [E]. (A) Sequence the 4-stage controlled descent, (B) Match surface observations with interpretations, and (C) Reconstruct the 3x3 damaged image archive to uncover the mystery clue.',
     commsCallout: {
@@ -146,6 +153,7 @@ export const JOURNEY_STAGES = [
     targetCoords: { x: 0, z: 0 },
     waypointLabel: 'Surveyor 1 Recovery Site',
     objective: 'Disconnect the unknown transmission without destroying the historic archive.',
+    hint: 'Return to Surveyor 1: Scan coupling [Q], isolate transmission on Recovery Rig [E], and secure Quantum Vault [E].',
     narrative: 'Arin returns to Surveyor 1 where the structure remains connected through the alien conduit. Arin must stabilise the interface, isolate the anomalous feed while preserving the 11,240 frames, and activate the portable data-storage unit.',
     instructions: '1. Use scanner [Q] to identify conduit connection point at Footpad 2. 2. Interact with Recovery Rig [E] to isolate anomalous transmission. 3. Activate portable data-storage unit [E] to secure archive.',
     commsCallout: {
@@ -163,6 +171,7 @@ export const JOURNEY_STAGES = [
     targetCoords: { x: 103.2, z: 65.5 },
     waypointLabel: 'Mission Terminal Projection',
     objective: 'The team prepares to leave the landing site. Arin debriefs with Commander Elena.',
+    hint: 'Return to the landing zone terminal to view the projected horizon coordinates and complete the mission debrief.',
     narrative: 'The recovered signal fragment is projected above the mission terminal, displaying an unknown location. Commander Elena contacts Arin to debrief the recovery report and authorize the next expedition.',
     instructions: 'Return to the Mission Terminal at the landing site [E]. View the projected unknown coordinates and respond to Commander Elena.',
     commsCallout: {
@@ -172,6 +181,39 @@ export const JOURNEY_STAGES = [
     }
   }
 ];
+
+/**
+ * Single unified interaction prompt helper (System C)
+ * Predictable format: [E] <Action> <TargetName>
+ */
+export function getInteractionPrompt(target) {
+  if (!target) return '';
+  const id = target.id;
+  if (id === 'poi_mission_terminal') return '[E] Read Mission Terminal';
+  if (id === 'surveyor_camera') return '[E] Inspect Surveyor 1 Camera';
+  if (id === 'surveyor_solar') return '[E] Inspect Solar Panel and Antenna';
+  if (id === 'surveyor_footpad') return '[E] Inspect Landing Leg and Footpad';
+  if (id === 'surveyor_core') return '[E] Inspect Surveyor 1 Spaceframe';
+  if (id === 'poi_crater_site_alpha') return '[E] Examine Rock Formation';
+  if (id === 'poi_crater_site_beta') return '[E] Examine Crater Edge Scree';
+  if (id === 'poi_crater_site_gamma') return '[E] Examine Buried Fragment';
+  if (id === 'poi_exposed_structure') return '[E] Scan Exposed Alien Structure';
+  if (id === 'poi_alien_structure') return '[E] Inspect Precursor Monolith';
+  if (id === 'poi_crater_conduit' || id === 'poi_data_conduit') return '[E] Inspect Data Conduit';
+  if (id === 'poi_central_interface') return '[E] Activate Central Interface';
+  if (id === 'poi_scanning_panel') return '[E] Interface with Scanning Panel';
+  if (id === 'poi_mission_echo_console') return '[E] Access Mission Echo Hologram';
+  if (id === 'poi_descent_simulation') return '[E] Inspect Descent Simulation';
+  if (id === 'poi_conduit_coupling') return '[E] Stabilise Interface';
+  if (id === 'poi_recovery_rig') return '[E] Isolate Transmission';
+  if (id === 'poi_quantum_storage_unit') return '[E] Secure Quantum Archive';
+  if (id === 'poi_maya_chen') return '[E] Talk to Specialist Maya Chen';
+  if (id === 'poi_leo_vance') return '[E] Talk to Officer Leo Vance';
+  if (id === 'poi_lunar_transport') return '[E] Inspect Lunar Transport Vehicle';
+  if (id === 'poi_route_marker_alpha') return '[E] Read Route Marker Alpha';
+  if (target.actionPrompt) return target.actionPrompt;
+  return `[E] Inspect ${target.shortName || target.title}`;
+}
 
 export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
   const mountRef = useRef(null);
@@ -225,7 +267,7 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
     footpad: false
   });
 
-  // Interactive Scanner Calibration state
+  // Interactive Scanner Calibration state (System B)
   const [isScanningActive, setIsScanningActive] = useState(false);
   const isScanningActiveRef = useRef(false);
   const [scanProgress, setScanProgress] = useState(0);
@@ -233,6 +275,42 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
   const [scanningTarget, setScanningTarget] = useState(null);
   const scanningTargetRef = useRef(null);
   const scanIntervalRef = useRef(null);
+  const [isScannerVisorActive, setIsScannerVisorActive] = useState(false);
+  const isScannerVisorActiveRef = useRef(false);
+
+  // Evidence Database State (System E)
+  const [evidenceEntries, setEvidenceEntries] = useState(INITIAL_EVIDENCE_DATABASE);
+  const evidenceEntriesRef = useRef(INITIAL_EVIDENCE_DATABASE);
+  const [isDatabaseOpen, setIsDatabaseOpen] = useState(false);
+  const isDatabaseOpenRef = useRef(false);
+  const [databaseNotice, setDatabaseNotice] = useState(null);
+  const databaseNoticeTimerRef = useRef(null);
+
+  const unlockEvidenceEntry = (recordId) => {
+    setEvidenceEntries(prev => {
+      const existing = prev.find(e => e.id === recordId);
+      if (existing && !existing.isUnlocked) {
+        const updated = prev.map(e => e.id === recordId ? { ...e, isUnlocked: true, dateUnlocked: new Date().toLocaleTimeString() } : e);
+        evidenceEntriesRef.current = updated;
+        
+        // Show floating HUD notification for new evidence
+        if (databaseNoticeTimerRef.current) clearTimeout(databaseNoticeTimerRef.current);
+        setDatabaseNotice({
+          id: existing.id,
+          title: existing.title,
+          category: existing.categoryLabel,
+          classification: existing.classification
+        });
+        databaseNoticeTimerRef.current = setTimeout(() => {
+          setDatabaseNotice(null);
+        }, 5500);
+
+        audio.playSurveyorScannerBeep();
+        return updated;
+      }
+      return prev;
+    });
+  };
 
   // The Discovery Event & Scanner Signal-Tracking Mode
   const [discoveryEvent, setDiscoveryEvent] = useState(null);
@@ -765,8 +843,8 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
     if (scanIntervalRef.current) clearInterval(scanIntervalRef.current);
 
     scanIntervalRef.current = setInterval(() => {
-      currentProg += 2.8;
-      freq += (2295.0 - 136.2) / 36;
+      currentProg += 3.2;
+      freq += (2295.0 - 136.2) / 32;
       tickCount++;
 
       if (tickCount % 6 === 0) {
@@ -783,17 +861,67 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
         isScanningActiveRef.current = false;
 
         audio.playSurveyorInterface();
-        const updated = { ...stage2ScansRef.current, [key]: true };
-        stage2ScansRef.current = updated;
-        setStage2Scans(updated);
+        
+        // Stage 2 Component Scans
+        if (key && ['camera', 'solar', 'footpad'].includes(key)) {
+          const updated = { ...stage2ScansRef.current, [key]: true };
+          stage2ScansRef.current = updated;
+          setStage2Scans(updated);
 
-        // Open Smithsonian Archival Dossier
-        setInvestigateTarget(target);
-
-        // Check if all 3 targets are scanned
-        if (Object.values(updated).every(Boolean) && !discoveryTriggeredRef.current) {
-          triggerDiscoverySequence();
+          // Check if all 3 targets are scanned
+          if (Object.values(updated).every(Boolean) && !discoveryTriggeredRef.current) {
+            triggerDiscoverySequence();
+          }
         }
+
+        // Stage 4 Scanned Structure
+        if (target.id === 'poi_exposed_structure' || target.id === 'poi_alien_structure') {
+          completeStage4Objective('scannedStructure');
+        }
+
+        // Stage 6 Stabilise Interface
+        if (target.id === 'poi_conduit_coupling' && journeyStageIndex === 5) {
+          completeStage6Step('stabilized');
+        }
+
+        // Map target ID to Evidence Database Record ID (System E)
+        const targetEvidenceMap = {
+          'surveyor_camera': 'hist_vidicon_camera',
+          'surveyor_solar': 'hist_solar_array',
+          'surveyor_footpad': 'hist_soil_mechanics',
+          'surveyor_core': 'hist_surveyor_touchdown',
+          'poi_mission_terminal': 'hist_atlas_centaur',
+          'poi_crater_site_alpha': 'evid_basalt_outcrop',
+          'poi_crater_site_beta': 'evid_crater_scree',
+          'poi_crater_site_gamma': 'sig_precursor_structure',
+          'poi_exposed_structure': 'sig_precursor_structure',
+          'poi_alien_structure': 'sig_precursor_structure',
+          'poi_crater_conduit': 'evid_data_conduit_line',
+          'poi_data_conduit': 'evid_data_conduit_line',
+          'poi_central_interface': 'sig_volumetric_interface',
+          'poi_scanning_panel': 'sig_volumetric_interface',
+          'poi_conduit_coupling': 'evid_recovery_gantry',
+          'poi_recovery_rig': 'evid_recovery_gantry',
+          'poi_quantum_storage_unit': 'evid_quantum_vault'
+        };
+
+        const evidenceId = targetEvidenceMap[target.id];
+        if (evidenceId) {
+          unlockEvidenceEntry(evidenceId);
+        }
+
+        if (target.id === 'surveyor_core' || target.id === 'poi_crater_site_alpha' || target.id === 'poi_crater_site_beta') {
+          unlockEvidenceEntry('sig_harmonic_432');
+        }
+        if (target.id === 'poi_crater_conduit' || target.id === 'poi_data_conduit') {
+          unlockEvidenceEntry('sig_extraction_telemetry');
+        }
+        if (target.id === 'poi_quantum_storage_unit') {
+          unlockEvidenceEntry('sig_vault_zero_coords');
+        }
+
+        // Open Smithsonian / Archival Dossier
+        setInvestigateTarget(target);
       }
     }, 45);
   };
@@ -1038,9 +1166,9 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
     const scannerScreenMap = createScannerHUDTexture(512, 512);
     const spacesuitFabricMap = createSpacesuitFabricTexture(512, 512);
 
-    // 3. CAMERA — First-Person Astronaut Eye Level (1.75m)
+    // 3. CAMERA — First-Person Astronaut Eye Level (1.7m)
     const camera = new THREE.PerspectiveCamera(65, width / height, 0.1, 2000);
-    const EYE_HEIGHT = 1.75;
+    const EYE_HEIGHT = 1.7;
     camera.position.set(104, EYE_HEIGHT, 66); // Start at Zone 1 Team Landing Zone looking West toward Surveyor 1
 
     // HIGH-DETAIL FIRST-PERSON 3D SCI-FI SCANNER VIEWMODEL
@@ -5313,8 +5441,25 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
         return;
       }
 
+      // Evidence Database Toggle [Tab] or [J] (System E)
+      if (code === 'Tab' || code === 'KeyJ') {
+        e.preventDefault();
+        setIsDatabaseOpen(prev => {
+          const next = !prev;
+          isDatabaseOpenRef.current = next;
+          audio.playClick();
+          return next;
+        });
+        return;
+      }
+
       // Pause Menu Toggle [Escape]
       if (code === 'Escape') {
+        if (isDatabaseOpenRef.current) {
+          setIsDatabaseOpen(false);
+          isDatabaseOpenRef.current = false;
+          return;
+        }
         togglePause();
         return;
       }
@@ -5335,29 +5480,25 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
         }
       }
 
-      // Scanner Trigger [Q] (Primary) and [F] (Alternate)
+      // Scanner Trigger [Q] (Primary) and [F] (Alternate) (System B)
       if (code === 'KeyQ' || code === 'KeyF') {
-        if (journeyStageIndex === 5 && !stage6StepsRef.current.stabilized) {
-          if ((nearInteractableRef.current && (
-            nearInteractableRef.current.id === 'poi_conduit_coupling' ||
-            nearInteractableRef.current.id === 'poi_recovery_rig' ||
-            nearInteractableRef.current.id.startsWith('surveyor_')
-          )) || distanceToSurveyor < 18) {
-            completeStage6Step('stabilized');
-          }
-        }
-        if (nearInteractableRef.current && (nearInteractableRef.current.id === 'poi_exposed_structure' || nearInteractableRef.current.id === 'poi_alien_structure')) {
-          completeStage4Objective('scannedStructure');
-          audio.playSurveyorScannerBeep();
-          setHudNotice('STRUCTURE SCANNED: Non-terrestrial crystalline carbon-silicide metamaterial');
-        }
-        if (nearInteractableRef.current && nearInteractableRef.current.id.startsWith('surveyor_')) {
+        if (nearInteractableRef.current) {
           const target = nearInteractableRef.current;
-          const key = target.id === 'surveyor_camera' ? 'camera' : target.id === 'surveyor_solar' ? 'solar' : target.id === 'surveyor_footpad' ? 'footpad' : null;
-          if (key && !stage2ScansRef.current[key]) {
-            startInteractiveScan(target, key);
-            return;
-          }
+          const key = target.id === 'surveyor_camera' ? 'camera' : target.id === 'surveyor_solar' ? 'solar' : target.id === 'surveyor_footpad' ? 'footpad' : target.id;
+          startInteractiveScan(target, key);
+        } else {
+          // Toggle Visor HUD overlay
+          setIsScannerVisorActive(prev => {
+            const next = !prev;
+            isScannerVisorActiveRef.current = next;
+            if (next) {
+              audio.playSurveyorScannerBeep();
+              setHudNotice('SCANNER VISOR ACTIVE: Object Scanning · Signal Tracking · Evidence Recording');
+            } else {
+              audio.playClick();
+            }
+            return next;
+          });
         }
         triggerScannerPulse();
       }
@@ -5570,7 +5711,7 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
           // Phase 4: Arin looks back at Surveyor 1 across Oceanus Procellarum
           const p = (eTime - 15.0) / 6.0;
           const camX = 102.0 + (103.5 - 102.0) * p;
-          const camY = (landingTerrainY + 1.75) + 0.25 * p;
+          const camY = (landingTerrainY + 1.7) + 0.25 * p;
           const camZ = 65.8 + (64.5 - 65.8) * p;
           camera.position.set(camX, camY, camZ);
           camera.lookAt(0, surveyorTerrainY + 1.5, 0);
@@ -5619,12 +5760,12 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
         moveX /= len;
         moveZ /= len;
 
-        const speed = keys.shift ? 7.2 : 4.4; // Astronaut EVA jog vs walking pace
+        const speed = keys.shift ? 5.0 : 3.5; // System A: Astronaut EVA sprint (5.0 m/s) vs deliberate walking pace (3.5 m/s)
         playerPos.x += moveX * speed * delta;
         playerPos.z += moveZ * speed * delta;
 
-        // Footstep audio when grounded
-        if (isGrounded && time - lastStepTime > (keys.shift ? 0.32 : 0.48)) {
+        // Footstep audio when grounded with deliberate astronaut EVA pacing
+        if (isGrounded && time - lastStepTime > (keys.shift ? 0.38 : 0.52)) {
           audio.playFootstepLunar();
           lastStepTime = time;
 
@@ -6421,12 +6562,9 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
                 : 'w-2 h-2 border-cyan-400/80 bg-cyan-400/40'
             }`} />
             {nearInteractable && (
-              <div className="absolute -top-6 text-[10px] text-cyan-300 font-bold tracking-widest uppercase bg-black/80 px-2 py-0.5 rounded border border-cyan-400/40 whitespace-nowrap">
-                {nearInteractable.id.startsWith('surveyor_') && ['surveyor_camera', 'surveyor_solar', 'surveyor_footpad'].includes(nearInteractable.id)
-                  ? (stage2Scans[nearInteractable.id === 'surveyor_camera' ? 'camera' : nearInteractable.id === 'surveyor_solar' ? 'solar' : 'footpad']
-                      ? '[E] REVIEW DOSSIER'
-                      : '[Q / E] SCAN COMPONENT')
-                  : '[E] INVESTIGATE'}
+              <div className="absolute -top-7 text-[11px] text-cyan-300 font-bold tracking-wider uppercase bg-black/85 px-3 py-1 rounded-lg border border-cyan-400 shadow-lg shadow-cyan-500/20 whitespace-nowrap font-mono flex items-center gap-1.5 animate-pulse">
+                <Crosshair className="w-3 h-3 text-cyan-400" />
+                <span>{getInteractionPrompt(nearInteractable)}</span>
               </div>
             )}
           </div>
@@ -6464,23 +6602,33 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
               </div>
             </div>
 
-            {/* 7-STAGE SUGGESTED PLAYER JOURNEY CARD */}
-            <div className="p-3.5 rounded-xl bg-black/85 backdrop-blur-md border border-cyan-500/40 shadow-xl text-xs space-y-2">
-              <div className="flex items-center justify-between">
-                <div className="text-[10px] text-cyan-400 font-bold uppercase tracking-widest flex items-center gap-1.5">
-                  <Shield className="w-3.5 h-3.5 text-cyan-400" />
-                  <span>JOURNEY · STEP {journeyStageIndex + 1} OF 7</span>
+            {/* MISSION OBJECTIVE HUD CARD (SYSTEM D) */}
+            <div className="p-3.5 rounded-xl bg-black/85 backdrop-blur-md border border-cyan-500/40 shadow-xl text-xs space-y-2.5 font-mono">
+              <div className="flex items-center justify-between border-b border-cyan-500/20 pb-2">
+                <div>
+                  <div className="text-[10px] text-cyan-400 font-bold uppercase tracking-widest flex items-center gap-1.5">
+                    <Shield className="w-3.5 h-3.5 text-cyan-400" />
+                    <span>PROJECT LEGACY · MISSION 01</span>
+                  </div>
+                  <div className="text-xs font-bold text-white tracking-wider mt-0.5">
+                    The First Footprint
+                  </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="px-2 py-0.5 rounded-full bg-cyan-950 border border-cyan-500/40 text-[9px] text-cyan-300 font-mono flex items-center gap-1">
-                    <Clock className="w-2.5 h-2.5" />
-                    <span>{JOURNEY_STAGES[journeyStageIndex]?.durationEst}</span>
-                  </span>
+                  <button
+                    type="button"
+                    onClick={() => { audio.playClick(); setIsDatabaseOpen(true); isDatabaseOpenRef.current = true; }}
+                    className="px-2 py-1 rounded bg-cyan-950/80 hover:bg-cyan-900 border border-cyan-500/40 text-[10px] text-cyan-300 flex items-center gap-1 transition-all"
+                    title="Open Evidence Database [Tab / J]"
+                  >
+                    <Database className="w-3 h-3 text-cyan-400" />
+                    <span>DB ({evidenceEntries.filter(e => e.isUnlocked).length}/{evidenceEntries.length})</span>
+                  </button>
                   <button
                     type="button"
                     onClick={() => { audio.playClick(); setShowJourneyRoadmap(prev => !prev); }}
                     className="p-1 px-2 rounded bg-white/10 hover:bg-white/20 text-slate-300 text-[10px] flex items-center gap-1 uppercase transition-colors"
-                    title="Toggle 7-Stage Journey Roadmap"
+                    title="Toggle Full 7-Stage Roadmap"
                   >
                     <ListOrdered className="w-3 h-3" />
                     <span>Roadmap</span>
@@ -6488,20 +6636,60 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
                 </div>
               </div>
 
-              <div className="text-sm font-bold text-white tracking-wide">
-                {JOURNEY_STAGES[journeyStageIndex]?.name}
+              {/* CURRENT OBJECTIVE */}
+              <div className="space-y-1">
+                <div className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">
+                  CURRENT OBJECTIVE
+                </div>
+                <div className="text-white font-sans text-xs sm:text-sm font-semibold leading-snug">
+                  {JOURNEY_STAGES[journeyStageIndex]?.objective}
+                </div>
               </div>
 
-              <div className="text-slate-300 font-sans text-xs leading-relaxed">
-                {JOURNEY_STAGES[journeyStageIndex]?.objective}
+              {/* SHORT HINT */}
+              <div className="p-2 rounded-lg bg-cyan-950/30 border border-cyan-500/20 text-[11px] font-sans text-slate-300 flex items-start gap-1.5">
+                <Info className="w-3.5 h-3.5 text-cyan-400 flex-shrink-0 mt-0.5" />
+                <span>{JOURNEY_STAGES[journeyStageIndex]?.hint || JOURNEY_STAGES[journeyStageIndex]?.instructions}</span>
               </div>
 
-              {/* Waypoint Distances for Zones 1, 2, 3, 4 */}
-              <div className="flex flex-wrap items-center gap-3 pt-1 text-[10px] text-slate-400 border-t border-white/10">
-                <div>LANDING: <strong className="text-amber-300">{distanceToLanding}m</strong></div>
-                <div>SURVEYOR 1: <strong className="text-cyan-300">{distanceToSurveyor}m</strong></div>
-                <div>CRATER: <strong className="text-purple-300">{distanceToCrater}m</strong></div>
-                <div>ALIEN STRUCTURE: <strong className="text-emerald-300">{distanceToAlienStructure}m</strong></div>
+              {/* INVESTIGATION PROGRESS */}
+              <div className="space-y-1 pt-1 border-t border-white/10">
+                <div className="flex items-center justify-between text-[10px]">
+                  <span className="text-slate-400 uppercase font-bold">Investigation progress</span>
+                  <span className="text-cyan-300 font-bold font-mono">
+                    {journeyStageIndex === 0 && `${Object.values(stage1Objectives).filter(Boolean).length} / 5 objectives`}
+                    {journeyStageIndex === 1 && `${Object.values(stage2Scans).filter(Boolean).length} / 3 components scanned`}
+                    {journeyStageIndex === 2 && `${Object.values(stage3Inspections).filter(Boolean).length} / 3 points investigated`}
+                    {journeyStageIndex === 3 && `${Object.values(stage4Objectives).filter(Boolean).length} / 4 structure milestones`}
+                    {journeyStageIndex === 4 && (isMissionEchoCompletedRef.current ? '3 / 3 puzzles reconstructed' : '0 / 3 puzzles completed')}
+                    {journeyStageIndex === 5 && `${Object.values(stage6Steps).filter(Boolean).length} / 3 recovery steps`}
+                    {journeyStageIndex === 6 && 'Debrief ready (100%)'}
+                  </span>
+                </div>
+                <div className="w-full h-1.5 rounded-full bg-slate-800 overflow-hidden">
+                  <div 
+                    className="h-full bg-gradient-to-r from-cyan-500 to-blue-500 transition-all duration-300"
+                    style={{
+                      width: `${
+                        journeyStageIndex === 0 ? (Object.values(stage1Objectives).filter(Boolean).length / 5) * 100 :
+                        journeyStageIndex === 1 ? (Object.values(stage2Scans).filter(Boolean).length / 3) * 100 :
+                        journeyStageIndex === 2 ? (Object.values(stage3Inspections).filter(Boolean).length / 3) * 100 :
+                        journeyStageIndex === 3 ? (Object.values(stage4Objectives).filter(Boolean).length / 4) * 100 :
+                        journeyStageIndex === 4 ? (isMissionEchoCompletedRef.current ? 100 : 33) :
+                        journeyStageIndex === 5 ? (Object.values(stage6Steps).filter(Boolean).length / 3) * 100 : 100
+                      }%`
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* SUIT COMMUNICATION STATUS */}
+              <div className="flex items-center justify-between text-[10px] text-emerald-400 font-mono pt-0.5">
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                  <span>Suit communication connected</span>
+                </div>
+                <span className="text-slate-400 font-mono">Stage {journeyStageIndex + 1}/7</span>
               </div>
             </div>
 
@@ -7217,6 +7405,20 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
 
             <button
               type="button"
+              onClick={() => {
+                audio.playClick();
+                setIsDatabaseOpen(true);
+                isDatabaseOpenRef.current = true;
+              }}
+              className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl border border-cyan-500/40 bg-cyan-950/80 hover:bg-cyan-900 text-cyan-300 hover:text-white backdrop-blur-md transition-all text-xs font-bold uppercase tracking-wider hover:scale-105 active:scale-95"
+              title="Open Evidence Database [Tab or J]"
+            >
+              <Database className="w-4 h-4 text-cyan-400" />
+              <span>[Tab / J] Database</span>
+            </button>
+
+            <button
+              type="button"
               onClick={togglePause}
               className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl border border-white/20 bg-black/80 hover:bg-black text-slate-300 hover:text-white backdrop-blur-md transition-all text-xs font-bold uppercase tracking-wider hover:scale-105 active:scale-95"
               title="Pause Mission [Esc]"
@@ -7229,16 +7431,10 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
               <button
                 type="button"
                 onClick={triggerInvestigation}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 via-blue-600 to-indigo-600 text-white font-bold text-xs uppercase tracking-wider border border-cyan-400 shadow-xl shadow-cyan-500/40 hover:scale-105 active:scale-95 animate-bounce"
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 via-blue-600 to-indigo-600 text-white font-bold text-xs uppercase tracking-wider border border-cyan-400 shadow-xl shadow-cyan-500/40 hover:scale-105 active:scale-95 animate-bounce font-mono"
               >
                 <Crosshair className="w-4 h-4 text-cyan-200" />
-                <span>
-                  {['surveyor_camera', 'surveyor_solar', 'surveyor_footpad'].includes(nearInteractable.id)
-                    ? (stage2Scans[nearInteractable.id === 'surveyor_camera' ? 'camera' : nearInteractable.id === 'surveyor_solar' ? 'solar' : 'footpad']
-                        ? `[E] Review Dossier: ${nearInteractable.title}`
-                        : `[Q / E] Calibrate & Scan: ${nearInteractable.title}`)
-                    : `[E] ${nearInteractable.title}`}
-                </span>
+                <span>{getInteractionPrompt(nearInteractable)}</span>
               </button>
             )}
           </div>
@@ -7744,6 +7940,39 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
             setInvestigateTarget(null);
           }}
           onLogData={(target) => {
+            // Automatically log evidence into Evidence Database (System E)
+            const targetEvidenceMap = {
+              'surveyor_camera': 'hist_vidicon_camera',
+              'surveyor_solar': 'hist_solar_array',
+              'surveyor_footpad': 'hist_soil_mechanics',
+              'surveyor_core': 'hist_surveyor_touchdown',
+              'poi_mission_terminal': 'hist_atlas_centaur',
+              'poi_crater_site_alpha': 'evid_basalt_outcrop',
+              'poi_crater_site_beta': 'evid_crater_scree',
+              'poi_crater_site_gamma': 'sig_precursor_structure',
+              'poi_exposed_structure': 'sig_precursor_structure',
+              'poi_alien_structure': 'sig_precursor_structure',
+              'poi_crater_conduit': 'evid_data_conduit_line',
+              'poi_data_conduit': 'evid_data_conduit_line',
+              'poi_central_interface': 'sig_volumetric_interface',
+              'poi_scanning_panel': 'sig_volumetric_interface',
+              'poi_conduit_coupling': 'evid_recovery_gantry',
+              'poi_recovery_rig': 'evid_recovery_gantry',
+              'poi_quantum_storage_unit': 'evid_quantum_vault'
+            };
+            if (targetEvidenceMap[target.id]) {
+              unlockEvidenceEntry(targetEvidenceMap[target.id]);
+            }
+            if (target.id === 'surveyor_core' || target.id === 'poi_crater_site_alpha' || target.id === 'poi_crater_site_beta') {
+              unlockEvidenceEntry('sig_harmonic_432');
+            }
+            if (target.id === 'poi_crater_conduit' || target.id === 'poi_data_conduit') {
+              unlockEvidenceEntry('sig_extraction_telemetry');
+            }
+            if (target.id === 'poi_quantum_storage_unit') {
+              unlockEvidenceEntry('sig_vault_zero_coords');
+            }
+
             if (target.id === 'poi_mission_terminal') {
               if (journeyStageIndex === 6) {
                 startEndingCinematic();
@@ -8378,6 +8607,10 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
                     <span className="text-slate-400">Scanner:</span>
                     <span className="font-bold text-white px-2 py-0.5 rounded bg-white/10">Q / F</span>
                   </div>
+                  <div className="p-2.5 rounded-lg bg-black/50 border border-white/10 flex justify-between items-center">
+                    <span className="text-slate-400">Database:</span>
+                    <span className="font-bold text-white px-2 py-0.5 rounded bg-white/10">Tab / J</span>
+                  </div>
                   <div className="p-2.5 rounded-lg bg-black/50 border border-white/10 flex justify-between items-center col-span-2">
                     <span className="text-slate-400">Pause Menu:</span>
                     <span className="font-bold text-white px-2 py-0.5 rounded bg-white/10">Esc</span>
@@ -8410,6 +8643,124 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
                   </button>
                 )}
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* EVIDENCE DATABASE MODAL (SYSTEM E) */}
+      <EvidenceDatabaseModal
+        isOpen={isDatabaseOpen}
+        onClose={() => {
+          setIsDatabaseOpen(false);
+          isDatabaseOpenRef.current = false;
+        }}
+        databaseEntries={evidenceEntries}
+      />
+
+      {/* EVIDENCE LOGGED NOTIFICATION TOAST (SYSTEM E) */}
+      {databaseNotice && (
+        <div className="fixed top-20 right-6 z-50 pointer-events-auto animate-bounce font-mono">
+          <button
+            type="button"
+            onClick={() => {
+              audio.playClick();
+              setIsDatabaseOpen(true);
+              isDatabaseOpenRef.current = true;
+            }}
+            className="p-3.5 rounded-2xl bg-slate-950/95 border-2 border-cyan-400 shadow-[0_0_40px_rgba(6,182,212,0.5)] flex items-center gap-3 text-left max-w-sm hover:scale-105 transition-transform"
+          >
+            <div className="p-2 rounded-xl bg-cyan-500/20 text-cyan-300 border border-cyan-400/40">
+              <Database className="w-5 h-5 text-cyan-400 animate-pulse" />
+            </div>
+            <div>
+              <div className="text-[10px] text-cyan-400 font-bold uppercase tracking-widest flex items-center gap-1.5">
+                <span>NEW DATABASE RECORD</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping" />
+              </div>
+              <div className="text-xs font-bold text-white line-clamp-1">{databaseNotice.title}</div>
+              <div className="text-[10px] text-slate-400 font-sans mt-0.5">
+                Filed under {databaseNotice.category} · Press [Tab] to view
+              </div>
+            </div>
+          </button>
+        </div>
+      )}
+
+      {/* SCANNER SENSOR VISOR HUD OVERLAY (SYSTEM B) */}
+      {isScannerVisorActive && (
+        <div className="fixed inset-0 pointer-events-none z-30 flex flex-col justify-between p-4 sm:p-6 font-mono select-none">
+          {/* Top Visor Sensor Bar */}
+          <div className="flex items-center justify-between px-4 py-2 rounded-xl bg-slate-950/85 backdrop-blur-md border border-cyan-400/50 shadow-[0_0_30px_rgba(6,182,212,0.3)]">
+            <div className="flex items-center gap-3">
+              <div className="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-ping" />
+              <span className="text-xs font-bold text-cyan-300 tracking-wider">
+                EVA MULTI-FUNCTION SENSOR SCANNER · ACTIVE [Q]
+              </span>
+            </div>
+
+            {/* 4 Functions Indicators */}
+            <div className="hidden md:flex items-center gap-2 text-[10px]">
+              <span className={`px-2 py-0.5 rounded border ${
+                nearInteractable ? 'bg-cyan-950 border-cyan-400 text-cyan-300 font-bold' : 'bg-black/40 border-white/10 text-slate-400'
+              }`}>
+                1. OBJECT SCAN
+              </span>
+              <span className={`px-2 py-0.5 rounded border ${
+                hasSignalTracker || distanceToAnomaly < 50 ? 'bg-purple-950 border-purple-400 text-purple-300 font-bold' : 'bg-black/40 border-white/10 text-slate-400'
+              }`}>
+                2. SIGNAL TRACKER ({scannerReading.strength}%)
+              </span>
+              <span className="px-2 py-0.5 rounded border bg-blue-950 border-blue-400 text-blue-300 font-bold">
+                3. EVIDENCE LOG [Tab]
+              </span>
+              <span className={`px-2 py-0.5 rounded border ${
+                journeyStageIndex >= 3 ? 'bg-emerald-950 border-emerald-400 text-emerald-300 font-bold' : 'bg-black/40 border-white/10 text-slate-400'
+              }`}>
+                4. INTERFACE LINK
+              </span>
+            </div>
+
+            <div className="text-[10px] text-cyan-400 font-mono">
+              FREQ: 432.06 Hz CARRIER LOCK
+            </div>
+          </div>
+
+          {/* Center Visor Reticle Brackets */}
+          <div className="flex-1 flex items-center justify-center">
+            <div className="relative w-64 h-64 border border-cyan-500/20 rounded-full flex items-center justify-center">
+              <div className="absolute inset-0 border border-dashed border-cyan-400/30 rounded-full animate-spin-slow" />
+              <div className="absolute inset-x-0 h-[1px] bg-cyan-400/20" />
+              <div className="absolute inset-y-0 w-[1px] bg-cyan-400/20" />
+
+              <div className="absolute top-2 left-2 w-4 h-4 border-t-2 border-l-2 border-cyan-400" />
+              <div className="absolute top-2 right-2 w-4 h-4 border-t-2 border-r-2 border-cyan-400" />
+              <div className="absolute bottom-2 left-2 w-4 h-4 border-b-2 border-l-2 border-cyan-400" />
+              <div className="absolute bottom-2 right-2 w-4 h-4 border-b-2 border-r-2 border-cyan-400" />
+
+              {nearInteractable && (
+                <div className="absolute -bottom-10 px-3 py-1 rounded bg-black/90 border border-cyan-400 text-[10px] text-cyan-300 font-bold uppercase tracking-wider text-center whitespace-nowrap shadow-lg">
+                  TARGET LOCKED: {nearInteractable.title} · PRESS [Q] OR [E] TO SCAN
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Bottom Visor Bar: Signal Tracker & Instructions */}
+          <div className="flex items-center justify-between px-4 py-2 rounded-xl bg-slate-950/85 backdrop-blur-md border border-cyan-400/50 text-xs">
+            <div className="flex items-center gap-4">
+              <div>
+                <span className="text-slate-400 text-[10px]">SIGNAL: </span>
+                <strong className="text-purple-300 font-bold">{scannerReading.strength}% ({scannerReading.tier})</strong>
+              </div>
+              <div className="hidden sm:inline">
+                <span className="text-slate-400 text-[10px]">VECTOR: </span>
+                <strong className="text-white">{scannerReading.direction} ({scannerReading.bearingDeg}°)</strong>
+              </div>
+            </div>
+
+            <div className="text-[10px] text-slate-400">
+              Aim at target & hold [Q] to scan · [Tab] opens Mission Database
             </div>
           </div>
         </div>
