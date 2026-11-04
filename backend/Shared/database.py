@@ -22,15 +22,25 @@ db_info = {
     "message": ""
 }
 
+def _is_postgres_url(url: str) -> bool:
+    lowered = (url or "").strip().lower()
+    return lowered.startswith(("postgresql://", "postgres://", "postgresql+psycopg://",
+                               "postgresql+psycopg2://", "postgresql+asyncpg://"))
+
+
 def create_db_engine():
     global DATABASE_URL
     
-    # Check if PostgreSQL URL is provided
-    if DATABASE_URL and (DATABASE_URL.startswith("postgresql://") or DATABASE_URL.startswith("postgres://")):
-        # SQLAlchemy requires postgresql://
+    # Check if PostgreSQL URL is provided. Accept driver-qualified URLs too
+    # (postgresql+psycopg://, postgresql+psycopg2://).
+    if DATABASE_URL and _is_postgres_url(DATABASE_URL):
         normalized_url = DATABASE_URL
         if normalized_url.startswith("postgres://"):
             normalized_url = normalized_url.replace("postgres://", "postgresql://", 1)
+        if normalized_url.startswith("postgresql+asyncpg://"):
+            normalized_url = normalized_url.replace("postgresql+asyncpg://", "postgresql+psycopg://", 1)
+        if normalized_url.startswith("postgresql://"):
+            normalized_url = "postgresql+psycopg2://" + normalized_url[len("postgresql://"):]
         
         try:
             logger.info("Attempting connection to PostgreSQL...")
@@ -56,8 +66,12 @@ def create_db_engine():
     
     # Fallback to local SQLite development database
     # Transparently declare this so the app never pretends PostgreSQL is connected when it is not
-    db_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "space_hardware.db")
-    sqlite_url = f"sqlite:///{db_path}"
+    db_path = os.getenv("NOVABASE_SQLITE_PATH", "").strip()
+    if not db_path:
+        db_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "space_hardware.db")
+    db_path = os.path.abspath(db_path)
+    os.makedirs(os.path.dirname(db_path), exist_ok=True)
+    sqlite_url = f"sqlite:///{db_path.replace(os.sep, '/')}"
     
     sqlite_engine = create_engine(
         sqlite_url,
@@ -87,6 +101,10 @@ def create_db_engine():
 
 engine = create_db_engine()
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+# Public dialect flags for code that needs to branch on the active backend.
+IS_POSTGRES = bool(engine.dialect.name == "postgresql")
+IS_SQLITE = bool(engine.dialect.name == "sqlite")
 
 def get_db():
     """Database session generator for dependency injection or standalone usage."""

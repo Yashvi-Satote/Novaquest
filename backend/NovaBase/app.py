@@ -22,8 +22,17 @@ from NovaBase.models import (
     SpacecraftAlias,
     SpacecraftKeyword,
     SpacecraftImage,
-    SpacecraftSource
+    SpacecraftSource,
+    SpacecraftContent,
+    SpacecraftPart,
+    TimelineEvent,
+    SpacecraftStakeholder,
+    SpacecraftModel,
+    Person,
+    SpacecraftPerson
 )
+from NovaBase.completeness import detail_payload, health_payload
+from NovaBase.ingest import load_registry, registry_slugs
 
 # Setup logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
@@ -49,16 +58,43 @@ for p in POSSIBLE_MODELS_DIRS:
 
 
 def bootstrap_database():
-    """Ensure the scalable database schema and complete 122 spacecraft records are present."""
-    from NovaBase.migrate_and_import import run_migration_and_import
+    """Opt-in schema bootstrap.
 
+    Import-time bootstrapping used to run the legacy migration/importer, which
+    made Flask startup slow and could overwrite the curated NovaBase data.
+    Schema creation now belongs to ``python -m backend.NovaBase.init_db``.
+    """
+    logger.info(
+        "NovaBase schema bootstrap is not run at import time. "
+        "Run: python -m backend.NovaBase.init_db --bootstrap"
+    )
+
+
+@app.route("/api/novabase/health", methods=["GET"])
+def novabase_health():
+    """Section-by-section completeness for every spacecraft (the 10-section contract)."""
+    db = SessionLocal()
     try:
-        run_migration_and_import()
+        registry = load_registry()
+        expected = registry_slugs(registry)
+    except Exception as exc:
+        logger.warning("Registry unavailable for health check: %s", exc)
+        expected = []
+    try:
+        payload = health_payload(db, expected_slugs=expected)
+        payload["database"] = {
+            "engine": get_db_status()["engine"],
+            "postgres": get_db_status()["is_postgres"],
+            "connected": get_db_status()["status"] == "connected",
+            "message": get_db_status()["message"],
+        }
+        return jsonify(payload), 200
     except Exception as e:
-        logger.error(f"Database bootstrap failed: {e}")
+        logger.error(f"Error building NovaBase health payload: {e}")
+        return jsonify({"status": "error", "error": str(e)}), 500
+    finally:
+        db.close()
 
-
-bootstrap_database()
 
 
 @app.route("/api/health", methods=["GET"])
@@ -397,8 +433,14 @@ def get_spacecraft_detail(identifier):
             joinedload(Spacecraft.model_3d),
             joinedload(Spacecraft.aliases),
             joinedload(Spacecraft.keywords),
-            joinedload(Spacecraft.images),
-            joinedload(Spacecraft.sources)
+            selectinload(Spacecraft.images),
+            selectinload(Spacecraft.sources),
+            selectinload(Spacecraft.content_blocks),
+            selectinload(Spacecraft.parts),
+            selectinload(Spacecraft.timeline),
+            selectinload(Spacecraft.models),
+            selectinload(Spacecraft.stakeholder_links).joinedload(SpacecraftStakeholder.organization),
+            selectinload(Spacecraft.people_links).joinedload(SpacecraftPerson.person),
         )
         
         sc = None
@@ -420,7 +462,9 @@ def get_spacecraft_detail(identifier):
         if not sc:
             return jsonify({"error": f"Spacecraft '{identifier}' not found"}), 404
 
-        return jsonify(sc.to_dict(full=True)), 200
+        data = sc.to_dict(full=True)
+        data.update(detail_payload(sc))
+        return jsonify(data), 200
 
     except Exception as e:
         logger.error(f"Error fetching spacecraft detail for '{identifier}': {e}")

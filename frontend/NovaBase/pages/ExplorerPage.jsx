@@ -5,7 +5,8 @@ import FilterBar from '../components/FilterBar';
 import HardwareCard from '../components/HardwareCard';
 import { 
   fetchFilters, 
-  fetchHardware 
+  fetchHardware,
+  fetchNovaBaseHealth
 } from '../../Shared/services/api';
 import { 
   X, 
@@ -14,7 +15,10 @@ import {
   RotateCcw, 
   ChevronLeft, 
   ChevronRight, 
-  Compass
+  Compass,
+  Database,
+  CheckCircle2,
+  AlertTriangle
 } from 'lucide-react';
 
 export default function ExplorerPage() {
@@ -41,6 +45,9 @@ export default function ExplorerPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [fetchError, setFetchError] = useState(null);
 
+  // NovaBase database/section health (10-section contract)
+  const [novaHealth, setNovaHealth] = useState(null);
+
   // Mobile Drawer
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -53,7 +60,7 @@ export default function ExplorerPage() {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  // Initial Load: Sidebar Hierarchy
+  // Initial Load: Sidebar Hierarchy + NovaBase health badge
   useEffect(() => {
     async function initAppData() {
       try {
@@ -62,6 +69,8 @@ export default function ExplorerPage() {
       } catch (err) {
         console.error('Initialization error:', err);
       }
+      const health = await fetchNovaBaseHealth();
+      setNovaHealth(health);
     }
     initAppData();
   }, []);
@@ -95,6 +104,8 @@ export default function ExplorerPage() {
   }, [debouncedQuery, activeFilters, sortOption, currentPage]);
 
   useEffect(() => {
+    // Data fetch on mount/filter change; state updates happen asynchronously.
+    // eslint-disable-next-line react/set-state-in-effect
     loadHardware();
   }, [loadHardware]);
 
@@ -212,6 +223,38 @@ export default function ExplorerPage() {
         {/* Main Content Area (Expands to use all remaining horizontal width) */}
         <main className="flex-1 min-w-0 px-4 sm:px-6 lg:px-8 py-5 space-y-5">
           
+          {/* NovaBase database + 10-section completeness badge */}
+          {novaHealth && (
+            <div className="flex flex-wrap items-center gap-2.5 text-[11px] sm:text-xs">
+              <span
+                className={
+                  novaHealth.all_sections_populated
+                    ? "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-100 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-600/50"
+                    : "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-100 dark:bg-amber-950/70 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-600/50"
+                }
+                title="All 10 NovaBase sections populated for every spacecraft"
+              >
+                {novaHealth.all_sections_populated ? (
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                ) : (
+                  <AlertTriangle className="w-3.5 h-3.5" />
+                )}
+                {novaHealth.complete_spacecraft}/{novaHealth.total_spacecraft} spacecraft complete
+              </span>
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-900/70 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/10">
+                <Database className="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" />
+                {novaHealth.database?.postgres ? 'PostgreSQL' : 'SQLite fallback'}
+                {novaHealth.database && !novaHealth.database.connected ? ' (offline)' : ''}
+              </span>
+              {novaHealth.missing_seed_missions?.length > 0 && (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-rose-100 dark:bg-rose-950/70 text-rose-800 dark:text-rose-300 border border-rose-300 dark:border-rose-600/50">
+                  <AlertCircle className="w-3.5 h-3.5" />
+                  {novaHealth.missing_seed_missions.length} seed missions missing
+                </span>
+              )}
+            </div>
+          )}
+
           {/* Search, Pills, Active Filters & Sorting */}
           <FilterBar
             searchQuery={searchQuery}
