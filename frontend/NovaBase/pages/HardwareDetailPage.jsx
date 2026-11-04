@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { fetchHardwareDetail } from '../../Shared/services/api';
 import AppNavbar from '../../Shared/components/layout/AppNavbar';
@@ -26,6 +26,8 @@ import {
   Tag,
   Users,
   Box,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 
 const MISSING_TEXT = 'Missing — not available in the current sources.';
@@ -35,6 +37,69 @@ function MissingBlock({ note }) {
     <div className="rounded-xl border border-dashed border-amber-300 dark:border-amber-600/40 bg-amber-50/70 dark:bg-amber-950/20 p-4 text-xs sm:text-sm text-amber-800 dark:text-amber-300 flex items-start gap-2">
       <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
       <span>{note || MISSING_TEXT}</span>
+    </div>
+  );
+}
+
+const LINE_CLAMP_CLASS = {
+  2: 'line-clamp-2',
+  3: 'line-clamp-3',
+  4: 'line-clamp-4',
+  5: 'line-clamp-5',
+  6: 'line-clamp-6',
+};
+
+/**
+ * Condenses long source text to a fixed number of lines and reveals the rest
+ * behind an accessible "Read more" toggle. Raw wiki dumps therefore stay out of
+ * the way until a reader explicitly asks for them.
+ */
+function ClampedText({ text, lines = 6, className = '' }) {
+  const [expandedText, setExpandedText] = useState(null);
+  const [overflowing, setOverflowing] = useState(false);
+  const textRef = useRef(null);
+  const clampClass = LINE_CLAMP_CLASS[lines] || 'line-clamp-6';
+  const bodyClass = className || 'text-sm sm:text-base text-slate-700 dark:text-slate-200';
+  const expanded = expandedText === text;
+
+  useEffect(() => {
+    const node = textRef.current;
+    if (!node) return undefined;
+
+    const measure = () => {
+      if (expanded) return;
+      setOverflowing(node.scrollHeight > node.clientHeight + 1);
+    };
+
+    measure();
+    if (typeof ResizeObserver === 'undefined') return undefined;
+
+    const observer = new ResizeObserver(measure);
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [text, expanded, clampClass]);
+
+  if (!text) return null;
+
+  return (
+    <div className="space-y-1.5">
+      <p
+        ref={textRef}
+        className={`leading-relaxed whitespace-pre-line ${expanded ? '' : clampClass} ${bodyClass}`}
+      >
+        {text}
+      </p>
+      {(overflowing || expanded) && (
+        <button
+          type="button"
+          onClick={() => setExpandedText(expanded ? null : text)}
+          aria-expanded={expanded}
+          className="inline-flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wider text-cyan-700 hover:text-cyan-600 dark:text-cyan-400 dark:hover:text-cyan-300 cursor-pointer"
+        >
+          {expanded ? 'Show less' : 'Read more'}
+          {expanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+        </button>
+      )}
     </div>
   );
 }
@@ -70,9 +135,12 @@ function Attribution({ block }) {
   );
 }
 
-function SectionCard({ number, title, icon: Icon, children, completeness }) {
+function SectionCard({ id, number, title, icon: Icon, children, completeness }) {
   return (
-    <div className="glass-panel rounded-2xl p-5 sm:p-6 bg-white/90 dark:bg-[#0c1222]/85 border border-slate-200/90 dark:border-white/10 shadow-xs space-y-3">
+    <section
+      id={id}
+      className="glass-panel rounded-2xl p-5 sm:p-6 bg-white/90 dark:bg-[#0c1222]/85 border border-slate-200/90 dark:border-white/10 shadow-xs space-y-3 scroll-mt-32"
+    >
       <div className="flex items-center justify-between gap-2 border-b border-slate-100 dark:border-white/5 pb-2.5">
         <div className="flex items-center gap-2 text-cyan-700 dark:text-cyan-400 min-w-0">
           <Icon className="w-5 h-5 shrink-0" />
@@ -87,7 +155,7 @@ function SectionCard({ number, title, icon: Icon, children, completeness }) {
         )}
       </div>
       {children}
-    </div>
+    </section>
   );
 }
 
@@ -191,6 +259,9 @@ export default function HardwareDetailPage() {
   const officialUrl = hardware?.official_url || verifiedSources[0]?.source_url || null;
   const content = hardware?.content || {};
   const completeness = hardware?.completeness || { populated_sections: 0, total_sections: 10 };
+  const sections = Object.values(hardware?.sections || {})
+    .slice()
+    .sort((first, second) => (first.number || 0) - (second.number || 0));
 
   const sectionText = (key, legacy) => {
     const body = content?.[key]?.body_text;
@@ -203,9 +274,7 @@ export default function HardwareDetailPage() {
     if (!text) return <MissingBlock />;
     return (
       <div className="space-y-1">
-        <p className="text-sm sm:text-base leading-relaxed text-slate-700 dark:text-slate-200 whitespace-pre-line">
-          {text}
-        </p>
+        <ClampedText text={text} lines={6} />
         <Attribution block={content?.[key]} />
       </div>
     );
@@ -215,7 +284,7 @@ export default function HardwareDetailPage() {
     <div className="min-h-screen bg-[#070b14] space-bg flex flex-col font-sans text-slate-100">
       <AppNavbar />
 
-      <main className="flex-1 w-full px-4 sm:px-6 lg:px-8 py-6 max-w-7xl mx-auto">
+      <main className="flex-1 w-full max-w-full px-4 sm:px-6 lg:px-8 2xl:px-12 py-6">
         <div className="mb-6 flex items-center justify-between gap-4">
           <button
             type="button"
@@ -253,15 +322,16 @@ export default function HardwareDetailPage() {
         {isLoading && (
           <div className="space-y-6 animate-pulse">
             <div className="h-32 bg-slate-200 dark:bg-slate-800/60 rounded-2xl w-full" />
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <div className="lg:col-span-2 space-y-4">
-                <div className="h-48 bg-slate-200 dark:bg-slate-800/60 rounded-2xl" />
-                <div className="h-48 bg-slate-200 dark:bg-slate-800/60 rounded-2xl" />
-                <div className="h-64 bg-slate-200 dark:bg-slate-800/60 rounded-2xl" />
+            <div className="space-y-5">
+              <div className="grid grid-cols-[repeat(auto-fit,minmax(260px,1fr))] gap-4">
+                {[1, 2, 3, 4].map((n) => (
+                  <div key={n} className="h-40 bg-slate-200 dark:bg-slate-800/60 rounded-2xl" />
+                ))}
               </div>
               <div className="space-y-4">
-                <div className="h-64 bg-slate-200 dark:bg-slate-800/60 rounded-2xl" />
                 <div className="h-48 bg-slate-200 dark:bg-slate-800/60 rounded-2xl" />
+                <div className="h-48 bg-slate-200 dark:bg-slate-800/60 rounded-2xl" />
+                <div className="h-64 bg-slate-200 dark:bg-slate-800/60 rounded-2xl" />
               </div>
             </div>
           </div>
@@ -328,9 +398,13 @@ export default function HardwareDetailPage() {
                     </span>
                   </div>
 
-                  <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed pt-1 max-w-4xl">
-                    {hardware.short_description || MISSING_TEXT}
-                  </p>
+                  <div className="pt-1">
+                    <ClampedText
+                      text={hardware.short_description || MISSING_TEXT}
+                      lines={3}
+                      className="text-sm sm:text-base text-slate-600 dark:text-slate-300"
+                    />
+                  </div>
                 </div>
 
                 <div className="shrink-0 flex flex-col sm:flex-row md:flex-col gap-2.5 items-start md:items-end">
@@ -358,15 +432,43 @@ export default function HardwareDetailPage() {
               </div>
             </div>
 
-            {/* MAIN TWO-COLUMN DOSSIER GRID */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-              {/* LEFT COLUMN: Sections 1-9 */}
-              <div className="lg:col-span-8 space-y-5">
-                <SectionCard number={1} title="What is it?" icon={BookOpen} completeness={content.what_is_it?.completeness}>
+            {/* SECTION COVERAGE: sticky, full-width table of contents */}
+            {sections.length > 0 && (
+              <nav
+                aria-label="Section coverage"
+                className="z-20 -mx-4 border-y border-slate-200/80 bg-white/90 px-4 py-2 backdrop-blur-md dark:border-white/10 dark:bg-[#070b14]/90 sm:sticky sm:top-14 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 2xl:-mx-12 2xl:px-12"
+              >
+                <div className="flex items-center gap-2 overflow-x-auto pb-0.5">
+                  <span className="shrink-0 inline-flex items-center gap-1.5 text-[10px] font-mono font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                    <Box className="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" />
+                    Section coverage
+                  </span>
+                  {sections.map((section) => (
+                    <a
+                      key={section.key}
+                      href={`#section-${section.number}`}
+                      title={section.populated ? 'Populated from verified sources' : 'Not populated in the current sources'}
+                      className={`shrink-0 rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors ${
+                        section.populated
+                          ? 'border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:border-emerald-700/50 dark:bg-emerald-950/40 dark:text-emerald-300 dark:hover:bg-emerald-950/70'
+                          : 'border-amber-300 bg-amber-50 text-amber-700 hover:bg-amber-100 dark:border-amber-700/50 dark:bg-amber-950/40 dark:text-amber-300 dark:hover:bg-amber-950/70'
+                      }`}
+                    >
+                      {section.number}. {section.label}
+                    </a>
+                  ))}
+                </div>
+              </nav>
+            )}
+
+            {/* MAIN DOSSIER: full-width sections */}
+            <div className="flex flex-col gap-5">
+              <div className="grid min-w-0 grid-cols-1 gap-5">
+                <SectionCard id="section-1" number={1} title="What is it?" icon={BookOpen} completeness={content.what_is_it?.completeness}>
                   {sectionNode('what_is_it', hardware.educational_description)}
                 </SectionCard>
 
-                <SectionCard number={2} title="How does it work?" icon={Cpu} completeness={content.how_it_works?.completeness}>
+                <SectionCard id="section-2" number={2} title="How does it work?" icon={Cpu} completeness={content.how_it_works?.completeness}>
                   {sectionNode('how_it_works', hardware.how_it_works)}
                   {hardware.parts?.length > 0 && (
                     <div className="pt-1 space-y-2">
@@ -377,7 +479,9 @@ export default function HardwareDetailPage() {
                         {hardware.parts.map((part) => (
                           <div key={part.id || part.part_name} className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/80 dark:border-white/5 text-xs">
                             <strong className="text-slate-900 dark:text-white font-semibold block mb-0.5">{part.part_name}</strong>
-                            <span className="text-slate-600 dark:text-slate-300">{part.purpose || 'Purpose not documented in the current source.'}</span>
+                            <span className="line-clamp-3 text-slate-600 dark:text-slate-300" title={part.purpose || undefined}>
+                              {part.purpose || 'Purpose not documented in the current source.'}
+                            </span>
                           </div>
                         ))}
                       </div>
@@ -385,16 +489,18 @@ export default function HardwareDetailPage() {
                   )}
                 </SectionCard>
 
-                <SectionCard number={3} title="Why is it important?" icon={Sparkles} completeness={content.why_important?.completeness}>
+                <SectionCard id="section-3" number={3} title="Why is it important?" icon={Sparkles} completeness={content.why_important?.completeness}>
                   {sectionNode('why_important', hardware.why_it_is_important)}
                 </SectionCard>
 
-                <SectionCard number={4} title="Current or last-known status" icon={Radio} completeness={content.status?.completeness}>
+                <SectionCard id="section-4" number={4} title="Current or last-known status" icon={Radio} completeness={content.status?.completeness}>
                   <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/70 border border-slate-200/80 dark:border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                     <div className="space-y-1">
-                      <p className="text-sm font-semibold text-slate-900 dark:text-white whitespace-pre-line">
-                        {sectionText('status', hardware.current_or_last_known_status) || MISSING_TEXT}
-                      </p>
+                      <ClampedText
+                        text={sectionText('status', hardware.current_or_last_known_status) || MISSING_TEXT}
+                        lines={4}
+                        className="text-sm font-semibold text-slate-900 dark:text-white"
+                      />
                       <p className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
                         <ShieldCheck className="w-4 h-4 text-cyan-600 dark:text-cyan-400" />
                         Status as of: {hardware.status_as_of || hardware.last_verified_at || 'Unknown'} · {hardware.verification_status || 'Archive record'}
@@ -405,7 +511,7 @@ export default function HardwareDetailPage() {
                   </div>
                 </SectionCard>
 
-                <SectionCard number={5} title="Imagery & scientific visualizations" icon={Layers}>
+                <SectionCard id="section-5" number={5} title="Imagery & scientific visualizations" icon={Layers}>
                   <ImageGallery
                     images={hardware.images || []}
                     hardwareName={hardware.name}
@@ -413,7 +519,7 @@ export default function HardwareDetailPage() {
                   />
                 </SectionCard>
 
-                <SectionCard number={6} title="Official archives & verified sources" icon={FileCheck}>
+                <SectionCard id="section-6" number={6} title="Official archives & verified sources" icon={FileCheck}>
                   {verifiedSources.length === 0 && !hardware.official_url ? (
                     <MissingBlock note="No verified source URLs stored for this spacecraft." />
                   ) : (
@@ -454,7 +560,7 @@ export default function HardwareDetailPage() {
                   )}
                 </SectionCard>
 
-                <SectionCard number={7} title="Mission timeline" icon={Calendar}>
+                <SectionCard id="section-7" number={7} title="Mission timeline" icon={Calendar}>
                   {hardware.timeline?.length > 0 ? (
                     <ol className="relative border-l border-slate-200 dark:border-white/10 ml-2 space-y-4">
                       {hardware.timeline.map((event, index) => (
@@ -472,7 +578,10 @@ export default function HardwareDetailPage() {
                             {event.title}
                           </p>
                           {event.description && event.description !== event.title && (
-                            <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                            <p
+                              className="line-clamp-3 text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5"
+                              title={event.description}
+                            >
                               {event.description}
                             </p>
                           )}
@@ -484,7 +593,7 @@ export default function HardwareDetailPage() {
                   )}
                 </SectionCard>
 
-                <SectionCard number={8} title="Institutional stakeholders" icon={Building2}>
+                <SectionCard id="section-8" number={8} title="Institutional stakeholders" icon={Building2}>
                   {hardware.stakeholders?.length > 0 ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                       {hardware.stakeholders.map((org, index) => (
@@ -505,9 +614,11 @@ export default function HardwareDetailPage() {
                   )}
                 </SectionCard>
 
-                <ModelViewer models={hardware.models || []} name={hardware.name} />
+                <div id="section-9" className="scroll-mt-32">
+                  <ModelViewer models={hardware.models || []} name={hardware.name} />
+                </div>
 
-                <SectionCard number={10} title="Top 10 people who helped develop the mission" icon={Users}>
+                <SectionCard id="section-10" number={10} title="Top 10 people who helped develop the mission" icon={Users}>
                   {hardware.people?.length > 0 ? (
                     <ol className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                       {hardware.people.map((person) => (
@@ -542,8 +653,8 @@ export default function HardwareDetailPage() {
                 )}
               </div>
 
-              {/* RIGHT COLUMN: Quick facts */}
-              <div className="lg:col-span-4 space-y-5">
+              {/* QUICK FACTS: full-width responsive cards */}
+              <div className="grid grid-cols-[repeat(auto-fit,minmax(260px,1fr))] gap-4">
                 <div className="glass-panel rounded-2xl p-5 bg-gradient-to-br from-cyan-500/10 via-slate-50 to-white dark:from-cyan-950/40 dark:via-[#0c1222]/90 dark:to-slate-950/80 border border-cyan-300 dark:border-cyan-500/30 shadow-sm space-y-3">
                   <span className="text-[11px] font-mono uppercase tracking-wider text-cyan-700 dark:text-cyan-400 font-semibold block">
                     Direct Mission Access
@@ -596,7 +707,11 @@ export default function HardwareDetailPage() {
                       <MapPin className="w-4 h-4" />
                       <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white">Location</h3>
                     </div>
-                    <p className="text-xs text-slate-700 dark:text-slate-300">{hardware.location_description}</p>
+                    <ClampedText
+                      text={hardware.location_description}
+                      lines={4}
+                      className="text-xs text-slate-700 dark:text-slate-300"
+                    />
                   </div>
                 )}
 
@@ -637,27 +752,6 @@ export default function HardwareDetailPage() {
                     </div>
                   </div>
                 )}
-
-                <div className="glass-panel rounded-2xl p-5 bg-white/90 dark:bg-[#0c1222]/85 border border-slate-200/90 dark:border-white/10 shadow-xs space-y-2">
-                  <div className="flex items-center gap-2 text-cyan-700 dark:text-cyan-400">
-                    <Box className="w-4 h-4" />
-                    <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white">Section Coverage</h3>
-                  </div>
-                  <div className="grid grid-cols-2 gap-1.5 text-[10px]">
-                    {Object.values(hardware.sections || {}).map((section) => (
-                      <span
-                        key={section.key}
-                        className={
-                          section.populated
-                            ? 'px-2 py-1 rounded border border-emerald-200 dark:border-emerald-700/50 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300'
-                            : 'px-2 py-1 rounded border border-amber-200 dark:border-amber-700/50 bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-300'
-                        }
-                      >
-                        {section.number}. {section.label}
-                      </span>
-                    ))}
-                  </div>
-                </div>
               </div>
             </div>
           </div>
@@ -665,7 +759,7 @@ export default function HardwareDetailPage() {
       </main>
 
       <footer className="mt-auto border-t border-slate-200/90 dark:border-white/10 bg-white/80 dark:bg-[#060a12]/90 py-4 px-4 sm:px-6 lg:px-8 text-xs text-slate-500 dark:text-slate-400 transition-colors">
-        <div className="w-full flex flex-col sm:flex-row items-center justify-between gap-2.5 max-w-7xl mx-auto">
+        <div className="w-full flex flex-col sm:flex-row items-center justify-between gap-2.5">
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-cyan-500 dark:bg-cyan-400" />
             <span className="font-medium text-slate-700 dark:text-slate-300">Novaquest</span>
