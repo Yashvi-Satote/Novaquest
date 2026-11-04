@@ -17,5 +17,24 @@ services:
       timeout: 5s
       retries: 10
 
+  novauser-db:
+    image: postgres:16-alpine
+    container_name: novauser-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: novauser
+      POSTGRES_PASSWORD: novauser_dev_password
+      POSTGRES_DB: users.db
+    ports:
+      - "55432:5432"
+    volumes:
+      - novauser_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U novauser -d users.db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
 volumes:
   novabase_pgdata:
+  novauser_pgdata:
