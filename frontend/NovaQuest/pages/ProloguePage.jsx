@@ -6,7 +6,8 @@ import {
   Sparkles, 
   Eye, 
   ArrowLeft,
-  Shield
+  Shield,
+  Rocket
 } from 'lucide-react';
 import PlayableBedroom3D from '../components/game/PlayableBedroom3D';
 import { createNewGame, saveGame, getSaveGame } from '../game/saveManager';
@@ -27,6 +28,15 @@ export default function ProloguePage() {
   // Telescope focus slider (0 to 100)
   const [focusValue, setFocusValue] = useState(25);
   const isMoonFocused = focusValue >= 85;
+
+  // Release any lingering pointer lock whenever exiting 3D bedroom phase
+  useEffect(() => {
+    if (phase !== 'bedroom_3d' && document.pointerLockElement) {
+      try {
+        document.exitPointerLock();
+      } catch {}
+    }
+  }, [phase]);
 
   // 2-second cinematic cutscene timer before starting the playable 3D bedroom
   useEffect(() => {
@@ -77,7 +87,31 @@ export default function ProloguePage() {
   // Step 2: Reached Telescope in 3D
   const handleInteractTelescope = () => {
     audio.playClick();
+    if (document.pointerLockElement) {
+      try {
+        document.exitPointerLock();
+      } catch {}
+    }
     setPhase('telescope_focus');
+  };
+
+  // Direct Skip to Chapter 1 (The First Footprint)
+  const handleSkipToChapter1 = () => {
+    audio.playStartGame();
+    if (document.pointerLockElement) {
+      try {
+        document.exitPointerLock();
+      } catch {}
+    }
+    const currentSave = getSaveGame() || createNewGame({ gender: selectedGender });
+    saveGame({
+      ...currentSave,
+      currentChapter: 'chapter_1',
+      title: 'Chapter 1: The First Footprint',
+      location: 'Oceanus Procellarum, Lunar Surface',
+      objective: 'Locate and inspect Surveyor 1 spacecraft components.'
+    });
+    navigate('/play');
   };
 
   // Step 2: Match-Cut Transition
@@ -91,9 +125,9 @@ export default function ProloguePage() {
       saveGame({
         ...currentSave,
         currentChapter: 'chapter_1',
-        title: 'Chapter 1: A Different Kind of Mission',
-        location: 'NASA Orbital Facility, Briefing Room',
-        objective: 'Attend assignment briefing with Commander Elena Voss and Maya Chen.'
+        title: 'Chapter 1: The First Footprint',
+        location: 'Oceanus Procellarum, Lunar Surface',
+        objective: 'Locate and inspect Surveyor 1 spacecraft components.'
       });
     }
   };
@@ -190,9 +224,19 @@ export default function ProloguePage() {
             </button>
           </div>
 
-          <div className="mt-10 text-xs font-mono text-slate-500 flex items-center gap-2 z-10">
-            <Shield className="w-3.5 h-3.5 text-slate-600" />
-            <span>ARCHIVE DOSSIER LINKED · INITIALIZING 3D WORLD</span>
+          <div className="mt-8 flex flex-col items-center gap-3 z-10">
+            <button
+              type="button"
+              onClick={handleSkipToChapter1}
+              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-cyan-950/60 hover:bg-cyan-900/80 text-cyan-300 hover:text-white border border-cyan-500/40 text-xs font-mono uppercase tracking-wider transition-all hover:scale-105 active:scale-95 shadow-lg shadow-cyan-950/50"
+            >
+              <Rocket className="w-4 h-4 text-cyan-400 -rotate-45" />
+              <span>Skip Prologue & Launch Chapter 1 Directly</span>
+            </button>
+            <div className="text-[11px] font-mono text-slate-500 flex items-center gap-2">
+              <Shield className="w-3.5 h-3.5 text-slate-600" />
+              <span>SURVEYOR 1 RECOVERY EXPEDITION (2126)</span>
+            </div>
           </div>
         </div>
       )}
@@ -219,8 +263,17 @@ export default function ProloguePage() {
               <Sparkles className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />
               <span>FLASHBACK ARCHIVE · {pronouns.descriptor.toUpperCase()}</span>
             </div>
-            <div className="text-slate-300 text-[11px] bg-black/75 px-3 py-1.5 rounded-full border border-white/10 backdrop-blur-md hidden sm:block">
-              Earth · Late Night Bedroom
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleSkipToChapter1}
+                className="px-3 py-1 rounded-full bg-cyan-950/80 hover:bg-cyan-900 border border-cyan-500/40 text-cyan-300 text-xs font-mono transition-all"
+              >
+                Skip to Chapter 1
+              </button>
+              <div className="text-slate-300 text-[11px] bg-black/75 px-3 py-1.5 rounded-full border border-white/10 backdrop-blur-md hidden sm:block">
+                Earth · Late Night Bedroom
+              </div>
             </div>
           </div>
 
@@ -271,8 +324,19 @@ export default function ProloguePage() {
               </div>
             </div>
 
-            <div className="pointer-events-auto text-xs font-mono text-slate-400 bg-black/60 px-3 py-1.5 rounded-lg border border-white/10 hidden md:block">
-              Walk with <strong className="text-cyan-300">WASD</strong> or <strong className="text-cyan-300">Arrow Keys</strong>
+            <div className="pointer-events-auto flex items-center gap-3">
+              <button
+                type="button"
+                onClick={handleSkipToChapter1}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-xs font-mono font-bold text-white uppercase tracking-wider transition-all shadow-md shadow-cyan-600/30 border border-cyan-400/40"
+              >
+                <Rocket className="w-3.5 h-3.5 -rotate-45" />
+                <span>Skip to Chapter 1</span>
+              </button>
+
+              <div className="text-xs font-mono text-slate-400 bg-black/60 px-3 py-1.5 rounded-lg border border-white/10 hidden md:block">
+                Walk with <strong className="text-cyan-300">WASD</strong> or <strong className="text-cyan-300">Arrow Keys</strong>
+              </div>
             </div>
           </div>
 
@@ -295,13 +359,22 @@ export default function ProloguePage() {
               <Eye className="w-4 h-4" />
               <span>Through the Brass Telescope Eyepiece</span>
             </div>
-            <button
-              type="button"
-              onClick={() => setPhase('bedroom_3d')}
-              className="text-xs font-mono text-slate-400 hover:text-white"
-            >
-              Step Away [Esc]
-            </button>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={handleSkipToChapter1}
+                className="text-xs font-mono px-3 py-1 rounded-lg bg-cyan-950/80 hover:bg-cyan-900 border border-cyan-500/40 text-cyan-300 hover:text-white transition-colors"
+              >
+                Skip Focus & Launch Chapter 1
+              </button>
+              <button
+                type="button"
+                onClick={() => setPhase('bedroom_3d')}
+                className="text-xs font-mono text-slate-400 hover:text-white"
+              >
+                Step Away [Esc]
+              </button>
+            </div>
           </header>
 
           <main className="w-full max-w-md flex flex-col items-center text-center space-y-6 my-auto">

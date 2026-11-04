@@ -11,7 +11,7 @@ import {
   Layers,
   RotateCcw
 } from 'lucide-react';
-import { getSaveGame, getSettings, saveSettings } from '../game/saveManager';
+import { getSaveGame, saveGame, createNewGame, getSettings, saveSettings } from '../game/saveManager';
 import { audio } from '../game/audioManager';
 import SettingsModal from '../components/game/SettingsModal';
 import LunarMapChapter1 from '../components/game/LunarMapChapter1';
@@ -82,12 +82,24 @@ export default function GameArenaPage({ theme }) {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isMuted, setIsMuted] = useState(() => getSettings().audio.muted);
 
+  const mcGender = save?.player?.mcGender || 'male';
+
   useEffect(() => {
     audio.startAmbience();
+    const existing = getSaveGame();
+    if (!existing || existing.currentChapter !== 'chapter_1') {
+      saveGame({
+        ...(existing || createNewGame({ gender: mcGender })),
+        currentChapter: 'chapter_1',
+        title: 'Chapter 1: The First Footprint',
+        location: 'Oceanus Procellarum, Lunar Surface',
+        objective: 'Surveyor 1 Investigation & Signal Tracking'
+      });
+    }
     return () => {
       // Don't kill ambience if navigating within game
     };
-  }, []);
+  }, [mcGender]);
 
   const handleToggleMute = () => {
     audio.playClick();
@@ -99,8 +111,6 @@ export default function GameArenaPage({ theme }) {
     if (newMuted) audio.stopAmbience();
     else audio.startAmbience();
   };
-
-  const mcGender = save?.player?.mcGender || 'male';
 
   return (
     <div className="relative h-screen w-screen overflow-hidden bg-black font-mono select-none flex flex-col">

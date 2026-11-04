@@ -79,6 +79,11 @@ export default function App() {
       <Route path="/" element={<MainMenuPage theme={theme} onToggleTheme={handleToggleTheme} />} />
       <Route path="/prologue" element={<ProloguePage />} />
       <Route path="/play" element={<GameArenaPage theme={theme} onToggleTheme={handleToggleTheme} />} />
+      <Route path="/chapter1" element={<Navigate to="/play" replace />} />
+      <Route path="/chapter-1" element={<Navigate to="/play" replace />} />
+      <Route path="/chapter" element={<Navigate to="/play" replace />} />
+      <Route path="/mission1" element={<Navigate to="/play" replace />} />
+      <Route path="/mission-1" element={<Navigate to="/play" replace />} />
       <Route path="/novamap" element={<SolarSystemPage theme={theme} onToggleTheme={handleToggleTheme} />} />
       <Route path="/solar-system" element={<Navigate to="/novamap" replace />} />
       <Route path="/novabase" element={<ExplorerPage theme={theme} onToggleTheme={handleToggleTheme} />} />

@@ -22,10 +22,17 @@ export default function NewGameModal({ isOpen, onClose, onConfirmStart }) {
 
   if (!isOpen) return null;
 
-  const handleLaunch = () => {
+  const handleLaunchChapter1 = () => {
     audio.playStartGame();
     if (onConfirmStart) {
-      onConfirmStart({ callsign, difficulty });
+      onConfirmStart({ target: 'chapter_1', callsign, difficulty });
+    }
+  };
+
+  const handleLaunchPrologue = () => {
+    audio.playClick();
+    if (onConfirmStart) {
+      onConfirmStart({ target: 'prologue', callsign, difficulty });
     }
   };
 
@@ -139,28 +146,43 @@ export default function NewGameModal({ isOpen, onClose, onConfirmStart }) {
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between border-t border-white/10 px-6 py-4 bg-black/60">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-white/10 px-6 py-4 bg-black/60">
           <button
             type="button"
             onClick={() => { audio.playClick(); onClose(); }}
-            className="py-2 px-4 rounded-xl text-xs font-semibold text-slate-300 hover:bg-white/10 transition-colors"
+            className="py-2 px-3 rounded-xl text-xs font-semibold text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
           >
             Cancel
           </button>
 
-          <button
-            type="button"
-            disabled={saveExists && !confirmedOverwrite}
-            onClick={handleLaunch}
-            className={`flex items-center gap-2 py-2.5 px-6 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-lg ${
-              saveExists && !confirmedOverwrite
-                ? 'opacity-40 cursor-not-allowed bg-slate-700 text-slate-400'
-                : 'bg-gradient-to-r from-cyan-500 via-blue-600 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-white shadow-cyan-600/30 hover:scale-[1.02] active:scale-[0.98]'
-            }`}
-          >
-            <span>Launch Expedition</span>
-            <ChevronRight className="h-4 w-4" />
-          </button>
+          <div className="flex items-center gap-2.5 w-full sm:w-auto">
+            <button
+              type="button"
+              disabled={saveExists && !confirmedOverwrite}
+              onClick={handleLaunchPrologue}
+              className={`flex-1 sm:flex-initial py-2.5 px-4 rounded-xl text-xs font-bold font-mono uppercase tracking-wider transition-all border border-white/15 ${
+                saveExists && !confirmedOverwrite
+                  ? 'opacity-40 cursor-not-allowed bg-slate-800 text-slate-500'
+                  : 'bg-white/5 hover:bg-white/15 text-slate-200 hover:text-white'
+              }`}
+            >
+              Play Prologue
+            </button>
+
+            <button
+              type="button"
+              disabled={saveExists && !confirmedOverwrite}
+              onClick={handleLaunchChapter1}
+              className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 py-2.5 px-5 rounded-xl text-xs font-bold font-mono uppercase tracking-wider transition-all shadow-lg ${
+                saveExists && !confirmedOverwrite
+                  ? 'opacity-40 cursor-not-allowed bg-slate-700 text-slate-400'
+                  : 'bg-gradient-to-r from-cyan-500 via-blue-600 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-white shadow-cyan-600/30 hover:scale-[1.02] active:scale-[0.98]'
+              }`}
+            >
+              <span>Launch Chapter 1</span>
+              <ChevronRight className="h-4 w-4" />
+            </button>
+          </div>
         </div>
       </div>
     </div>

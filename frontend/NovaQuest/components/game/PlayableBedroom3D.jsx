@@ -611,8 +611,13 @@ export default function PlayableBedroom3D({ mcGender = 'male', onInteractTelesco
       // Interaction trigger [E] or Space
       if (code === 'KeyE' || code === 'Space') {
         const dist = camera.position.distanceTo(telescopePos);
-        if (dist < 3.2) {
+        if (dist < 4.0) {
           audio.playClick();
+          if (document.pointerLockElement) {
+            try {
+              document.exitPointerLock();
+            } catch {}
+          }
           if (onInteractRef.current) onInteractRef.current();
         }
       }
@@ -806,7 +811,7 @@ export default function PlayableBedroom3D({ mcGender = 'male', onInteractTelesco
 
       // Check distance from player to the Brass Telescope
       const distToTelescope = camera.position.distanceTo(telescopePos);
-      const isNear = distToTelescope < 3.2;
+      const isNear = distToTelescope < 4.0;
       setNearTelescope(isNear);
 
       renderer.render(scene, camera);
@@ -825,6 +830,11 @@ export default function PlayableBedroom3D({ mcGender = 'male', onInteractTelesco
     window.addEventListener('resize', handleResize);
 
     return () => {
+      if (document.pointerLockElement) {
+        try {
+          document.exitPointerLock();
+        } catch {}
+      }
       window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('keyup', onKeyUp);
       window.removeEventListener('resize', handleResize);
@@ -876,6 +886,11 @@ export default function PlayableBedroom3D({ mcGender = 'male', onInteractTelesco
             type="button"
             onClick={() => {
               audio.playClick();
+              if (document.pointerLockElement) {
+                try {
+                  document.exitPointerLock();
+                } catch {}
+              }
               if (onInteractTelescope) onInteractTelescope();
             }}
             className="pointer-events-auto flex items-center gap-2 px-6 py-3 rounded-2xl bg-gradient-to-r from-cyan-500 via-blue-600 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-white font-mono text-xs sm:text-sm font-bold uppercase tracking-wider shadow-2xl shadow-cyan-500/50 hover:scale-105 active:scale-95 transition-all border border-cyan-400"
