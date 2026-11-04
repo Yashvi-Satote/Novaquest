@@ -35,7 +35,7 @@ app = Flask(__name__)
 
 # Configure CORS
 cors_origin = os.getenv("CORS_ORIGIN", "*")
-CORS(app, origins=[cors_origin, "http://localhost:5173", "http://127.0.0.1:5173"], supports_credentials=True)
+CORS(app, origins=[cors_origin, "http://localhost", "http://127.0.0.1", "http://localhost:80", "http://127.0.0.1:80", "http://localhost:5173", "http://127.0.0.1:5173"], supports_credentials=True)
 
 # Locate models repository directory
 POSSIBLE_MODELS_DIRS = [
