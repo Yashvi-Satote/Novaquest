@@ -24,8 +24,17 @@ from NovaBase.models import (
     SpacecraftAlias,
     SpacecraftKeyword,
     SpacecraftImage,
-    SpacecraftSource
+    SpacecraftSource,
+    SpacecraftContent,
+    SpacecraftPart,
+    TimelineEvent,
+    SpacecraftStakeholder,
+    SpacecraftModel,
+    Person,
+    SpacecraftPerson
 )
+from NovaBase.completeness import detail_payload, health_payload
+from NovaBase.ingest import load_registry, registry_slugs
 
 # Setup logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
@@ -70,7 +79,6 @@ def bootstrap_database():
         db.close()
 
 
-bootstrap_database()
 
 
 @app.route("/api/health", methods=["GET"])
@@ -376,8 +384,14 @@ def get_spacecraft_detail(identifier):
             joinedload(Spacecraft.model_3d),
             joinedload(Spacecraft.aliases),
             joinedload(Spacecraft.keywords),
-            joinedload(Spacecraft.images),
-            joinedload(Spacecraft.sources)
+            selectinload(Spacecraft.images),
+            selectinload(Spacecraft.sources),
+            selectinload(Spacecraft.content_blocks),
+            selectinload(Spacecraft.parts),
+            selectinload(Spacecraft.timeline),
+            selectinload(Spacecraft.models),
+            selectinload(Spacecraft.stakeholder_links).joinedload(SpacecraftStakeholder.organization),
+            selectinload(Spacecraft.people_links).joinedload(SpacecraftPerson.person),
         )
         
         sc = None
@@ -399,7 +413,9 @@ def get_spacecraft_detail(identifier):
         if not sc:
             return jsonify({"error": f"Spacecraft '{identifier}' not found"}), 404
 
-        return jsonify(sc.to_dict(full=True)), 200
+        data = sc.to_dict(full=True)
+        data.update(detail_payload(sc))
+        return jsonify(data), 200
 
     except Exception as e:
         logger.error(f"Error fetching spacecraft detail for '{identifier}': {e}")

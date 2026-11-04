@@ -1,0 +1,1749 @@
+{
+  "registry_version": 1,
+  "generated_from": "NovaBase prompt section 6 (curated seed registry) and section 7 (curated key-leaders list). No values are scraped from the PDF.",
+  "defaults": {
+    "viewer_url": "https://eyes.nasa.gov/apps/solar-system/",
+    "wikipedia_api": "https://en.wikipedia.org/w/api.php",
+    "wikipedia_rest": "https://en.wikipedia.org/api/rest_v1/page/summary/",
+    "nasa_3d_tree": "https://api.github.com/repos/nasa/NASA-3D-Resources/git/trees/master?recursive=1",
+    "nasa_3d_contents": "https://api.github.com/repos/nasa/NASA-3D-Resources/contents/3D%20Models",
+    "nssdca_pattern": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id={id}"
+  },
+  "missions": [
+    {
+      "slug": "surveyor-1",
+      "name": "Surveyor 1",
+      "display_name": "Surveyor 1",
+      "destination_category": "Moon",
+      "destination": "Moon (Oceanus Procellarum)",
+      "mission_type": "Lander",
+      "object_type": "Lander",
+      "agency": "NASA/JPL",
+      "operator": "NASA/JPL",
+      "manufacturer": "Hughes Aircraft",
+      "wiki_title": "Surveyor_1",
+      "secondary_wiki_titles": [],
+      "nssdca_id": "1966-045A",
+      "model_keywords": [
+        "Surveyor"
+      ],
+      "model_include": [],
+      "model_exclude": [
+        "Mars Global Surveyor"
+      ],
+      "model_overrides": [],
+      "launch_date": "1966-05-30",
+      "landing_date": "1966-06-02",
+      "end_date": "1967-01",
+      "status_label": "ended",
+      "status_text": "Contact ended January 1967 after a successful soft landing and 1966 operations.",
+      "mission_status": "Completed",
+      "sources": [
+        {
+          "label": "NASA NSSDCA - Surveyor 1",
+          "url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1966-045A",
+          "source_type": "archive"
+        },
+        {
+          "label": "Wikipedia - Surveyor 1",
+          "url": "https://en.wikipedia.org/wiki/Surveyor_1",
+          "source_type": "wikipedia"
+        }
+      ],
+      "people": [
+        {
+          "name": "Benjamin Milwitzky",
+          "role": "NASA Surveyor program manager"
+        },
+        {
+          "name": "Oran W. Nicks",
+          "role": "NASA Director of Lunar and Planetary Programs"
+        },
+        {
+          "name": "William H. Pickering",
+          "role": "Director of JPL"
+        },
+        {
+          "name": "Walker E. Giberson",
+          "role": "JPL Surveyor project manager until 1965"
+        },
+        {
+          "name": "Robert J. Parks",
+          "role": "JPL Surveyor program manager 1965-66"
+        },
+        {
+          "name": "Leo Stoolman",
+          "role": "Hughes Aircraft Surveyor project manager"
+        },
+        {
+          "name": "Leonard Jaffe",
+          "role": "NASA Surveyor program scientist"
+        },
+        {
+          "name": "Eugene M. Shoemaker",
+          "role": "Leader of Surveyor TV experiment"
+        },
+        {
+          "name": "Elliott C. Morris",
+          "role": "USGS, TV team"
+        },
+        {
+          "name": "Robert M. Batson",
+          "role": "USGS, TV team"
+        }
+      ]
+    },
+    {
+      "slug": "surveyor-3",
+      "name": "Surveyor 3",
+      "display_name": "Surveyor 3",
+      "destination_category": "Moon",
+      "destination": "Moon (Oceanus Procellarum)",
+      "mission_type": "Lander",
+      "object_type": "Lander",
+      "agency": "NASA/JPL",
+      "operator": "NASA/JPL",
+      "manufacturer": "Hughes Aircraft",
+      "wiki_title": "Surveyor_3",
+      "secondary_wiki_titles": [],
+      "nssdca_id": "1967-035A",
+      "model_keywords": [
+        "Surveyor"
+      ],
+      "model_include": [],
+      "model_exclude": [
+        "Mars Global Surveyor"
+      ],
+      "model_overrides": [],
+      "launch_date": "1967-04-17",
+      "landing_date": "1967-04-20",
+      "end_date": "1967-05",
+      "status_label": "ended",
+      "status_text": "Operations ended May 1967; the lander was visited by the Apollo 12 crew in November 1969.",
+      "mission_status": "Completed",
+      "sources": [
+        {
+          "label": "NASA NSSDCA - Surveyor 3",
+          "url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1967-035A",
+          "source_type": "archive"
+        },
+        {
+          "label": "Wikipedia - Surveyor 3",
+          "url": "https://en.wikipedia.org/wiki/Surveyor_3",
+          "source_type": "wikipedia"
+        }
+      ],
+      "people": [
+        {
+          "name": "Benjamin Milwitzky",
+          "role": "NASA Surveyor program manager"
+        },
+        {
+          "name": "Howard H. Haglund",
+          "role": "JPL Surveyor program manager 1966-68"
+        },
+        {
+          "name": "Leo Stoolman",
+          "role": "Hughes project manager"
+        },
+        {
+          "name": "Leonard Jaffe",
+          "role": "NASA program scientist"
+        },
+        {
+          "name": "Eugene M. Shoemaker",
+          "role": "TV experiment leader"
+        },
+        {
+          "name": "Ronald F. Scott",
+          "role": "Caltech, soil mechanics investigator"
+        },
+        {
+          "name": "Floyd I. Roberson",
+          "role": "JPL, soil mechanics investigator"
+        },
+        {
+          "name": "Justin J. Rennilson",
+          "role": "JPL, TV co-investigator"
+        },
+        {
+          "name": "Charles Conrad",
+          "role": "Apollo 12 commander, retrieved parts 1969"
+        },
+        {
+          "name": "Alan Bean",
+          "role": "Apollo 12 LM pilot, retrieved parts 1969"
+        }
+      ]
+    },
+    {
+      "slug": "apollo-lunar-module",
+      "name": "Apollo Lunar Module",
+      "display_name": "Apollo Lunar Module (LM) Components",
+      "destination_category": "Moon",
+      "destination": "Moon",
+      "mission_type": "Lander",
+      "object_type": "Lander",
+      "agency": "NASA",
+      "operator": "NASA",
+      "manufacturer": "Grumman Aircraft Engineering Corporation",
+      "wiki_title": "Apollo_Lunar_Module",
+      "secondary_wiki_titles": [],
+      "nssdca_id": "1969-059C",
+      "model_keywords": [
+        "Lunar Module"
+      ],
+      "model_include": [],
+      "model_exclude": [],
+      "model_overrides": [],
+      "launch_date": "1969-07-20",
+      "landing_date": "1969-07-20",
+      "end_date": "1972",
+      "status_label": "ended",
+      "status_text": "Ten Lunar Modules flew and six landed during Apollo 11, 12, 14, 15, 16 and 17; the program ran from 1969 to 1972.",
+      "mission_status": "Completed",
+      "sources": [
+        {
+          "label": "NASA NSSDCA - Apollo 11 Lunar Module",
+          "url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1969-059C",
+          "source_type": "archive"
+        },
+        {
+          "label": "Wikipedia - Apollo Lunar Module",
+          "url": "https://en.wikipedia.org/wiki/Apollo_Lunar_Module",
+          "source_type": "wikipedia"
+        }
+      ],
+      "people": [
+        {
+          "name": "Thomas J. Kelly",
+          "role": "Grumman chief engineer of the LM"
+        },
+        {
+          "name": "Joseph G. Gavin Jr.",
+          "role": "Grumman LM program director"
+        },
+        {
+          "name": "Owen Maynard",
+          "role": "NASA MSC Apollo systems engineering and LM development"
+        },
+        {
+          "name": "Maxime A. Faget",
+          "role": "NASA MSC director of engineering"
+        },
+        {
+          "name": "Robert R. Gilruth",
+          "role": "Director NASA Manned Spacecraft Center"
+        },
+        {
+          "name": "George M. Low",
+          "role": "NASA Apollo Spacecraft Program manager"
+        },
+        {
+          "name": "John C. Houbolt",
+          "role": "NASA Langley, champion of lunar orbit rendezvous"
+        },
+        {
+          "name": "Charles Stark Draper",
+          "role": "MIT Instrumentation Lab, guidance and navigation"
+        },
+        {
+          "name": "Eldon C. Hall",
+          "role": "MIT, chief designer of Apollo Guidance Computer"
+        },
+        {
+          "name": "Margaret Hamilton",
+          "role": "MIT, lead of Apollo on-board flight software"
+        }
+      ]
+    },
+    {
+      "slug": "apollo-lrv",
+      "name": "Apollo Lunar Roving Vehicle",
+      "display_name": "Apollo Lunar Roving Vehicle (LRV)",
+      "destination_category": "Moon",
+      "destination": "Moon (Hadley-Apennine, Descartes, Taurus-Littrow)",
+      "mission_type": "Rover",
+      "object_type": "Rover",
+      "agency": "NASA",
+      "operator": "NASA",
+      "manufacturer": "Boeing",
+      "wiki_title": "Lunar_Roving_Vehicle",
+      "secondary_wiki_titles": [],
+      "nssdca_id": null,
+      "model_keywords": [
+        "Lunar Roving Vehicle"
+      ],
+      "model_include": [],
+      "model_exclude": [],
+      "model_overrides": [],
+      "launch_date": "1971",
+      "landing_date": "1971",
+      "end_date": "1972",
+      "status_label": "ended",
+      "status_text": "Used on Apollo 15 (1971), 16 and 17 (1972); about 90 km were driven in total.",
+      "mission_status": "Completed",
+      "sources": [
+        {
+          "label": "NASA History - Lunar Roving Vehicle",
+          "url": "https://www.nasa.gov/history/alsj/a15/a15.lrv.html",
+          "source_type": "official_nasa"
+        },
+        {
+          "label": "Wikipedia - Lunar Roving Vehicle",
+          "url": "https://en.wikipedia.org/wiki/Lunar_Roving_Vehicle",
+          "source_type": "wikipedia"
+        }
+      ],
+      "people": [
+        {
+          "name": "Saverio Morea",
+          "role": "NASA Marshall, LRV project manager"
+        },
+        {
+          "name": "Eberhard Rees",
+          "role": "NASA Marshall, led Lunar Rover program"
+        },
+        {
+          "name": "Wernher von Braun",
+          "role": "NASA Marshall director, set up Lunar Roving Task Team"
+        },
+        {
+          "name": "Georg von Tiesenhausen",
+          "role": "NASA Marshall, early lunar rover concept"
+        },
+        {
+          "name": "Ferenc Pavlics",
+          "role": "General Motors, chief engineer mobility system"
+        },
+        {
+          "name": "Sam Romano",
+          "role": "General Motors, LRV program manager"
+        },
+        {
+          "name": "Mieczyslaw G. Bekker",
+          "role": "General Motors, off-road/lunar mobility pioneer"
+        },
+        {
+          "name": "Henry Kudish",
+          "role": "Boeing, first LRV project manager 1969-70"
+        },
+        {
+          "name": "Earl Houtz",
+          "role": "Boeing, LRV project manager from 1970"
+        },
+        {
+          "name": "David R. Scott",
+          "role": "Apollo 15 commander, first to drive the LRV"
+        }
+      ]
+    },
+    {
+      "slug": "luna-17-lunokhod-1",
+      "name": "Luna 17 / Lunokhod 1",
+      "display_name": "Luna 17 / Lunokhod 1",
+      "destination_category": "Moon",
+      "destination": "Moon (Mare Imbrium)",
+      "mission_type": "Lander",
+      "object_type": "Rover",
+      "agency": "Soviet Union (Lavochkin Association)",
+      "operator": "Soviet Union (Lavochkin Association)",
+      "manufacturer": "Lavochkin Association",
+      "wiki_title": "Lunokhod_1",
+      "secondary_wiki_titles": [],
+      "nssdca_id": "1970-095A",
+      "model_keywords": [
+        "Lunokhod"
+      ],
+      "model_include": [],
+      "model_exclude": [],
+      "model_overrides": [],
+      "launch_date": "1970-11-10",
+      "landing_date": "1970-11-17",
+      "end_date": "1971-09-14",
+      "status_label": "lost_contact",
+      "status_text": "Last contact 14 September 1971.",
+      "mission_status": "Completed",
+      "sources": [
+        {
+          "label": "NASA NSSDCA - Luna 17 / Lunokhod 1",
+          "url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1970-095A",
+          "source_type": "archive"
+        },
+        {
+          "label": "Wikipedia - Lunokhod 1",
+          "url": "https://en.wikipedia.org/wiki/Lunokhod_1",
+          "source_type": "wikipedia"
+        }
+      ],
+      "people": [
+        {
+          "name": "Georgy Babakin",
+          "role": "Chief designer, Lavochkin"
+        },
+        {
+          "name": "Alexander Kemurdzhian",
+          "role": "Chief designer of Lunokhod chassis, VNIITransMash"
+        },
+        {
+          "name": "Oleg Ivanovsky",
+          "role": "Deputy chief designer, Lavochkin"
+        },
+        {
+          "name": "Mstislav Keldysh",
+          "role": "President of Soviet Academy of Sciences"
+        },
+        {
+          "name": "Alexander P. Vinogradov",
+          "role": "Geochemist, scientific leader of soil studies"
+        },
+        {
+          "name": "Vladimir Chelomei",
+          "role": "Chief designer of Proton rocket"
+        },
+        {
+          "name": "Nikolai Yeremenko",
+          "role": "Lunokhod crew commander"
+        },
+        {
+          "name": "Igor Fyodorov",
+          "role": "Lunokhod crew commander"
+        },
+        {
+          "name": "Gabdulkhay Latypov",
+          "role": "Lunokhod driver"
+        },
+        {
+          "name": "Vyacheslav Dovgan",
+          "role": "Lunokhod driver"
+        }
+      ]
+    },
+    {
+      "slug": "opportunity",
+      "name": "Opportunity",
+      "display_name": "Opportunity (Mars Exploration Rover B)",
+      "destination_category": "Mars",
+      "destination": "Mars (Meridiani Planum)",
+      "mission_type": "Rover",
+      "object_type": "Rover",
+      "agency": "NASA/JPL",
+      "operator": "NASA/JPL",
+      "manufacturer": "NASA/JPL",
+      "wiki_title": "Opportunity_(rover)",
+      "secondary_wiki_titles": [],
+      "nssdca_id": "2003-032A",
+      "model_keywords": [
+        "Opportunity"
+      ],
+      "model_include": [],
+      "model_exclude": [],
+      "model_overrides": [],
+      "launch_date": "2003-07-07",
+      "landing_date": "2004-01-25",
+      "end_date": "2019-02-13",
+      "status_label": "lost_contact",
+      "status_text": "Contact lost in June 2018 during a planet-wide dust storm; the mission ended in February 2019.",
+      "mission_status": "Completed",
+      "sources": [
+        {
+          "label": "NASA Science - Mars Exploration Rovers Spirit and Opportunity",
+          "url": "https://science.nasa.gov/mission/mars-exploration-rovers-spirit-and-opportunity/",
+          "source_type": "official_nasa"
+        },
+        {
+          "label": "NASA NSSDCA - Mars Exploration Rover B",
+          "url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=2003-032A",
+          "source_type": "archive"
+        },
+        {
+          "label": "Wikipedia - Opportunity (rover)",
+          "url": "https://en.wikipedia.org/wiki/Opportunity_(rover)",
+          "source_type": "wikipedia"
+        }
+      ],
+      "people": [
+        {
+          "name": "Steven Squyres",
+          "role": "Cornell, Principal Investigator"
+        },
+        {
+          "name": "Peter Theisinger",
+          "role": "JPL, MER project manager"
+        },
+        {
+          "name": "John Callas",
+          "role": "JPL, later MER project manager"
+        },
+        {
+          "name": "Joy Crisp",
+          "role": "JPL, MER project scientist"
+        },
+        {
+          "name": "Matthew Golombek",
+          "role": "JPL, landing site selection lead"
+        },
+        {
+          "name": "Raymond Arvidson",
+          "role": "Washington University in St. Louis, deputy PI"
+        },
+        {
+          "name": "James F. Bell III",
+          "role": "Cornell, Pancam lead"
+        },
+        {
+          "name": "Goestar Klingelhoefer",
+          "role": "University of Mainz, Moessbauer lead"
+        },
+        {
+          "name": "Rudolf Rieder",
+          "role": "Max Planck Institute for Chemistry, APXS lead"
+        },
+        {
+          "name": "Charles Elachi",
+          "role": "Director of JPL"
+        }
+      ]
+    },
+    {
+      "slug": "perseverance-ingenuity",
+      "name": "Perseverance / Ingenuity",
+      "display_name": "Perseverance / Ingenuity",
+      "destination_category": "Mars",
+      "destination": "Mars (Jezero Crater)",
+      "mission_type": "Rover",
+      "object_type": "Rover",
+      "agency": "NASA/JPL",
+      "operator": "NASA/JPL",
+      "manufacturer": "NASA/JPL",
+      "wiki_title": "Perseverance_(rover)",
+      "secondary_wiki_titles": [
+        "Ingenuity_(helicopter)"
+      ],
+      "nssdca_id": "2020-052A",
+      "model_keywords": [
+        "Perseverance"
+      ],
+      "model_include": [],
+      "model_exclude": [],
+      "model_overrides": [],
+      "launch_date": "2020-07-30",
+      "landing_date": "2021-02-18",
+      "end_date": null,
+      "status_label": "active",
+      "status_text": "Perseverance is active; Ingenuity was retired in January 2024 after 72 flights.",
+      "mission_status": "Active",
+      "sources": [
+        {
+          "label": "NASA Science - Mars 2020 Perseverance",
+          "url": "https://science.nasa.gov/mission/mars-2020-perseverance/",
+          "source_type": "official_nasa"
+        },
+        {
+          "label": "NASA NSSDCA - Mars 2020",
+          "url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=2020-052A",
+          "source_type": "archive"
+        },
+        {
+          "label": "Wikipedia - Perseverance (rover)",
+          "url": "https://en.wikipedia.org/wiki/Perseverance_(rover)",
+          "source_type": "wikipedia"
+        }
+      ],
+      "people": [
+        {
+          "name": "John McNamee",
+          "role": "JPL, Perseverance project manager"
+        },
+        {
+          "name": "Matt Wallace",
+          "role": "JPL, deputy project manager"
+        },
+        {
+          "name": "Kenneth Farley",
+          "role": "Caltech, project scientist"
+        },
+        {
+          "name": "Adam Steltzner",
+          "role": "JPL, chief engineer"
+        },
+        {
+          "name": "MiMi Aung",
+          "role": "JPL, Ingenuity project manager"
+        },
+        {
+          "name": "Bob Balaram",
+          "role": "JPL, Ingenuity chief engineer"
+        },
+        {
+          "name": "Havard Grip",
+          "role": "JPL, Ingenuity chief pilot"
+        },
+        {
+          "name": "Roger Wiens",
+          "role": "Los Alamos, SuperCam PI"
+        },
+        {
+          "name": "Abigail Allwood",
+          "role": "JPL, PIXL PI"
+        },
+        {
+          "name": "Michael Hecht",
+          "role": "MIT Haystack, MOXIE PI"
+        }
+      ]
+    },
+    {
+      "slug": "mars-pathfinder",
+      "name": "Mars Pathfinder / Sojourner",
+      "display_name": "Mars Pathfinder / Sojourner",
+      "destination_category": "Mars",
+      "destination": "Mars (Ares Vallis)",
+      "mission_type": "Lander",
+      "object_type": "Lander",
+      "agency": "NASA/JPL",
+      "operator": "NASA/JPL",
+      "manufacturer": "NASA/JPL",
+      "wiki_title": "Mars_Pathfinder",
+      "secondary_wiki_titles": [],
+      "nssdca_id": "1996-068A",
+      "model_keywords": [
+        "Mars Pathfinder"
+      ],
+      "model_include": [],
+      "model_exclude": [],
+      "model_overrides": [],
+      "launch_date": "1996-12-04",
+      "landing_date": "1997-07-04",
+      "end_date": "1997-09-27",
+      "status_label": "ended",
+      "status_text": "Final signal received 27 September 1997.",
+      "mission_status": "Completed",
+      "sources": [
+        {
+          "label": "NASA Science - Mars Pathfinder",
+          "url": "https://science.nasa.gov/mission/mars-pathfinder/",
+          "source_type": "official_nasa"
+        },
+        {
+          "label": "NASA NSSDCA - Mars Pathfinder",
+          "url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1996-068A",
+          "source_type": "archive"
+        },
+        {
+          "label": "Wikipedia - Mars Pathfinder",
+          "url": "https://en.wikipedia.org/wiki/Mars_Pathfinder",
+          "source_type": "wikipedia"
+        }
+      ],
+      "people": [
+        {
+          "name": "Anthony Spear",
+          "role": "JPL, project manager"
+        },
+        {
+          "name": "Matthew Golombek",
+          "role": "JPL, project scientist"
+        },
+        {
+          "name": "Donna Shirley",
+          "role": "JPL, Sojourner rover manager"
+        },
+        {
+          "name": "Jacob Matijevic",
+          "role": "JPL, Sojourner chief engineer"
+        },
+        {
+          "name": "Brian Muirhead",
+          "role": "JPL, flight system manager"
+        },
+        {
+          "name": "Rob Manning",
+          "role": "JPL, entry/descent/landing chief engineer"
+        },
+        {
+          "name": "Peter H. Smith",
+          "role": "University of Arizona, IMP camera PI"
+        },
+        {
+          "name": "Rudolf Rieder",
+          "role": "Max Planck Institute for Chemistry, APXS lead"
+        },
+        {
+          "name": "Wesley Huntress",
+          "role": "NASA Associate Administrator for Space Science"
+        },
+        {
+          "name": "Daniel Goldin",
+          "role": "NASA Administrator, faster, better, cheaper"
+        }
+      ]
+    },
+    {
+      "slug": "parker-solar-probe",
+      "name": "Parker Solar Probe",
+      "display_name": "Parker Solar Probe",
+      "destination_category": "Heliophysics",
+      "destination": "The Sun (corona)",
+      "mission_type": "Probe",
+      "object_type": "Probe",
+      "agency": "NASA/Johns Hopkins APL",
+      "operator": "NASA/Johns Hopkins APL",
+      "manufacturer": "Johns Hopkins APL",
+      "wiki_title": "Parker_Solar_Probe",
+      "secondary_wiki_titles": [],
+      "nssdca_id": "2018-065A",
+      "model_keywords": [
+        "Parker Solar Probe"
+      ],
+      "model_include": [],
+      "model_exclude": [],
+      "model_overrides": [],
+      "launch_date": "2018-08-12",
+      "landing_date": "2024-12-24",
+      "end_date": null,
+      "status_label": "active",
+      "status_text": "Active. Closest approach on 24 December 2024 brought the spacecraft about 6.1 million km from the solar surface at roughly 692,000 km/h.",
+      "mission_status": "Active",
+      "sources": [
+        {
+          "label": "NASA Science - Parker Solar Probe",
+          "url": "https://science.nasa.gov/mission/parker-solar-probe/",
+          "source_type": "official_nasa"
+        },
+        {
+          "label": "Parker Solar Probe - Johns Hopkins APL",
+          "url": "https://parkersolarprobe.jhuapl.edu/",
+          "source_type": "mission_site"
+        },
+        {
+          "label": "NASA NSSDCA - Parker Solar Probe",
+          "url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=2018-065A",
+          "source_type": "archive"
+        },
+        {
+          "label": "Wikipedia - Parker Solar Probe",
+          "url": "https://en.wikipedia.org/wiki/Parker_Solar_Probe",
+          "source_type": "wikipedia"
+        }
+      ],
+      "people": [
+        {
+          "name": "Eugene Parker",
+          "role": "University of Chicago, solar wind theorist and namesake"
+        },
+        {
+          "name": "Nicola Fox",
+          "role": "APL project scientist, later NASA Heliophysics Director"
+        },
+        {
+          "name": "Nour Raouafi",
+          "role": "APL, project scientist"
+        },
+        {
+          "name": "Andrew Driesman",
+          "role": "APL, project manager"
+        },
+        {
+          "name": "Yanping Guo",
+          "role": "APL, mission design lead"
+        },
+        {
+          "name": "Stuart Bale",
+          "role": "UC Berkeley, FIELDS PI"
+        },
+        {
+          "name": "Justin Kasper",
+          "role": "University of Michigan, SWEAP PI"
+        },
+        {
+          "name": "David McComas",
+          "role": "Princeton, ISIS PI"
+        },
+        {
+          "name": "Russell Howard",
+          "role": "Naval Research Laboratory, WISPR PI"
+        },
+        {
+          "name": "Angelos Vourlidas",
+          "role": "APL, WISPR project scientist"
+        }
+      ]
+    },
+    {
+      "slug": "messenger",
+      "name": "MESSENGER",
+      "display_name": "MESSENGER",
+      "destination_category": "Deep Space",
+      "destination": "Mercury",
+      "mission_type": "Orbiter",
+      "object_type": "Orbiter",
+      "agency": "NASA/Johns Hopkins APL",
+      "operator": "NASA/Johns Hopkins APL",
+      "manufacturer": "Johns Hopkins APL",
+      "wiki_title": "MESSENGER",
+      "secondary_wiki_titles": [],
+      "nssdca_id": "2004-030A",
+      "model_keywords": [
+        "MESSENGER"
+      ],
+      "model_include": [],
+      "model_exclude": [],
+      "model_overrides": [],
+      "launch_date": "2004-08-03",
+      "landing_date": "2011-03-18",
+      "end_date": "2015-04-30",
+      "status_label": "ended",
+      "status_text": "Ended 30 April 2015 with a controlled impact on Mercury.",
+      "mission_status": "Completed",
+      "sources": [
+        {
+          "label": "NASA Science - MESSENGER",
+          "url": "https://science.nasa.gov/mission/messenger/",
+          "source_type": "official_nasa"
+        },
+        {
+          "label": "MESSENGER - Johns Hopkins APL",
+          "url": "https://messenger.jhuapl.edu/",
+          "source_type": "mission_site"
+        },
+        {
+          "label": "NASA NSSDCA - MESSENGER",
+          "url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=2004-030A",
+          "source_type": "archive"
+        },
+        {
+          "label": "Wikipedia - MESSENGER",
+          "url": "https://en.wikipedia.org/wiki/MESSENGER",
+          "source_type": "wikipedia"
+        }
+      ],
+      "people": [
+        {
+          "name": "Sean C. Solomon",
+          "role": "Principal Investigator"
+        },
+        {
+          "name": "Ralph L. McNutt Jr.",
+          "role": "APL, project scientist"
+        },
+        {
+          "name": "Max Peterson",
+          "role": "APL, early project manager"
+        },
+        {
+          "name": "David G. Grant",
+          "role": "APL, project manager, development and launch"
+        },
+        {
+          "name": "Peter D. Bedini",
+          "role": "APL, project manager, flybys and orbit"
+        },
+        {
+          "name": "Helene Winters",
+          "role": "APL, project manager, final phase"
+        },
+        {
+          "name": "Eric J. Finnegan",
+          "role": "APL, mission systems engineer"
+        },
+        {
+          "name": "Robert E. Gold",
+          "role": "APL, science payload manager"
+        },
+        {
+          "name": "Brian J. Anderson",
+          "role": "APL, magnetometer lead"
+        },
+        {
+          "name": "Maria T. Zuber",
+          "role": "MIT, laser altimeter and geophysics lead"
+        }
+      ]
+    },
+    {
+      "slug": "new-horizons",
+      "name": "New Horizons",
+      "display_name": "New Horizons",
+      "destination_category": "Deep Space",
+      "destination": "Pluto, Charon, Arrokoth",
+      "mission_type": "Flyby",
+      "object_type": "Flyby Probe",
+      "agency": "NASA/Johns Hopkins APL",
+      "operator": "NASA/Johns Hopkins APL",
+      "manufacturer": "Johns Hopkins APL",
+      "wiki_title": "New_Horizons",
+      "secondary_wiki_titles": [],
+      "nssdca_id": "2006-001A",
+      "model_keywords": [
+        "New Horizons"
+      ],
+      "model_include": [],
+      "model_exclude": [],
+      "model_overrides": [],
+      "launch_date": "2006-01-19",
+      "landing_date": "2015-07-14",
+      "end_date": null,
+      "status_label": "active",
+      "status_text": "Active in an extended Kuiper Belt mission; Pluto flyby 14 July 2015 and Arrokoth flyby 1 January 2019.",
+      "mission_status": "Active",
+      "sources": [
+        {
+          "label": "NASA Science - New Horizons",
+          "url": "https://science.nasa.gov/mission/new-horizons/",
+          "source_type": "official_nasa"
+        },
+        {
+          "label": "New Horizons - Johns Hopkins APL",
+          "url": "https://pluto.jhuapl.edu/",
+          "source_type": "mission_site"
+        },
+        {
+          "label": "NASA NSSDCA - New Horizons",
+          "url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=2006-001A",
+          "source_type": "archive"
+        },
+        {
+          "label": "Wikipedia - New Horizons",
+          "url": "https://en.wikipedia.org/wiki/New_Horizons",
+          "source_type": "wikipedia"
+        }
+      ],
+      "people": [
+        {
+          "name": "S. Alan Stern",
+          "role": "Principal Investigator"
+        },
+        {
+          "name": "Glen Fountain",
+          "role": "APL, project manager"
+        },
+        {
+          "name": "Hal Weaver",
+          "role": "APL, project scientist"
+        },
+        {
+          "name": "Alice Bowman",
+          "role": "APL, mission operations manager"
+        },
+        {
+          "name": "Yanping Guo",
+          "role": "APL, mission design lead"
+        },
+        {
+          "name": "Andrew Cheng",
+          "role": "APL, LORRI PI"
+        },
+        {
+          "name": "G. Leonard Tyler",
+          "role": "Stanford, REX PI"
+        },
+        {
+          "name": "Mihaly Horanyi",
+          "role": "University of Colorado, Student Dust Counter PI"
+        },
+        {
+          "name": "David McComas",
+          "role": "SWAP PI"
+        },
+        {
+          "name": "Ralph L. McNutt Jr.",
+          "role": "APL, PEPSSI PI"
+        }
+      ]
+    },
+    {
+      "slug": "cassini-huygens",
+      "name": "Cassini-Huygens",
+      "display_name": "Cassini-Huygens",
+      "destination_category": "Deep Space",
+      "destination": "Saturn and Titan",
+      "mission_type": "Orbiter",
+      "object_type": "Orbiter",
+      "agency": "NASA/ESA/ASI",
+      "operator": "NASA/JPL",
+      "manufacturer": "NASA/JPL",
+      "wiki_title": "Cassini–Huygens",
+      "secondary_wiki_titles": [],
+      "nssdca_id": "1997-061A",
+      "model_keywords": [
+        "Cassini"
+      ],
+      "model_include": [],
+      "model_exclude": [],
+      "model_overrides": [],
+      "launch_date": "1997-10-15",
+      "landing_date": "2004-07-01",
+      "end_date": "2017-09-15",
+      "status_label": "ended",
+      "status_text": "Ended 15 September 2017 with the planned Grand Finale plunge into Saturn. Huygens landed on Titan on 14 January 2005.",
+      "mission_status": "Completed",
+      "sources": [
+        {
+          "label": "NASA Science - Cassini",
+          "url": "https://science.nasa.gov/mission/cassini/",
+          "source_type": "official_nasa"
+        },
+        {
+          "label": "NASA NSSDCA - Cassini-Huygens",
+          "url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1997-061A",
+          "source_type": "archive"
+        },
+        {
+          "label": "Wikipedia - Cassini-Huygens",
+          "url": "https://en.wikipedia.org/wiki/Cassini%E2%80%93Huygens",
+          "source_type": "wikipedia"
+        }
+      ],
+      "people": [
+        {
+          "name": "Robert Mitchell",
+          "role": "JPL, Cassini program manager"
+        },
+        {
+          "name": "Earl Maize",
+          "role": "JPL, program manager final years"
+        },
+        {
+          "name": "Dennis Matson",
+          "role": "JPL, original project scientist"
+        },
+        {
+          "name": "Linda Spilker",
+          "role": "JPL, project scientist"
+        },
+        {
+          "name": "Jean-Pierre Lebreton",
+          "role": "ESA, Huygens project scientist and mission manager"
+        },
+        {
+          "name": "Carolyn Porco",
+          "role": "Space Science Institute, imaging team leader"
+        },
+        {
+          "name": "Charles Elachi",
+          "role": "JPL, Cassini RADAR team leader"
+        },
+        {
+          "name": "Hasso Niemann",
+          "role": "NASA Goddard, Huygens GCMS PI"
+        },
+        {
+          "name": "Martin Tomasko",
+          "role": "University of Arizona, Huygens DISR PI"
+        },
+        {
+          "name": "J. Hunter Waite",
+          "role": "Southwest Research Institute, INMS lead"
+        }
+      ]
+    },
+    {
+      "slug": "galileo",
+      "name": "Galileo",
+      "display_name": "Galileo",
+      "destination_category": "Deep Space",
+      "destination": "Jupiter and Europa",
+      "mission_type": "Orbiter",
+      "object_type": "Orbiter",
+      "agency": "NASA/JPL",
+      "operator": "NASA/JPL",
+      "manufacturer": "NASA/JPL",
+      "wiki_title": "Galileo_(spacecraft)",
+      "secondary_wiki_titles": [],
+      "nssdca_id": "1989-084B",
+      "model_keywords": [
+        "Galileo"
+      ],
+      "model_include": [],
+      "model_exclude": [],
+      "model_overrides": [],
+      "launch_date": "1989-10-18",
+      "landing_date": "1995-12-07",
+      "end_date": "2003-09-21",
+      "status_label": "ended",
+      "status_text": "Ended 21 September 2003 with a planned plunge into Jupiter.",
+      "mission_status": "Completed",
+      "sources": [
+        {
+          "label": "NASA Science - Galileo",
+          "url": "https://science.nasa.gov/mission/galileo/",
+          "source_type": "official_nasa"
+        },
+        {
+          "label": "NASA NSSDCA - Galileo",
+          "url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1989-084B",
+          "source_type": "archive"
+        },
+        {
+          "label": "Wikipedia - Galileo (spacecraft)",
+          "url": "https://en.wikipedia.org/wiki/Galileo_(spacecraft)",
+          "source_type": "wikipedia"
+        }
+      ],
+      "people": [
+        {
+          "name": "John R. Casani",
+          "role": "JPL, project manager 1977-88"
+        },
+        {
+          "name": "Dick Spehalski",
+          "role": "JPL, project manager 1988-90"
+        },
+        {
+          "name": "William J. O'Neil",
+          "role": "JPL, project manager 1990-97"
+        },
+        {
+          "name": "James Erickson",
+          "role": "JPL, project manager 1998-2001"
+        },
+        {
+          "name": "Eilene Theilig",
+          "role": "JPL, project manager 2001-03"
+        },
+        {
+          "name": "Claudia Alexander",
+          "role": "JPL, last project manager"
+        },
+        {
+          "name": "Torrence V. Johnson",
+          "role": "JPL, project scientist"
+        },
+        {
+          "name": "Michael Belton",
+          "role": "Imaging team leader"
+        },
+        {
+          "name": "Margaret Kivelson",
+          "role": "UCLA, magnetometer PI"
+        },
+        {
+          "name": "Richard E. Young",
+          "role": "NASA Ames, Galileo Probe project scientist"
+        }
+      ]
+    },
+    {
+      "slug": "juno",
+      "name": "Juno",
+      "display_name": "Juno",
+      "destination_category": "Deep Space",
+      "destination": "Jupiter (flybys of Ganymede, Europa, Io)",
+      "mission_type": "Orbiter",
+      "object_type": "Orbiter",
+      "agency": "NASA/JPL",
+      "operator": "NASA/JPL",
+      "manufacturer": "Lockheed Martin",
+      "wiki_title": "Juno_(spacecraft)",
+      "secondary_wiki_titles": [],
+      "nssdca_id": "2011-040A",
+      "model_keywords": [
+        "Juno"
+      ],
+      "model_include": [],
+      "model_exclude": [],
+      "model_overrides": [],
+      "launch_date": "2011-08-05",
+      "landing_date": "2016-07-04",
+      "end_date": null,
+      "status_label": "active",
+      "status_text": "Active in an extended mission; Jupiter arrival 4 July 2016.",
+      "mission_status": "Active",
+      "sources": [
+        {
+          "label": "NASA Science - Juno",
+          "url": "https://science.nasa.gov/mission/juno/",
+          "source_type": "official_nasa"
+        },
+        {
+          "label": "Juno - Southwest Research Institute",
+          "url": "https://missionjuno.swri.edu/",
+          "source_type": "mission_site"
+        },
+        {
+          "label": "NASA NSSDCA - Juno",
+          "url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=2011-040A",
+          "source_type": "archive"
+        },
+        {
+          "label": "Wikipedia - Juno (spacecraft)",
+          "url": "https://en.wikipedia.org/wiki/Juno_(spacecraft)",
+          "source_type": "wikipedia"
+        }
+      ],
+      "people": [
+        {
+          "name": "Scott Bolton",
+          "role": "Southwest Research Institute, Principal Investigator"
+        },
+        {
+          "name": "Rick Nybakken",
+          "role": "JPL, project manager"
+        },
+        {
+          "name": "Steve Levin",
+          "role": "JPL, project scientist"
+        },
+        {
+          "name": "John Connerney",
+          "role": "NASA Goddard, magnetometer lead and deputy PI"
+        },
+        {
+          "name": "Michael Janssen",
+          "role": "JPL, Microwave Radiometer lead"
+        },
+        {
+          "name": "William Kurth",
+          "role": "University of Iowa, Waves lead"
+        },
+        {
+          "name": "Alberto Adriani",
+          "role": "Italian Institute for Space Astrophysics, JIRAM PI"
+        },
+        {
+          "name": "Candy Hansen",
+          "role": "Planetary Science Institute, JunoCam lead"
+        },
+        {
+          "name": "Luciano Iess",
+          "role": "Sapienza University of Rome, gravity science lead"
+        },
+        {
+          "name": "David McComas",
+          "role": "Princeton, JEDI PI"
+        }
+      ]
+    },
+    {
+      "slug": "venera-13",
+      "name": "Venera 13",
+      "display_name": "Venera 13",
+      "destination_category": "Deep Space",
+      "destination": "Venus (east of Phoebe Regio)",
+      "mission_type": "Lander",
+      "object_type": "Lander",
+      "agency": "Soviet Union (Lavochkin Association)",
+      "operator": "Soviet Union (Lavochkin Association)",
+      "manufacturer": "Lavochkin Association",
+      "wiki_title": "Venera_13",
+      "secondary_wiki_titles": [],
+      "nssdca_id": "1981-106A",
+      "model_keywords": [
+        "Venera"
+      ],
+      "model_include": [],
+      "model_exclude": [],
+      "model_overrides": [],
+      "launch_date": "1981-10-30",
+      "landing_date": "1982-03-01",
+      "end_date": "1982-03-01",
+      "status_label": "ended",
+      "status_text": "The lander survived on the surface for 127 minutes against a 32-minute design life.",
+      "mission_status": "Completed",
+      "sources": [
+        {
+          "label": "NASA NSSDCA - Venera 13",
+          "url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1981-106A",
+          "source_type": "archive"
+        },
+        {
+          "label": "Wikipedia - Venera 13",
+          "url": "https://en.wikipedia.org/wiki/Venera_13",
+          "source_type": "wikipedia"
+        }
+      ],
+      "people": [
+        {
+          "name": "Sergei Kryukov",
+          "role": "Lavochkin Association, general designer"
+        },
+        {
+          "name": "Vyacheslav Kovtunenko",
+          "role": "Lavochkin, general designer, 1970s Venera program"
+        },
+        {
+          "name": "Oleg Ivanovsky",
+          "role": "Lavochkin, deputy chief designer"
+        },
+        {
+          "name": "Roald Sagdeev",
+          "role": "Director of IKI"
+        },
+        {
+          "name": "Valery Barsukov",
+          "role": "Director of Vernadsky Institute, GEOKHI"
+        },
+        {
+          "name": "Yuri Surkov",
+          "role": "GEOKHI, XRF soil analysis"
+        },
+        {
+          "name": "Leonid Ksanfomaliti",
+          "role": "IKI, lander imaging"
+        },
+        {
+          "name": "Mikhail Marov",
+          "role": "Keldysh Institute, Venus atmosphere"
+        },
+        {
+          "name": "Vasily Moroz",
+          "role": "IKI, Venus atmosphere science"
+        },
+        {
+          "name": "Alexander Basilevsky",
+          "role": "GEOKHI, Venus surface geology"
+        }
+      ]
+    },
+    {
+      "slug": "voyager-2",
+      "name": "Voyager 2",
+      "display_name": "Voyager 2",
+      "destination_category": "Deep Space",
+      "destination": "Jupiter, Saturn, Uranus, Neptune, interstellar space",
+      "mission_type": "Flyby",
+      "object_type": "Flyby Probe",
+      "agency": "NASA/JPL",
+      "operator": "NASA/JPL",
+      "manufacturer": "NASA/JPL",
+      "wiki_title": "Voyager_2",
+      "secondary_wiki_titles": [],
+      "nssdca_id": "1977-076A",
+      "model_keywords": [
+        "Voyager"
+      ],
+      "model_include": [
+        "voyager"
+      ],
+      "model_exclude": [],
+      "model_overrides": [],
+      "launch_date": "1977-08-20",
+      "landing_date": "1989-08-25",
+      "end_date": null,
+      "status_label": "active",
+      "status_text": "Active in interstellar space since 5 November 2018; Neptune flyby 25 August 1989.",
+      "mission_status": "Active",
+      "sources": [
+        {
+          "label": "NASA Science - Voyager",
+          "url": "https://science.nasa.gov/mission/voyager/",
+          "source_type": "official_nasa"
+        },
+        {
+          "label": "Voyager - JPL",
+          "url": "https://voyager.jpl.nasa.gov/",
+          "source_type": "mission_site"
+        },
+        {
+          "label": "NASA NSSDCA - Voyager 2",
+          "url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1977-076A",
+          "source_type": "archive"
+        },
+        {
+          "label": "Wikipedia - Voyager 2",
+          "url": "https://en.wikipedia.org/wiki/Voyager_2",
+          "source_type": "wikipedia"
+        }
+      ],
+      "people": [
+        {
+          "name": "Edward C. Stone",
+          "role": "JPL/Caltech, Project Scientist"
+        },
+        {
+          "name": "Harris Schurmeier",
+          "role": "JPL, early project manager"
+        },
+        {
+          "name": "Raymond Heacock",
+          "role": "JPL, project manager"
+        },
+        {
+          "name": "Charles Kohlhase",
+          "role": "JPL, mission design"
+        },
+        {
+          "name": "Bradford Smith",
+          "role": "University of Arizona, imaging team leader"
+        },
+        {
+          "name": "Stamatios Krimigis",
+          "role": "Johns Hopkins APL, low-energy charged particles"
+        },
+        {
+          "name": "Norman Ness",
+          "role": "NASA Goddard, magnetometer"
+        },
+        {
+          "name": "Herbert Bridge",
+          "role": "MIT, plasma science"
+        },
+        {
+          "name": "Donald Gurnett",
+          "role": "University of Iowa, plasma wave"
+        },
+        {
+          "name": "Rochus Vogt",
+          "role": "Caltech, cosmic ray"
+        }
+      ]
+    },
+    {
+      "slug": "rosetta",
+      "name": "Rosetta",
+      "display_name": "Rosetta (Comet 67P Orbiter)",
+      "destination_category": "Deep Space",
+      "destination": "Comet 67P/Churyumov-Gerasimenko",
+      "mission_type": "Orbiter",
+      "object_type": "Orbiter",
+      "agency": "ESA",
+      "operator": "ESA",
+      "manufacturer": "Astrium",
+      "wiki_title": "Rosetta_(spacecraft)",
+      "secondary_wiki_titles": [],
+      "nssdca_id": "2004-006A",
+      "model_keywords": [
+        "Rosetta"
+      ],
+      "model_include": [],
+      "model_exclude": [],
+      "model_overrides": [],
+      "launch_date": "2004-03-02",
+      "landing_date": "2014-08-06",
+      "end_date": "2016-09-30",
+      "status_label": "ended",
+      "status_text": "Ended 30 September 2016 with a controlled landing on comet 67P; arrival at the comet 6 August 2014.",
+      "mission_status": "Completed",
+      "sources": [
+        {
+          "label": "ESA - Rosetta",
+          "url": "https://www.esa.int/Science_Exploration/Space_Science/Rosetta",
+          "source_type": "esa"
+        },
+        {
+          "label": "NASA NSSDCA - Rosetta",
+          "url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=2004-006A",
+          "source_type": "archive"
+        },
+        {
+          "label": "Wikipedia - Rosetta (spacecraft)",
+          "url": "https://en.wikipedia.org/wiki/Rosetta_(spacecraft)",
+          "source_type": "wikipedia"
+        }
+      ],
+      "people": [
+        {
+          "name": "Gerhard Schwehm",
+          "role": "ESA, project scientist to 2012"
+        },
+        {
+          "name": "Matt Taylor",
+          "role": "ESA, project scientist"
+        },
+        {
+          "name": "Fred Jansen",
+          "role": "ESA, mission manager"
+        },
+        {
+          "name": "Paolo Ferri",
+          "role": "ESA, head of mission operations"
+        },
+        {
+          "name": "Andrea Accomazzo",
+          "role": "ESA, flight director"
+        },
+        {
+          "name": "Kathrin Altwegg",
+          "role": "University of Bern, ROSINA PI"
+        },
+        {
+          "name": "Holger Sierks",
+          "role": "Max Planck Institute for Solar System Research, OSIRIS PI"
+        },
+        {
+          "name": "Karl-Heinz Glassmeier",
+          "role": "TU Braunschweig, RPC magnetometer lead"
+        },
+        {
+          "name": "Samuel Gulkis",
+          "role": "JPL, MIRO PI"
+        },
+        {
+          "name": "Claudia Alexander",
+          "role": "JPL, NASA Rosetta project scientist and project manager"
+        }
+      ]
+    },
+    {
+      "slug": "dart",
+      "name": "DART",
+      "display_name": "DART (Double Asteroid Redirection Test)",
+      "destination_category": "Deep Space",
+      "destination": "Asteroid Dimorphos (moonlet of Didymos)",
+      "mission_type": "Impactor",
+      "object_type": "Impactor",
+      "agency": "NASA/Johns Hopkins APL",
+      "operator": "NASA/Johns Hopkins APL",
+      "manufacturer": "Johns Hopkins APL",
+      "wiki_title": "Double_Asteroid_Redirection_Test",
+      "secondary_wiki_titles": [],
+      "nssdca_id": "2021-110A",
+      "model_keywords": [
+        "DART"
+      ],
+      "model_include": [],
+      "model_exclude": [],
+      "model_overrides": [],
+      "launch_date": "2021-11-24",
+      "landing_date": "2022-09-26",
+      "end_date": "2022-09-26",
+      "status_label": "ended",
+      "status_text": "Completed with the 26 September 2022 impact on Dimorphos at about 6.1 km/s; ESA's Hera follow-up launched in October 2024.",
+      "mission_status": "Completed",
+      "sources": [
+        {
+          "label": "NASA Science - DART",
+          "url": "https://science.nasa.gov/mission/dart/",
+          "source_type": "official_nasa"
+        },
+        {
+          "label": "DART - Johns Hopkins APL",
+          "url": "https://dart.jhuapl.edu/",
+          "source_type": "mission_site"
+        },
+        {
+          "label": "NASA NSSDCA - DART",
+          "url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=2021-110A",
+          "source_type": "archive"
+        },
+        {
+          "label": "Wikipedia - Double Asteroid Redirection Test",
+          "url": "https://en.wikipedia.org/wiki/Double_Asteroid_Redirection_Test",
+          "source_type": "wikipedia"
+        }
+      ],
+      "people": [
+        {
+          "name": "Andrew Cheng",
+          "role": "APL, investigation co-lead"
+        },
+        {
+          "name": "Andy Rivkin",
+          "role": "APL, investigation co-lead"
+        },
+        {
+          "name": "Nancy Chabot",
+          "role": "APL, coordination lead"
+        },
+        {
+          "name": "Ed Reynolds",
+          "role": "APL, project manager"
+        },
+        {
+          "name": "Elena Adams",
+          "role": "APL, mission systems engineer"
+        },
+        {
+          "name": "Betsy Congdon",
+          "role": "APL, lead spacecraft engineer"
+        },
+        {
+          "name": "Cristina Thomas",
+          "role": "Northern Arizona University, ground observation lead"
+        },
+        {
+          "name": "Carolyn Ernst",
+          "role": "APL, DRACO instrument scientist"
+        },
+        {
+          "name": "Lindley Johnson",
+          "role": "NASA Planetary Defense Officer"
+        },
+        {
+          "name": "Thomas Statler",
+          "role": "NASA DART program scientist"
+        }
+      ]
+    },
+    {
+      "slug": "voyager-1",
+      "name": "Voyager 1",
+      "display_name": "Voyager 1",
+      "destination_category": "Deep Space",
+      "destination": "Jupiter, Saturn, Titan, interstellar space",
+      "mission_type": "Flyby",
+      "object_type": "Flyby Probe",
+      "agency": "NASA/JPL",
+      "operator": "NASA/JPL",
+      "manufacturer": "NASA/JPL",
+      "wiki_title": "Voyager_1",
+      "secondary_wiki_titles": [],
+      "nssdca_id": "1977-084A",
+      "model_keywords": [
+        "Voyager"
+      ],
+      "model_include": [
+        "voyager"
+      ],
+      "model_exclude": [],
+      "model_overrides": [],
+      "launch_date": "1977-09-05",
+      "landing_date": "2012-08-25",
+      "end_date": null,
+      "status_label": "active",
+      "status_text": "Active and the farthest human-made object, about 170 AU from the Sun; entered interstellar space on 25 August 2012.",
+      "mission_status": "Active",
+      "sources": [
+        {
+          "label": "NASA Science - Voyager",
+          "url": "https://science.nasa.gov/mission/voyager/",
+          "source_type": "official_nasa"
+        },
+        {
+          "label": "Voyager - JPL",
+          "url": "https://voyager.jpl.nasa.gov/",
+          "source_type": "mission_site"
+        },
+        {
+          "label": "NASA NSSDCA - Voyager 1",
+          "url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1977-084A",
+          "source_type": "archive"
+        },
+        {
+          "label": "Wikipedia - Voyager 1",
+          "url": "https://en.wikipedia.org/wiki/Voyager_1",
+          "source_type": "wikipedia"
+        }
+      ],
+      "people": [
+        {
+          "name": "Edward C. Stone",
+          "role": "JPL/Caltech, Project Scientist for decades"
+        },
+        {
+          "name": "Harris Schurmeier",
+          "role": "JPL, early project manager"
+        },
+        {
+          "name": "Raymond Heacock",
+          "role": "JPL, project manager"
+        },
+        {
+          "name": "Suzanne Dodd",
+          "role": "JPL, project manager in interstellar era"
+        },
+        {
+          "name": "Bradford Smith",
+          "role": "University of Arizona, imaging team leader"
+        },
+        {
+          "name": "Linda Morabito",
+          "role": "JPL navigation engineer who discovered Io's volcanic plume"
+        },
+        {
+          "name": "Carl Sagan",
+          "role": "Chair of Golden Record committee"
+        },
+        {
+          "name": "Frank Drake",
+          "role": "Golden Record committee, message design"
+        },
+        {
+          "name": "Ann Druyan",
+          "role": "Golden Record creative director"
+        },
+        {
+          "name": "Jon Lomberg",
+          "role": "Golden Record image designer"
+        }
+      ]
+    },
+    {
+      "slug": "philae",
+      "name": "Philae",
+      "display_name": "Philae (Comet 67P Lander)",
+      "destination_category": "Deep Space",
+      "destination": "Comet 67P/Churyumov-Gerasimenko",
+      "mission_type": "Lander",
+      "object_type": "Lander",
+      "agency": "ESA",
+      "operator": "ESA",
+      "manufacturer": "DLR-led consortium",
+      "wiki_title": "Philae_(spacecraft)",
+      "secondary_wiki_titles": [],
+      "nssdca_id": "2004-006C",
+      "model_keywords": [
+        "Philae"
+      ],
+      "model_include": [],
+      "model_exclude": [],
+      "model_overrides": [],
+      "launch_date": "2014-11-12",
+      "landing_date": "2014-11-12",
+      "end_date": "2015-07-09",
+      "status_label": "lost_contact",
+      "status_text": "Last contact 9 July 2015; touchdown at Agilkia on 12 November 2014 after separation from Rosetta, then a bounce to Abydos.",
+      "mission_status": "Completed",
+      "sources": [
+        {
+          "label": "ESA - Rosetta (Philae lander)",
+          "url": "https://www.esa.int/Science_Exploration/Space_Science/Rosetta",
+          "source_type": "esa"
+        },
+        {
+          "label": "NASA NSSDCA - Philae",
+          "url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=2004-006C",
+          "source_type": "archive"
+        },
+        {
+          "label": "Wikipedia - Philae (spacecraft)",
+          "url": "https://en.wikipedia.org/wiki/Philae_(spacecraft)",
+          "source_type": "wikipedia"
+        }
+      ],
+      "people": [
+        {
+          "name": "Stephan Ulamec",
+          "role": "DLR, lander manager"
+        },
+        {
+          "name": "Jean-Pierre Bibring",
+          "role": "Institut d'Astrophysique Spatiale, lead scientist and CIVA PI"
+        },
+        {
+          "name": "Hermann Boehnhardt",
+          "role": "Max Planck Institute for Solar System Research, project scientist"
+        },
+        {
+          "name": "Jens Biele",
+          "role": "DLR, lander scientist and landing analysis"
+        },
+        {
+          "name": "Hans-Ulrich Auster",
+          "role": "TU Braunschweig, ROMAP PI"
+        },
+        {
+          "name": "Fred Goesmann",
+          "role": "Max Planck Institute, COSAC PI"
+        },
+        {
+          "name": "Wlodek Kofman",
+          "role": "IPAG Grenoble, CONSERT PI"
+        },
+        {
+          "name": "Tilman Spohn",
+          "role": "DLR, MUPUS PI"
+        },
+        {
+          "name": "Ian Wright",
+          "role": "Open University, Ptolemy PI"
+        },
+        {
+          "name": "Goestar Klingelhoefer",
+          "role": "University of Mainz, APXS PI"
+        }
+      ]
+    }
+  ]
+}
