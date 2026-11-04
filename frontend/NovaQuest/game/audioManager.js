@@ -1097,6 +1097,52 @@ class AudioManager {
   }
 
   /**
+   * Suit EVA Headlamp Switch Toggle: Heavy glove relay click + capacitor surge
+   */
+  playHeadlampToggle(isOn = true) {
+    const ctx = this.ensureContext();
+    if (!ctx) return;
+    const { sfx } = this.getVolumes();
+    if (sfx <= 0.001) return;
+
+    try {
+      const now = ctx.currentTime;
+      // Mechanical switch click
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(isOn ? 1800 : 920, now);
+      osc.frequency.exponentialRampToValueAtTime(isOn ? 800 : 420, now + 0.035);
+
+      gain.gain.setValueAtTime(sfx * 0.16, now);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.04);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.045);
+
+      // Capacitor power hum on ignition
+      if (isOn) {
+        const humOsc = ctx.createOscillator();
+        const humGain = ctx.createGain();
+        humOsc.type = 'sine';
+        humOsc.frequency.setValueAtTime(140, now);
+        humOsc.frequency.linearRampToValueAtTime(440, now + 0.08);
+
+        humGain.gain.setValueAtTime(0.0001, now);
+        humGain.gain.linearRampToValueAtTime(sfx * 0.09, now + 0.02);
+        humGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.12);
+
+        humOsc.connect(humGain);
+        humGain.connect(ctx.destination);
+        humOsc.start(now);
+        humOsc.stop(now + 0.14);
+      }
+    } catch {}
+  }
+
+  /**
    * Stop all persistent audio loops upon level exit or pause
    */
   stopAllLoops() {

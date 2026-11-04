@@ -27,7 +27,8 @@ import {
   Pause,
   Gamepad2,
   Database,
-  AlertTriangle
+  AlertTriangle,
+  Lightbulb
 } from 'lucide-react';
 import { audio } from '../../game/audioManager';
 import InvestigationModal from './InvestigationModal';
@@ -39,6 +40,8 @@ import {
   createLunarRoughnessTexture,
   createBasaltRockTexture,
   createGoldFoilTexture,
+  createSilverFoilTexture,
+  createCrumpledFoilNormalTexture,
   createSolarPanelTexture,
   createAlienGlyphTexture,
   createRoverTrackTexture,
@@ -252,7 +255,23 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
   const [scanPulseActive, setScanPulseActive] = useState(false);
   const [investigateTarget, setInvestigateTarget] = useState(null);
   const [nearInteractable, setNearInteractable] = useState(null);
-  const [hudNotice, setHudNotice] = useState('Click screen to look • [WASD] Move • [Space] Jump • [E] Interact • [Q] Scanner • [Esc] Pause');
+
+  // Visual Fidelity: Astronaut EVA Helmet Headlamp (cuts through pitch-black vacuum shadows)
+  const [isHeadlampOn, setIsHeadlampOn] = useState(true);
+  const isHeadlampOnRef = useRef(true);
+  const headlampSpotRef = useRef(null);
+  const headlampFillRef = useRef(null);
+
+  const toggleHeadlamp = () => {
+    const next = !isHeadlampOnRef.current;
+    isHeadlampOnRef.current = next;
+    setIsHeadlampOn(next);
+    if (headlampSpotRef.current) headlampSpotRef.current.visible = next;
+    if (headlampFillRef.current) headlampFillRef.current.visible = next;
+    audio.playHeadlampToggle(next);
+  };
+
+  const [hudNotice, setHudNotice] = useState('Click screen to look • [WASD] Move • [Space] Jump • [E] Interact • [Q] Scanner • [L] Headlamp • [Esc] Pause');
 
   // Stage 1 — Arrival on the Moon Tutorial Objectives
   const [stage1Objectives, setStage1Objectives] = useState({
@@ -1262,6 +1281,8 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
     const regolithRoughnessMap = createLunarRoughnessTexture(512, 512);
     const basaltRockMap = createBasaltRockTexture(512, 512);
     const goldFoilMap = createGoldFoilTexture(512, 512);
+    const silverFoilMap = createSilverFoilTexture(512, 512);
+    const crumpledNormalMap = createCrumpledFoilNormalTexture(512, 512);
     const solarPanelMap = createSolarPanelTexture(512, 512);
     const alienGlyphMap = createAlienGlyphTexture(512, 512);
     const roverTrackMap = createRoverTrackTexture(256, 512);
@@ -1374,6 +1395,32 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
     fpScannerGroup.add(scannerSpot);
 
     camera.add(fpScannerGroup);
+
+    // Helmet Headlamp mounted on first-person astronaut EVA suit (cuts through pitch-black vacuum shadows)
+    const headlampSpot = new THREE.SpotLight(0xf8fafc, 4.5, 65, Math.PI / 4.8, 0.35, 1.8);
+    headlampSpot.position.set(0, 0.15, -0.1);
+    headlampSpot.castShadow = true;
+    headlampSpot.shadow.mapSize.width = 1024;
+    headlampSpot.shadow.mapSize.height = 1024;
+    headlampSpot.shadow.camera.near = 0.2;
+    headlampSpot.shadow.camera.far = 65;
+    headlampSpot.shadow.bias = -0.0005;
+
+    const headlampTarget = new THREE.Object3D();
+    headlampTarget.position.set(0, 0.1, -12);
+    camera.add(headlampTarget);
+    headlampSpot.target = headlampTarget;
+    camera.add(headlampSpot);
+
+    const headlampFill = new THREE.PointLight(0xe0f2fe, 0.45, 9, 2.0);
+    headlampFill.position.set(0, -0.1, -0.2);
+    camera.add(headlampFill);
+
+    headlampSpotRef.current = headlampSpot;
+    headlampFillRef.current = headlampFill;
+    headlampSpot.visible = isHeadlampOnRef.current;
+    headlampFill.visible = isHeadlampOnRef.current;
+
     scene.add(camera);
 
     // 3. RENDERER WITH HIGH-CONTRAST PBR SHADOWS
@@ -1386,99 +1433,123 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
     renderer.setSize(width, height);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFShadowMap; // Sharp shadow edges (authentic vacuum shadows, no atmospheric blur)
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap; // Authentic vacuum shadows with smooth physical penumbra
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.35; // High dynamic range
     container.appendChild(renderer.domElement);
 
-    // 4. LOW-ANGLE HARSH LUNAR SUNLIGHT & EARTHSHINE (VACUUM EXPOSURE)
-    // One strong directional light representing the Sun at low elevation (~14.4 deg) casting long, sharp, inky shadows
-    const sunLight = new THREE.DirectionalLight(0xfffef2, 5.5);
-    sunLight.position.set(290, 72, -180);
+    // 4. LOW-ANGLE HARSH LUNAR SUNLIGHT (15° - 22° ELEVATION) & PURE VACUUM SHADOWS
+    // The Moon has zero atmosphere to scatter light. Shadows are jet-black without indirect bounce.
+    const sunLight = new THREE.DirectionalLight(0xfffef5, 6.5);
+    sunLight.position.set(280, 95, -170); // Low elevation angle ~16.5 degrees
     sunLight.castShadow = true;
     sunLight.shadow.mapSize.width = 4096;
     sunLight.shadow.mapSize.height = 4096;
     sunLight.shadow.camera.near = 10;
     sunLight.shadow.camera.far = 700;
-    const shadowSize = 240;
+    const shadowSize = 250;
     sunLight.shadow.camera.left = -shadowSize;
     sunLight.shadow.camera.right = shadowSize;
     sunLight.shadow.camera.top = shadowSize;
     sunLight.shadow.camera.bottom = -shadowSize;
-    sunLight.shadow.bias = -0.0003;
-    sunLight.shadow.radius = 1; // Sharp shadow edges
+    sunLight.shadow.bias = -0.0002;
+    sunLight.shadow.radius = 1;
     scene.add(sunLight);
 
-    // Stark high-contrast vacuum lighting: Zero atmosphere to scatter sunlight.
-    // Earthshine is the only subtle indirect fill light on shadow-facing terrain (cool blue-grey)
-    const earthshineLight = new THREE.DirectionalLight(0x38bdf8, 0.14);
-    earthshineLight.position.set(-260, 125, -340);
-    scene.add(earthshineLight);
+    // Subtle lunar regolith diffuse bounce light (upward bounce from sunlit regolith, albedo ~0.12)
+    const regolithBounceLight = new THREE.DirectionalLight(0x94a3b8, 0.12);
+    regolithBounceLight.position.set(-280, -95, 170);
+    scene.add(regolithBounceLight);
 
-    // Near-zero ambient light (0.04) ensuring deep, inky vacuum shadows with extreme contrast
-    const faintAmbient = new THREE.AmbientLight(0x04060a, 0.04);
+    // Near-zero ambient light (<= 0.04) ensuring deep, inky pitch-black vacuum shadows
+    const faintAmbient = new THREE.AmbientLight(0x020306, 0.02);
     scene.add(faintAmbient);
 
-    // 5. CELESTIAL ENVIRONMENT: BLACK SKY, SPARSE STARS & DISTANT SUBTLE EARTH
-    // Under harsh unfiltered lunar sunlight, only a few pinpoint non-twinkling stars are visible
-    const starCount = 650;
+    // Zero atmospheric fog/haze
+    scene.fog = null;
+
+    // 5. PHOTOREALISTIC SKYBOX & PINPOINT NON-TWINKLING STARS
+    // Under vacuum without atmospheric scintillation, stars DO NOT twinkle.
+    const starCount = 3800;
     const starGeo = new THREE.BufferGeometry();
     const starPositions = new Float32Array(starCount * 3);
     const starColors = new Float32Array(starCount * 3);
 
-    for (let i = 0; i < starCount * 3; i += 3) {
+    const spectralColors = [
+      new THREE.Color(0xa5b4fc), // O/B Blue-white (hottest)
+      new THREE.Color(0xf8fafc), // A/F White
+      new THREE.Color(0xfef08a), // G Solar yellow
+      new THREE.Color(0xfdba74), // K/M Orange-red
+      new THREE.Color(0xe2e8f0)  // Neutral stellar white
+    ];
+
+    for (let i = 0; i < starCount; i++) {
+      const idx = i * 3;
       const u = Math.random();
       const v = Math.random();
       const theta = u * 2.0 * Math.PI;
       const phi = Math.acos(2.0 * v - 1.0);
-      const r = 900 + Math.random() * 50;
+      const r = 950 + Math.random() * 40;
 
-      starPositions[i] = r * Math.sin(phi) * Math.cos(theta);
-      starPositions[i + 1] = Math.abs(r * Math.cos(phi)) + 12; // Keep in upper hemisphere
-      starPositions[i + 2] = r * Math.sin(phi) * Math.sin(theta);
+      starPositions[idx] = r * Math.sin(phi) * Math.cos(theta);
+      starPositions[idx + 1] = Math.abs(r * Math.cos(phi)) + 8; // Upper celestial hemisphere
+      starPositions[idx + 2] = r * Math.sin(phi) * Math.sin(theta);
 
-      const isBright = Math.random() > 0.88;
-      starColors[i] = isBright ? 0.95 : 0.65 + Math.random() * 0.2;
-      starColors[i + 1] = isBright ? 0.95 : 0.65 + Math.random() * 0.2;
-      starColors[i + 2] = 1.0;
+      const color = spectralColors[Math.floor(Math.random() * spectralColors.length)];
+      const brightness = Math.random() > 0.92 ? 1.0 : 0.45 + Math.random() * 0.45;
+      starColors[idx] = color.r * brightness;
+      starColors[idx + 1] = color.g * brightness;
+      starColors[idx + 2] = color.b * brightness;
     }
     starGeo.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
     starGeo.setAttribute('color', new THREE.BufferAttribute(starColors, 3));
-    const starMat = new THREE.PointsMaterial({ size: 0.85, vertexColors: true });
+    const starMat = new THREE.PointsMaterial({
+      size: 1.0,
+      sizeAttenuation: false,
+      vertexColors: true
+    });
     const starfield = new THREE.Points(starGeo, starMat);
     scene.add(starfield);
 
-    // Distant Earth hanging subtly in the western sky (small blue-white marble, not dominating)
-    const earthGroup = new THREE.Group();
-    earthGroup.position.set(-260, 125, -340);
+    // 6. THE BLUE MARBLE ("EARTHRISE")
+    // High-resolution 3D sphere of Earth hanging low over the horizon, bathed in sunlight with faint atmospheric rim glow
+    const textureLoader = new THREE.TextureLoader();
+    const earthDayMap = textureLoader.load('/textures/planets/earth_day.jpg');
+    const earthCloudsMap = textureLoader.load('/textures/planets/earth_clouds.jpg');
+    const earthSpecularMap = textureLoader.load('/textures/planets/earth_specular.jpg');
 
-    const earthSphereGeo = new THREE.SphereGeometry(6.5, 48, 48);
+    const earthGroup = new THREE.Group();
+    earthGroup.position.set(-280, 85, -290); // Low elevation angle (~12-14 deg) over crater rim
+
+    const earthSphereGeo = new THREE.SphereGeometry(7.2, 64, 64);
     const earthMat = new THREE.MeshStandardMaterial({
-      color: 0x2563eb,
-      emissive: 0x081f44,
-      roughness: 0.55,
+      map: earthDayMap,
+      roughnessMap: earthSpecularMap,
+      roughness: 0.65,
       metalness: 0.05
     });
     const earthSphere = new THREE.Mesh(earthSphereGeo, earthMat);
+    earthSphere.rotation.y = 2.4;
     earthGroup.add(earthSphere);
 
     // Swirling white clouds layer
-    const cloudsGeo = new THREE.SphereGeometry(6.62, 48, 48);
+    const cloudsGeo = new THREE.SphereGeometry(7.32, 64, 64);
     const cloudsMat = new THREE.MeshStandardMaterial({
-      color: 0xffffff,
+      map: earthCloudsMap,
       transparent: true,
-      opacity: 0.42,
-      roughness: 0.85
+      opacity: 0.55,
+      roughness: 0.9,
+      blending: THREE.AdditiveBlending
     });
     const earthClouds = new THREE.Mesh(cloudsGeo, cloudsMat);
     earthGroup.add(earthClouds);
 
-    // Delicate subtle blue atmospheric haze glow ring around Earth
-    const earthAtmosphereGeo = new THREE.SphereGeometry(6.95, 32, 32);
+    // Atmospheric cyan Fresnel rim glow shell
+    const earthAtmosphereGeo = new THREE.SphereGeometry(7.6, 48, 48);
     const earthAtmosphereMat = new THREE.MeshBasicMaterial({
       color: 0x38bdf8,
       transparent: true,
-      opacity: 0.22,
+      opacity: 0.28,
       side: THREE.BackSide
     });
     const earthAtmosphere = new THREE.Mesh(earthAtmosphereGeo, earthAtmosphereMat);
@@ -1864,24 +1935,65 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
     const surveyorTerrainY = getTerrainHeight(0, 0);
     surveyorGroup.position.set(0, surveyorTerrainY, 0);
 
-    // Medium-poly PBR materials
-    const matAluminum = new THREE.MeshStandardMaterial({ color: 0xd4d4d8, metalness: 0.88, roughness: 0.24 });
-    const matGoldFoil = new THREE.MeshStandardMaterial({
+    // NASA Museum-Grade PBR Metallic Shaders (Authentic vacuum surface physics)
+    // Kapton gold thermal MLI blanket with crumpled normal map
+    const matKaptonGold = new THREE.MeshStandardMaterial({
       map: goldFoilMap,
+      normalMap: crumpledNormalMap,
+      normalScale: new THREE.Vector2(1.5, 1.5),
       bumpMap: goldFoilMap,
-      bumpScale: 0.12,
-      metalness: 0.92,
-      roughness: 0.32,
-      color: 0xf59e0b
+      bumpScale: 0.08,
+      color: 0xf59e0b,
+      metalness: 0.96,
+      roughness: 0.20
     });
+
+    // Aluminized Mylar / Kapton silver thermal blanket with crumpled normal map
+    const matKaptonSilver = new THREE.MeshStandardMaterial({
+      map: silverFoilMap,
+      normalMap: crumpledNormalMap,
+      normalScale: new THREE.Vector2(1.6, 1.6),
+      bumpMap: silverFoilMap,
+      bumpScale: 0.08,
+      color: 0xf1f5f9,
+      metalness: 0.98,
+      roughness: 0.16
+    });
+
+    // Matte anodized titanium tubular spaceframe & structural Warren trusses
+    const matTitaniumAnodized = new THREE.MeshStandardMaterial({
+      color: 0x94a3b8,
+      metalness: 0.92,
+      roughness: 0.44
+    });
+
+    // Telescoping polished mirror chrome oleo shock absorber pistons
+    const matChromeOleo = new THREE.MeshStandardMaterial({
+      color: 0xf8fafc,
+      metalness: 0.99,
+      roughness: 0.04
+    });
+
+    // High-efficiency silicon photovoltaic solar cell wafer
     const matSolarPanel = new THREE.MeshStandardMaterial({
       map: solarPanelMap,
-      roughness: 0.16,
-      metalness: 0.8
+      metalness: 0.85,
+      roughness: 0.18
     });
+
     // Cold scientific materials (Surveyor 1 has zero artificial lights and no emissive glow)
-    const matGlassOptic = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.94, roughness: 0.08 });
-    const matRocketNozzle = new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.95, roughness: 0.35 });
+    const matGlassOptic = new THREE.MeshStandardMaterial({
+      color: 0x0f172a,
+      metalness: 0.1,
+      roughness: 0.05
+    });
+    const matRocketNozzle = new THREE.MeshStandardMaterial({
+      color: 0x1e293b,
+      metalness: 0.95,
+      roughness: 0.35
+    });
+    const matAluminum = matTitaniumAnodized;
+    const matGoldFoil = matKaptonGold;
 
     // A. Authentic Open Triangular Tubular Lattice Space Frame (NASA Surveyor Specification)
     const frameTrussGroup = new THREE.Group();
@@ -2033,7 +2145,7 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
 
     const compB = new THREE.Group();
     compB.position.set(-0.65, 1.85, 0.25);
-    const compBBox = new THREE.Mesh(new THREE.BoxGeometry(1.15, 0.75, 0.75), matGoldFoil);
+    const compBBox = new THREE.Mesh(new THREE.BoxGeometry(1.15, 0.75, 0.75), matKaptonSilver);
     compBBox.castShadow = true;
     compB.add(compBBox);
 
@@ -2046,7 +2158,7 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
     surveyorGroup.add(compB);
 
     // E. 3 High-Detail Articulated Tripod Landing Legs with Telescoping Oleo Pistons & Honeycomb Footpads
-    const chromePistonMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, metalness: 0.98, roughness: 0.06 });
+    const chromePistonMat = matChromeOleo;
     const blueCollarMat = new THREE.MeshStandardMaterial({ color: 0x1e3a8a, metalness: 0.88, roughness: 0.3 });
 
     for (let i = 0; i < 3; i++) {
@@ -2344,6 +2456,61 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
     surveyorGroup.add(targetMarkerFootpad);
 
     scene.add(surveyorGroup);
+
+    // NASA 3D Resource Integration:
+    // Seamlessly load official NASA Surveyor 1 GLTF models if present in /models/
+    // Retargets all child meshes with museum-grade PBR metallic shaders
+    const candidatePaths = ['/models/spacecraft/surveyor.glb', '/models/nasa/surveyor_1.glb'];
+    let surveyorModelLoaded = false;
+
+    const applyNASAPBRShaders = (rootObj) => {
+      rootObj.traverse((child) => {
+        if (child.isMesh) {
+          child.castShadow = true;
+          child.receiveShadow = true;
+          const name = (child.name || '').toLowerCase();
+          if (name.includes('foil') || name.includes('gold') || name.includes('mli') || name.includes('blanket')) {
+            child.material = matKaptonGold;
+          } else if (name.includes('silver') || name.includes('mylar') || name.includes('insul')) {
+            child.material = matKaptonSilver;
+          } else if (name.includes('solar') || name.includes('panel') || name.includes('array')) {
+            child.material = matSolarPanel;
+          } else if (name.includes('piston') || name.includes('chrome') || name.includes('shock')) {
+            child.material = matChromeOleo;
+          } else if (name.includes('lens') || name.includes('glass') || name.includes('optic') || name.includes('vidicon')) {
+            child.material = matGlassOptic;
+          } else if (name.includes('nozzle') || name.includes('engine') || name.includes('throat')) {
+            child.material = matRocketNozzle;
+          } else if (child.material) {
+            child.material = matTitaniumAnodized;
+          }
+        }
+      });
+    };
+
+    const tryLoadSurveyorGLTF = (pathIdx = 0) => {
+      if (pathIdx >= candidatePaths.length) return;
+      gltfLoader.load(
+        candidatePaths[pathIdx],
+        (gltf) => {
+          if (surveyorModelLoaded) return;
+          surveyorModelLoaded = true;
+          const nasaModel = gltf.scene;
+          applyNASAPBRShaders(nasaModel);
+          frameTrussGroup.visible = false;
+          compA.visible = false;
+          compB.visible = false;
+          solarGroup.visible = false;
+          tvCameraGroup.visible = false;
+          surveyorGroup.add(nasaModel);
+        },
+        undefined,
+        () => {
+          tryLoadSurveyorGLTF(pathIdx + 1);
+        }
+      );
+    };
+    tryLoadSurveyorGLTF(0);
 
     // =========================================================================
     // 11. ZONE 1 — TEAM LANDING ZONE (X: 105, Z: 65)
@@ -4767,8 +4934,8 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
 
     // 14. DYNAMIC BALLISTIC REGOLITH MOVEMENT DUST (NO ATMOSPHERIC FLOATING)
     // Particles strictly triggered by astronaut locomotion, vehicle tires, or impacts
-    // Following vacuum ballistics in lunar gravity (g = 1.62 m/s^2) and settling immediately
-    const MAX_DUST = 72;
+    // Following pure vacuum parabolic arcs in lunar gravity (g = 1.62 m/s^2) and settling immediately on ground contact
+    const MAX_DUST = 256;
     const dustGeo = new THREE.BufferGeometry();
     const dustPositions = new Float32Array(MAX_DUST * 3);
     const dustVelocities = new Float32Array(MAX_DUST * 3);
@@ -4781,39 +4948,39 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
       dustPositions[i * 3 + 1] = -999;
       dustPositions[i * 3 + 2] = 0;
       dustLifetimes[i] = 999;
-      dustMaxLife[i] = 0.65;
+      dustMaxLife[i] = 0.85;
     }
     dustGeo.setAttribute('position', new THREE.BufferAttribute(dustPositions, 3));
 
     const dustMat = new THREE.PointsMaterial({
       map: dustParticleTex,
-      size: 0.24,
-      color: 0x9ca3af, // Lunar regolith dust grey
+      size: 0.22,
+      color: 0x9ca3af, // Lunar regolith abrasive dust grey
       transparent: true,
-      opacity: 0.8,
+      opacity: 0.85,
       depthWrite: false
     });
     const dustParticles = new THREE.Points(dustGeo, dustMat);
     scene.add(dustParticles);
 
-    const spawnMovementDust = (cx, cz, count = 8, intensity = 1.0) => {
-      const cy = getTerrainHeight(cx, cz) + 0.03;
+    const spawnMovementDust = (cx, cz, count = 10, intensity = 1.0) => {
+      const cy = getTerrainHeight(cx, cz) + 0.02;
       for (let k = 0; k < count; k++) {
         const idx = (nextDustIndex + k) % MAX_DUST;
         const spreadAng = Math.random() * Math.PI * 2;
-        const spreadDist = Math.random() * 0.16;
+        const spreadDist = Math.random() * 0.22;
 
         dustPositions[idx * 3] = cx + Math.cos(spreadAng) * spreadDist;
         dustPositions[idx * 3 + 1] = cy;
         dustPositions[idx * 3 + 2] = cz + Math.sin(spreadAng) * spreadDist;
 
-        // Ballistic velocity: upward kick + small lateral scatter
-        dustVelocities[idx * 3] = (Math.random() - 0.5) * 0.45 * intensity;
-        dustVelocities[idx * 3 + 1] = (0.55 + Math.random() * 0.65) * intensity;
-        dustVelocities[idx * 3 + 2] = (Math.random() - 0.5) * 0.45 * intensity;
+        // Pure ballistic velocity: upward kick + lateral dispersion without atmospheric drag
+        dustVelocities[idx * 3] = (Math.random() - 0.5) * 0.55 * intensity;
+        dustVelocities[idx * 3 + 1] = (0.75 + Math.random() * 0.85) * intensity;
+        dustVelocities[idx * 3 + 2] = (Math.random() - 0.5) * 0.55 * intensity;
 
         dustLifetimes[idx] = 0;
-        dustMaxLife[idx] = 0.45 + Math.random() * 0.3;
+        dustMaxLife[idx] = 0.85 + Math.random() * 0.45;
       }
       nextDustIndex = (nextDustIndex + count) % MAX_DUST;
     };
@@ -5577,6 +5744,12 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
         return;
       }
 
+      // Suit EVA Helmet Headlamp Toggle [L] or [T]
+      if (code === 'KeyL' || code === 'KeyT') {
+        toggleHeadlamp();
+        return;
+      }
+
       if (isPausedRef.current) return;
 
       if (code === 'KeyW' || code === 'ArrowUp') keys.w = true;
@@ -5692,7 +5865,7 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
       const locked = document.pointerLockElement === renderer.domElement;
       setIsLocked(locked);
       if (locked) {
-        setHudNotice('Look around with mouse • [WASD] Move • [Space] Jump • [E] Interact • [Q] Scanner • [Esc] Pause');
+        setHudNotice('Look around with mouse • [WASD] Move • [Space] Jump • [E] Interact • [Q] Scanner • [L] Headlamp • [Esc] Pause');
       } else {
         setHudNotice('Click screen to activate Astronaut EVA controls • [Esc] Pause');
       }
@@ -6735,6 +6908,8 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
       basaltRockMap.dispose();
       regolithRockMat.dispose();
       goldFoilMap.dispose();
+      silverFoilMap.dispose();
+      crumpledNormalMap.dispose();
       solarPanelMap.dispose();
       alienGlyphMap.dispose();
       roverTrackMap.dispose();
@@ -6743,6 +6918,17 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
       carbonFiberMap.dispose();
       scannerScreenMap.dispose();
       spacesuitFabricMap.dispose();
+      earthDayMap.dispose();
+      earthCloudsMap.dispose();
+      earthSpecularMap.dispose();
+      starGeo.dispose();
+      starMat.dispose();
+      earthSphereGeo.dispose();
+      earthMat.dispose();
+      cloudsGeo.dispose();
+      cloudsMat.dispose();
+      earthAtmosphereGeo.dispose();
+      earthAtmosphereMat.dispose();
       scanBeamGeo.dispose();
       scanBeamMat.dispose();
       dustGeo.dispose();
@@ -6918,6 +7104,19 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
                     <ListOrdered className="w-3 h-3" />
                     <span>Roadmap</span>
                   </button>
+                  <button
+                    type="button"
+                    onClick={toggleHeadlamp}
+                    className={`px-2 py-1 rounded border text-[10px] flex items-center gap-1 transition-all ${
+                      isHeadlampOn
+                        ? 'bg-amber-500/20 border-amber-400 text-amber-300 shadow-[0_0_8px_rgba(245,158,11,0.3)]'
+                        : 'bg-slate-900 border-white/20 text-slate-400'
+                    }`}
+                    title="Toggle Suit EVA Helmet Headlamp [L / T]"
+                  >
+                    <Lightbulb className={`w-3 h-3 ${isHeadlampOn ? 'text-amber-400 fill-amber-400' : 'text-slate-500'}`} />
+                    <span>HEADLAMP [{isHeadlampOn ? 'ON' : 'OFF'}]</span>
+                  </button>
                 </div>
               </div>
 
@@ -7030,6 +7229,7 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
                   <div><strong className="text-amber-400">[Mouse]</strong> Look</div>
                   <div><strong className="text-amber-400">[E]</strong> Interact</div>
                   <div><strong className="text-amber-400">[Q]</strong> Scan</div>
+                  <div><strong className="text-amber-400">[L]</strong> Lamp</div>
                   <div><strong className="text-amber-400">[Esc]</strong> Pause</div>
                 </div>
               </div>
@@ -8922,7 +9122,11 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
                     <span className="text-slate-400">Database:</span>
                     <span className="font-bold text-white px-2 py-0.5 rounded bg-white/10">Tab / J</span>
                   </div>
-                  <div className="p-2.5 rounded-lg bg-black/50 border border-white/10 flex justify-between items-center col-span-2">
+                  <div className="p-2.5 rounded-lg bg-black/50 border border-white/10 flex justify-between items-center">
+                    <span className="text-slate-400">Headlamp:</span>
+                    <span className="font-bold text-white px-2 py-0.5 rounded bg-white/10">L / T</span>
+                  </div>
+                  <div className="p-2.5 rounded-lg bg-black/50 border border-white/10 flex justify-between items-center">
                     <span className="text-slate-400">Pause Menu:</span>
                     <span className="font-bold text-white px-2 py-0.5 rounded bg-white/10">Esc</span>
                   </div>

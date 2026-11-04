@@ -659,3 +659,119 @@ export function createSpacesuitFabricTexture(width = 512, height = 512) {
   return texture;
 }
 
+/**
+ * Creates Authentic Tangent-Space Normal Map for Crumpled MLI Thermal Blankets
+ * Generates organic micro-wrinkles, triangular fold creases, and hammered foil normals
+ */
+export function createCrumpledFoilNormalTexture(width = 512, height = 512) {
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d');
+
+  const heights = new Float32Array(width * height);
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const f1 = Math.abs(Math.sin(x * 0.08) * Math.cos(y * 0.08));
+      const f2 = Math.abs(Math.sin(x * 0.18 + y * 0.14) * 0.6);
+      const f3 = Math.abs(Math.sin((x - y) * 0.28) * 0.35);
+      const f4 = Math.abs(Math.sin((x + y) * 0.45) * 0.2);
+      const wrinkle = f1 + f2 + f3 + f4;
+      heights[y * width + x] = wrinkle;
+    }
+  }
+
+  const imgData = ctx.createImageData(width, height);
+  const data = imgData.data;
+  const bumpStrength = 2.4;
+
+  for (let y = 0; y < height; y++) {
+    const yPrev = (y - 1 + height) % height;
+    const yNext = (y + 1) % height;
+    for (let x = 0; x < width; x++) {
+      const xPrev = (x - 1 + width) % width;
+      const xNext = (x + 1) % width;
+
+      const idx = (y * width + x) * 4;
+      const dhdx = (heights[y * width + xNext] - heights[y * width + xPrev]) * bumpStrength;
+      const dhdy = (heights[yNext * width + x] - heights[yPrev * width + x]) * bumpStrength;
+
+      let nx = -dhdx;
+      let ny = -dhdy;
+      let nz = 1.0;
+      const len = Math.hypot(nx, ny, nz);
+      nx /= len;
+      ny /= len;
+      nz /= len;
+
+      data[idx] = Math.round((nx * 0.5 + 0.5) * 255);
+      data[idx + 1] = Math.round((ny * 0.5 + 0.5) * 255);
+      data[idx + 2] = Math.round((nz * 0.5 + 0.5) * 255);
+      data[idx + 3] = 255;
+    }
+  }
+
+  ctx.putImageData(imgData, 0, 0);
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.RepeatWrapping;
+  return texture;
+}
+
+/**
+ * Creates Aluminized Mylar / Silver Kapton Insulation Blanket Texture
+ */
+export function createSilverFoilTexture(width = 512, height = 512) {
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d');
+
+  ctx.fillStyle = '#cbd5e1';
+  ctx.fillRect(0, 0, width, height);
+
+  const imgData = ctx.getImageData(0, 0, width, height);
+  const data = imgData.data;
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const idx = (y * width + x) * 4;
+      const n1 = Math.sin(x * 0.12) * Math.cos(y * 0.12);
+      const n2 = Math.sin(x * 0.28 + y * 0.22) * 0.5;
+      const crinkle = (n1 + n2) * 40;
+
+      const v = Math.max(160, Math.min(250, 205 + crinkle));
+      data[idx] = v;
+      data[idx + 1] = Math.max(160, Math.min(252, v + 2));
+      data[idx + 2] = Math.max(170, Math.min(255, v + 6));
+      data[idx + 3] = 255;
+    }
+  }
+  ctx.putImageData(imgData, 0, 0);
+
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+  ctx.lineWidth = 1.5;
+  for (let y = 0; y < height; y += 64) {
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(width, y);
+    ctx.stroke();
+    for (let rx = 16; rx < width; rx += 32) {
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+      ctx.beginPath();
+      ctx.arc(rx, y, 1.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+  for (let x = 0; x < width; x += 64) {
+    ctx.beginPath();
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x, height);
+    ctx.stroke();
+  }
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.RepeatWrapping;
+  return texture;
+}
+
