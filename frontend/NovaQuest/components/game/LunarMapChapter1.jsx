@@ -1789,6 +1789,14 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
       color: 0x6e717b
     });
 
+    const regolithRockMat = new THREE.MeshStandardMaterial({
+      map: regolithMap,
+      bumpMap: regolithBumpMap,
+      bumpScale: 0.18,
+      roughness: 0.94,
+      metalness: 0.04
+    });
+
     const boulderGroup = new THREE.Group();
     const rockGeoLarge = createMediumPolyRockGeo(1.8, 2, 0.30);
     const rockGeoMedium = createMediumPolyRockGeo(1.0, 1, 0.24);
@@ -6725,6 +6733,7 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
       regolithBumpMap.dispose();
       regolithRoughnessMap.dispose();
       basaltRockMap.dispose();
+      regolithRockMat.dispose();
       goldFoilMap.dispose();
       solarPanelMap.dispose();
       alienGlyphMap.dispose();
