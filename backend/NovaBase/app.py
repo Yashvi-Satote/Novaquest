@@ -81,6 +81,32 @@ def bootstrap_database():
 
 
 
+@app.route("/api/novabase/health", methods=["GET"])
+def novabase_health():
+    """Section-by-section completeness for every spacecraft (the 10-section contract)."""
+    db = SessionLocal()
+    try:
+        registry = load_registry()
+        expected = registry_slugs(registry)
+    except Exception as exc:
+        logger.warning("Registry unavailable for health check: %s", exc)
+        expected = []
+    try:
+        payload = health_payload(db, expected_slugs=expected)
+        payload["database"] = {
+            "engine": get_db_status()["engine"],
+            "postgres": get_db_status()["is_postgres"],
+            "connected": get_db_status()["status"] == "connected",
+            "message": get_db_status()["message"],
+        }
+        return jsonify(payload), 200
+    except Exception as e:
+        logger.error(f"Error building NovaBase health payload: {e}")
+        return jsonify({"status": "error", "error": str(e)}), 500
+    finally:
+        db.close()
+
+
 @app.route("/api/health", methods=["GET"])
 def health_check():
     """Health check endpoint reporting backend and database status."""
