@@ -213,9 +213,25 @@ export default function MissionEchoModal({ isOpen, onClose, onCompleteEcho }) {
         setDescentAltitude(Math.max(0, +alt.toFixed(1)));
       }, 65);
     } else {
+      const errorNotes = [];
+      if (step1 !== 'stage_retro') {
+        errorNotes.push('Step 1 Mistake: Spacecraft arrives from translunar trajectory at 2,600 m/s. The solid main retro-rocket ignition is required at 75 km altitude to kill 95% of orbital momentum before other thrusters can steer.');
+      }
+      if (step2 !== 'stage_jettison') {
+        errorNotes.push('Step 2 Mistake: The 560 kg spent solid rocket motor casing blocks the radar altimeter and Doppler velocity beams. It must be pyrotechnically jettisoned at 11 km to clear radar sensors.');
+      }
+      if (step3 !== 'stage_vernier') {
+        errorNotes.push('Step 3 Mistake: Three throttleable liquid Vernier thrusters must take over at 11 km to steer attitude and brake descent smoothly down to 1.5 m/s.');
+      }
+      if (step4 !== 'stage_cutoff') {
+        errorNotes.push('Step 4 Mistake: Verniers must cut off at 3.4 meters. Firing rocket engines all the way to ground contact will blow abrasive dust into Vidicon quartz optics and cause engine backpressure damage.');
+      }
+
       setDescentFeedback({
         type: 'error',
-        message: 'SEQUENCE MISMATCH: Lunar landing requires progressive deceleration: Main retro-rocket burn must occur first, followed by motor jettison/radar lock, Vernier terminal throttle, and finally 3.4m cutoff before footpad touchdown.'
+        title: 'SEQUENCE CALIBRATION MISMATCH — MISTAKE ANALYSIS',
+        mistakes: errorNotes,
+        message: 'The landing sequence violates lunar orbital descent physics. Review the explanation above, adjust any mistaken step, and retry with zero penalty.'
       });
     }
   };
@@ -230,7 +246,7 @@ export default function MissionEchoModal({ isOpen, onClose, onCompleteEcho }) {
     if (!footpad || !rocks || !slope) {
       setSurfaceFeedback({
         type: 'error',
-        message: 'Please select an interpretation for all 3 highlighted surface observations.'
+        message: 'Please select an interpretation for all 3 highlighted surface observations before verifying.'
       });
       return;
     }
@@ -247,13 +263,22 @@ export default function MissionEchoModal({ isOpen, onClose, onCompleteEcho }) {
         message: 'SURFACE ANALYSIS CONFIRMED: Footpad impressions proved lunar soil had sufficient bearing strength (~35 kPa) to support heavy spacecraft. Rock distributions documented impact ejecta blankets, and the 1.2° slope verified tripod landing stability.'
       });
     } else {
-      const errors = [];
-      if (!isFootpadCorrect) errors.push('Footpad impression');
-      if (!isRocksCorrect) errors.push('Rock distribution');
-      if (!isSlopeCorrect) errors.push('Surface slope');
+      const detailedErrors = [];
+      if (!isFootpadCorrect) {
+        detailedErrors.push('Footpad Impression: The 5.2 cm regolith displacement trench proved soil mechanical bearing capacity (~35 kPa) to confirm astronauts would not sink into quicksand dust, not thermal resistance.');
+      }
+      if (!isRocksCorrect) {
+        detailedErrors.push('Rock Distribution: Angular boulder distribution documents impact breccia ejecta blankets excavated by meteorite impacts, not volcanic lava flows.');
+      }
+      if (!isSlopeCorrect) {
+        detailedErrors.push('Surface Slope: The 1.2° local tilt confirmed the landing gear could maintain static equilibrium without tipping over on the mare plains, not seismic plate faulting.');
+      }
+
       setSurfaceFeedback({
         type: 'error',
-        message: `Incorrect match for: ${errors.join(', ')}. Review the geological principles and try again.`
+        title: 'SURFACE INTERPRETATION MISMATCH — GEOLOGICAL ANALYSIS',
+        mistakes: detailedErrors,
+        message: 'One or more observations were correlated with incorrect geological principles. Review the analysis above, adjust the selections, and retry.'
       });
     }
   };
@@ -331,14 +356,19 @@ export default function MissionEchoModal({ isOpen, onClose, onCompleteEcho }) {
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={() => { audio.playClick(); onClose(); }}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
-            title="Close [Esc]"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-3">
+            <span className="hidden sm:inline-block px-2.5 py-1 rounded-full bg-cyan-950/80 border border-cyan-500/40 text-[10px] text-cyan-300 font-mono">
+              Progress Preserved · Challenge {currentStep}/3
+            </span>
+            <button
+              type="button"
+              onClick={() => { audio.playClick(); onClose(); }}
+              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+              title="Close [Esc] (Puzzle progress is preserved)"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </header>
 
         {/* Narrative Context Banner */}
@@ -472,14 +502,34 @@ export default function MissionEchoModal({ isOpen, onClose, onCompleteEcho }) {
                 })}
               </div>
 
-              {/* Feedback Alert */}
+              {/* Feedback Alert with Mistake Explanation & Retry */}
               {descentFeedback && (
-                <div className={`p-3 rounded-xl border text-xs font-sans leading-relaxed ${
+                <div className={`p-3.5 rounded-xl border text-xs font-sans leading-relaxed space-y-2 ${
                   descentFeedback.type === 'success' 
                     ? 'bg-emerald-950/40 border-emerald-500/40 text-emerald-200' 
-                    : 'bg-amber-950/40 border-amber-500/40 text-amber-200'
+                    : 'bg-amber-950/50 border-amber-500/50 text-amber-200 shadow-inner'
                 }`}>
-                  {descentFeedback.message}
+                  <div className="font-bold flex items-center justify-between text-xs uppercase tracking-wider">
+                    <span>{descentFeedback.title || (descentFeedback.type === 'success' ? 'Telemetry Confirmed' : 'Sequence Calibration Notice')}</span>
+                    {descentFeedback.type === 'error' && (
+                      <span className="text-[10px] px-2 py-0.5 rounded bg-amber-900/60 border border-amber-400 text-amber-300 font-mono">
+                        Retry Allowed · No Penalty
+                      </span>
+                    )}
+                  </div>
+                  {descentFeedback.mistakes && (
+                    <ul className="space-y-1.5 pl-2 border-l-2 border-amber-500/40 text-amber-100 text-[11px]">
+                      {descentFeedback.mistakes.map((m, idx) => (
+                        <li key={idx} className="flex items-start gap-1.5">
+                          <span className="text-amber-400 font-bold">•</span>
+                          <span>{m}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  <p className="text-[11px] text-slate-300">
+                    {descentFeedback.message}
+                  </p>
                 </div>
               )}
 
@@ -662,14 +712,34 @@ export default function MissionEchoModal({ isOpen, onClose, onCompleteEcho }) {
 
               </div>
 
-              {/* Surface Feedback / Observation Report */}
+              {/* Surface Feedback with Mistake Explanation & Retry */}
               {surfaceFeedback && (
-                <div className={`p-3 rounded-xl border text-xs font-sans leading-relaxed ${
+                <div className={`p-3.5 rounded-xl border text-xs font-sans leading-relaxed space-y-2 ${
                   surfaceFeedback.type === 'success' 
                     ? 'bg-emerald-950/40 border-emerald-500/40 text-emerald-200' 
-                    : 'bg-amber-950/40 border-amber-500/40 text-amber-200'
+                    : 'bg-amber-950/50 border-amber-500/50 text-amber-200 shadow-inner'
                 }`}>
-                  {surfaceFeedback.message}
+                  <div className="font-bold flex items-center justify-between text-xs uppercase tracking-wider">
+                    <span>{surfaceFeedback.title || (surfaceFeedback.type === 'success' ? 'Analysis Verified' : 'Geological Interpretation Notice')}</span>
+                    {surfaceFeedback.type === 'error' && (
+                      <span className="text-[10px] px-2 py-0.5 rounded bg-amber-900/60 border border-amber-400 text-amber-300 font-mono">
+                        Retry Allowed · No Penalty
+                      </span>
+                    )}
+                  </div>
+                  {surfaceFeedback.mistakes && (
+                    <ul className="space-y-1.5 pl-2 border-l-2 border-amber-500/40 text-amber-100 text-[11px]">
+                      {surfaceFeedback.mistakes.map((m, idx) => (
+                        <li key={idx} className="flex items-start gap-1.5">
+                          <span className="text-amber-400 font-bold">•</span>
+                          <span>{m}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  <p className="text-[11px] text-slate-300">
+                    {surfaceFeedback.message}
+                  </p>
                 </div>
               )}
 

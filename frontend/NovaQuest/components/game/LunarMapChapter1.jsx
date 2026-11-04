@@ -26,7 +26,8 @@ import {
   Wifi,
   Pause,
   Gamepad2,
-  Database
+  Database,
+  AlertTriangle
 } from 'lucide-react';
 import { audio } from '../../game/audioManager';
 import InvestigationModal from './InvestigationModal';
@@ -185,10 +186,24 @@ export const JOURNEY_STAGES = [
 /**
  * Single unified interaction prompt helper (System C)
  * Predictable format: [E] <Action> <TargetName>
+ * Includes Situation 7: Dormant inactive interface when approached too early
  */
-export function getInteractionPrompt(target) {
+export function getInteractionPrompt(target, currentStage = 0) {
   if (!target) return '';
   const id = target.id;
+
+  // Situation 7: Player approaches alien structure too early -> Show inactive interface
+  if (currentStage < 3 && (
+    id === 'poi_exposed_structure' || 
+    id === 'poi_alien_structure' || 
+    id === 'poi_central_interface' || 
+    id === 'poi_scanning_panel' || 
+    id === 'poi_crater_conduit' || 
+    id === 'poi_data_conduit'
+  )) {
+    return '[E] Inactive Precursor Interface (Dormant)';
+  }
+
   if (id === 'poi_mission_terminal') return '[E] Read Mission Terminal';
   if (id === 'surveyor_camera') return '[E] Inspect Surveyor 1 Camera';
   if (id === 'surveyor_solar') return '[E] Inspect Solar Panel and Antenna';
@@ -311,6 +326,18 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
       return prev;
     });
   };
+
+  // Situation 1: Soft boundary warning state
+  const [boundaryWarning, setBoundaryWarning] = useState(null);
+  const boundaryWarningRef = useRef(null);
+  const lastBoundaryCommsTimeRef = useRef(0);
+  const lastBoundaryAudioTimeRef = useRef(0);
+
+  // Situation 3: Signal Assistance State (Direction becomes more informative)
+  const [isSignalAssisted, setIsSignalAssisted] = useState(false);
+  const isSignalAssistedRef = useRef(false);
+  const stage3StartTimeRef = useRef(0);
+  const lastAssistedHintTimeRef = useRef(0);
 
   // The Discovery Event & Scanner Signal-Tracking Mode
   const [discoveryEvent, setDiscoveryEvent] = useState(null);
@@ -825,6 +852,28 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
   };
 
   const startInteractiveScan = (target, key) => {
+    if (!target) return;
+
+    // Situation 7: Player approaches alien structure too early -> Show inactive interface
+    if (journeyStageIndex < 3 && (
+      target.id === 'poi_exposed_structure' ||
+      target.id === 'poi_alien_structure' ||
+      target.id === 'poi_central_interface' ||
+      target.id === 'poi_scanning_panel' ||
+      target.id === 'poi_crater_conduit' ||
+      target.id === 'poi_data_conduit'
+    )) {
+      audio.playScanNoSignal();
+      setHudNotice('SCANNER: INACTIVE PRECURSOR STRUCTURE · 0.00% Local Resonance. Inspect Surveyor 1 and track signal first.');
+      setActiveComms({
+        callsign: 'CHEN-SCIENCE',
+        speaker: 'Specialist Maya Chen',
+        text: 'Captain, that structure appears completely inert right now. We need to inspect Surveyor 1 and trace the signal first to understand what powers it.'
+      });
+      audio.playRadioCommsChatter('chen');
+      return;
+    }
+
     if (isScanningActiveRef.current) return;
     setIsScanningActive(true);
     isScanningActiveRef.current = true;
@@ -964,6 +1013,11 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
 
   // 7-Stage Suggested Player Journey State
   const [journeyStageIndex, setJourneyStageIndex] = useState(0);
+  const journeyStageIndexRef = useRef(0);
+  useEffect(() => {
+    journeyStageIndexRef.current = journeyStageIndex;
+  }, [journeyStageIndex]);
+
   const [completedStageIndices, setCompletedStageIndices] = useState([]);
   const [activeComms, setActiveComms] = useState(null);
   const [showJourneyRoadmap, setShowJourneyRoadmap] = useState(false);
@@ -971,6 +1025,7 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
   const [navTargetDistance, setNavTargetDistance] = useState(105);
 
   const advanceJourneyStage = (nextIndex) => {
+    journeyStageIndexRef.current = nextIndex;
     setJourneyStageIndex((current) => {
       if (nextIndex <= current || nextIndex >= JOURNEY_STAGES.length) return current;
       const stage = JOURNEY_STAGES[nextIndex];
@@ -1018,6 +1073,14 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
     triggerScannerBeamRef.current?.();
     setTimeout(() => setScanPulseActive(false), 2400);
 
+    // Situation 2: Player scans the wrong object / empty terrain -> Scanner says no relevant signal
+    if (!nearInteractableRef.current) {
+      setTimeout(() => {
+        audio.playScanNoSignal();
+        setHudNotice('SCANNER: NO RELEVANT SIGNAL · Target is inert lunar regolith / basalt matrix. No anomalous carrier detected.');
+      }, 250);
+    }
+
     // Show scanner telemetry feedback in HUD
     if (journeyStageIndex === 2 || hasSignalTracker) {
       setHudNotice(`SIGNAL TRACKER: ${scannerReadingRef.current.strength}% [${scannerReadingRef.current.tier}] · Direction: ${scannerReadingRef.current.direction}`);
@@ -1038,6 +1101,27 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
   const triggerInvestigation = () => {
     if (nearInteractableRef.current) {
       const id = nearInteractableRef.current.id;
+
+      // Situation 7: Player approaches alien structure too early -> Show inactive interface
+      if (journeyStageIndex < 3 && (
+        id === 'poi_exposed_structure' ||
+        id === 'poi_alien_structure' ||
+        id === 'poi_central_interface' ||
+        id === 'poi_scanning_panel' ||
+        id === 'poi_crater_conduit' ||
+        id === 'poi_data_conduit'
+      )) {
+        audio.playScanNoSignal();
+        setHudNotice('INTERFACE INACTIVE: Precursor console is dormant. Local energy grid unpowered. Inspect Surveyor 1 and trace seismic signal to activate.');
+        setActiveComms({
+          callsign: 'CHEN-SCIENCE',
+          speaker: 'Specialist Maya Chen',
+          text: 'Captain, that structure appears completely inert right now. We need to inspect Surveyor 1 and trace the signal first to understand what powers it.'
+        });
+        audio.playRadioCommsChatter('chen');
+        return;
+      }
+
       if (id === 'poi_scanning_panel' || id === 'poi_mission_echo_console' || id === 'poi_descent_simulation') {
         audio.playMissionEchoActivation();
         setTimeout(() => audio.playMissionEchoArchivalAudio(), 320);
@@ -1083,16 +1167,37 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
         else if (id === 'poi_crater_site_gamma') inspectStage3Point('pointC');
         setInvestigateTarget(nearInteractableRef.current);
       } else if (id === 'poi_central_interface' || id === 'poi_scanning_panel') {
+        if (journeyStageIndexRef.current < 3) {
+          setHudNotice('INTERFACE INACTIVE: Precursor console is dormant. Local energy grid unpowered. Inspect Surveyor 1 and trace seismic signal to activate.');
+          audio.playScanNoSignal();
+          setActiveComms({
+            callsign: 'CHEN-SCIENCE',
+            speaker: 'Specialist Maya Chen',
+            text: 'Captain, that structure appears completely inert right now. We need to inspect Surveyor 1 and trace the signal first to understand what powers it.'
+          });
+          audio.playRadioCommsChatter('chen');
+          return;
+        }
         if (!stage4ObjectivesRef.current.activatedInterface) {
           startInterfaceActivation();
         } else {
           setIsMissionEchoOpen(true);
         }
       } else if (id === 'poi_exposed_structure') {
+        if (journeyStageIndexRef.current < 3) {
+          setHudNotice('PRECURSOR STRUCTURE DORMANT: No active energy or data carrier detected.');
+          audio.playScanNoSignal();
+          return;
+        }
         completeStage4Objective('scannedStructure');
         audio.playSurveyorScannerBeep();
         setInvestigateTarget(nearInteractableRef.current);
       } else if (id === 'poi_crater_conduit') {
+        if (journeyStageIndexRef.current < 3) {
+          setHudNotice('DATA CONDUIT INERT: Awaiting precursor core activation.');
+          audio.playScanNoSignal();
+          return;
+        }
         completeStage4Objective('inspectedConduit');
         audio.playAnomalyHarmonic();
         setInvestigateTarget(nearInteractableRef.current);
@@ -5519,13 +5624,24 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
             return;
           }
         }
-        if (journeyStageIndex === 6) {
+        if (journeyStageIndexRef.current === 6) {
           if (nearInteractableRef.current?.id === 'poi_mission_terminal' || nearInteractableRef.current?.id === 'poi_lunar_transport' || nearInteractableRef.current?.id === 'poi_extraction_pallet') {
             startEndingCinematic();
             return;
           }
         }
         if (nearInteractableRef.current && (nearInteractableRef.current.id === 'poi_central_interface' || nearInteractableRef.current.id === 'poi_scanning_panel')) {
+          if (journeyStageIndexRef.current < 3) {
+            setHudNotice('INTERFACE INACTIVE: Precursor console is dormant. Local energy grid unpowered. Inspect Surveyor 1 and trace seismic signal to activate.');
+            audio.playScanNoSignal();
+            setActiveComms({
+              callsign: 'CHEN-SCIENCE',
+              speaker: 'Specialist Maya Chen',
+              text: 'Captain, that structure appears completely inert right now. We need to inspect Surveyor 1 and trace the signal first to understand what powers it.'
+            });
+            audio.playRadioCommsChatter('chen');
+            return;
+          }
           if (!stage4ObjectivesRef.current.activatedInterface) {
             startInterfaceActivation();
             return;
@@ -5575,6 +5691,21 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
     };
 
     document.addEventListener('pointerlockchange', onPointerLockChange);
+
+    // Situation 6: Automatically pause and release pointer lock when player loses window focus
+    const onWindowBlur = () => {
+      if (!isPausedRef.current && !isOpeningCinematicRef.current && !isEndingCinematicRef.current) {
+        setIsPaused(true);
+        isPausedRef.current = true;
+        if (document.pointerLockElement) {
+          try {
+            document.exitPointerLock();
+          } catch {}
+        }
+      }
+    };
+
+    window.addEventListener('blur', onWindowBlur);
 
     const handleCanvasClick = () => {
       audio.ensureContext();
@@ -5760,7 +5891,20 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
         moveX /= len;
         moveZ /= len;
 
-        const speed = keys.shift ? 5.0 : 3.5; // System A: Astronaut EVA sprint (5.0 m/s) vs deliberate walking pace (3.5 m/s)
+        let speed = keys.shift ? 5.0 : 3.5; // System A: Astronaut EVA sprint (5.0 m/s) vs deliberate walking pace (3.5 m/s)
+
+        // Situation 1: Soft boundary velocity dampening (Non-lethal, gentle suit resistance when moving outward near perimeter)
+        if (!underground) {
+          const currentDist = Math.hypot(playerPos.x, playerPos.z);
+          if (currentDist > 180) {
+            const outwardDot = (moveX * (playerPos.x / currentDist) + moveZ * (playerPos.z / currentDist));
+            if (outwardDot > 0) {
+              const dampFactor = Math.max(0.2, (205 - currentDist) / 25);
+              speed *= dampFactor;
+            }
+          }
+        }
+
         playerPos.x += moveX * speed * delta;
         playerPos.z += moveZ * speed * delta;
 
@@ -5816,11 +5960,11 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
       if (underground) {
         targetGroundY = CAVERN_Y; // Cavern floor level
       } else {
-        // Natural boundary clamp (r <= 210m so player cannot walk over outer crater rims)
+        // Natural boundary clamp (r <= 205m so player cannot walk over outer crater rims into unmodeled void)
         const distFromCenter = Math.hypot(playerPos.x, playerPos.z);
-        if (distFromCenter > 208) {
-          playerPos.x = (playerPos.x / distFromCenter) * 208;
-          playerPos.z = (playerPos.z / distFromCenter) * 208;
+        if (distFromCenter > 205) {
+          playerPos.x = (playerPos.x / distFromCenter) * 205;
+          playerPos.z = (playerPos.z / distFromCenter) * 205;
         }
         targetGroundY = getTerrainHeight(playerPos.x, playerPos.z);
       }
@@ -5994,7 +6138,15 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
       }
 
       // Dynamic Zone 4 & 6 state responsiveness (lighting & conduit)
-      if (stage6StepsRef.current.isolated) {
+      // Situation 7: Inactive / dormant visuals when approaching precursor structure before Stage 4
+      if (journeyStageIndexRef.current < 3) {
+        if (alienGlowLight) alienGlowLight.intensity = 0.05;
+        if (energyBeam) energyBeam.visible = false;
+        if (conduitMat) {
+          conduitMat.emissiveIntensity = 0.02;
+          conduitMat.color.setHex(0x0a0c10);
+        }
+      } else if (stage6StepsRef.current.isolated) {
         if (alienGlowLight) alienGlowLight.intensity = 0.35;
         if (energyBeam) energyBeam.visible = false;
         if (conduitMat) {
@@ -6005,6 +6157,7 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
       } else {
         // Faint blue/cyan pulses for the alien structure
         if (alienGlowLight) alienGlowLight.intensity = 1.2 + Math.sin(time * 1.5) * 0.5;
+        if (energyBeam) energyBeam.visible = true;
         const conduitBoost = hasSignalTrackerRef.current ? 0.45 : 0;
         if (conduitMat) conduitMat.emissiveIntensity = 0.45 + conduitBoost + Math.sin(time * 3.5) * 0.25;
       }
@@ -6132,10 +6285,63 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
         setDistanceToAnomaly(distAnomaly);
         setCompassHeading(headingDeg);
 
+        // Situation 1: Soft boundary warning check (Non-lethal exploration safety envelope)
+        if (!underground) {
+          const distFromCenter = Math.hypot(playerPos.x, playerPos.z);
+          if (distFromCenter > 150) {
+            const excess = Math.round(distFromCenter - 150);
+            const returnAngleRad = Math.atan2(-playerPos.x, -playerPos.z);
+            const returnBearing = Math.round((THREE.MathUtils.radToDeg(returnAngleRad) % 360 + 360) % 360);
+            const relAngle = Math.round(((returnBearing - headingDeg) % 360 + 360) % 360);
+
+            let returnDir = 'AHEAD';
+            if (relAngle > 30 && relAngle < 150) returnDir = 'RIGHT';
+            else if (relAngle >= 150 && relAngle <= 210) returnDir = 'BEHIND';
+            else if (relAngle > 210 && relAngle < 330) returnDir = 'LEFT';
+
+            const isCrit = distFromCenter > 180;
+            const warningObj = {
+              active: true,
+              distance: Math.round(distFromCenter),
+              excess,
+              bearing: returnBearing,
+              returnDir,
+              level: isCrit ? 'critical' : 'advisory'
+            };
+            boundaryWarningRef.current = warningObj;
+            setBoundaryWarning(warningObj);
+
+            // Audio telemetry warning tone (throttled)
+            if (time - lastBoundaryAudioTimeRef.current > (isCrit ? 4.5 : 7.0)) {
+              audio.playBoundaryWarning();
+              lastBoundaryAudioTimeRef.current = time;
+            }
+
+            // Maya Comms callout (throttled every 24 seconds)
+            if (time - lastBoundaryCommsTimeRef.current > 24.0) {
+              lastBoundaryCommsTimeRef.current = time;
+              setActiveComms({
+                callsign: 'CHEN-SCIENCE',
+                speaker: 'Specialist Maya Chen',
+                text: isCrit
+                  ? 'Captain Arin, telemetry link is degrading rapidly! You are departing the primary Surveyor 1 investigation sector. Turn back toward the mission coordinates.'
+                  : 'Captain, suit telemetry reports you are approaching the designated exploration perimeter. Surveyor 1 is behind you.'
+              });
+              audio.playRadioCommsChatter('chen');
+            }
+          } else {
+            if (boundaryWarningRef.current) {
+              boundaryWarningRef.current = null;
+              setBoundaryWarning(null);
+            }
+          }
+        }
+
         // 7-Stage Suggested Player Journey Nav-Target calculation
+        const curStage = journeyStageIndexRef.current;
         let targetX = 0;
         let targetZ = 0;
-        if (journeyStageIndex === 0) {
+        if (curStage === 0) {
           if (stage1ObjectivesRef.current.read_briefing) {
             targetX = 82.0;
             targetZ = 52.0;
@@ -6143,7 +6349,7 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
             targetX = 103.2;
             targetZ = 65.5;
           }
-        } else if (journeyStageIndex === 1) {
+        } else if (curStage === 1) {
           if (hasSignalTrackerRef.current) {
             targetX = -75;
             targetZ = -50;
@@ -6166,7 +6372,7 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
             targetX = 0;
             targetZ = 0;
           }
-        } else if (journeyStageIndex === 2) {
+        } else if (curStage === 2) {
           if (isPointCDiscoveredRef.current) {
             targetX = -78;
             targetZ = -54; // Precursor fragment on crater floor
@@ -6180,7 +6386,7 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
             targetX = -78;
             targetZ = -54; // Point C (Crater floor)
           }
-        } else if (journeyStageIndex === 3) {
+        } else if (curStage === 3) {
           if (!stage4ObjectivesRef.current.scannedStructure) {
             targetX = -78;
             targetZ = -54; // Exposed Alien Structure
@@ -6191,7 +6397,7 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
             targetX = -77.2;
             targetZ = -53.2; // Central Alien Interface Console
           }
-        } else if (journeyStageIndex === 5) {
+        } else if (curStage === 5) {
           if (!stage6StepsRef.current.stabilized) {
             targetX = 0.8;
             targetZ = 0.4; // Footpad 2 Conduit Coupling
@@ -6205,11 +6411,11 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
             targetX = 3.8;
             targetZ = -2.6; // Extraction Pallet
           }
-        } else if (journeyStageIndex === 6) {
+        } else if (curStage === 6) {
           targetX = 103.2;
           targetZ = 65.5; // Tactical Mission Terminal (Landing Site)
         } else {
-          const currentStageObj = JOURNEY_STAGES[journeyStageIndex] || JOURNEY_STAGES[0];
+          const currentStageObj = JOURNEY_STAGES[curStage] || JOURNEY_STAGES[0];
           targetX = currentStageObj?.targetCoords?.x || 0;
           targetZ = currentStageObj?.targetCoords?.z || 0;
         }
@@ -6268,10 +6474,38 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
           strength = Math.max(12, Math.round(20 - (dPointC - 95.0) * 0.1));
         }
 
+        // Situation 3: Signal Assistance timer & dynamic directional guidance
+        if (curStage === 2) {
+          if (stage3StartTimeRef.current === 0) {
+            stage3StartTimeRef.current = time;
+          }
+          const searchDuration = time - stage3StartTimeRef.current;
+          const stage3Done = stage3InspectionsRef.current.pointA && stage3InspectionsRef.current.pointB && stage3InspectionsRef.current.pointC;
+
+          if (!stage3Done && searchDuration > 20.0) {
+            if (!isSignalAssistedRef.current) {
+              isSignalAssistedRef.current = true;
+              setIsSignalAssisted(true);
+            }
+            if (searchDuration > 25.0 && time - lastAssistedHintTimeRef.current > 40.0) {
+              lastAssistedHintTimeRef.current = time;
+              setActiveComms({
+                callsign: 'CHEN-SCIENCE',
+                speaker: 'Specialist Maya Chen',
+                text: "Captain, I've reconfigured your scanner array. Directional vectoring and distance triangulation are now active on your HUD to help trace the transmission source."
+              });
+              audio.playRadioCommsChatter('chen');
+            }
+          }
+        }
+
         let tier = 'Weak signal';
         if (strength >= 78) tier = 'Strong signal';
         else if (strength >= 45) tier = 'Medium signal';
         else tier = 'Weak signal';
+
+        const turnArrow = relDir === 'Ahead' ? '▲' : relDir.includes('Right') ? '►' : relDir.includes('Left') ? '◄' : '▼';
+        const turnInstruction = relDir === 'Ahead' ? 'DIRECT ALIGNMENT' : relDir.includes('Right') ? `TURN RIGHT · BRG ${degC}°` : relDir.includes('Left') ? `TURN LEFT · BRG ${degC}°` : `REVERSE · BRG ${degC}°`;
 
         const updatedTracker = {
           active: true,
@@ -6280,20 +6514,22 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
           direction: cardDir,
           relativeDir: relDir,
           bearingDeg: degC,
-          distanceM: Math.round(dPointC)
+          distanceM: Math.round(dPointC),
+          turnArrow,
+          turnInstruction
         };
         scannerReadingRef.current = updatedTracker;
         setScannerReading(updatedTracker);
 
         // Stage 3 — Point C Automatic Discovery Check upon reaching Crater Floor
-        if (journeyStageIndex === 2 && dPointC < 6.5 && !isPointCDiscoveredRef.current) {
+        if (curStage === 2 && dPointC < 6.5 && !isPointCDiscoveredRef.current) {
           triggerPointCDiscovery();
           stage3InspectionsRef.current.pointC = true;
           setStage3Inspections({ ...stage3InspectionsRef.current });
         }
 
         // Stage 1 Tutorial Objective Check & Natural Stage Transitions
-        if (journeyStageIndex === 0) {
+        if (curStage === 0) {
           const distToTerm = Math.hypot(playerPos.x - 103.2, playerPos.z - 65.5);
           if (distToTerm < 4.8) {
             completeStage1Objective('walk_terminal');
@@ -6477,6 +6713,7 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
       window.removeEventListener('resize', handleResize);
       document.removeEventListener('mousemove', onMouseMove);
       document.removeEventListener('pointerlockchange', onPointerLockChange);
+      window.removeEventListener('blur', onWindowBlur);
       if (renderer.domElement) {
         renderer.domElement.removeEventListener('click', handleCanvasClick);
       }
@@ -6564,11 +6801,50 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
             {nearInteractable && (
               <div className="absolute -top-7 text-[11px] text-cyan-300 font-bold tracking-wider uppercase bg-black/85 px-3 py-1 rounded-lg border border-cyan-400 shadow-lg shadow-cyan-500/20 whitespace-nowrap font-mono flex items-center gap-1.5 animate-pulse">
                 <Crosshair className="w-3 h-3 text-cyan-400" />
-                <span>{getInteractionPrompt(nearInteractable)}</span>
+                <span>{getInteractionPrompt(nearInteractable, journeyStageIndex)}</span>
               </div>
             )}
           </div>
         </div>
+
+        {/* SITUATION 1: SOFT BOUNDARY WARNING OVERLAY (EXPLORATION SAFETY ENVELOPE) */}
+        {boundaryWarning && boundaryWarning.active && (
+          <div className="absolute top-16 inset-x-0 flex justify-center pointer-events-none z-30 px-4">
+            <div className={`max-w-lg w-full p-3.5 rounded-2xl backdrop-blur-md border shadow-2xl transition-all duration-300 pointer-events-auto ${
+              boundaryWarning.level === 'critical'
+                ? 'bg-rose-950/90 border-rose-500 text-rose-100 shadow-[0_0_35px_rgba(244,63,94,0.45)] animate-pulse'
+                : 'bg-amber-950/90 border-amber-500/80 text-amber-100 shadow-[0_0_25px_rgba(245,158,11,0.35)]'
+            }`}>
+              <div className="flex items-center justify-between border-b border-current/20 pb-1.5 mb-2">
+                <div className="flex items-center gap-2 font-bold text-xs uppercase tracking-wider">
+                  <AlertTriangle className={`w-4 h-4 ${boundaryWarning.level === 'critical' ? 'text-rose-400 animate-ping' : 'text-amber-400 animate-pulse'}`} />
+                  <span>{boundaryWarning.level === 'critical' ? 'CRITICAL TELEMETRY BOUNDARY EXCEEDED' : 'MISSION PERIMETER ADVISORY'}</span>
+                </div>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-black/60 font-bold border border-current/30">
+                  +{boundaryWarning.excess}m EXCEEDING ENVELOPE
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-xs">
+                <div className="space-y-0.5">
+                  <div className="text-[11px] opacity-85">
+                    Departing Surveyor 1 operational grid. Reorient return vector:
+                  </div>
+                  <div className="font-bold font-mono tracking-wide flex items-center gap-2 mt-1">
+                    <span className="text-amber-300">BEARING {boundaryWarning.bearing}°</span>
+                    <span className="opacity-50">·</span>
+                    <span className="text-white bg-white/10 px-2 py-0.5 rounded text-[10px] border border-white/20">
+                      {boundaryWarning.returnDir === 'AHEAD' ? '▲ MAINTAIN COURSE' : boundaryWarning.returnDir === 'RIGHT' ? '► TURN RIGHT' : boundaryWarning.returnDir === 'LEFT' ? '◄ TURN LEFT' : '▼ REVERSE HEADING'}
+                    </span>
+                  </div>
+                </div>
+                <div className="text-right pl-3">
+                  <div className="text-[10px] opacity-75 font-mono">Distance to Hub</div>
+                  <div className="text-base font-bold font-mono text-white">{boundaryWarning.distance}m</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* TOP COMPASS TAPE & MISSION OBJECTIVE HUD */}
         <div className="absolute top-4 inset-x-6 flex items-start justify-between">
@@ -7315,14 +7591,40 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
                   </div>
                 </div>
 
-                {/* Direction */}
-                <div className="p-2 rounded-lg bg-black/50 border border-white/10 flex items-center justify-between text-[11px]">
-                  <span className="text-slate-400">Direction:</span>
-                  <div className="flex items-center gap-1.5 font-bold text-white">
-                    <Compass className="w-3.5 h-3.5 text-cyan-400" />
-                    <span className="text-cyan-300">{scannerReading.direction}</span>
-                    <span className="text-slate-400 text-[10px]">({scannerReading.relativeDir})</span>
+                {/* Direction with Informative Assisted Guidance */}
+                <div className={`p-2 rounded-lg border text-[11px] ${
+                  isSignalAssisted
+                    ? 'bg-cyan-950/70 border-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.25)]'
+                    : 'bg-black/50 border-white/10'
+                }`}>
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-400">Direction:</span>
+                    <div className="flex items-center gap-1.5 font-bold text-white">
+                      <Compass className="w-3.5 h-3.5 text-cyan-400" />
+                      <span className="text-cyan-300">{scannerReading.direction}</span>
+                      <span className="text-slate-400 text-[10px]">({scannerReading.relativeDir})</span>
+                    </div>
                   </div>
+
+                  {isSignalAssisted && (
+                    <div className="mt-2 pt-1.5 border-t border-cyan-500/30 space-y-1">
+                      <div className="flex items-center justify-between text-[10px]">
+                        <span className="text-cyan-300 font-bold tracking-wider flex items-center gap-1.5">
+                          <span className="text-amber-300 font-bold font-mono animate-pulse text-xs">
+                            {scannerReading.turnArrow || (scannerReading.relativeDir === 'Ahead' ? '▲' : scannerReading.relativeDir.includes('Right') ? '►' : scannerReading.relativeDir.includes('Left') ? '◄' : '▼')}
+                          </span>
+                          <span>{scannerReading.turnInstruction || (scannerReading.relativeDir === 'Ahead' ? 'ON TARGET' : `ALIGN ${scannerReading.relativeDir.toUpperCase()}`)}</span>
+                        </span>
+                        <span className="text-amber-200 font-mono text-[9px] bg-black/60 px-1.5 py-0.5 rounded border border-amber-500/30">
+                          BRG {scannerReading.bearingDeg}° · {scannerReading.distanceM}m
+                        </span>
+                      </div>
+                      <div className="text-[9px] text-cyan-200/80 font-mono flex items-center justify-between">
+                        <span>Assisted Dipole Array</span>
+                        <span className="text-emerald-400 font-bold tracking-wider">CALIBRATED</span>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Footer status / Pulse instruction */}
@@ -7434,7 +7736,7 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
                 className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 via-blue-600 to-indigo-600 text-white font-bold text-xs uppercase tracking-wider border border-cyan-400 shadow-xl shadow-cyan-500/40 hover:scale-105 active:scale-95 animate-bounce font-mono"
               >
                 <Crosshair className="w-4 h-4 text-cyan-200" />
-                <span>{getInteractionPrompt(nearInteractable)}</span>
+                <span>{getInteractionPrompt(nearInteractable, journeyStageIndex)}</span>
               </button>
             )}
           </div>
