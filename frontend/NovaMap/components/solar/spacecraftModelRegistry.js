@@ -697,29 +697,25 @@ export function getSpacecraftModelSpec(slug) {
  * Load or instantiate a 3D Spacecraft Model
  * Returns a Promise resolving to a Three.js Group.
  */
-export async function loadSpacecraft3DModel(slug) {
+export async function loadSpacecraft3DModel(slug, customModelPath = null) {
   const spec = getSpacecraftModelSpec(slug);
+  const pathToLoad = customModelPath || spec?.modelPath;
 
-  if (!spec) {
-    // Return a generic scientific probe placeholder if no entry found
-    return PROCEDURAL_GENERATORS.newHorizons();
-  }
-
-  // 1. If spec has a GLB modelPath, load authentic model
-  if (spec.isAuthenticModel && spec.modelPath) {
+  // 1. If we have a verified model path (from database or registry), load authentic model
+  if (pathToLoad) {
     try {
-      let gltfScene = modelCache.get(spec.modelPath);
+      let gltfScene = modelCache.get(pathToLoad);
       if (!gltfScene) {
         const gltf = await new Promise((resolve, reject) => {
           loader.load(
-            spec.modelPath,
+            pathToLoad,
             resolve,
             undefined,
             reject
           );
         });
         gltfScene = gltf.scene;
-        modelCache.set(spec.modelPath, gltfScene);
+        modelCache.set(pathToLoad, gltfScene);
       }
 
       // Deep clone mesh and materials
@@ -733,7 +729,7 @@ export async function loadSpacecraft3DModel(slug) {
       bbox.getSize(size);
 
       const maxDim = Math.max(size.x, size.y, size.z) || 1;
-      const targetScale = (spec.scale || 1.0) * (2.2 / maxDim);
+      const targetScale = ((spec && spec.scale) || 1.0) * (2.2 / maxDim);
 
       clone.position.sub(center); // Center geometry
 
@@ -741,38 +737,38 @@ export async function loadSpacecraft3DModel(slug) {
       rootGroup.add(clone);
       rootGroup.scale.setScalar(targetScale);
 
-      if (spec.rotation) {
+      if (spec && spec.rotation) {
         rootGroup.rotation.set(...spec.rotation);
       }
 
       rootGroup.userData = {
         slug,
-        name: spec.name,
+        name: spec?.name || slug,
         isAuthenticModel: true,
-        provenance: spec.provenance,
+        provenance: spec?.provenance || 'NASA Eyes on the Solar System (Official Public Domain - matthewgiarra/spacecraft-models)',
         isFallback: false
       };
 
       return rootGroup;
     } catch (err) {
-      console.warn(`Failed to load authentic GLB model for ${slug} (${spec.modelPath}):`, err);
+      console.warn(`Failed to load authentic 3D model for ${slug} (${pathToLoad}):`, err);
       // Fall through to procedural fallback
     }
   }
 
-  // 2. Procedural generator
-  const genKey = spec.proceduralKey || 'newHorizons';
+  // 2. Procedural generator placeholder
+  const genKey = spec?.proceduralKey || 'newHorizons';
   const generator = PROCEDURAL_GENERATORS[genKey] || PROCEDURAL_GENERATORS.newHorizons;
   const procGroup = generator();
   const rootGroup = new THREE.Group();
   rootGroup.add(procGroup);
-  rootGroup.scale.setScalar(spec.scale || 1.0);
+  rootGroup.scale.setScalar(spec?.scale || 1.0);
 
   rootGroup.userData = {
     slug,
-    name: spec.name,
+    name: spec?.name || slug,
     isAuthenticModel: false,
-    provenance: spec.provenance,
+    provenance: spec?.provenance || 'Mission-appropriate geometric placeholder (Official 3D model unavailable)',
     isFallback: true
   };
 
