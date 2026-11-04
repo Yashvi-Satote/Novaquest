@@ -403,6 +403,14 @@ class SpacecraftImage(Base):
     source_url = Column(String(1000), nullable=False)
     attribution = Column(String(255), nullable=False)
     publication_date = Column(String(50), nullable=True)
+    thumbnail_url = Column(String(1000), nullable=True)
+    kind = Column(String(50), default="photo")
+    credit = Column(String(255), nullable=True)
+    license = Column(String(255), nullable=True)
+    source_id = Column(Integer, nullable=True)
+    width = Column(Integer, nullable=True)
+    height = Column(Integer, nullable=True)
+    sort_order = Column(Integer, default=0)
 
     spacecraft = relationship("Spacecraft", back_populates="images")
 
@@ -414,8 +422,15 @@ class SpacecraftImage(Base):
             "title": self.title,
             "description": self.description,
             "image_url": self.image_url,
+            "thumbnail_url": self.thumbnail_url or self.image_url,
             "source_url": self.source_url,
-            "attribution": self.attribution,
+            "attribution": self.credit or self.attribution,
+            "credit": self.credit or self.attribution,
+            "license": self.license,
+            "kind": self.kind or "photo",
+            "width": self.width,
+            "height": self.height,
+            "sort_order": self.sort_order,
             "publication_date": self.publication_date
         }
 
@@ -430,6 +445,12 @@ class SpacecraftSource(Base):
     source_type = Column(String(100), nullable=False)
     evidence_notes = Column(Text, nullable=True)
     last_checked_at = Column(String(50), nullable=True)
+    label = Column(String(255), nullable=True)
+    url = Column(String(1000), nullable=True)
+    verified = Column(Boolean, default=False)
+    http_status = Column(Integer, nullable=True)
+    last_checked = Column(DateTime, nullable=True)
+    source_id = Column(Integer, nullable=True)
 
     spacecraft = relationship("Spacecraft", back_populates="sources")
 
@@ -438,11 +459,284 @@ class SpacecraftSource(Base):
             "id": self.id,
             "spacecraft_id": self.spacecraft_id,
             "source_name": self.source_name,
+            "label": self.label or self.source_name,
             "source_url": self.source_url,
+            "url": self.url or self.source_url,
             "source_type": self.source_type,
             "evidence_notes": self.evidence_notes,
-            "last_checked_at": self.last_checked_at
+            "verified": bool(self.verified),
+            "http_status": self.http_status,
+            "last_checked_at": self.last_checked_at,
+            "last_checked": self.last_checked.isoformat() if self.last_checked else None
         }
+
+
+# =========================================================================
+# NOVABASE 10-SECTION MODELS
+# =========================================================================
+
+class SpacecraftContent(Base):
+    __tablename__ = "spacecraft_content"
+
+    id = Column(Integer, primary_key=True, index=True)
+    spacecraft_id = Column(Integer, ForeignKey("spacecraft.id", ondelete="CASCADE"), nullable=False, index=True)
+    section_key = Column(String(50), nullable=False, index=True)
+    body_text = Column(Text, nullable=True)
+    source_id = Column(Integer, ForeignKey("spacecraft_sources.id", ondelete="SET NULL"), nullable=True)
+    license = Column(String(100), nullable=True)
+    attribution = Column(String(500), nullable=True)
+    revision_id = Column(String(50), nullable=True)
+    page_url = Column(String(1000), nullable=True)
+    fetched_at = Column(DateTime, nullable=True)
+    completeness = Column(String(20), nullable=False, default="missing")
+    created_at = Column(DateTime, server_default=func.now())
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+
+    spacecraft = relationship("Spacecraft", back_populates="content_blocks")
+
+    __table_args__ = (
+        UniqueConstraint("spacecraft_id", "section_key", name="uq_spacecraft_content"),
+    )
+
+    def to_dict(self):
+        return {
+            "section_key": self.section_key,
+            "body_text": self.body_text,
+            "source_id": self.source_id,
+            "license": self.license,
+            "attribution": self.attribution,
+            "revision_id": self.revision_id,
+            "page_url": self.page_url,
+            "fetched_at": self.fetched_at.isoformat() if self.fetched_at else None,
+            "completeness": self.completeness
+        }
+
+
+class SpacecraftPart(Base):
+    __tablename__ = "spacecraft_parts"
+
+    id = Column(Integer, primary_key=True, index=True)
+    spacecraft_id = Column(Integer, ForeignKey("spacecraft.id", ondelete="CASCADE"), nullable=False, index=True)
+    part_name = Column(String(255), nullable=False)
+    purpose = Column(Text, nullable=True)
+    sort_order = Column(Integer, default=0)
+
+    spacecraft = relationship("Spacecraft", back_populates="parts")
+
+    __table_args__ = (
+        UniqueConstraint("spacecraft_id", "part_name", name="uq_spacecraft_part"),
+    )
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "part_name": self.part_name,
+            "purpose": self.purpose,
+            "sort_order": self.sort_order
+        }
+
+
+class TimelineEvent(Base):
+    __tablename__ = "timeline_events"
+
+    id = Column(Integer, primary_key=True, index=True)
+    spacecraft_id = Column(Integer, ForeignKey("spacecraft.id", ondelete="CASCADE"), nullable=False, index=True)
+    event_date = Column(String(50), nullable=True)
+    event_date_precision = Column(String(20), default="day")
+    title = Column(String(255), nullable=False)
+    description = Column(Text, nullable=True)
+    event_type = Column(String(50), default="event")
+    source_id = Column(Integer, ForeignKey("spacecraft_sources.id", ondelete="SET NULL"), nullable=True)
+    sort_order = Column(Integer, default=0)
+
+    spacecraft = relationship("Spacecraft", back_populates="timeline")
+
+    __table_args__ = (
+        UniqueConstraint("spacecraft_id", "event_date", "title", name="uq_timeline_event"),
+    )
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "event_date": self.event_date,
+            "event_date_precision": self.event_date_precision,
+            "title": self.title,
+            "description": self.description,
+            "event_type": self.event_type,
+            "source_id": self.source_id,
+            "sort_order": self.sort_order
+        }
+
+
+class SpacecraftStakeholder(Base):
+    __tablename__ = "spacecraft_stakeholders"
+
+    id = Column(Integer, primary_key=True, index=True)
+    spacecraft_id = Column(Integer, ForeignKey("spacecraft.id", ondelete="CASCADE"), nullable=False, index=True)
+    organization_id = Column(Integer, ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False, index=True)
+    role = Column(String(100), nullable=False)
+
+    spacecraft = relationship("Spacecraft", back_populates="stakeholder_links")
+    organization = relationship("Organization")
+
+    __table_args__ = (
+        UniqueConstraint("spacecraft_id", "organization_id", "role", name="uq_spacecraft_stakeholder"),
+    )
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "organization_id": self.organization_id,
+            "name": self.organization.name if self.organization else None,
+            "role": self.role,
+            "country": self.organization.country if self.organization else None,
+            "url": self.organization.official_url if self.organization else None,
+            "org_type": self.organization.organization_type if self.organization else None
+        }
+
+
+class SpacecraftModel(Base):
+    __tablename__ = "spacecraft_models"
+
+    id = Column(Integer, primary_key=True, index=True)
+    spacecraft_id = Column(Integer, ForeignKey("spacecraft.id", ondelete="CASCADE"), nullable=False, index=True)
+    file_path = Column(String(1000), nullable=True)
+    download_url = Column(String(1500), nullable=True)
+    format = Column(String(20), nullable=True)
+    size_bytes = Column(BigInteger, nullable=True)
+    web_ready = Column(Boolean, default=False)
+    provider = Column(String(100), default="NASA 3D Resources")
+    license = Column(String(200), default="NASA 3D resources are free to use without copyright")
+    viewer_url = Column(String(1000), nullable=True)
+    status = Column(String(30), nullable=False, default="ok")
+    created_at = Column(DateTime, server_default=func.now())
+
+    spacecraft = relationship("Spacecraft", back_populates="models")
+
+    __table_args__ = (
+        UniqueConstraint("spacecraft_id", "download_url", name="uq_spacecraft_model_url"),
+    )
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "file_path": self.file_path,
+            "download_url": self.download_url,
+            "format": self.format,
+            "size_bytes": self.size_bytes,
+            "web_ready": bool(self.web_ready),
+            "provider": self.provider,
+            "license": self.license,
+            "viewer_url": self.viewer_url,
+            "status": self.status
+        }
+
+
+class Person(Base):
+    __tablename__ = "people"
+
+    id = Column(Integer, primary_key=True, index=True)
+    full_name = Column(String(255), nullable=False, unique=True, index=True)
+    affiliation = Column(String(255), nullable=True)
+    bio_short = Column(Text, nullable=True)
+    wiki_url = Column(String(1000), nullable=True)
+    created_at = Column(DateTime, server_default=func.now())
+
+    mission_links = relationship("SpacecraftPerson", back_populates="person", cascade="all, delete-orphan")
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "full_name": self.full_name,
+            "affiliation": self.affiliation,
+            "bio_short": self.bio_short,
+            "wiki_url": self.wiki_url
+        }
+
+
+class SpacecraftPerson(Base):
+    __tablename__ = "spacecraft_people"
+
+    id = Column(Integer, primary_key=True, index=True)
+    spacecraft_id = Column(Integer, ForeignKey("spacecraft.id", ondelete="CASCADE"), nullable=False, index=True)
+    person_id = Column(Integer, ForeignKey("people.id", ondelete="CASCADE"), nullable=False, index=True)
+    role_on_mission = Column(String(255), nullable=True)
+    rank_order = Column(Integer, nullable=False)
+    source_id = Column(Integer, ForeignKey("spacecraft_sources.id", ondelete="SET NULL"), nullable=True)
+
+    spacecraft = relationship("Spacecraft", back_populates="people_links")
+    person = relationship("Person", back_populates="mission_links")
+
+    __table_args__ = (
+        UniqueConstraint("spacecraft_id", "rank_order", name="uq_spacecraft_person_rank"),
+        CheckConstraint("rank_order BETWEEN 1 AND 10", name="ck_spacecraft_person_rank"),
+    )
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "rank_order": self.rank_order,
+            "full_name": self.person.full_name if self.person else None,
+            "role_on_mission": self.role_on_mission,
+            "affiliation": self.person.affiliation if self.person else None,
+            "wiki_url": self.person.wiki_url if self.person else None
+        }
+
+
+class DataSource(Base):
+    __tablename__ = "data_sources"
+
+    id = Column(Integer, primary_key=True, index=True)
+    api_name = Column(String(100), nullable=False, unique=True)
+    base_url = Column(String(1000), nullable=False)
+    license = Column(String(200), nullable=True)
+    attribution = Column(Text, nullable=True)
+    last_checked = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, server_default=func.now())
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "api_name": self.api_name,
+            "base_url": self.base_url,
+            "license": self.license,
+            "attribution": self.attribution,
+            "last_checked": self.last_checked.isoformat() if self.last_checked else None
+        }
+
+
+class IngestionRun(Base):
+    __tablename__ = "ingestion_runs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    provider = Column(String(100), nullable=False)
+    started_at = Column(DateTime, server_default=func.now())
+    finished_at = Column(DateTime, nullable=True)
+    status = Column(String(50), nullable=False, default="running")
+    rows_inserted = Column(Integer, default=0)
+    rows_updated = Column(Integer, default=0)
+    errors = Column(Text, nullable=True)
+    details = Column(Text, nullable=True)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "provider": self.provider,
+            "started_at": self.started_at.isoformat() if self.started_at else None,
+            "finished_at": self.finished_at.isoformat() if self.finished_at else None,
+            "status": self.status,
+            "rows_inserted": self.rows_inserted,
+            "rows_updated": self.rows_updated,
+            "errors": self.errors
+        }
+
+
+class SchemaVersion(Base):
+    __tablename__ = "schema_version"
+
+    version = Column(Integer, primary_key=True)
+    description = Column(String(255), nullable=False)
+    applied_at = Column(DateTime, server_default=func.now())
 
 
 # =========================================================================

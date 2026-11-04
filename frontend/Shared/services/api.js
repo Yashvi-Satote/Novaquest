@@ -23,6 +23,25 @@ export async function fetchHealth() {
   }
 }
 
+export async function fetchNovaBaseHealth() {
+  try {
+    const res = await fetch(`${API_BASE}/novabase/health`);
+    if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+    return await res.json();
+  } catch (err) {
+    console.error('Failed to fetch NovaBase health:', err);
+    return {
+      status: 'offline',
+      total_spacecraft: 0,
+      complete_spacecraft: 0,
+      all_sections_populated: false,
+      per_spacecraft: [],
+      missing_seed_missions: [],
+      errors: ['Cannot reach /api/novabase/health.'],
+    };
+  }
+}
+
 export async function fetchFilters() {
   const res = await fetch(`${API_BASE}/filters`);
   if (!res.ok) throw new Error(`Failed to fetch filters: ${res.statusText}`);
