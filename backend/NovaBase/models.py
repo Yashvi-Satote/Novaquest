@@ -2,7 +2,7 @@ import json
 from datetime import datetime
 from sqlalchemy import (
     Column, Integer, String, Text, Float, ForeignKey, DateTime, Boolean,
-    BigInteger, func, Index, UniqueConstraint
+    BigInteger, func, Index, UniqueConstraint, CheckConstraint
 )
 from sqlalchemy.orm import relationship
 from Shared.database import Base
@@ -163,6 +163,33 @@ class Spacecraft(Base):
     keywords = relationship("SpacecraftKeyword", back_populates="spacecraft", cascade="all, delete-orphan")
     images = relationship("SpacecraftImage", back_populates="spacecraft", cascade="all, delete-orphan")
     sources = relationship("SpacecraftSource", back_populates="spacecraft", cascade="all, delete-orphan")
+
+    # NovaBase 10-section content
+    content_blocks = relationship("SpacecraftContent", back_populates="spacecraft", cascade="all, delete-orphan")
+    parts = relationship(
+        "SpacecraftPart",
+        back_populates="spacecraft",
+        cascade="all, delete-orphan",
+        order_by="SpacecraftPart.sort_order",
+    )
+    timeline = relationship(
+        "TimelineEvent",
+        back_populates="spacecraft",
+        cascade="all, delete-orphan",
+        order_by="TimelineEvent.sort_order",
+    )
+    stakeholder_links = relationship(
+        "SpacecraftStakeholder",
+        back_populates="spacecraft",
+        cascade="all, delete-orphan",
+    )
+    models = relationship("SpacecraftModel", back_populates="spacecraft", cascade="all, delete-orphan")
+    people_links = relationship(
+        "SpacecraftPerson",
+        back_populates="spacecraft",
+        cascade="all, delete-orphan",
+        order_by="SpacecraftPerson.rank_order",
+    )
 
     @property
     def primary_mission(self):
