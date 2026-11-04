@@ -157,18 +157,18 @@ export const JOURNEY_STAGES = [
   {
     stepIndex: 6,
     id: 'end_next_signal',
-    name: 'End — Next signal',
-    durationEst: 'Approx. 1–2 minutes',
-    zoneName: 'ZONE 6 · RECOVERY & EXTRACTION',
-    targetCoords: { x: 3.8, z: -2.6 },
-    waypointLabel: 'Secure Extraction Pallet',
-    objective: 'The team discovers a new set of coordinates. Arin decides to continue Project Legacy.',
-    narrative: 'Inspection of the decoded carrier wave reveals coordinates leading deep beneath the lunar surface to "Vault Zero". Arin commits the team to the next expedition of Project Legacy.',
-    instructions: 'Inspect the Mobile Extraction Pallet [E]. Review the decrypted transmission vector, confirm the coordinates to Vault Zero, and commit Arin to the next chapter of Project Legacy.',
+    name: 'Stage 7 — The next signal',
+    durationEst: 'Approx. 1 minute',
+    zoneName: 'ZONE 1 · LANDING SITE & MISSION ENDING',
+    targetCoords: { x: 103.2, z: 65.5 },
+    waypointLabel: 'Mission Terminal Projection',
+    objective: 'The team prepares to leave the landing site. Arin debriefs with Commander Elena.',
+    narrative: 'The recovered signal fragment is projected above the mission terminal, displaying an unknown location. Commander Elena contacts Arin to debrief the recovery report and authorize the next expedition.',
+    instructions: 'Return to the Mission Terminal at the landing site [E]. View the projected unknown coordinates and respond to Commander Elena.',
     commsCallout: {
-      callsign: 'CHEN-SCIENCE',
-      speaker: 'Specialist Maya Chen',
-      text: 'Commander Arin... the carrier wave wasn’t random noise. It contained encrypted coordinates to an uncharted facility deep beneath the lunar crust: Vault Zero. We have to continue Project Legacy.'
+      callsign: 'ELENA-CMD',
+      speaker: 'Commander Elena',
+      text: "Captain, we've received your recovery report. The archive is safe. Excellent work."
     }
   }
 ];
@@ -315,6 +315,14 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
   });
   const [showIsolateModal, setShowIsolateModal] = useState(false);
   const [showRecoveryReport, setShowRecoveryReport] = useState(false);
+
+  // Stage 7 — The Next Signal State & Ending Cinematic
+  const [isEndingCinematic, setIsEndingCinematic] = useState(false);
+  const isEndingCinematicRef = useRef(false);
+  const endingCinematicTimerRef = useRef(0);
+  const [endingDialoguePhase, setEndingDialoguePhase] = useState(0);
+  const [showMissionCompleteModal, setShowMissionCompleteModal] = useState(false);
+  const [showCredits, setShowCredits] = useState(false);
 
   // Opening Cinematic & Pause State
   const [isOpeningCinematic, setIsOpeningCinematic] = useState(true);
@@ -636,8 +644,106 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
     // 5. Advance to Stage 7 (at 16.0s)
     setTimeout(() => {
       advanceJourneyStage(6);
-      setActiveObjective('Approach the Extraction Sled to review coordinates and conclude Chapter 1.');
+      setActiveObjective('Return to the Mission Terminal at the landing site to debrief with Commander Elena.');
     }, 16000);
+  };
+
+  // Stage 7 — Helper Functions
+  const startEndingCinematic = () => {
+    if (isEndingCinematicRef.current) return;
+    isEndingCinematicRef.current = true;
+    setIsEndingCinematic(true);
+    endingCinematicTimerRef.current = 0;
+    setEndingDialoguePhase(1);
+
+    if (document.pointerLockElement) {
+      try {
+        document.exitPointerLock();
+      } catch {}
+    }
+
+    audio.playMissionEchoActivation();
+    setHudNotice('STAGE 7: MISSION DEBRIEF · COMMAND CARRIER AEGIS COMM LINK ESTABLISHED');
+
+    // Dialogue Line 1 (0s)
+    // Commander Elena: "Captain, we've received your recovery report. The archive is safe. Excellent work."
+    setActiveComms({
+      callsign: 'ELENA-CMD',
+      speaker: 'Commander Elena',
+      text: "Captain, we've received your recovery report. The archive is safe. Excellent work."
+    });
+    audio.playRadioCommsChatter('elena');
+
+    // Dialogue Line 2 (5.0s)
+    // Arin: "Commander, this wasn't just a recovery operation. Something was using Surveyor's data."
+    setTimeout(() => {
+      setEndingDialoguePhase(2);
+      setActiveComms({
+        callsign: 'RAO-COMMAND',
+        speaker: 'Captain Arin Rao',
+        text: "Commander, this wasn't just a recovery operation. Something was using Surveyor's data."
+      });
+      audio.playEquipmentFeedback();
+    }, 5000);
+
+    // Dialogue Line 3 (10.0s)
+    // Commander Elena: "Do you want to investigate the coordinates?"
+    setTimeout(() => {
+      setEndingDialoguePhase(3);
+      setActiveComms({
+        callsign: 'ELENA-CMD',
+        speaker: 'Commander Elena',
+        text: "Do you want to investigate the coordinates?"
+      });
+      audio.playRadioCommsChatter('elena');
+    }, 10000);
+
+    // Dialogue Line 4 (15.0s)
+    // Arin looks back at Surveyor 1.
+    // Arin: "Yes. I think I finally understand what this mission is about."
+    setTimeout(() => {
+      setEndingDialoguePhase(4);
+      setActiveComms({
+        callsign: 'RAO-COMMAND',
+        speaker: 'Captain Arin Rao',
+        text: "Yes. I think I finally understand what this mission is about."
+      });
+      audio.playEquipmentFeedback();
+    }, 15000);
+
+    // Dialogue Line 5 (20.5s)
+    // Commander Elena: "Then welcome to Project Legacy, Captain."
+    setTimeout(() => {
+      setEndingDialoguePhase(5);
+      setActiveComms({
+        callsign: 'ELENA-CMD',
+        speaker: 'Commander Elena',
+        text: "Then welcome to Project Legacy, Captain."
+      });
+      audio.playMissionEchoActivation();
+    }, 20500);
+
+    // Camera moves toward Moon's horizon (26.0s)
+    setTimeout(() => {
+      setEndingDialoguePhase(6);
+      setHudNotice('NEXT SIGNAL LOCATION LOCKED · AZIMUTH 294° · VAULT ZERO BEACON');
+      audio.playAnomalyHarmonic();
+    }, 26000);
+
+    // Final MISSION COMPLETE screen (32.0s)
+    setTimeout(() => {
+      setShowMissionCompleteModal(true);
+      setIsEndingCinematic(false);
+      isEndingCinematicRef.current = false;
+      audio.playMissionEchoArchivalAudio();
+    }, 32000);
+  };
+
+  const skipEndingCinematic = () => {
+    isEndingCinematicRef.current = false;
+    setIsEndingCinematic(false);
+    setShowMissionCompleteModal(true);
+    audio.playClick();
   };
 
   const startInteractiveScan = (target, key) => {
@@ -822,8 +928,12 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
           setInvestigateTarget(target);
         }
       } else if (id === 'poi_mission_terminal' || id === 'poi_lunar_transport' || id === 'poi_route_marker_alpha') {
-        if (id === 'poi_mission_terminal') {
-          completeStage1Objective('activate_terminal');
+        if (id === 'poi_mission_terminal' || id === 'poi_lunar_transport') {
+          if (journeyStageIndex === 6) {
+            startEndingCinematic();
+            return;
+          }
+          if (id === 'poi_mission_terminal') completeStage1Objective('activate_terminal');
         } else if (id === 'poi_route_marker_alpha') {
           completeStage1Objective('approach_route_marker');
           advanceJourneyStage(1);
@@ -881,7 +991,11 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
         setInvestigateTarget(nearInteractableRef.current);
       } else if (id === 'poi_extraction_pallet' && isMissionEchoCompletedRef.current) {
         audio.playEquipmentFeedback();
-        setShowChapter1Completion(true);
+        if (journeyStageIndex === 6) {
+          startEndingCinematic();
+        } else {
+          setShowMissionCompleteModal(true);
+        }
         setInvestigateTarget(nearInteractableRef.current);
       } else {
         audio.playInteract();
@@ -2744,6 +2858,90 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
     const termLight = new THREE.PointLight(0x06b6d4, 2.5, 8);
     termLight.position.set(0, 1.3, 0.3);
     terminalGroup.add(termLight);
+
+    // Stage 7: Recovered Signal Fragment & Unknown Map Location Hologram above Terminal
+    const terminalHoloProjection = new THREE.Group();
+    terminalHoloProjection.position.set(0, 1.95, 0.15);
+    terminalHoloProjection.visible = false;
+
+    // 1. Wireframe Holographic Lunar Globe / Map
+    const holoGlobeGeo = new THREE.SphereGeometry(0.36, 16, 12);
+    const holoGlobeMat = new THREE.MeshBasicMaterial({
+      color: 0x38bdf8,
+      wireframe: true,
+      transparent: true,
+      opacity: 0.7
+    });
+    const holoGlobeMesh = new THREE.Mesh(holoGlobeGeo, holoGlobeMat);
+    terminalHoloProjection.add(holoGlobeMesh);
+
+    // 2. Concentric Tactical Coordinate Rings
+    const holoRingGeo = new THREE.RingGeometry(0.48, 0.52, 32);
+    const holoRingMat = new THREE.MeshBasicMaterial({
+      color: 0x06b6d4,
+      side: THREE.DoubleSide,
+      transparent: true,
+      opacity: 0.8
+    });
+    const holoRing1 = new THREE.Mesh(holoRingGeo, holoRingMat);
+    holoRing1.rotation.x = Math.PI / 2;
+    terminalHoloProjection.add(holoRing1);
+
+    const holoRing2 = new THREE.Mesh(
+      new THREE.RingGeometry(0.62, 0.65, 32),
+      new THREE.MeshBasicMaterial({ color: 0x818cf8, side: THREE.DoubleSide, transparent: true, opacity: 0.55 })
+    );
+    holoRing2.rotation.x = Math.PI / 2;
+    terminalHoloProjection.add(holoRing2);
+
+    // 3. Beacon pin indicating the unknown location coordinates
+    const beaconPinMat = new THREE.MeshBasicMaterial({ color: 0xf59e0b });
+    const beaconPin = new THREE.Mesh(new THREE.ConeGeometry(0.045, 0.22, 8), beaconPinMat);
+    beaconPin.position.set(0.22, 0.24, 0.15);
+    beaconPin.rotation.z = -Math.PI / 4;
+    terminalHoloProjection.add(beaconPin);
+
+    // 4. Recovered Signal Fragment Glyph hovering above globe
+    const stage7GlyphGeo = new THREE.OctahedronGeometry(0.09, 0);
+    const stage7GlyphMat = new THREE.MeshBasicMaterial({ color: 0xec4899, wireframe: true });
+    const stage7GlyphMesh = new THREE.Mesh(stage7GlyphGeo, stage7GlyphMat);
+    stage7GlyphMesh.position.set(0, 0.55, 0);
+    terminalHoloProjection.add(stage7GlyphMesh);
+
+    // 5. Holographic PointLight
+    const stage7HoloLight = new THREE.PointLight(0x38bdf8, 3.0, 12);
+    stage7HoloLight.position.set(0, 0.3, 0);
+    terminalHoloProjection.add(stage7HoloLight);
+
+    terminalGroup.add(terminalHoloProjection);
+
+    // Stage 7: Distant Horizon Signal Beacon (Vault Zero / Next Signal Location)
+    const horizonBeaconGroup = new THREE.Group();
+    horizonBeaconGroup.position.set(-360, 48, -260);
+    horizonBeaconGroup.visible = false;
+
+    const horizonBeaconCore = new THREE.Mesh(
+      new THREE.SphereGeometry(2.5, 16, 16),
+      new THREE.MeshBasicMaterial({ color: 0x06b6d4 })
+    );
+    horizonBeaconGroup.add(horizonBeaconCore);
+
+    const beaconBeamGeo = new THREE.CylinderGeometry(0.8, 4.0, 180, 16, 1, true);
+    const beaconBeamMat = new THREE.MeshBasicMaterial({
+      color: 0x38bdf8,
+      transparent: true,
+      opacity: 0.65,
+      side: THREE.DoubleSide
+    });
+    const beaconBeam = new THREE.Mesh(beaconBeamGeo, beaconBeamMat);
+    beaconBeam.position.y = 90;
+    horizonBeaconGroup.add(beaconBeam);
+
+    const horizonBeaconLight = new THREE.PointLight(0x06b6d4, 15, 300);
+    horizonBeaconLight.position.y = 10;
+    horizonBeaconGroup.add(horizonBeaconLight);
+
+    scene.add(horizonBeaconGroup);
 
     landingZoneGroup.add(terminalGroup);
 
@@ -5107,6 +5305,14 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
         return;
       }
 
+      // Skip Ending Cinematic with Space, Escape, or E
+      if (isEndingCinematicRef.current) {
+        if (code === 'Space' || code === 'Escape' || code === 'KeyE') {
+          skipEndingCinematic();
+        }
+        return;
+      }
+
       // Pause Menu Toggle [Escape]
       if (code === 'Escape') {
         togglePause();
@@ -5169,6 +5375,12 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
           }
           if (nearInteractableRef.current?.id === 'poi_quantum_storage_unit' && stage6StepsRef.current.isolated && !stage6StepsRef.current.secured) {
             completeStage6Step('secured');
+            return;
+          }
+        }
+        if (journeyStageIndex === 6) {
+          if (nearInteractableRef.current?.id === 'poi_mission_terminal' || nearInteractableRef.current?.id === 'poi_lunar_transport' || nearInteractableRef.current?.id === 'poi_extraction_pallet') {
+            startEndingCinematic();
             return;
           }
         }
@@ -5326,6 +5538,54 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
             text: 'Welcome to the Moon, Captain. Try not to wander too far. We have a spacecraft to recover.'
           });
           audio.playRadioCommsChatter('chen');
+        }
+
+        renderer.render(scene, camera);
+        return;
+      }
+
+      // Stage 7 Ending Cinematic Sequence
+      if (isEndingCinematicRef.current) {
+        endingCinematicTimerRef.current += delta;
+        const eTime = endingCinematicTimerRef.current;
+
+        if (eTime < 5.0) {
+          // Phase 1: Close framing on Mission Terminal & projected map
+          camera.position.set(102.2, landingTerrainY + 1.65, 66.8);
+          camera.lookAt(103.2, landingTerrainY + 2.1, 65.5);
+        } else if (eTime < 10.0) {
+          // Phase 2: Gentle slow dolly around terminal as Arin explains
+          const p = (eTime - 5.0) / 5.0;
+          const cx = 102.2 + (101.8 - 102.2) * p;
+          const cy = (landingTerrainY + 1.65) + 0.1 * Math.sin(p * Math.PI);
+          const cz = 66.8 + (66.0 - 66.8) * p;
+          camera.position.set(cx, cy, cz);
+          camera.lookAt(103.2, landingTerrainY + 2.05, 65.5);
+        } else if (eTime < 15.0) {
+          // Phase 3: Hologram illuminates bright amber/cyan unknown location
+          const p = (eTime - 10.0) / 5.0;
+          camera.position.set(102.0 + 0.3 * Math.sin(p * 2.0), landingTerrainY + 1.7, 65.8);
+          camera.lookAt(103.2, landingTerrainY + 2.1, 65.5);
+        } else if (eTime < 21.0) {
+          // Phase 4: Arin looks back at Surveyor 1 across Oceanus Procellarum
+          const p = (eTime - 15.0) / 6.0;
+          const camX = 102.0 + (103.5 - 102.0) * p;
+          const camY = (landingTerrainY + 1.75) + 0.25 * p;
+          const camZ = 65.8 + (64.5 - 65.8) * p;
+          camera.position.set(camX, camY, camZ);
+          camera.lookAt(0, surveyorTerrainY + 1.5, 0);
+        } else if (eTime < 26.0) {
+          // Phase 5: Elena welcomes Arin to Project Legacy
+          camera.position.set(103.5, landingTerrainY + 2.0, 64.5);
+          camera.lookAt(0, surveyorTerrainY + 1.5, 0);
+        } else {
+          // Phase 6: Camera moves up toward the Moon's horizon, revealing the next signal location!
+          const p = Math.min(1.0, (eTime - 26.0) / 6.0);
+          const camX = 103.5 + (88.0 - 103.5) * p;
+          const camY = (landingTerrainY + 2.0) + (14.0 - 2.0) * p;
+          const camZ = 64.5 + (48.0 - 64.5) * p;
+          camera.position.set(camX, camY, camZ);
+          camera.lookAt(-360, 48, -260);
         }
 
         renderer.render(scene, camera);
@@ -5663,6 +5923,35 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
         }
       }
 
+      // Animate Stage 7 Terminal Hologram Projection & Distant Horizon Signal Beacon
+      if (typeof terminalHoloProjection !== 'undefined' && terminalHoloProjection) {
+        const isStage7 = journeyStageIndex === 6;
+        terminalHoloProjection.visible = isStage7;
+        if (isStage7) {
+          terminalHoloProjection.rotation.y += delta * 0.75;
+          if (typeof stage7GlyphMesh !== 'undefined' && stage7GlyphMesh) {
+            stage7GlyphMesh.rotation.y += delta * 1.5;
+            stage7GlyphMesh.position.y = 0.55 + Math.sin(time * 3.0) * 0.05;
+          }
+          if (typeof stage7HoloLight !== 'undefined' && stage7HoloLight) {
+            stage7HoloLight.intensity = 2.4 + Math.sin(time * 3.5) * 0.8;
+          }
+        }
+      }
+
+      if (typeof horizonBeaconGroup !== 'undefined' && horizonBeaconGroup) {
+        const isStage7 = journeyStageIndex === 6;
+        horizonBeaconGroup.visible = isStage7;
+        if (isStage7) {
+          if (typeof beaconBeam !== 'undefined' && beaconBeam) {
+            beaconBeam.rotation.y += delta * 0.35;
+          }
+          if (typeof horizonBeaconLight !== 'undefined' && horizonBeaconLight) {
+            horizonBeaconLight.intensity = 14 + Math.sin(time * 4.0) * 6;
+          }
+        }
+      }
+
       // Cancel interface activation if player moved out of range
       if (isActivatingInterfaceRef.current) {
         const dInterface = Math.hypot(playerPos.x - (-77.2), playerPos.z - (-53.2));
@@ -5775,6 +6064,9 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
             targetX = 3.8;
             targetZ = -2.6; // Extraction Pallet
           }
+        } else if (journeyStageIndex === 6) {
+          targetX = 103.2;
+          targetZ = 65.5; // Tactical Mission Terminal (Landing Site)
         } else {
           const currentStageObj = JOURNEY_STAGES[journeyStageIndex] || JOURNEY_STAGES[0];
           targetX = currentStageObj?.targetCoords?.x || 0;
@@ -6728,6 +7020,57 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
               </div>
             )}
 
+            {/* STAGE 7 — THE NEXT SIGNAL OBJECTIVES */}
+            {journeyStageIndex === 6 && (
+              <div className="p-3.5 rounded-xl bg-slate-950/90 backdrop-blur-md border border-amber-500/40 shadow-xl text-xs space-y-2">
+                <div className="flex items-center justify-between text-[10px] text-amber-300 font-bold uppercase tracking-wider">
+                  <div className="flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
+                    <span>The Next Signal (Stage 7)</span>
+                  </div>
+                  <span className="text-slate-400 font-mono">Mission Ending</span>
+                </div>
+
+                <div className="space-y-1.5 pt-1">
+                  <div className="p-2 rounded-lg text-[11px] bg-amber-950/30 text-amber-200 border border-amber-500/30">
+                    <div className="flex items-center justify-between">
+                      <span className="font-semibold text-white">1. Return to Mission Terminal</span>
+                      <span className="text-[9px] px-1.5 py-0.5 rounded font-mono font-bold bg-amber-900/60 text-amber-300">
+                        {distanceToLanding < 12 ? 'IN RANGE' : `${distanceToLanding}m AWAY`}
+                      </span>
+                    </div>
+                    <div className="text-[10px] text-slate-400 mt-0.5">
+                      The team prepares to leave the landing site. Signal fragment projected above terminal.
+                    </div>
+                  </div>
+
+                  <div className="p-2 rounded-lg text-[11px] bg-white/[0.03] text-slate-300 border border-white/5">
+                    <div className="flex items-center justify-between">
+                      <span className="font-semibold text-white">2. Debrief with Commander Elena</span>
+                      <span className="text-[9px] px-1.5 py-0.5 rounded font-mono font-bold text-slate-400">
+                        PRESS [E]
+                      </span>
+                    </div>
+                    <div className="text-[10px] text-slate-400 mt-0.5">
+                      Review unknown location on map and decide to investigate the coordinates.
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-2 border-t border-white/10 flex items-center justify-between text-[10px] font-mono">
+                  <span className="text-slate-400">Classified Coordinates Ready</span>
+                  <button
+                    type="button"
+                    onClick={startEndingCinematic}
+                    className="text-amber-400 font-bold hover:underline flex items-center gap-1"
+                  >
+                    <span>START DEBRIEF [E]</span>
+                    <ChevronRight className="w-3 h-3" />
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* SIGNAL TRACKER HUD CARD (STAGE 3 SPECIFICATION) */}
             {(hasSignalTracker || journeyStageIndex === 2) && (
               <div className="p-3.5 rounded-xl bg-slate-950/95 backdrop-blur-md border border-cyan-400/60 shadow-[0_0_35px_rgba(6,182,212,0.3)] space-y-2.5 text-xs font-mono">
@@ -7402,6 +7745,10 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
           }}
           onLogData={(target) => {
             if (target.id === 'poi_mission_terminal') {
+              if (journeyStageIndex === 6) {
+                startEndingCinematic();
+                return;
+              }
               completeStage1Objective('read_briefing');
               setActiveObjective('Objective updated: Approach Route Marker Alpha leading West toward Surveyor 1');
             } else if (target.id === 'poi_route_marker_alpha') {
@@ -7452,7 +7799,11 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
                 completeStage6Step('secured');
               }
             } else if (target.id === 'poi_extraction_pallet') {
-              setShowChapter1Completion(true);
+              if (journeyStageIndex === 6) {
+                startEndingCinematic();
+              } else {
+                setShowMissionCompleteModal(true);
+              }
             } else {
               setActiveObjective(`Cataloged: ${target.title}. Continue exploring the sector.`);
             }
@@ -7665,7 +8016,7 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
                   audio.playClick();
                   setShowRecoveryReport(false);
                   advanceJourneyStage(6);
-                  setActiveObjective('Approach the Extraction Sled to review coordinates and conclude Chapter 1.');
+                  setActiveObjective('Return to the Mission Terminal at the landing site to debrief with Commander Elena.');
                 }}
                 className="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-600 via-cyan-600 to-indigo-600 hover:from-emerald-500 hover:to-cyan-500 text-white font-bold text-xs uppercase tracking-widest shadow-lg shadow-emerald-600/30 transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2"
               >
@@ -7677,78 +8028,251 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
         </div>
       )}
 
-      {/* CHAPTER 1 MISSION ACCOMPLISHED BANNER (END — NEXT SIGNAL) */}
-      {showChapter1Completion && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/90 backdrop-blur-xl animate-fade-in font-mono select-none">
-          <div className="relative w-full max-w-xl rounded-2xl bg-slate-950 border-2 border-emerald-500/60 shadow-[0_0_80px_rgba(16,185,129,0.35)] p-6 text-center space-y-5">
-            <div className="inline-flex p-3 rounded-2xl bg-emerald-500/20 border border-emerald-400/40 text-emerald-300">
-              <Trophy className="w-8 h-8 text-emerald-400 animate-bounce" />
-            </div>
-
-            <div className="space-y-1">
-              <div className="text-[11px] text-emerald-400 font-bold tracking-widest uppercase">
-                MISSION ACCOMPLISHED · CHAPTER 1 COMPLETE
-              </div>
-              <h2 className="text-xl sm:text-2xl font-bold text-white tracking-wide uppercase">
-                End — Next Signal: Vault Zero
-              </h2>
-            </div>
-
-            <p className="text-slate-300 text-xs sm:text-sm font-sans leading-relaxed">
-              Surveyor 1 has been braced with robotic stabilizers and all 11,240 historic Vidicon frames are secured in the quantum vault. 
-              The alien conduit has powered down, leaving its decrypted transmission vector pointing to an ancient subterranean complex deep beneath the lunar crust: <strong>Vault Zero</strong>.
-            </p>
-
-            <div className="p-3.5 rounded-xl bg-black/60 border border-emerald-500/30 text-left text-xs font-mono space-y-1.5">
-              <div className="flex justify-between text-slate-400">
-                <span>Phase 1 — Spawn & Debrief:</span>
-                <span className="text-emerald-300 font-bold">Team Landing Complete</span>
-              </div>
-              <div className="flex justify-between text-slate-400">
-                <span>Phase 2 — Explore Surveyor 1:</span>
-                <span className="text-emerald-300 font-bold">4/4 Components Scanned</span>
-              </div>
-              <div className="flex justify-between text-slate-400">
-                <span>Phase 3 — Investigate Crater:</span>
-                <span className="text-purple-300 font-bold">432.06 Hz Epicenter Isolated</span>
-              </div>
-              <div className="flex justify-between text-slate-400">
-                <span>Phase 4 — Discover Alien Structure:</span>
-                <span className="text-cyan-300 font-bold">Precursor Monolith Interfaced</span>
-              </div>
-              <div className="flex justify-between text-slate-400">
-                <span>Phase 5 — Solve Mission Echo:</span>
-                <span className="text-cyan-300 font-bold">3/3 Historical Puzzles Restored</span>
-              </div>
-              <div className="flex justify-between text-slate-400">
-                <span>Phase 6 — Recover Surveyor 1:</span>
-                <span className="text-emerald-300 font-bold">Alien Feed Severed · 11,240 Frames</span>
-              </div>
-              <div className="flex justify-between text-slate-400">
-                <span>Phase 7 — End Next Signal:</span>
-                <span className="text-amber-300 font-bold">Arin Commits to Project Legacy</span>
+      {/* STAGE 7 — ENDING CINEMATIC LETTERBOX & LIVE DEBRIEF OVERLAY */}
+      {isEndingCinematic && (
+        <div className="absolute inset-0 pointer-events-auto z-50 flex flex-col justify-between">
+          {/* Top Letterbox Bar */}
+          <div className="h-20 bg-black/95 flex items-center justify-between px-8 border-b border-cyan-500/20">
+            <div className="flex items-center gap-3">
+              <div className="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-ping" />
+              <div className="text-xs font-mono tracking-widest text-cyan-300 uppercase">
+                PROJECT LEGACY // MISSION 01 · COMMAND DEBRIEF LINK
               </div>
             </div>
+            <div className="text-[11px] font-mono tracking-wider text-amber-300 uppercase font-bold">
+              STAGE 7 — THE NEXT SIGNAL
+            </div>
+          </div>
 
-            <div className="p-3 rounded-xl bg-cyan-950/30 border border-cyan-500/30 text-left text-xs font-sans text-cyan-200">
-              <strong className="text-cyan-300 font-mono">Captain Arin Rao:</strong> "We came to recover our past... but whoever built this left an invitation to what comes next. Project Legacy continues."
+          {/* Center Cinematic Reticle / Stage Direction */}
+          <div className="flex-1 flex flex-col items-center justify-center p-6 text-center select-none pointer-events-none">
+            {endingDialoguePhase === 4 && (
+              <div className="p-3 rounded-xl bg-black/75 backdrop-blur-md border border-cyan-500/40 text-cyan-300 text-xs sm:text-sm font-sans italic tracking-wide animate-fade-in">
+                (Arin looks back at Surveyor 1 across Oceanus Procellarum.)
+              </div>
+            )}
+            {endingDialoguePhase >= 6 && (
+              <div className="p-4 rounded-2xl bg-black/85 backdrop-blur-md border-2 border-cyan-400 shadow-[0_0_60px_rgba(6,182,212,0.4)] space-y-2 max-w-md animate-fade-in font-mono">
+                <div className="text-[10px] text-cyan-400 uppercase tracking-widest flex items-center justify-center gap-1.5 font-bold">
+                  <Sparkles className="w-3.5 h-3.5 text-cyan-400 animate-spin" />
+                  <span>NEXT SIGNAL LOCATION DETECTED</span>
+                </div>
+                <div className="text-base sm:text-lg font-bold text-white tracking-widest uppercase">
+                  CLASSIFIED COORDINATES LOCKED
+                </div>
+                <div className="text-xs text-amber-300 font-mono">
+                  AZIMUTH: 294° NW · RANGE: 42.8 KM · VAULT ZERO
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Bottom Letterbox Bar with Subtitles & Skip Button */}
+          <div className="h-24 bg-black/95 flex items-center justify-between px-8 border-t border-cyan-500/20">
+            <div className="text-xs sm:text-sm font-sans text-slate-200 max-w-3xl leading-relaxed">
+              {endingDialoguePhase === 1 && (
+                <span>
+                  <strong className="text-cyan-300 font-mono">Commander Elena:</strong> "Captain, we've received your recovery report. The archive is safe. Excellent work."
+                </span>
+              )}
+              {endingDialoguePhase === 2 && (
+                <span>
+                  <strong className="text-amber-300 font-mono">Arin:</strong> "Commander, this wasn't just a recovery operation. Something was using Surveyor's data."
+                </span>
+              )}
+              {endingDialoguePhase === 3 && (
+                <span>
+                  <strong className="text-cyan-300 font-mono">Commander Elena:</strong> "Do you want to investigate the coordinates?"
+                </span>
+              )}
+              {endingDialoguePhase === 4 && (
+                <span>
+                  <span className="italic text-slate-400 font-mono pr-2">(Arin looks back at Surveyor 1.)</span>
+                  <strong className="text-amber-300 font-mono">Arin:</strong> "Yes. I think I finally understand what this mission is about."
+                </span>
+              )}
+              {endingDialoguePhase === 5 && (
+                <span>
+                  <strong className="text-cyan-300 font-mono">Commander Elena:</strong> "Then welcome to Project Legacy, Captain."
+                </span>
+              )}
+              {endingDialoguePhase >= 6 && (
+                <span className="font-mono text-cyan-400 tracking-wider uppercase text-xs">
+                  The camera moves toward the Moon's horizon. The next signal location appears on the screen.
+                </span>
+              )}
             </div>
 
-            <div className="flex justify-center gap-4 pt-2">
+            <button
+              type="button"
+              onClick={skipEndingCinematic}
+              className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-slate-300 text-xs font-mono uppercase tracking-wider transition-all flex items-center gap-1.5 flex-shrink-0"
+            >
+              <span>Skip Debrief</span>
+              <ChevronRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* STAGE 7 — OFFICIAL MISSION COMPLETE ENDING SCREEN */}
+      {(showMissionCompleteModal || showChapter1Completion) && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/95 backdrop-blur-2xl animate-fade-in font-mono select-none overflow-y-auto">
+          <div className="relative w-full max-w-2xl rounded-2xl bg-slate-950 border-2 border-emerald-500/70 shadow-[0_0_90px_rgba(16,185,129,0.35)] p-6 sm:p-8 text-center space-y-6 my-auto">
+            {/* Header Badge & Title */}
+            <div className="space-y-2">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-950/80 border border-emerald-500/50 text-xs text-emerald-300 font-bold uppercase tracking-widest">
+                <Trophy className="w-4 h-4 text-emerald-400 animate-bounce" />
+                <span>PROJECT LEGACY · MISSION 01</span>
+              </div>
+              <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-widest uppercase">
+                MISSION COMPLETE
+              </h1>
+              <div className="text-sm sm:text-base font-semibold text-cyan-400 tracking-wider uppercase font-sans">
+                The First Footprint
+              </div>
+            </div>
+
+            {/* Exact Required 4 Core Mission Outcomes */}
+            <div className="p-4 sm:p-5 rounded-xl bg-black/70 border border-emerald-500/30 text-left text-xs sm:text-sm font-mono space-y-3">
+              <div className="flex items-center justify-between border-b border-white/10 pb-2">
+                <span className="text-slate-300 font-sans">Recovered:</span>
+                <span className="text-emerald-400 font-bold tracking-wide flex items-center gap-1.5">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                  Surveyor 1 historical archive
+                </span>
+              </div>
+              <div className="flex items-center justify-between border-b border-white/10 pb-2">
+                <span className="text-slate-300 font-sans">Discovered:</span>
+                <span className="text-cyan-400 font-bold tracking-wide flex items-center gap-1.5">
+                  <Sparkles className="w-4 h-4 text-cyan-400 flex-shrink-0" />
+                  Unknown signal network
+                </span>
+              </div>
+              <div className="flex items-center justify-between border-b border-white/10 pb-2">
+                <span className="text-slate-300 font-sans">Next destination:</span>
+                <span className="text-amber-400 font-bold tracking-wide flex items-center gap-1.5">
+                  <MapPin className="w-4 h-4 text-amber-400 flex-shrink-0" />
+                  Classified coordinates
+                </span>
+              </div>
+              <div className="flex items-center justify-between pt-0.5">
+                <span className="text-slate-300 font-sans">Project Legacy:</span>
+                <span className="text-purple-300 font-bold tracking-wide flex items-center gap-1.5">
+                  <Shield className="w-4 h-4 text-purple-400 flex-shrink-0" />
+                  Mission 01 completed
+                </span>
+              </div>
+            </div>
+
+            {/* Scripted Comms Dialogue Archive */}
+            <div className="p-4 rounded-xl bg-slate-900/80 border border-cyan-500/30 text-left text-xs space-y-2 font-sans">
+              <div className="text-[10px] text-cyan-400 font-mono font-bold uppercase tracking-wider border-b border-white/10 pb-1 flex justify-between items-center">
+                <span>Mission Debrief Log · Carrier Aegis Uplink</span>
+                <span className="text-slate-400 font-normal">Encrypted Carrier 432.06 Hz</span>
+              </div>
+              <div className="text-slate-300 space-y-2 text-xs leading-relaxed">
+                <p>
+                  <strong className="text-cyan-300 font-mono">Commander Elena:</strong> "Captain, we've received your recovery report. The archive is safe. Excellent work."
+                </p>
+                <p>
+                  <strong className="text-amber-300 font-mono">Arin:</strong> "Commander, this wasn't just a recovery operation. Something was using Surveyor's data."
+                </p>
+                <p>
+                  <strong className="text-cyan-300 font-mono">Commander Elena:</strong> "Do you want to investigate the coordinates?"
+                </p>
+                <p className="italic text-slate-400 pl-3 border-l-2 border-slate-600">
+                  (Arin looks back at Surveyor 1.)
+                </p>
+                <p>
+                  <strong className="text-amber-300 font-mono">Arin:</strong> "Yes. I think I finally understand what this mission is about."
+                </p>
+                <p>
+                  <strong className="text-cyan-300 font-mono">Commander Elena:</strong> "Then welcome to Project Legacy, Captain."
+                </p>
+              </div>
+            </div>
+
+            {/* End Credits Toggle Section */}
+            {showCredits && (
+              <div className="p-4 rounded-xl bg-black/60 border border-white/10 text-left text-xs font-mono space-y-3 animate-fade-in">
+                <div className="text-cyan-300 font-bold border-b border-white/10 pb-1 uppercase tracking-wider">
+                  Project Legacy · Expedition Aegis Credits
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] text-slate-300 font-sans">
+                  <div>
+                    <div className="text-slate-400 font-mono text-[10px] uppercase">Historical Tribute:</div>
+                    <div className="font-semibold text-white">NASA Surveyor 1 (1966)</div>
+                    <div className="text-[10px] text-slate-400">First U.S. Soft Lunar Landing</div>
+                  </div>
+                  <div>
+                    <div className="text-slate-400 font-mono text-[10px] uppercase">Landing Site:</div>
+                    <div className="font-semibold text-white">Oceanus Procellarum</div>
+                    <div className="text-[10px] text-slate-400">2.474° S, 43.339° W</div>
+                  </div>
+                  <div>
+                    <div className="text-slate-400 font-mono text-[10px] uppercase">Expedition Team:</div>
+                    <div>Captain Arin Rao (Commander)</div>
+                    <div>Specialist Maya Chen (Lead Science)</div>
+                    <div>Officer Leo Vance (Ops & Recovery)</div>
+                  </div>
+                  <div>
+                    <div className="text-slate-400 font-mono text-[10px] uppercase">Next Chapter:</div>
+                    <div className="font-semibold text-cyan-300">Vault Zero Subterranean Network</div>
+                    <div className="text-[10px] text-slate-400">Project Legacy Mission 02</div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Action Buttons */}
+            <div className="flex flex-col sm:flex-row justify-center gap-3 pt-2">
               <button
                 type="button"
-                onClick={() => { audio.playClick(); setShowChapter1Completion(false); }}
-                className="px-5 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-slate-300 font-bold text-xs uppercase tracking-wider transition-all"
+                onClick={() => {
+                  audio.playClick();
+                  setShowCredits(!showCredits);
+                }}
+                className="px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 font-bold text-xs uppercase tracking-wider transition-all"
               >
-                Continue Free Exploration
+                {showCredits ? 'Hide Credits' : 'End Credits & Lore'}
               </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  audio.playClick();
+                  setShowMissionCompleteModal(false);
+                  setShowChapter1Completion(false);
+                }}
+                className="px-5 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-slate-200 font-bold text-xs uppercase tracking-wider transition-all"
+              >
+                Free Exploration
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setShowMissionCompleteModal(false);
+                  setShowChapter1Completion(false);
+                  startEndingCinematic();
+                }}
+                className="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-amber-300 font-bold text-xs uppercase tracking-wider transition-all"
+              >
+                Replay Ending
+              </button>
+
               {onReturnMenu && (
                 <button
                   type="button"
-                  onClick={() => { audio.playClick(); onReturnMenu(); }}
-                  className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-cyan-600 hover:from-emerald-500 hover:to-cyan-500 text-white font-bold text-xs uppercase tracking-wider shadow-lg shadow-emerald-600/30 transition-all hover:scale-105 active:scale-95"
+                  onClick={() => {
+                    audio.playClick();
+                    onReturnMenu();
+                  }}
+                  className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 via-cyan-600 to-indigo-600 hover:from-emerald-500 hover:to-cyan-500 text-white font-bold text-xs uppercase tracking-wider shadow-lg shadow-emerald-600/30 transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-2"
                 >
-                  Return to Base Menu
+                  <span>Return to Base Menu</span>
+                  <ChevronRight className="w-4 h-4" />
                 </button>
               )}
             </div>
