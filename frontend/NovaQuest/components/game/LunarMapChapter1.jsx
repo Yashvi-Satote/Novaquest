@@ -526,7 +526,7 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
   };
 
   const triggerPointCDiscovery = () => {
-    if (isPointCDiscoveredRef.current) return;
+    if (isPointCDiscoveredRef.current && journeyStageIndexRef.current >= 3) return;
     isPointCDiscoveredRef.current = true;
     setIsPointCDiscovered(true);
 
@@ -558,17 +558,22 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
       setActiveObjective('Precursor fragment uncovered. The crater floor is shifting...');
       advanceJourneyStage(3);
       triggerGroundShift();
-    }, 9500);
+    }, 8500);
   };
 
   const inspectStage3Point = (pointId) => {
-    if (stage3InspectionsRef.current[pointId]) return;
     const updated = { ...stage3InspectionsRef.current, [pointId]: true };
     stage3InspectionsRef.current = updated;
     setStage3Inspections(updated);
     audio.playInteract();
 
-    if (pointId === 'pointC') {
+    const allStage3Done = updated.pointA && updated.pointB && updated.pointC;
+    if (allStage3Done) {
+      triggerPointCDiscovery();
+      // Directly advance to Stage 4 and trigger ground shift
+      advanceJourneyStage(3);
+      triggerGroundShift();
+    } else if (pointId === 'pointC') {
       triggerPointCDiscovery();
     }
   };
@@ -959,6 +964,15 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
           }
         }
 
+        // Stage 3 Investigation Point Scans
+        if (target.id === 'poi_crater_site_alpha') {
+          inspectStage3Point('pointA');
+        } else if (target.id === 'poi_crater_site_beta') {
+          inspectStage3Point('pointB');
+        } else if (target.id === 'poi_crater_site_gamma') {
+          inspectStage3Point('pointC');
+        }
+
         // Stage 4 Scanned Structure
         if (target.id === 'poi_exposed_structure' || target.id === 'poi_alien_structure') {
           completeStage4Objective('scannedStructure');
@@ -1085,6 +1099,18 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
     }, 14000);
     return () => clearTimeout(timer);
   }, [activeComms]);
+
+  // Stage 3 -> Stage 4 Automatic Progression Guard
+  // Ensures that whenever all 3 Stage 3 objectives are satisfied, the player seamlessly advances to Stage 4
+  useEffect(() => {
+    if (journeyStageIndex === 2) {
+      const allStage3Done = stage3Inspections.pointA && stage3Inspections.pointB && stage3Inspections.pointC;
+      if (allStage3Done) {
+        advanceJourneyStage(3);
+        triggerGroundShift();
+      }
+    }
+  }, [journeyStageIndex, stage3Inspections]);
 
   // Mission Echo & Extraction State
   const [isMissionEchoOpen, setIsMissionEchoOpen] = useState(false);
@@ -7162,17 +7188,18 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
           } else if (distLanding > 28 || distSurveyor < 65) {
             advanceJourneyStage(1);
           }
-        } else if (journeyStageIndex === 1 && hasSignalTrackerRef.current && (distCrater < 48 && distLanding > 60)) {
+        } else if (curStage === 1 && hasSignalTrackerRef.current && (distCrater < 48 && distLanding > 60)) {
           advanceJourneyStage(2);
-        } else if (journeyStageIndex === 2 && isPointCDiscoveredRef.current && distBuried < 14.0) {
+        } else if (curStage === 2 && ((stage3InspectionsRef.current.pointA && stage3InspectionsRef.current.pointB && stage3InspectionsRef.current.pointC) || (isPointCDiscoveredRef.current && distBuried < 14.0))) {
           advanceJourneyStage(3);
-        } else if (journeyStageIndex === 3 && (distEcho < 20 || isMissionEchoOpen)) {
+          triggerGroundShift();
+        } else if (curStage === 3 && (distEcho < 20 || isMissionEchoOpen)) {
           advanceJourneyStage(4);
         }
 
         // Stage 4 Proximity & Ground Shift check
-        if (journeyStageIndex === 3) {
-          if (distBuried < 16.0 && !isGroundShiftTriggeredRef.current) {
+        if (curStage === 3) {
+          if (distBuried < 18.0 && !isGroundShiftTriggeredRef.current) {
             triggerGroundShift();
           }
           if (Math.hypot(playerPos.x - (-77.2), playerPos.z - (-53.2)) < 4.2) {
@@ -7939,16 +7966,30 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
                 {/* Stage 3 Status / Discovery confirmation */}
                 <div className="pt-2 border-t border-white/10 flex items-center justify-between text-[10px] font-mono">
                   <span className="text-slate-400">
-                    {isPointCDiscovered
+                    {Object.values(stage3Inspections).every(Boolean)
+                      ? 'All 3 signal points confirmed · Ready for Stage 4'
+                      : isPointCDiscovered
                       ? 'Precursor fragment visible at crater floor'
                       : 'Follow scanner direction & strength [Q]'}
                   </span>
-                  {isPointCDiscovered && (
+                  {Object.values(stage3Inspections).every(Boolean) ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        audio.playInteract();
+                        advanceJourneyStage(3);
+                        triggerGroundShift();
+                      }}
+                      className="px-2.5 py-1 rounded bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-500 hover:to-cyan-500 text-white font-bold text-[10px] uppercase tracking-wider animate-pulse shadow-md shadow-cyan-500/30 cursor-pointer pointer-events-auto"
+                    >
+                      Advance to Stage 4 &rarr;
+                    </button>
+                  ) : isPointCDiscovered ? (
                     <span className="text-purple-400 font-bold flex items-center gap-1 animate-pulse">
                       <Sparkles className="w-3 h-3 text-purple-400" />
                       <span>EPICENTER CONFIRMED</span>
                     </span>
-                  )}
+                  ) : null}
                 </div>
               </div>
             )}
