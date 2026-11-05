@@ -25,6 +25,8 @@ class AudioManager {
 
     // Vacuum Helmet Life-Support Breathing State
     this.isBreathingPlaying = false;
+    this.isBreathingFast = false;
+    this.onBreathPulse = null;
     this.breathingTimeout = null;
 
     // Alien Structure Sub-Bass Mechanical Bedrock Vibration State
@@ -224,9 +226,116 @@ class AudioManager {
   }
 
   /**
-   * Footstep on lunar regolith: Muffled low-frequency dust crunch transmitted via suit boots
+   * Footstep on lunar regolith via Mechanical Bone-Conduction (Vacuum Physics)
+   * In a vacuum, sound cannot travel through air. The impact travels directly through the
+   * astronaut's boot sole, ankle pivots, and suit chassis, creating a deep, muffled chest thud
+   * (low-pass filtered ~280Hz - 380Hz) rather than an airborne crunch.
    */
-  playFootstepLunar() {
+  playFootstepLunar(isSprinting = false) {
+    const ctx = this.ensureContext();
+    if (!ctx) return;
+    const { sfx } = this.getVolumes();
+    if (sfx <= 0.001) return;
+
+    try {
+      const now = ctx.currentTime;
+
+      // 1. Heavy low-frequency bone conduction thump
+      const thudOsc = ctx.createOscillator();
+      const thudGain = ctx.createGain();
+      thudOsc.type = 'triangle';
+      const baseFreq = isSprinting ? 95 : 80;
+      thudOsc.frequency.setValueAtTime(baseFreq + Math.random() * 15, now);
+      thudOsc.frequency.exponentialRampToValueAtTime(32, now + (isSprinting ? 0.09 : 0.11));
+
+      thudGain.gain.setValueAtTime(sfx * (isSprinting ? 0.22 : 0.16), now);
+      thudGain.gain.exponentialRampToValueAtTime(0.0001, now + (isSprinting ? 0.10 : 0.12));
+
+      // 2. Muffled particulate crunch through low-pass bone-conduction filter
+      const noise = this.createNoiseBuffer(0.12);
+      if (noise) {
+        const noiseSrc = ctx.createBufferSource();
+        noiseSrc.buffer = noise;
+
+        const boneFilter = ctx.createBiquadFilter();
+        boneFilter.type = 'lowpass';
+        boneFilter.frequency.setValueAtTime(isSprinting ? 420 : 340, now);
+        boneFilter.Q.setValueAtTime(1.8, now);
+
+        const noiseGain = ctx.createGain();
+        noiseGain.gain.setValueAtTime(sfx * (isSprinting ? 0.14 : 0.09), now);
+        noiseGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.10);
+
+        noiseSrc.connect(boneFilter);
+        boneFilter.connect(noiseGain);
+        noiseGain.connect(ctx.destination);
+
+        noiseSrc.start(now);
+        noiseSrc.stop(now + 0.11);
+      }
+
+      thudOsc.connect(thudGain);
+      thudGain.connect(ctx.destination);
+      thudOsc.start(now);
+      thudOsc.stop(now + (isSprinting ? 0.11 : 0.13));
+    } catch {}
+  }
+
+  /**
+   * Jump Landing on Lunar Surface: Heavy mechanical shock absorber compression & deep bedrock thump
+   */
+  playJumpLandingLunar() {
+    const ctx = this.ensureContext();
+    if (!ctx) return;
+    const { sfx } = this.getVolumes();
+    if (sfx <= 0.001) return;
+
+    try {
+      const now = ctx.currentTime;
+
+      // Heavy bone-conduction impact rumble
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(95, now);
+      osc.frequency.exponentialRampToValueAtTime(26, now + 0.22);
+
+      gain.gain.setValueAtTime(sfx * 0.32, now);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.25);
+
+      // Pneumatic damper hiss (internal suit pressure release)
+      const noise = this.createNoiseBuffer(0.25);
+      if (noise) {
+        const noiseSrc = ctx.createBufferSource();
+        noiseSrc.buffer = noise;
+        const filter = ctx.createBiquadFilter();
+        filter.type = 'bandpass';
+        filter.frequency.setValueAtTime(1200, now);
+        filter.Q.setValueAtTime(2.2, now);
+
+        const noiseGain = ctx.createGain();
+        noiseGain.gain.setValueAtTime(sfx * 0.12, now);
+        noiseGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.22);
+
+        noiseSrc.connect(filter);
+        filter.connect(noiseGain);
+        noiseGain.connect(ctx.destination);
+
+        noiseSrc.start(now);
+        noiseSrc.stop(now + 0.24);
+      }
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.26);
+    } catch {}
+  }
+
+  /**
+   * EVA Suit Motorized Exoskeleton Actuator Servo Whine
+   */
+  playSuitServo(speed = 'normal') {
     const ctx = this.ensureContext();
     if (!ctx) return;
     const { sfx } = this.getVolumes();
@@ -237,18 +346,20 @@ class AudioManager {
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
 
-      osc.type = 'triangle';
-      osc.frequency.setValueAtTime(105 + Math.random() * 20, now);
-      osc.frequency.exponentialRampToValueAtTime(38, now + 0.08);
+      osc.type = 'sine';
+      const isFast = speed === 'fast';
+      const startFreq = isFast ? 2200 : 1750;
+      const endFreq = isFast ? 2600 : 1950;
+      osc.frequency.setValueAtTime(startFreq + (Math.random() - 0.5) * 80, now);
+      osc.frequency.linearRampToValueAtTime(endFreq, now + (isFast ? 0.09 : 0.13));
 
-      gain.gain.setValueAtTime(sfx * 0.10, now);
-      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.09);
+      gain.gain.setValueAtTime(sfx * (isFast ? 0.045 : 0.028), now);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + (isFast ? 0.10 : 0.14));
 
       osc.connect(gain);
       gain.connect(ctx.destination);
-
       osc.start(now);
-      osc.stop(now + 0.09);
+      osc.stop(now + (isFast ? 0.11 : 0.15));
     } catch {}
   }
 
@@ -389,7 +500,8 @@ class AudioManager {
 
   /**
    * Suit Breathing Loop: Astronaut life-support O2 regulator airflow cycle.
-   * Rhythmic, quiet, intimate inhalation (~1.8s) and exhalation (~2.0s) inside the helmet.
+   * Rhythmic, quiet, intimate inhalation and exhalation inside the helmet.
+   * Dynamically shifts between calm resting breathing (~6.2s) and accelerated sprint respiration (~2.4s).
    */
   startSuitBreathing() {
     if (this.isBreathingPlaying) return;
@@ -400,67 +512,97 @@ class AudioManager {
     const runBreathingCycle = () => {
       if (!this.isBreathingPlaying) return;
       const { sfx } = this.getVolumes();
+      const isFast = this.isBreathingFast;
+
       if (sfx <= 0.001) {
-        this.breathingTimeout = setTimeout(runBreathingCycle, 6200);
+        this.breathingTimeout = setTimeout(runBreathingCycle, isFast ? 2400 : 6200);
         return;
       }
 
       try {
         const now = ctx.currentTime;
-        const noiseBuf = this.createNoiseBuffer(3.0);
+        const noiseBuf = this.createNoiseBuffer(2.5);
         if (!noiseBuf) return;
 
-        // Inhalation (~1.8s) — life-support O2 regulator opening
+        const inhaleDuration = isFast ? 0.95 : 1.75;
+        const exhaleDelay = isFast ? 1.15 : 2.4;
+        const exhaleDuration = isFast ? 1.05 : 1.95;
+        const cycleTotal = isFast ? 2400 : 6200;
+
+        // Inhalation — life-support O2 regulator opening
         const inhaleSrc = ctx.createBufferSource();
         inhaleSrc.buffer = noiseBuf;
         const inhaleFilter = ctx.createBiquadFilter();
         inhaleFilter.type = 'bandpass';
-        inhaleFilter.frequency.setValueAtTime(820, now);
-        inhaleFilter.Q.setValueAtTime(2.4, now);
-        inhaleFilter.frequency.linearRampToValueAtTime(960, now + 1.2);
+        inhaleFilter.frequency.setValueAtTime(isFast ? 920 : 820, now);
+        inhaleFilter.Q.setValueAtTime(2.2, now);
+        inhaleFilter.frequency.linearRampToValueAtTime(isFast ? 1120 : 960, now + inhaleDuration * 0.7);
 
         const inhaleGain = ctx.createGain();
         inhaleGain.gain.setValueAtTime(0.0001, now);
-        inhaleGain.gain.linearRampToValueAtTime(sfx * 0.035, now + 0.8);
-        inhaleGain.gain.exponentialRampToValueAtTime(0.0001, now + 1.8);
+        inhaleGain.gain.linearRampToValueAtTime(sfx * (isFast ? 0.055 : 0.035), now + inhaleDuration * 0.45);
+        inhaleGain.gain.exponentialRampToValueAtTime(0.0001, now + inhaleDuration);
 
         inhaleSrc.connect(inhaleFilter);
         inhaleFilter.connect(inhaleGain);
         inhaleGain.connect(ctx.destination);
 
         inhaleSrc.start(now);
-        inhaleSrc.stop(now + 1.85);
+        inhaleSrc.stop(now + inhaleDuration + 0.05);
 
-        // Exhalation (~2.0s) — smooth air pressure exhaust valve
-        const exhaleTime = now + 2.5;
+        // Exhalation — warm breath exhaust valve (triggers visor condensation pulse)
+        const exhaleTime = now + exhaleDelay;
         const exhaleSrc = ctx.createBufferSource();
         exhaleSrc.buffer = noiseBuf;
         const exhaleFilter = ctx.createBiquadFilter();
         exhaleFilter.type = 'bandpass';
-        exhaleFilter.frequency.setValueAtTime(680, exhaleTime);
-        exhaleFilter.Q.setValueAtTime(1.9, exhaleTime);
-        exhaleFilter.frequency.linearRampToValueAtTime(520, exhaleTime + 1.4);
+        exhaleFilter.frequency.setValueAtTime(isFast ? 750 : 680, exhaleTime);
+        exhaleFilter.Q.setValueAtTime(1.8, exhaleTime);
+        exhaleFilter.frequency.linearRampToValueAtTime(isFast ? 560 : 520, exhaleTime + exhaleDuration * 0.7);
 
         const exhaleGain = ctx.createGain();
         exhaleGain.gain.setValueAtTime(0.0001, exhaleTime);
-        exhaleGain.gain.linearRampToValueAtTime(sfx * 0.024, exhaleTime + 0.8);
-        exhaleGain.gain.exponentialRampToValueAtTime(0.0001, exhaleTime + 2.0);
+        exhaleGain.gain.linearRampToValueAtTime(sfx * (isFast ? 0.045 : 0.024), exhaleTime + exhaleDuration * 0.4);
+        exhaleGain.gain.exponentialRampToValueAtTime(0.0001, exhaleTime + exhaleDuration);
 
         exhaleSrc.connect(exhaleFilter);
         exhaleFilter.connect(exhaleGain);
         exhaleGain.connect(ctx.destination);
 
         exhaleSrc.start(exhaleTime);
-        exhaleSrc.stop(exhaleTime + 2.05);
+        exhaleSrc.stop(exhaleTime + exhaleDuration + 0.05);
 
-        // Schedule next breathing cycle (total ~6.6s loop)
-        this.breathingTimeout = setTimeout(runBreathingCycle, 6600);
+        // Notify listener for visual breath condensation pulse
+        setTimeout(() => {
+          if (this.isBreathingPlaying && this.onBreathPulse) {
+            this.onBreathPulse(isFast ? 'fast' : 'calm');
+          }
+        }, Math.max(10, Math.round(exhaleDelay * 1000)));
+
+        this.breathingTimeout = setTimeout(runBreathingCycle, cycleTotal);
       } catch {
-        this.breathingTimeout = setTimeout(runBreathingCycle, 7000);
+        this.breathingTimeout = setTimeout(runBreathingCycle, isFast ? 2600 : 6600);
       }
     };
 
     runBreathingCycle();
+  }
+
+  setBreathingRate(isFast = false) {
+    if (this.isBreathingFast === isFast) return;
+    this.isBreathingFast = isFast;
+    if (this.breathingTimeout) {
+      clearTimeout(this.breathingTimeout);
+      this.breathingTimeout = null;
+    }
+    if (this.isBreathingPlaying) {
+      this.isBreathingPlaying = false;
+      this.startSuitBreathing();
+    }
+  }
+
+  setOnBreathPulse(callback) {
+    this.onBreathPulse = callback;
   }
 
   stopSuitBreathing() {

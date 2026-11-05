@@ -364,6 +364,11 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
   const screenPOIsRef = useRef([]);
   const triggerSonarWaveRef = useRef(null);
 
+  // Helmet Visor Breath Condensation & Respiration Dynamics (Option 2)
+  const [breathCondensation, setBreathCondensation] = useState(0);
+  const breathCondensationRef = useRef(0);
+  const sprintDurationRef = useRef(0);
+
   // Situation 3: Signal Assistance State (Direction becomes more informative)
   const [isSignalAssisted, setIsSignalAssisted] = useState(false);
   const isSignalAssistedRef = useRef(false);
@@ -5965,6 +5970,13 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
 
     renderer.domElement.addEventListener('click', handleCanvasClick);
 
+    // Option 2: Visor Breath Condensation Pulse on Exhalation
+    audio.setOnBreathPulse((rate) => {
+      const isFast = rate === 'fast';
+      breathCondensationRef.current = Math.min(1.0, breathCondensationRef.current + (isFast ? 0.48 : 0.22));
+      setBreathCondensation(+breathCondensationRef.current.toFixed(3));
+    });
+
     // 14. ANIMATION & GAME SIMULATION LOOP
     let animId;
     let underground = false;
@@ -6153,9 +6165,10 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
         playerPos.x += moveX * speed * delta;
         playerPos.z += moveZ * speed * delta;
 
-        // Footstep audio when grounded with deliberate astronaut EVA pacing
+        // Footstep audio via mechanical bone-conduction & suit actuator servo whine
         if (isGrounded && time - lastStepTime > (keys.shift ? 0.38 : 0.52)) {
-          audio.playFootstepLunar();
+          audio.playFootstepLunar(keys.shift);
+          audio.playSuitServo(keys.shift ? 'fast' : 'normal');
           lastStepTime = time;
 
           // Drop an astronaut EVA bootprint in the lunar regolith
@@ -6249,7 +6262,7 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
           playerPos.y = targetGroundY + EYE_HEIGHT;
           playerVelocityY = 0;
           isGrounded = true;
-          audio.playFootstepLunar();
+          audio.playJumpLandingLunar();
           if (!underground) {
             spawnMovementDust(playerPos.x, playerPos.z, 14, 1.4);
           }
@@ -6258,6 +6271,26 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
         // Smooth terrain adherence
         const desiredY = targetGroundY + EYE_HEIGHT;
         playerPos.y += (desiredY - playerPos.y) * 0.35;
+      }
+
+      // Option 2: Respiration cadence simulation based on physical astronaut EVA exertion
+      const isSprinting = isMoving && isGrounded && keys.shift;
+      if (isSprinting) {
+        sprintDurationRef.current += delta;
+        if (sprintDurationRef.current > 1.8) {
+          audio.setBreathingRate(true);
+        }
+      } else {
+        sprintDurationRef.current = Math.max(0, sprintDurationRef.current - delta * 1.6);
+        if (sprintDurationRef.current <= 0.4) {
+          audio.setBreathingRate(false);
+        }
+      }
+
+      // Option 2: Environmental Control Unit (ECU) ventilation smoothly evaporates breath condensation
+      if (breathCondensationRef.current > 0.001) {
+        breathCondensationRef.current = Math.max(0, breathCondensationRef.current - delta * (isSprinting ? 0.14 : 0.28));
+        setBreathCondensation(+breathCondensationRef.current.toFixed(3));
       }
 
       // First-person head bob
@@ -7068,6 +7101,8 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
 
     return () => {
       audio.stopAllLoops();
+      audio.setOnBreathPulse(null);
+      audio.setBreathingRate(false);
       clearTimeout(resizeTimer);
       window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('keyup', onKeyUp);
@@ -7134,15 +7169,68 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
       <div ref={mountRef} className="absolute inset-0 h-full w-full" />
 
       {/* ASTRONAUT HELMET VISOR HUD OVERLAY */}
-      <div className="absolute inset-0 pointer-events-none z-10">
+      <div className="absolute inset-0 pointer-events-none z-10 overflow-hidden">
         
-        {/* Subtle Visor Curvature Vignette */}
+        {/* Curved Polycarbonate Helmet Perimeter Gasket & Edge Curvature */}
         <div 
-          className="absolute inset-0"
+          className="absolute inset-0 pointer-events-none"
           style={{
-            background: 'radial-gradient(circle at center, transparent 65%, rgba(0,0,0,0.5) 85%, rgba(6,182,212,0.06) 100%)'
+            background: 'radial-gradient(ellipse at center, transparent 58%, rgba(2, 6, 23, 0.40) 80%, rgba(2, 6, 23, 0.92) 100%)',
+            boxShadow: 'inset 0 0 120px rgba(6, 182, 212, 0.09)'
           }}
         />
+
+        {/* Top-Left Polycarbonate Glass Specular Reflection Highlight */}
+        <div 
+          className="absolute top-0 left-0 w-2/3 h-1/2 pointer-events-none mix-blend-screen opacity-50"
+          style={{
+            background: 'radial-gradient(ellipse at 18% 12%, rgba(255, 255, 255, 0.14) 0%, rgba(56, 189, 248, 0.05) 35%, transparent 72%)'
+          }}
+        />
+
+        {/* Interior EVA Helmet LED Telemetry Bounce Reflections */}
+        <div className="absolute bottom-4 left-8 w-4 h-4 rounded-full bg-cyan-400/25 blur-[4px] pointer-events-none" />
+        <div className="absolute bottom-4 right-8 w-4 h-4 rounded-full bg-emerald-400/20 blur-[4px] pointer-events-none" />
+
+        {/* OPTION 2: ASTRONAUT HELMET VISOR BREATH CONDENSATION (PULSES ON EXHALATION, EVAPORATES VIA ECU) */}
+        {breathCondensation > 0.005 && (
+          <div 
+            className="absolute inset-x-0 bottom-0 h-72 pointer-events-none transition-opacity duration-150 overflow-hidden"
+            style={{ opacity: Math.min(1.0, breathCondensation * 1.18) }}
+          >
+            {/* Center Exhalation Plume (Directly over astronaut mouth/chin port) */}
+            <div 
+              className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[440px] h-[200px] rounded-[50%] blur-xl"
+              style={{
+                background: 'radial-gradient(ellipse at 50% 100%, rgba(240, 249, 255, 0.48) 0%, rgba(224, 242, 254, 0.28) 42%, rgba(255, 255, 255, 0.08) 68%, transparent 85%)'
+              }}
+            />
+            
+            {/* Left Cheek Ventilation Plume */}
+            <div 
+              className="absolute bottom-2 left-[20%] w-[280px] h-[150px] rounded-[50%] blur-lg"
+              style={{
+                background: 'radial-gradient(ellipse at 55% 90%, rgba(240, 249, 255, 0.35) 0%, rgba(224, 242, 254, 0.18) 45%, transparent 80%)'
+              }}
+            />
+
+            {/* Right Cheek Ventilation Plume */}
+            <div 
+              className="absolute bottom-2 right-[20%] w-[280px] h-[150px] rounded-[50%] blur-lg"
+              style={{
+                background: 'radial-gradient(ellipse at 45% 90%, rgba(240, 249, 255, 0.35) 0%, rgba(224, 242, 254, 0.18) 45%, transparent 80%)'
+              }}
+            />
+
+            {/* Micro-droplet condensation mist texture */}
+            <div 
+              className="absolute inset-x-0 bottom-0 h-48 backdrop-blur-[1px] mix-blend-screen opacity-70"
+              style={{
+                background: 'radial-gradient(ellipse at 50% 100%, rgba(255, 255, 255, 0.20) 0%, transparent 75%)'
+              }}
+            />
+          </div>
+        )}
 
         {/* DYNAMIC SOLAR VISOR GLARE & ANAMORPHIC FLARE (WHEN LOOKING TOWARD LOW-ANGLE HARSH SUN) */}
         {sunGlareIntensity > 0.05 && (
