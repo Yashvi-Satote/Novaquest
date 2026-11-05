@@ -1754,6 +1754,201 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
     terrainMesh.castShadow = true;
     scene.add(terrainMesh);
 
+    // =========================================================================
+    // PHYSICAL OBJECT COLLIDERS & OBSTACLE RESOLUTION SYSTEM
+    // =========================================================================
+    const PLAYER_COLLIDER_RADIUS = 0.45;
+    let lastSuitBumpTime = 0;
+
+    const surfaceColliders = [
+      // 1. Zone 1: Team Landing Site
+      // Lunar Transport Vehicle (Aegis-01 / SEV)
+      { type: 'obb', name: 'Transport Vehicle', cx: 110.5, cz: 65.0, halfX: 3.6, halfZ: 1.85, rot: Math.PI * 0.95 },
+      // Mission Terminal Console
+      { type: 'cylinder', name: 'Mission Terminal', x: 103.2, z: 65.5, radius: 0.48 },
+      // Satellite Communications Dish Tripod & Mast
+      { type: 'cylinder', name: 'Comms Dish Tripod', x: 104.0, z: 58.5, radius: 1.35 },
+      // Mission Equipment Nanuk Containers
+      { type: 'box', name: 'Equipment Crates', minX: 101.0, maxX: 103.6, minZ: 59.8, maxZ: 61.8 },
+      // Ground Deployable Solar Panels
+      { type: 'box', name: 'Solar Array', minX: 106.5, maxX: 110.8, minZ: 57.2, maxZ: 59.2 },
+      // Crewmates in pressurized xEMU EVA suits
+      { type: 'cylinder', name: 'Maya Chen', x: 102.0, z: 66.2, radius: 0.52 },
+      { type: 'cylinder', name: 'Leo Vance', x: 100.5, z: 62.5, radius: 0.52 },
+
+      // 2. Waypoint Route Marker Alpha Beacon Pillar
+      { type: 'cylinder', name: 'Route Marker Alpha', x: 78.0, z: 50.0, radius: 0.70 },
+
+      // 3. Zone 2: Surveyor 1 Landing Basin
+      // Main Triangular Tubular Spaceframe & Retro Rocket Engine
+      { type: 'cylinder', name: 'Surveyor 1 Core', x: 0.0, z: 0.0, radius: 1.45 },
+      // Tripod Landing Footpads & Oleo Shock Absorber Struts
+      { type: 'cylinder', name: 'Surveyor Footpad 1', x: 3.4, z: 0.0, radius: 0.55 },
+      { type: 'cylinder', name: 'Surveyor Footpad 2', x: -1.7, z: 2.94, radius: 0.55 },
+      { type: 'cylinder', name: 'Surveyor Footpad 3', x: -1.7, z: -2.94, radius: 0.55 },
+      // Stage 6 Extraction Rig & Storage Unit
+      { type: 'cylinder', name: 'Recovery Rig', x: 2.5, z: -1.0, radius: 0.80 },
+
+      // 4. Zone 3: Crater Investigation Area
+      // Partially Buried Precursor Object / Shiftable Crust Slabs
+      { type: 'cylinder', name: 'Precursor Buried Object', x: -78.0, z: -54.0, radius: 1.85 },
+
+      // 5. Zone 4: Alien Structure Area
+      // Central Obsidian Monolith Plinth
+      { type: 'cylinder', name: 'Alien Monolith Plinth', x: -120.0, z: -75.0, radius: 3.4 },
+      // 4 Massive Bedrock Anchoring Pylons
+      ...[0, 1, 2, 3].map((p) => {
+        const pAng = (p * Math.PI * 2) / 4 + 0.38 + Math.PI / 8;
+        return {
+          type: 'cylinder',
+          name: `Alien Pylon ${p + 1}`,
+          x: -120.0 + Math.cos(pAng) * 3.6,
+          z: -75.0 + Math.sin(pAng) * 3.6,
+          radius: 1.15
+        };
+      }),
+
+      // 6. Zone 5: Mission Echo Interface Dais
+      // Central Sunken Projector Core
+      { type: 'cylinder', name: 'Echo Projector Core', x: -116.0, z: -72.0, radius: 0.65 }
+    ];
+
+    // Smooth physical collision detection & tangent sliding resolver
+    const resolveCollisions = (posX, posZ, isUnderground) => {
+      let x = posX;
+      let z = posZ;
+      let collided = false;
+
+      if (isUnderground) {
+        // 1. Subterranean Cavern Rock Perimeter Boundary (Circular Basalt Hall)
+        const cavernCenterX = -95;
+        const cavernCenterZ = -110;
+        const maxCavernRadius = 24.5;
+        const dx = x - cavernCenterX;
+        const dz = z - cavernCenterZ;
+        const distFromCenter = Math.hypot(dx, dz);
+        if (distFromCenter > maxCavernRadius - PLAYER_COLLIDER_RADIUS) {
+          const clampDist = maxCavernRadius - PLAYER_COLLIDER_RADIUS;
+          x = cavernCenterX + (dx / distFromCenter) * clampDist;
+          z = cavernCenterZ + (dz / distFromCenter) * clampDist;
+          collided = true;
+        }
+
+        // 2. Central Precursor Pedestal / Altar Core
+        const pedRadius = 2.4;
+        const pDist = Math.hypot(x - cavernCenterX, z - cavernCenterZ);
+        const minPedDist = pedRadius + PLAYER_COLLIDER_RADIUS;
+        if (pDist < minPedDist) {
+          if (pDist > 0.001) {
+            x = cavernCenterX + (dx / pDist) * minPedDist;
+            z = cavernCenterZ + (dz / pDist) * minPedDist;
+          } else {
+            z += minPedDist;
+          }
+          collided = true;
+        }
+
+        return { x, z, collided };
+      }
+
+      // Surface Colliders — 3-pass resolution for silky smooth tangent sliding along corners & edges
+      for (let pass = 0; pass < 3; pass++) {
+        for (let i = 0; i < surfaceColliders.length; i++) {
+          const c = surfaceColliders[i];
+
+          if (c.type === 'cylinder') {
+            const dx = x - c.x;
+            const dz = z - c.z;
+            const distSq = dx * dx + dz * dz;
+            const minDist = c.radius + PLAYER_COLLIDER_RADIUS;
+
+            if (distSq < minDist * minDist) {
+              collided = true;
+              if (distSq > 0.0001) {
+                const dist = Math.sqrt(distSq);
+                const push = minDist - dist;
+                x += (dx / dist) * push;
+                z += (dz / dist) * push;
+              } else {
+                x += minDist;
+              }
+            }
+          } else if (c.type === 'box') {
+            const cx = Math.max(c.minX, Math.min(c.maxX, x));
+            const cz = Math.max(c.minZ, Math.min(c.maxZ, z));
+            const dx = x - cx;
+            const dz = z - cz;
+            const distSq = dx * dx + dz * dz;
+
+            if (distSq < PLAYER_COLLIDER_RADIUS * PLAYER_COLLIDER_RADIUS) {
+              collided = true;
+              if (distSq > 0.0001) {
+                const dist = Math.sqrt(distSq);
+                const push = PLAYER_COLLIDER_RADIUS - dist;
+                x += (dx / dist) * push;
+                z += (dz / dist) * push;
+              } else {
+                const left = x - c.minX;
+                const right = c.maxX - x;
+                const bottom = z - c.minZ;
+                const top = c.maxZ - z;
+                const minEdge = Math.min(left, right, bottom, top);
+                if (minEdge === left) x = c.minX - PLAYER_COLLIDER_RADIUS;
+                else if (minEdge === right) x = c.maxX + PLAYER_COLLIDER_RADIUS;
+                else if (minEdge === bottom) z = c.minZ - PLAYER_COLLIDER_RADIUS;
+                else z = c.maxZ + PLAYER_COLLIDER_RADIUS;
+              }
+            }
+          } else if (c.type === 'obb') {
+            const cosR = Math.cos(-c.rot);
+            const sinR = Math.sin(-c.rot);
+            const dx = x - c.cx;
+            const dz = z - c.cz;
+
+            const lx = dx * cosR - dz * sinR;
+            const lz = dx * sinR + dz * cosR;
+
+            const clx = Math.max(-c.halfX, Math.min(c.halfX, lx));
+            const clz = Math.max(-c.halfZ, Math.min(c.halfZ, lz));
+
+            const ldx = lx - clx;
+            const ldz = lz - clz;
+            const ldistSq = ldx * ldx + ldz * ldz;
+
+            if (ldistSq < PLAYER_COLLIDER_RADIUS * PLAYER_COLLIDER_RADIUS) {
+              collided = true;
+              let pushLx = 0;
+              let pushLz = 0;
+
+              if (ldistSq > 0.0001) {
+                const ldist = Math.sqrt(ldistSq);
+                const push = PLAYER_COLLIDER_RADIUS - ldist;
+                pushLx = (ldx / ldist) * push;
+                pushLz = (ldz / ldist) * push;
+              } else {
+                const left = lx - (-c.halfX);
+                const right = c.halfX - lx;
+                const bottom = lz - (-c.halfZ);
+                const top = c.halfZ - lz;
+                const minEdge = Math.min(left, right, bottom, top);
+                if (minEdge === left) pushLx = -left - PLAYER_COLLIDER_RADIUS;
+                else if (minEdge === right) pushLx = right + PLAYER_COLLIDER_RADIUS;
+                else if (minEdge === bottom) pushLz = -bottom - PLAYER_COLLIDER_RADIUS;
+                else pushLz = top + PLAYER_COLLIDER_RADIUS;
+              }
+
+              const cosW = Math.cos(c.rot);
+              const sinW = Math.sin(c.rot);
+              x += pushLx * cosW - pushLz * sinW;
+              z += pushLx * sinW + pushLz * cosW;
+            }
+          }
+        }
+      }
+
+      return { x, z, collided };
+    };
+
     // 8. ROVER TIRE TRACKS & ASTRONAUT TRAIL DECALS (Medium-Poly Mesh Ribbons)
     const createTrackRibbon = (points, width = 1.6) => {
       const curve = new THREE.CatmullRomCurve3(points);
@@ -1913,6 +2108,16 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
         rock.castShadow = true;
         rock.receiveShadow = true;
         boulderGroup.add(rock);
+
+        if (geoChoice === rockGeoLarge || scale > 1.25) {
+          surfaceColliders.push({
+            type: 'cylinder',
+            name: 'Crater Rim Boulder',
+            x: rx,
+            z: rz,
+            radius: scale * (geoChoice === rockGeoLarge ? 1.25 : 0.75)
+          });
+        }
       }
     }
 
@@ -3607,6 +3812,13 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
       boulder.castShadow = true;
       boulder.receiveShadow = true;
       craterInvestigationGroup.add(boulder);
+      surfaceColliders.push({
+        type: 'cylinder',
+        name: `Zone 3 Crater Rim Boulder ${i + 1}`,
+        x: worldX,
+        z: worldZ,
+        radius: bScale * 1.45
+      });
     }
 
     // B. Inner Talus Scree & Angular Rocks Tumbling Down Crater Walls
@@ -6165,6 +6377,16 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
         playerPos.x += moveX * speed * delta;
         playerPos.z += moveZ * speed * delta;
 
+        // Resolve collisions with physical objects, structures, spacecraft, and terrain obstacles
+        const colResult = resolveCollisions(playerPos.x, playerPos.z, underground);
+        playerPos.x = colResult.x;
+        playerPos.z = colResult.z;
+
+        if (colResult.collided && isMoving && time - lastSuitBumpTime > 0.42) {
+          lastSuitBumpTime = time;
+          audio.playSuitBump?.();
+        }
+
         // Footstep audio via mechanical bone-conduction & suit actuator servo whine
         if (isGrounded && time - lastStepTime > (keys.shift ? 0.38 : 0.52)) {
           audio.playFootstepLunar(keys.shift);
@@ -6194,6 +6416,10 @@ export default function LunarMapChapter1({ mcGender = 'male', onReturnMenu }) {
             }
           }
         }
+      } else {
+        const colResult = resolveCollisions(playerPos.x, playerPos.z, underground);
+        playerPos.x = colResult.x;
+        playerPos.z = colResult.z;
       }
 
       // Check for Transition into/out of Subterranean Precursor Cavern

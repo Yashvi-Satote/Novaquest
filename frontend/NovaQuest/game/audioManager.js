@@ -364,6 +364,35 @@ class AudioManager {
   }
 
   /**
+   * Suit EVA Surface Collision Bump
+   * Low-frequency mechanical bone-conduction thud when the astronaut's suit
+   * brushes or bumps into a vehicle hull, titanium leg strut, boulder, or alien monolith.
+   */
+  playSuitBump() {
+    const ctx = this.ensureContext();
+    if (!ctx) return;
+    const { sfx } = this.getVolumes();
+    if (sfx <= 0.001) return;
+
+    try {
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(65, now);
+      osc.frequency.exponentialRampToValueAtTime(24, now + 0.11);
+
+      gain.gain.setValueAtTime(sfx * 0.16, now);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.13);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.14);
+    } catch {}
+  }
+
+  /**
    * Low-gravity jump lift / EVA suit boost sound
    */
   playJumpLunar() {
