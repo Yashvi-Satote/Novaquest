@@ -150,9 +150,11 @@ def run_migration_and_import():
     try:
         # Locate spacecraft repository files
         possible_repo_paths = [
-            os.path.abspath(os.path.join(backend_dir, "..", "..", "spacecraft-models")),
-            os.path.abspath(os.path.join(backend_dir, "..", "spacecraft-models")),
-            r"C:\Users\LENOVO\.gemini\antigravity\scratch\novaquest_workspace\spacecraft-models"
+            p for p in [
+                os.getenv("SPACECRAFT_REPO_DIR"),
+                os.path.abspath(os.path.join(backend_dir, "..", "..", "spacecraft-models")),
+                os.path.abspath(os.path.join(backend_dir, "..", "spacecraft-models")),
+            ] if p
         ]
         repo_dir = None
         for p in possible_repo_paths:

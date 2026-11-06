@@ -1,8 +1,13 @@
 import os
 import sys
 import logging
+import re
+import time
+from collections import defaultdict
+from threading import Lock
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
+from werkzeug.utils import secure_filename
 from sqlalchemy import or_, and_, desc, asc, func
 from sqlalchemy.orm import joinedload, selectinload
 
@@ -42,20 +47,121 @@ logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 
-# Configure CORS
-cors_origin = os.getenv("CORS_ORIGIN", "*")
-CORS(app, origins=[cors_origin, "http://localhost", "http://127.0.0.1", "http://localhost:80", "http://127.0.0.1:80", "http://localhost:5173", "http://127.0.0.1:5173"], supports_credentials=True)
+# Security: Ensure debug mode is disabled unless explicitly enabled via environment variable
+_flask_debug_raw = os.getenv("FLASK_DEBUG", "0").strip().lower()
+app.config["DEBUG"] = _flask_debug_raw in {"1", "true", "yes"}
 
-# Locate models repository directory
+# Security: Enforce maximum request payload size (16MB default) to prevent memory exhaustion DoS
+MAX_PAYLOAD_BYTES = int(os.getenv("MAX_CONTENT_LENGTH", 16 * 1024 * 1024))
+app.config["MAX_CONTENT_LENGTH"] = MAX_PAYLOAD_BYTES
+
+
+@app.errorhandler(413)
+def request_entity_too_large(error):
+    return jsonify({"error": "Request payload exceeds maximum allowed size (16MB)."}), 413
+
+
+# Configure CORS with explicit trusted origins - never permit wildcard '*' with credentials
+DEFAULT_TRUSTED_ORIGINS = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:80",
+    "http://127.0.0.1:80",
+    "http://localhost:5000",
+    "http://127.0.0.1:5000",
+]
+
+
+def get_trusted_cors_origins() -> list[str]:
+    raw_env = os.getenv("CORS_ORIGINS") or os.getenv("CORS_ORIGIN") or ""
+    configured = [origin.strip() for origin in raw_env.split(",") if origin.strip()]
+    origins = []
+    for origin in configured:
+        if origin == "*":
+            logger.warning("Wildcard CORS origin '*' is strictly prohibited with credentialed requests; skipping.")
+            continue
+        origins.append(origin)
+    if not origins:
+        origins = list(DEFAULT_TRUSTED_ORIGINS)
+    return origins
+
+
+CORS(app, origins=get_trusted_cors_origins(), supports_credentials=True)
+
+
+# Rate Limiting
+class SimpleRateLimiter:
+    """Thread-safe sliding-window in-memory rate limiter."""
+
+    def __init__(self, requests_per_minute: int = 120):
+        self.rpm = requests_per_minute
+        self.hits = defaultdict(list)
+        self.lock = Lock()
+
+    def is_allowed(self, client_ip: str) -> tuple[bool, int]:
+        now = time.time()
+        window_start = now - 60.0
+        with self.lock:
+            timestamps = [t for t in self.hits[client_ip] if t > window_start]
+            if len(timestamps) >= self.rpm:
+                self.hits[client_ip] = timestamps
+                retry_after = int(60.0 - (now - timestamps[0])) + 1
+                return False, max(1, retry_after)
+            timestamps.append(now)
+            self.hits[client_ip] = timestamps
+            return True, 0
+
+    def reset(self):
+        with self.lock:
+            self.hits.clear()
+
+
+RATE_LIMIT_RPM = int(os.getenv("RATE_LIMIT_RPM", 120))
+RATE_LIMIT_ENABLED = os.getenv("RATE_LIMIT_ENABLED", "true").lower() in {"1", "true", "yes"}
+rate_limiter = SimpleRateLimiter(requests_per_minute=RATE_LIMIT_RPM)
+
+
+@app.before_request
+def check_rate_limit():
+    if not RATE_LIMIT_ENABLED:
+        return None
+    # Skip during unit tests unless specifically activated
+    if app.config.get("TESTING") and not app.config.get("TEST_RATE_LIMIT"):
+        return None
+
+    forwarded = request.headers.get("X-Forwarded-For")
+    if forwarded:
+        client_ip = forwarded.split(",")[0].strip()
+    else:
+        client_ip = request.remote_addr or "127.0.0.1"
+
+    allowed, retry_after = rate_limiter.is_allowed(client_ip)
+    if not allowed:
+        resp = jsonify({
+            "error": "Rate limit exceeded. Too many requests.",
+            "retry_after_seconds": retry_after,
+        })
+        resp.status_code = 429
+        resp.headers["Retry-After"] = str(retry_after)
+        return resp
+
+
+# Locate models repository directory using portable configuration
 POSSIBLE_MODELS_DIRS = [
-    os.path.abspath(os.path.join(backend_dir, "..", "..", "spacecraft-models", "models")),
-    os.path.abspath(os.path.join(backend_dir, "..", "spacecraft-models", "models")),
-    r"C:\Users\LENOVO\.gemini\antigravity\scratch\novaquest_workspace\spacecraft-models\models"
+    p for p in [
+        os.getenv("MODELS_DIR"),
+        os.path.abspath(os.path.join(backend_dir, "..", "..", "spacecraft-models", "models")),
+        os.path.abspath(os.path.join(backend_dir, "..", "spacecraft-models", "models")),
+        os.path.abspath(os.path.join(backend_dir, "..", "frontend", "public", "models", "spacecraft")),
+        os.path.abspath(os.path.join(backend_dir, "models")),
+    ] if p
 ]
 MODELS_BASE_DIR = None
 for p in POSSIBLE_MODELS_DIRS:
-    if os.path.exists(p):
-        MODELS_BASE_DIR = p
+    if os.path.exists(p) and os.path.isdir(p):
+        MODELS_BASE_DIR = os.path.realpath(p)
         break
 
 
@@ -363,16 +469,58 @@ def build_spacecraft_query(db, params):
     return query
 
 
+ALLOWED_SORTS = {"name_asc", "name_desc", "launch_date_asc", "launch_date_desc", "status"}
+
+
+def parse_int_query_param(
+    name: str,
+    default: int = 1,
+    min_val: int | None = 1,
+    max_val: int | None = 1000,
+) -> tuple[int | None, str | None]:
+    raw = request.args.get(name)
+    if raw is None or raw == "":
+        return default, None
+    try:
+        val = int(raw)
+    except (ValueError, TypeError):
+        return None, f"Query parameter '{name}' must be an integer."
+    if min_val is not None and val < min_val:
+        return None, f"Query parameter '{name}' must be at least {min_val}."
+    if max_val is not None and val > max_val:
+        return None, f"Query parameter '{name}' must not exceed {max_val}."
+    return val, None
+
+
 @app.route("/api/hardware", methods=["GET"])
 @app.route("/api/spacecraft", methods=["GET"])
 def get_spacecraft_list():
     """Returns paginated spacecraft list with complete 3D model references."""
+    page, err = parse_int_query_param("page", default=1, min_val=1, max_val=100000)
+    if err:
+        return jsonify({"error": err}), 400
+
+    limit, err = parse_int_query_param("limit", default=20, min_val=1, max_val=150)
+    if err:
+        return jsonify({"error": err}), 400
+
+    if "mission_id" in request.args:
+        raw_mid = request.args.get("mission_id", "").strip()
+        if raw_mid and raw_mid.lower() != "all":
+            try:
+                int(raw_mid)
+            except (ValueError, TypeError):
+                return jsonify({"error": "Query parameter 'mission_id' must be an integer."}), 400
+
+    raw_sort = request.args.get("sort_by")
+    if raw_sort and raw_sort not in ALLOWED_SORTS:
+        return jsonify({
+            "error": f"Invalid 'sort_by' parameter. Allowed values: {', '.join(sorted(ALLOWED_SORTS))}"
+        }), 400
+
     db = SessionLocal()
     try:
-        page = max(1, int(request.args.get("page", 1)))
-        limit = min(150, max(1, int(request.args.get("limit", 20))))
         offset = (page - 1) * limit
-
         query = build_spacecraft_query(db, request.args)
         total_count = query.count()
         records = query.offset(offset).limit(limit).all()
@@ -623,6 +771,9 @@ def get_models_list():
 @app.route("/api/models/<model_name>", methods=["GET"])
 def get_model_detail(model_name):
     """Returns details for a specific 3D model."""
+    if not re.match(r"^[a-zA-Z0-9_\-]+$", model_name):
+        return jsonify({"error": "Invalid model name"}), 400
+
     db = SessionLocal()
     try:
         model = db.query(Model3D).filter(Model3D.model_name == model_name.lower()).first()
@@ -636,15 +787,58 @@ def get_model_detail(model_name):
         db.close()
 
 
+ALLOWED_MODEL_EXTENSIONS = {".glb", ".gltf", ".bin", ".png", ".jpg", ".jpeg", ".webp", ".json"}
+
+
 @app.route("/api/models/<model_name>/<filename>", methods=["GET"])
 def serve_model_file(model_name, filename):
-    """Serve physical 3D model asset directly from the models directory."""
+    """Serve physical 3D model asset directly from the models directory with strict path validation."""
     if not MODELS_BASE_DIR:
         return jsonify({"error": "Models directory not configured"}), 500
-    
-    target_dir = os.path.join(MODELS_BASE_DIR, model_name)
-    if not os.path.exists(target_dir):
+
+    # 1. Strict validation of model_name
+    if not re.match(r"^[a-zA-Z0-9_\-]+$", model_name):
+        return jsonify({"error": "Invalid model name"}), 400
+
+    # 2. Strict validation of filename
+    if not re.match(r"^[a-zA-Z0-9_\-\.]+$", filename) or ".." in filename or "/" in filename or "\\" in filename:
+        return jsonify({"error": "Invalid filename"}), 400
+
+    sec_name = secure_filename(filename)
+    if not sec_name or sec_name != filename:
+        return jsonify({"error": "Invalid filename format"}), 400
+
+    _, ext = os.path.splitext(filename)
+    if ext.lower() not in ALLOWED_MODEL_EXTENSIONS:
+        return jsonify({"error": f"File extension '{ext}' is not permitted"}), 400
+
+    # 3. Strict directory containment checks
+    base_dir = os.path.realpath(MODELS_BASE_DIR)
+    target_dir = os.path.realpath(os.path.join(base_dir, model_name))
+
+    try:
+        common_dir = os.path.commonpath([base_dir, target_dir])
+    except ValueError:
+        return jsonify({"error": "Invalid path traversal"}), 400
+
+    if common_dir != base_dir or target_dir == base_dir:
+        return jsonify({"error": "Path traversal detected"}), 400
+
+    if not os.path.exists(target_dir) or not os.path.isdir(target_dir):
         return jsonify({"error": f"Model directory '{model_name}' not found"}), 404
+
+    # 4. Strict file containment check
+    target_file = os.path.realpath(os.path.join(target_dir, filename))
+    try:
+        common_file = os.path.commonpath([target_dir, target_file])
+    except ValueError:
+        return jsonify({"error": "Invalid file path traversal"}), 400
+
+    if common_file != target_dir or target_file == target_dir:
+        return jsonify({"error": "Path traversal detected"}), 400
+
+    if not os.path.exists(target_file) or not os.path.isfile(target_file):
+        return jsonify({"error": f"File '{filename}' not found"}), 404
 
     return send_from_directory(target_dir, filename)
 
@@ -885,8 +1079,9 @@ def get_map_filters():
 
 def run():
     port = int(os.getenv("PORT", 5000))
-    debug = os.getenv("FLASK_DEBUG", "True").lower() == "true"
-    print(f"Starting Novaquest Backend on port {port}...")
+    debug_raw = os.getenv("FLASK_DEBUG", "0").strip().lower()
+    debug = debug_raw in {"1", "true", "yes"}
+    print(f"Starting Novaquest Backend on port {port} (debug={debug})...")
     app.run(host="0.0.0.0", port=port, debug=debug)
 
 

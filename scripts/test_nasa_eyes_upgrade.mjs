@@ -1,8 +1,8 @@
 import puppeteer from '../frontend/node_modules/puppeteer-core/lib/puppeteer/puppeteer-core.js';
 import path from 'path';
 
-const chromePath = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
-const artifactDir = 'C:\\Users\\mitro\\.gemini\\antigravity\\brain\\08777b3a-3100-48d3-885a-83d4e0a36c43';
+const chromePath = process.env.CHROME_PATH || 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
+const artifactDir = process.env.ARTIFACT_DIR || path.resolve(process.cwd(), 'artifacts');
 
 async function runTests() {
   console.log('Launching Chrome via Puppeteer-core...');
