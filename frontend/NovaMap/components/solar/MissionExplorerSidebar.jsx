@@ -52,7 +52,8 @@ export default function MissionExplorerSidebar({
   onSelectScale,
   onResetView,
   isOpen,
-  onToggleOpen
+  onToggleOpen,
+  hideToggleButton = false
 }) {
   const [activeTab, setActiveTab] = useState('planets'); // 'system' | 'planets' | 'moons' | 'smallbodies' | 'spacecraft'
   const [searchQuery, setSearchQuery] = useState('');
@@ -231,8 +232,8 @@ export default function MissionExplorerSidebar({
 
   return (
     <>
-      {/* Toggle button when closed */}
-      {!isOpen && (
+      {/* Toggle button when closed (hidden when floating dock is active) */}
+      {!isOpen && !hideToggleButton && (
         <button
           type="button"
           onClick={onToggleOpen}

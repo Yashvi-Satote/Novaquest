@@ -263,8 +263,14 @@ export class SolarEngine {
       const isSpacecraft = hitMesh.userData.isSpacecraft;
       
       if (this.hoveredItem !== id) {
+        if (this.hoveredItem && this.planetBodies.has(this.hoveredItem)) {
+          this.planetBodies.get(this.hoveredItem).setHovered(false);
+        }
         this.hoveredItem = id;
         this.domElement.style.cursor = 'pointer';
+        if (this.planetBodies.has(id)) {
+          this.planetBodies.get(id).setHovered(true);
+        }
         if (isSpacecraft) {
           if (this.markers) this.markers.setHoveredCraft(id);
           if (this.interstellar) this.interstellar.setHoveredProbe(id);
@@ -281,6 +287,9 @@ export class SolarEngine {
       }
     } else {
       if (this.hoveredItem) {
+        if (this.planetBodies.has(this.hoveredItem)) {
+          this.planetBodies.get(this.hoveredItem).setHovered(false);
+        }
         this.hoveredItem = null;
         this.domElement.style.cursor = 'default';
         if (this.markers) this.markers.setHoveredCraft(null);
@@ -320,6 +329,7 @@ export class SolarEngine {
     this.selectedBodyId = null;
     this.selectedSpacecraftSlug = null;
     this.trackedCraftSlug = null;
+    this.planetBodies.forEach(pBody => pBody.setSelected(false));
     if (this.markers) this.markers.highlightMarker(null);
     if (this.interstellar) this.interstellar.highlightProbe(null);
     if (this.onDeselect) {
@@ -380,6 +390,7 @@ export class SolarEngine {
     const body = this.planetBodies.get(planetId);
     this.selectedBodyId = planetId;
     this.selectedSpacecraftSlug = null;
+    this.planetBodies.forEach((pBody, pId) => pBody.setSelected(pId === planetId));
     this.interstellar.highlightProbe(null);
     this.markers.highlightMarker(null);
 

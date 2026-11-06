@@ -146,10 +146,10 @@ export default function SolarControlsHUD({
           </div>
         </div>
       ) : (
-        <div className="pointer-events-none absolute top-4 left-1/2 -translate-x-1/2 z-20 w-[92%] max-w-2xl">
-          <div className="bg-[#080518]/90 backdrop-blur-md border border-cyan-500/25 px-4 py-1.5 rounded-full shadow-lg shadow-purple-950/50 flex items-center justify-center gap-2 text-center">
-            <Info className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
-            <p className="text-[11px] sm:text-xs text-purple-200/90 font-medium tracking-wide truncate">
+        <div className="pointer-events-none absolute top-4 left-1/2 -translate-x-1/2 z-20 max-w-xl opacity-75 hover:opacity-100 transition-opacity">
+          <div className="bg-[#080518]/70 backdrop-blur-md border border-cyan-500/20 px-3 py-1 rounded-full shadow-lg shadow-purple-950/40 flex items-center justify-center gap-1.5 text-center">
+            <Info className="w-3 h-3 text-cyan-400 shrink-0" />
+            <p className="text-[10px] sm:text-[11px] text-purple-200/90 font-medium tracking-tight truncate">
               {SOLAR_SYSTEM_DISCLAIMER}
             </p>
           </div>
