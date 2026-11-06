@@ -12,9 +12,10 @@ const SolarCanvas = forwardRef(function SolarCanvas({
   simulationDate,
   lightingMode = 'natural',
   cameraMode = 'orbit',
-  layerVisibility = { orbits: true, trajectories: true, markers: true },
+  layerVisibility = { orbits: true, trajectories: true, markers: true, asteroids: true },
   onSelectPlanet,
   onSelectSpacecraft,
+  onDeselect,
   onHoverItem,
   onModeChange,
   onDateChange
@@ -24,6 +25,21 @@ const SolarCanvas = forwardRef(function SolarCanvas({
 
   // Expose imperative engine methods to parent
   useImperativeHandle(ref, () => ({
+    zoomIn: (factor) => {
+      if (engineRef.current) {
+        engineRef.current.zoomIn(factor);
+      }
+    },
+    zoomOut: (factor) => {
+      if (engineRef.current) {
+        engineRef.current.zoomOut(factor);
+      }
+    },
+    deselectAll: () => {
+      if (engineRef.current) {
+        engineRef.current.deselectAll();
+      }
+    },
     focusPlanet: (planetId) => {
       if (engineRef.current) {
         engineRef.current.focusPlanet(planetId);
@@ -111,6 +127,7 @@ const SolarCanvas = forwardRef(function SolarCanvas({
 
   const onSelectPlanetRef = useRef(onSelectPlanet);
   const onSelectCraftRef = useRef(onSelectSpacecraft);
+  const onDeselectRef = useRef(onDeselect);
   const onHoverRef = useRef(onHoverItem);
   const onModeChangeRef = useRef(onModeChange);
   const onDateChangeRef = useRef(onDateChange);
@@ -118,6 +135,7 @@ const SolarCanvas = forwardRef(function SolarCanvas({
   useEffect(() => { onModeChangeRef.current = onModeChange; }, [onModeChange]);
   useEffect(() => { onSelectPlanetRef.current = onSelectPlanet; }, [onSelectPlanet]);
   useEffect(() => { onSelectCraftRef.current = onSelectSpacecraft; }, [onSelectSpacecraft]);
+  useEffect(() => { onDeselectRef.current = onDeselect; }, [onDeselect]);
   useEffect(() => { onHoverRef.current = onHoverItem; }, [onHoverItem]);
   useEffect(() => { onDateChangeRef.current = onDateChange; }, [onDateChange]);
 
@@ -174,6 +192,9 @@ const SolarCanvas = forwardRef(function SolarCanvas({
     if (layerVisibility.stars !== prevLayerRef.current?.stars) {
       engineRef.current.setLayerVisibility('stars', layerVisibility.stars);
     }
+    if (layerVisibility.asteroids !== prevLayerRef.current?.asteroids) {
+      engineRef.current.setLayerVisibility('asteroids', layerVisibility.asteroids);
+    }
     prevLayerRef.current = layerVisibility;
   }, [layerVisibility]);
 
@@ -190,6 +211,7 @@ const SolarCanvas = forwardRef(function SolarCanvas({
     const engine = new SolarEngine(container, {
       onSelectPlanet: (id) => onSelectPlanetRef.current && onSelectPlanetRef.current(id),
       onSelectSpacecraft: (slug) => onSelectCraftRef.current && onSelectCraftRef.current(slug),
+      onDeselect: () => onDeselectRef.current && onDeselectRef.current(),
       onHoverItem: (info) => onHoverRef.current && onHoverRef.current(info),
       onModeChange: (data) => onModeChangeRef.current && onModeChangeRef.current(data),
       onDateChange: (date) => onDateChangeRef.current && onDateChangeRef.current(date)

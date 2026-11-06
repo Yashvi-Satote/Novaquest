@@ -32,7 +32,8 @@ export default function SolarSystemPage() {
     labels: true,
     trajectories: true,
     markers: true,
-    stars: true
+    stars: true,
+    asteroids: true
   });
 
   const handleTogglePlay = () => {
@@ -183,6 +184,18 @@ export default function SolarSystemPage() {
     }
   };
 
+  const handleZoomIn = () => {
+    if (canvasRef.current) {
+      canvasRef.current.zoomIn();
+    }
+  };
+
+  const handleZoomOut = () => {
+    if (canvasRef.current) {
+      canvasRef.current.zoomOut();
+    }
+  };
+
   return (
     <div className="h-screen bg-[#060412] text-slate-100 flex flex-col font-sans overflow-hidden select-none">
       {/* Shared application navigation */}
@@ -191,9 +204,10 @@ export default function SolarSystemPage() {
       {/* 3D Deep Space Viewport & HUD Overlay Container */}
       <main className="relative flex-1 min-h-0 w-full overflow-hidden">
         
-        {/* Left Drawer: 250+ Mission Catalogue Explorer */}
+        {/* Left Drawer: NASA Eyes-Inspired Explorer (Solar System, Planets, Moons, Spacecraft, Search) */}
         <MissionExplorerSidebar
           selectedMissionSlug={selectedMissionSlug}
+          selectedCelestialId={selectedCelestialId}
           onSelectMission={handleSelectMissionFromSidebar}
           onSelectPlanet={(planetId) => {
             setSelectedCelestialId(planetId);
@@ -202,6 +216,15 @@ export default function SolarSystemPage() {
               canvasRef.current.focusCelestialBody(planetId);
             }
           }}
+          onSelectMoon={(moonId) => {
+            setSelectedCelestialId(moonId);
+            setSelectedMissionSlug(null);
+            if (canvasRef.current) {
+              canvasRef.current.focusMoon(moonId);
+            }
+          }}
+          onSelectScale={handleSelectScale}
+          onResetView={handleResetView}
           isOpen={sidebarOpen}
           onToggleOpen={() => setSidebarOpen(prev => !prev)}
         />
@@ -217,6 +240,10 @@ export default function SolarSystemPage() {
           layerVisibility={layerVisibility}
           onSelectPlanet={handleSelectPlanetFrom3D}
           onSelectSpacecraft={handleSelectSpacecraftFrom3D}
+          onDeselect={() => {
+            setSelectedCelestialId(null);
+            setSelectedMissionSlug(null);
+          }}
           onHoverItem={(info) => setHoveredItemInfo(info)}
           onModeChange={handleModeChange}
         />
@@ -230,6 +257,8 @@ export default function SolarSystemPage() {
           activeScale={activeScale}
           onSelectScale={handleSelectScale}
           onResetView={handleResetView}
+          onZoomIn={handleZoomIn}
+          onZoomOut={handleZoomOut}
           hoveredItemInfo={hoveredItemInfo}
           isVoyagerLocalMode={isVoyagerLocalMode}
           onExitVoyagerLocal={handleExitVoyagerLocal}
