@@ -592,6 +592,9 @@ export class PlanetBody {
     this.moons = [];
     this.clickableMeshes = [];
     this.labelSprite = null;
+    this.alwaysShowLabels = false;
+    this.isHovered = false;
+    this.isSelected = false;
     this.cometTail = null;
 
     this.orbitPivot = new THREE.Group();
@@ -813,12 +816,28 @@ export class PlanetBody {
     const yOffset = this.data.radius * 1.5 + 1.2;
     this.labelSprite.position.set(0, yOffset, 0);
     this.labelSprite.scale.set(7.0, 1.75, 1);
+    this.labelSprite.visible = false;
     this.container.add(this.labelSprite);
   }
 
   setLabelVisibility(visible) {
+    this.alwaysShowLabels = visible;
+    this.updateLabelVisibility();
+  }
+
+  setHovered(hovered) {
+    this.isHovered = Boolean(hovered);
+    this.updateLabelVisibility();
+  }
+
+  setSelected(selected) {
+    this.isSelected = Boolean(selected);
+    this.updateLabelVisibility();
+  }
+
+  updateLabelVisibility() {
     if (this.labelSprite) {
-      this.labelSprite.visible = visible;
+      this.labelSprite.visible = Boolean(this.alwaysShowLabels || this.isHovered || this.isSelected);
     }
   }
 
@@ -1129,22 +1148,27 @@ export class PlanetBody {
       this.cloudMesh.rotation.y += 0.08 * delta * speedMultiplier;
     }
 
-    // Adaptive distance-based scaling and proximity fade for billboard label
+    // Adaptive distance-based scaling and proximity fade for billboard label (visible on hover, selection, or layer toggle)
     if (this.labelSprite && camera) {
-      const worldPos = this.getWorldPosition();
-      const dist = camera.position.distanceTo(worldPos);
-      const closeThreshold = this.data.radius * 5.0;
-      if (dist < closeThreshold) {
-        // Smoothly fade out label when camera zooms in close to inspect the planet
-        const factor = Math.max(0, (dist - this.data.radius * 2.2) / (closeThreshold - this.data.radius * 2.2));
-        this.labelSprite.material.opacity = factor;
-        this.labelSprite.visible = factor > 0.05;
+      const shouldShow = Boolean(this.alwaysShowLabels || this.isHovered || this.isSelected);
+      if (!shouldShow) {
+        this.labelSprite.visible = false;
       } else {
-        this.labelSprite.material.opacity = 1.0;
-        this.labelSprite.visible = true;
-        const baseScale = Math.min(Math.max(0.04 * dist, 1.6), 26.0);
-        this.labelSprite.scale.set(baseScale * 4, baseScale, 1);
-        this.labelSprite.position.y = this.data.radius * 1.35 + baseScale * 0.42;
+        const worldPos = this.getWorldPosition();
+        const dist = camera.position.distanceTo(worldPos);
+        const closeThreshold = this.data.radius * 5.0;
+        if (dist < closeThreshold) {
+          // Smoothly fade out label when camera zooms in close to inspect the planet
+          const factor = Math.max(0, (dist - this.data.radius * 2.2) / (closeThreshold - this.data.radius * 2.2));
+          this.labelSprite.material.opacity = factor;
+          this.labelSprite.visible = factor > 0.05;
+        } else {
+          this.labelSprite.material.opacity = 1.0;
+          this.labelSprite.visible = true;
+          const baseScale = Math.min(Math.max(0.04 * dist, 1.6), 26.0);
+          this.labelSprite.scale.set(baseScale * 4, baseScale, 1);
+          this.labelSprite.position.y = this.data.radius * 1.35 + baseScale * 0.42;
+        }
       }
     }
 

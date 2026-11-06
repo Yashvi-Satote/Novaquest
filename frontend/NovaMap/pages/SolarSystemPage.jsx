@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Orbit, RotateCcw, ArrowLeft, Sparkles } from 'lucide-react';
 import AppNavbar from '../../Shared/components/layout/AppNavbar';
@@ -7,10 +7,42 @@ import SolarControlsHUD from '../components/solar/SolarControlsHUD';
 import MissionExplorerSidebar from '../components/solar/MissionExplorerSidebar';
 import MissionDetailDrawer from '../components/solar/MissionDetailDrawer';
 import CelestialDetailDrawer from '../components/solar/CelestialDetailDrawer';
+import CinematicFloatingControls from '../components/solar/CinematicFloatingControls';
+import NovaAstronautCompanion from '../components/companion/NovaAstronautCompanion';
+
+const LAYOUT_STORAGE_KEY = 'nova_layout_preferences_v1';
+
+const getInitialLayoutPreferences = () => {
+  try {
+    const saved = localStorage.getItem(LAYOUT_STORAGE_KEY);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      return {
+        isSidebarOpen: parsed.isSidebarOpen ?? false, // Minimal cinematic default: focus on 3D space
+        isTimelineOpen: parsed.isTimelineOpen ?? true,
+        isCompanionOpen: parsed.isCompanionOpen ?? true,
+        isDrawerOpen: parsed.isDrawerOpen ?? false,
+        isZenMode: false
+      };
+    }
+  } catch (e) {
+    console.warn('Failed to parse saved layout preferences', e);
+  }
+  return {
+    isSidebarOpen: false, // Minimal cinematic default: focus on 3D space
+    isTimelineOpen: true,
+    isCompanionOpen: true,
+    isDrawerOpen: false,
+    isZenMode: false
+  };
+};
 
 export default function SolarSystemPage() {
   const navigate = useNavigate();
   const canvasRef = useRef(null);
+
+  // Cinematic Layout Preferences (saved in localStorage)
+  const [layoutPrefs, setLayoutPrefs] = useState(getInitialLayoutPreferences);
 
   // Simulation & Selection States
   const [isPlaying, setIsPlaying] = useState(true);
@@ -26,7 +58,6 @@ export default function SolarSystemPage() {
   const [isInspectingSpacecraft, setIsInspectingSpacecraft] = useState(false);
   const [inspectedCraft, setInspectedCraft] = useState(null);
   const [hoveredItemInfo, setHoveredItemInfo] = useState(null);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   // NASA Eyes-inspired Display Controls
   const [lightingMode, setLightingMode] = useState('natural'); // 'natural' | 'flood'
@@ -41,6 +72,73 @@ export default function SolarSystemPage() {
     comets: true,
     stars: true
   });
+
+  // Save layout preferences to localStorage
+  const saveLayoutPrefs = (updates) => {
+    setLayoutPrefs(prev => {
+      const next = { ...prev, ...updates };
+      try {
+        localStorage.setItem(LAYOUT_STORAGE_KEY, JSON.stringify({
+          isSidebarOpen: next.isSidebarOpen,
+          isTimelineOpen: next.isTimelineOpen,
+          isCompanionOpen: next.isCompanionOpen,
+          isDrawerOpen: next.isDrawerOpen
+        }));
+      } catch (e) {
+        console.warn('Failed to save layout preferences', e);
+      }
+      return next;
+    });
+  };
+
+  // Dock button handlers
+  const handleToggleSidebar = () => {
+    saveLayoutPrefs({ isSidebarOpen: !layoutPrefs.isSidebarOpen });
+  };
+
+  const handleToggleTimeline = () => {
+    saveLayoutPrefs({ isTimelineOpen: !layoutPrefs.isTimelineOpen });
+  };
+
+  const handleToggleCompanion = () => {
+    saveLayoutPrefs({ isCompanionOpen: !layoutPrefs.isCompanionOpen });
+  };
+
+  const handleToggleDrawer = () => {
+    saveLayoutPrefs({ isDrawerOpen: !layoutPrefs.isDrawerOpen });
+  };
+
+  const handleToggleZenMode = () => {
+    setLayoutPrefs(prev => ({ ...prev, isZenMode: !prev.isZenMode }));
+  };
+
+  const handleRestoreDefaultLayout = () => {
+    const defaults = {
+      isSidebarOpen: false,
+      isTimelineOpen: true,
+      isCompanionOpen: true,
+      isDrawerOpen: false,
+      isZenMode: false
+    };
+    setLayoutPrefs(defaults);
+    try {
+      localStorage.setItem(LAYOUT_STORAGE_KEY, JSON.stringify(defaults));
+    } catch (e) {
+      console.warn('Failed to save layout preferences', e);
+    }
+    handleResetView();
+  };
+
+  // Escape key exits Zen mode
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && layoutPrefs.isZenMode) {
+        setLayoutPrefs(prev => ({ ...prev, isZenMode: false }));
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [layoutPrefs.isZenMode]);
 
   const handleTogglePlay = () => {
     setIsPlaying(prev => !prev);
@@ -238,36 +336,61 @@ export default function SolarSystemPage() {
 
   return (
     <div className="h-screen bg-[#060412] text-slate-100 flex flex-col font-sans overflow-hidden select-none">
-      {/* Shared application navigation */}
-      <AppNavbar />
+      {/* Shared application navigation (Hidden in Zen Mode) */}
+      {!layoutPrefs.isZenMode && <AppNavbar />}
 
       {/* 3D Deep Space Viewport & HUD Overlay Container */}
       <main className="relative flex-1 min-h-0 w-full overflow-hidden">
         
-        {/* Left Drawer: NASA Eyes-Inspired Explorer (Solar System, Planets, Moons, Spacecraft, Search) */}
-        <MissionExplorerSidebar
-          selectedMissionSlug={selectedMissionSlug}
-          selectedCelestialId={selectedCelestialId}
-          onSelectMission={handleSelectMissionFromSidebar}
-          onSelectPlanet={(planetId) => {
-            setSelectedCelestialId(planetId);
-            setSelectedMissionSlug(null);
-            if (canvasRef.current) {
-              canvasRef.current.focusCelestialBody(planetId);
-            }
-          }}
-          onSelectMoon={(moonId) => {
-            setSelectedCelestialId(moonId);
-            setSelectedMissionSlug(null);
-            if (canvasRef.current) {
-              canvasRef.current.focusMoon(moonId);
-            }
-          }}
-          onSelectScale={handleSelectScale}
-          onResetView={handleResetView}
-          isOpen={sidebarOpen}
-          onToggleOpen={() => setSidebarOpen(prev => !prev)}
+        {/* Floating Minimal Viewport Control Dock (Phase 2) */}
+        <CinematicFloatingControls
+          isSidebarOpen={layoutPrefs.isSidebarOpen}
+          onToggleSidebar={handleToggleSidebar}
+          isTimelineOpen={layoutPrefs.isTimelineOpen}
+          onToggleTimeline={handleToggleTimeline}
+          isCompanionOpen={layoutPrefs.isCompanionOpen}
+          onToggleCompanion={handleToggleCompanion}
+          isDrawerOpen={layoutPrefs.isDrawerOpen}
+          onToggleDrawer={handleToggleDrawer}
+          isZenMode={layoutPrefs.isZenMode}
+          onToggleZenMode={handleToggleZenMode}
+          onRestoreDefaultLayout={handleRestoreDefaultLayout}
+          className={
+            layoutPrefs.isZenMode
+              ? 'top-4 left-4'
+              : layoutPrefs.isSidebarOpen
+                ? 'top-20 left-80 sm:left-88 md:left-[24.5rem]'
+                : 'top-20 left-4'
+          }
         />
+
+        {/* Left Drawer: NASA Eyes-Inspired Explorer (Collapsible) */}
+        {!layoutPrefs.isZenMode && (
+          <MissionExplorerSidebar
+            selectedMissionSlug={selectedMissionSlug}
+            selectedCelestialId={selectedCelestialId}
+            onSelectMission={handleSelectMissionFromSidebar}
+            onSelectPlanet={(planetId) => {
+              setSelectedCelestialId(planetId);
+              setSelectedMissionSlug(null);
+              if (canvasRef.current) {
+                canvasRef.current.focusCelestialBody(planetId);
+              }
+            }}
+            onSelectMoon={(moonId) => {
+              setSelectedCelestialId(moonId);
+              setSelectedMissionSlug(null);
+              if (canvasRef.current) {
+                canvasRef.current.focusMoon(moonId);
+              }
+            }}
+            onSelectScale={handleSelectScale}
+            onResetView={handleResetView}
+            isOpen={layoutPrefs.isSidebarOpen}
+            onToggleOpen={handleToggleSidebar}
+            hideToggleButton={true}
+          />
+        )}
 
         {/* Central 3D Canvas */}
         <SolarCanvas
@@ -317,81 +440,99 @@ export default function SolarSystemPage() {
           </div>
         )}
 
-        {/* Floating NASA Eyes-Style Navigation & Simulation HUD */}
-        <SolarControlsHUD
-          isPlaying={isPlaying}
-          onTogglePlay={handleTogglePlay}
-          speed={speed}
-          onChangeSpeed={handleChangeSpeed}
-          timeDirection={timeDirection}
-          onToggleTimeDirection={handleToggleTimeDirection}
-          onStepDays={handleStepDays}
-          activeScale={activeScale}
-          onSelectScale={handleSelectScale}
-          onResetView={handleResetView}
-          onZoomIn={handleZoomIn}
-          onZoomOut={handleZoomOut}
-          hoveredItemInfo={hoveredItemInfo}
-          isVoyagerLocalMode={isVoyagerLocalMode}
-          onExitVoyagerLocal={handleExitVoyagerLocal}
-          isSurfaceMode={isSurfaceMode}
-          activeSurfaceCraft={activeSurfaceCraft}
-          onExitSurfaceMode={handleExitSurfaceMode}
-          selectedMissionSlug={selectedMissionSlug}
-          onEnterVoyagerLocal={handleEnterVoyagerLocal}
-          simulationDate={simulationDate}
-          onSelectDate={handleSelectDate}
-          lightingMode={lightingMode}
-          onToggleLightingMode={handleToggleLightingMode}
-          cameraMode={cameraMode}
-          onChangeCameraMode={handleChangeCameraMode}
-          layerVisibility={layerVisibility}
-          onToggleLayer={handleToggleLayer}
-          onScrubStart={handleScrubStart}
-          onScrubEnd={handleScrubEnd}
-        />
+        {/* Floating NASA Eyes-Style Navigation & Simulation HUD (Collapsible) */}
+        {!layoutPrefs.isZenMode && layoutPrefs.isTimelineOpen && (
+          <SolarControlsHUD
+            isPlaying={isPlaying}
+            onTogglePlay={handleTogglePlay}
+            speed={speed}
+            onChangeSpeed={handleChangeSpeed}
+            timeDirection={timeDirection}
+            onToggleTimeDirection={handleToggleTimeDirection}
+            onStepDays={handleStepDays}
+            activeScale={activeScale}
+            onSelectScale={handleSelectScale}
+            onResetView={handleResetView}
+            onZoomIn={handleZoomIn}
+            onZoomOut={handleZoomOut}
+            hoveredItemInfo={hoveredItemInfo}
+            isVoyagerLocalMode={isVoyagerLocalMode}
+            onExitVoyagerLocal={handleExitVoyagerLocal}
+            isSurfaceMode={isSurfaceMode}
+            activeSurfaceCraft={activeSurfaceCraft}
+            onExitSurfaceMode={handleExitSurfaceMode}
+            selectedMissionSlug={selectedMissionSlug}
+            onEnterVoyagerLocal={handleEnterVoyagerLocal}
+            simulationDate={simulationDate}
+            onSelectDate={handleSelectDate}
+            lightingMode={lightingMode}
+            onToggleLightingMode={handleToggleLightingMode}
+            cameraMode={cameraMode}
+            onChangeCameraMode={handleChangeCameraMode}
+            layerVisibility={layerVisibility}
+            onToggleLayer={handleToggleLayer}
+            onScrubStart={handleScrubStart}
+            onScrubEnd={handleScrubEnd}
+          />
+        )}
 
-        {/* Right Drawer: Selected Mission Verified Telemetry & Detail */}
-        <MissionDetailDrawer
-          selectedSlug={selectedMissionSlug}
-          onClose={() => {
-            setSelectedMissionSlug(null);
-            if (isInspectingSpacecraft) {
-              handleExitSpacecraftInspection();
-            }
-          }}
-          onEnterVoyagerLocal={handleEnterVoyagerLocal}
-          isVoyagerLocalMode={isVoyagerLocalMode}
-          isInspectingSpacecraft={isInspectingSpacecraft}
-          onExitInspection={handleExitSpacecraftInspection}
-          onToggleAutoRotate={handleToggleInspectionAutoRotate}
-          onFocusSpacecraft={(slug) => {
-            if (canvasRef.current) {
-              canvasRef.current.focusSpacecraft(slug);
-            }
-          }}
-          onExploreSurface={handleEnterSurfaceMode}
-        />
+        {/* NOVA: Animated Cartoon Astronaut AI Companion & Solar System Guide (Phase 3-6) */}
+        {!layoutPrefs.isZenMode && layoutPrefs.isCompanionOpen && (
+          <NovaAstronautCompanion
+            selectedCelestialId={selectedCelestialId}
+            selectedMissionSlug={selectedMissionSlug}
+            onExploreScale={handleSelectScale}
+            onFocusCelestial={(id) => {
+              setSelectedCelestialId(id);
+              setSelectedMissionSlug(null);
+              if (canvasRef.current) {
+                canvasRef.current.focusCelestialBody(id);
+              }
+            }}
+            onOpenTelemetryDrawer={() => saveLayoutPrefs({ isDrawerOpen: true })}
+          />
+        )}
 
-        {/* Right Drawer: Selected Celestial Body Inspection (Planets & Moons) */}
-        <CelestialDetailDrawer
-          selectedId={selectedCelestialId}
-          onClose={() => setSelectedCelestialId(null)}
-          onSelectMoon={(moonId) => {
-            setSelectedCelestialId(moonId);
-            if (canvasRef.current) {
-              canvasRef.current.focusMoon(moonId);
-            }
-          }}
-          onSelectParentPlanet={(planetId) => {
-            setSelectedCelestialId(planetId);
-            if (canvasRef.current) {
-              canvasRef.current.focusPlanet(planetId);
-            }
-          }}
-          onExploreSurface={handleEnterSurfaceMode}
-          onResetToSystem={handleResetView}
-        />
+        {/* Right Drawer: Selected Mission Verified Telemetry & Detail (Only when explicitly opened via dock) */}
+        {!layoutPrefs.isZenMode && layoutPrefs.isDrawerOpen && selectedMissionSlug && (
+          <MissionDetailDrawer
+            selectedSlug={selectedMissionSlug}
+            onClose={() => saveLayoutPrefs({ isDrawerOpen: false })}
+            onEnterVoyagerLocal={handleEnterVoyagerLocal}
+            isVoyagerLocalMode={isVoyagerLocalMode}
+            isInspectingSpacecraft={isInspectingSpacecraft}
+            onExitInspection={handleExitSpacecraftInspection}
+            onToggleAutoRotate={handleToggleInspectionAutoRotate}
+            onFocusSpacecraft={(slug) => {
+              if (canvasRef.current) {
+                canvasRef.current.focusSpacecraft(slug);
+              }
+            }}
+            onExploreSurface={handleEnterSurfaceMode}
+          />
+        )}
+
+        {/* Right Drawer: Selected Celestial Body Inspection (Only when explicitly opened via dock) */}
+        {!layoutPrefs.isZenMode && layoutPrefs.isDrawerOpen && selectedCelestialId && (
+          <CelestialDetailDrawer
+            selectedId={selectedCelestialId}
+            onClose={() => saveLayoutPrefs({ isDrawerOpen: false })}
+            onSelectMoon={(moonId) => {
+              setSelectedCelestialId(moonId);
+              if (canvasRef.current) {
+                canvasRef.current.focusMoon(moonId);
+              }
+            }}
+            onSelectParentPlanet={(planetId) => {
+              setSelectedCelestialId(planetId);
+              if (canvasRef.current) {
+                canvasRef.current.focusPlanet(planetId);
+              }
+            }}
+            onExploreSurface={handleEnterSurfaceMode}
+            onResetToSystem={handleResetView}
+          />
+        )}
 
       </main>
     </div>
