@@ -23,7 +23,7 @@ from sqlalchemy import inspect, text
 logger = logging.getLogger(__name__)
 
 SCHEMA_PATH = Path(__file__).with_name("schema.sql")
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 
 # Columns added by the NovaBase rebuild.  ``ALTER TABLE ADD COLUMN`` works on
 # both SQLite and PostgreSQL and is safe to run against an existing database.
@@ -42,6 +42,37 @@ ADDITIVE_COLUMNS: dict[str, dict[str, str]] = {
         "is_active_flag": "BOOLEAN DEFAULT FALSE",
         "extra": "TEXT",
         "updated_at": "TIMESTAMP",
+        "alternate_names": "TEXT",
+        "agency": "VARCHAR(255)",
+        "manufacturer": "VARCHAR(255)",
+        "spacecraft_type": "VARCHAR(100) DEFAULT 'Spacecraft'",
+        "description": "TEXT",
+        "model_path": "VARCHAR(500)",
+        "model_format": "VARCHAR(50) DEFAULT 'glb'",
+        "thumbnail_path": "VARCHAR(500)",
+        "source_url": "VARCHAR(500)",
+        "agency_id": "INTEGER",
+        "physical_status": "VARCHAR(100)",
+        "decommission_date": "VARCHAR(50)",
+        "landing_date": "VARCHAR(50)",
+        "location_description": "VARCHAR(255)",
+        "latitude": "DOUBLE PRECISION",
+        "longitude": "DOUBLE PRECISION",
+        "manufacturer_id": "INTEGER",
+        "operator_id": "INTEGER",
+        "mission_agency_id": "INTEGER",
+        "launch_provider_id": "INTEGER",
+        "primary_mission_id": "INTEGER",
+        "last_verified_at": "VARCHAR(50)",
+    },
+    "missions": {
+        "mission_name": "VARCHAR(255)",
+        "agency": "VARCHAR(255)",
+        "mission_type": "VARCHAR(100)",
+        "end_date": "VARCHAR(50)",
+        "destination": "VARCHAR(100) DEFAULT 'Deep Space'",
+        "objectives": "TEXT",
+        "source_url": "VARCHAR(500)",
     },
     "spacecraft_images": {
         "thumbnail_url": "VARCHAR(1000)",
@@ -65,7 +96,10 @@ ADDITIVE_COLUMNS: dict[str, dict[str, str]] = {
 
 # Reverse dependency order for the explicit --reset path only.
 RESET_ORDER = [
+    "v_hardware_component_coverage",
     "v_spacecraft_completeness",
+    "hardware_component_missions",
+    "hardware_components",
     "spacecraft_people",
     "people",
     "spacecraft_models",
