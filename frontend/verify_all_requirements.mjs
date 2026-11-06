@@ -1,8 +1,8 @@
 import puppeteer from 'puppeteer-core';
 import path from 'path';
 
-const CHROME_PATH = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
-const ARTIFACT_DIR = 'C:\\Users\\mitro\\.gemini\\antigravity\\brain\\08777b3a-3100-48d3-885a-83d4e0a36c43';
+const CHROME_PATH = process.env.CHROME_PATH || 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
+const ARTIFACT_DIR = process.env.ARTIFACT_DIR || path.resolve(process.cwd(), 'artifacts');
 
 async function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));

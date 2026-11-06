@@ -453,9 +453,19 @@ def run_ingestion():
         }
 
         # 6. Read spacecraft.json and import 122 Spacecraft records
-        repo_json = os.path.abspath(os.path.join(backend_dir, "..", "..", "spacecraft-models", "spacecraft.json"))
-        if not os.path.exists(repo_json):
-            repo_json = os.path.abspath(os.path.join(backend_dir, "..", "spacecraft-models", "spacecraft.json"))
+        repo_json = os.getenv("SPACECRAFT_JSON_PATH")
+        if not repo_json or not os.path.exists(repo_json):
+            for candidate in [
+                os.path.abspath(os.path.join(backend_dir, "..", "..", "spacecraft-models", "spacecraft.json")),
+                os.path.abspath(os.path.join(backend_dir, "..", "spacecraft-models", "spacecraft.json")),
+            ]:
+                if os.path.exists(candidate):
+                    repo_json = candidate
+                    break
+
+        if not repo_json or not os.path.exists(repo_json):
+            print(f"[5/6] Notice: spacecraft.json dataset not found at expected locations. Skipping file ingestion.")
+            return
 
         print(f"[5/6] Reading spacecraft dataset from {repo_json}...")
         with open(repo_json, "r", encoding="utf-8") as f:

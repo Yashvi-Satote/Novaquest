@@ -106,8 +106,12 @@ class Settings:
             "http://localhost:5173,http://127.0.0.1:5173",
         )
         self.cors_origins = [
-            origin.strip() for origin in raw_origins.split(",") if origin.strip()
+            origin.strip()
+            for origin in raw_origins.split(",")
+            if origin.strip() and origin.strip() != "*"
         ]
+        if not self.cors_origins:
+            self.cors_origins = ["http://localhost:5173", "http://127.0.0.1:5173"]
 
         self.min_password_length = _MIN_PASSWORD_LENGTH
         self.max_password_length = _MAX_PASSWORD_LENGTH
