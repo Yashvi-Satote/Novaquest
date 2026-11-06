@@ -120,15 +120,21 @@ def _upsert_mission(session: Session, mission: dict[str, Any]) -> Mission:
         if source.get("source_type") in ("official_nasa", "mission_site", "esa"):
             official_url = source.get("url")
             break
+    mission_name = mission.get("display_name") or mission.get("name")
+    end_date = mission.get("end_date")
     values = {
-        "name": mission.get("display_name") or mission.get("name"),
+        "name": mission_name,
+        "mission_name": mission_name,
         "slug": slug,
         "destination_category": mission.get("destination_category", "Deep Space"),
+        "destination": mission.get("destination") or mission.get("destination_category", "Deep Space"),
         "launch_date": mission.get("launch_date"),
-        "mission_end_date": mission.get("end_date"),
+        "end_date": end_date,
+        "mission_end_date": end_date,
         "mission_status": mission.get("mission_status", "Active"),
         "description": mission.get("status_text"),
         "official_url": official_url,
+        "source_url": official_url,
     }
     if row is None:
         row = Mission(**values)

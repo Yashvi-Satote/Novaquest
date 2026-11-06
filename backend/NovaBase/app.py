@@ -166,7 +166,15 @@ for p in POSSIBLE_MODELS_DIRS:
 
 
 def bootstrap_database():
-    """Ensure the scalable database schema and complete 122 spacecraft records are present."""
+    """Ensure the scalable database schema and complete spacecraft records are present."""
+    from Shared.database import engine
+    from NovaBase.schema_tools import bootstrap_schema
+
+    try:
+        bootstrap_schema(engine)
+    except Exception as exc:
+        logger.warning(f"Schema initialization notice: {exc}")
+
     db = SessionLocal()
     try:
         count = db.query(Spacecraft).count()

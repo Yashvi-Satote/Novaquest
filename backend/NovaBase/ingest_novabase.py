@@ -165,17 +165,10 @@ def run_ingestion():
         print(f"Creating safety backup at {backup_file}...")
         shutil.copyfile(db_file, backup_file)
 
-    # 2. Re-create NovaBase schema tables cleanly
-    print("[1/6] Initializing NovaBase database schema (SPACECRAFT, MISSIONS, SPACECRAFT_MISSIONS, MAP_OBJECTS)...")
-    with engine.connect() as conn:
-        for tbl in ["map_objects", "spacecraft_missions", "mission_spacecraft", "models_3d",
-                    "spacecraft_aliases", "spacecraft_keywords", "spacecraft_images", "spacecraft_sources",
-                    "hardware_aliases", "hardware_keywords", "hardware_images", "hardware_sources",
-                    "hardware", "spacecraft", "missions"]:
-            conn.execute(text(f"DROP TABLE IF EXISTS \"{tbl}\""))
-        conn.commit()
-
-    Base.metadata.create_all(bind=engine)
+    # 2. Initialize NovaBase schema idempotently
+    print("[1/6] Initializing NovaBase database schema...")
+    from NovaBase.schema_tools import bootstrap_schema
+    bootstrap_schema(engine)
 
     db = SessionLocal()
     try:

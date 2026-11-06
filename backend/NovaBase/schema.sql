@@ -32,6 +32,7 @@ CREATE TABLE IF NOT EXISTS organizations (
     slug VARCHAR(255) NOT NULL UNIQUE,
     organization_type VARCHAR(100) NOT NULL DEFAULT 'Space Agency',
     country VARCHAR(100),
+    description TEXT,
     official_url VARCHAR(500),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
@@ -44,17 +45,26 @@ CREATE INDEX IF NOT EXISTS idx_organizations_type ON organizations(organization_
 -- -------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS missions (
     id SERIAL PRIMARY KEY,
-    name VARCHAR(255) NOT NULL UNIQUE,
+    name VARCHAR(255) NOT NULL,
+    mission_name VARCHAR(255),
     slug VARCHAR(255) NOT NULL UNIQUE,
-    destination_category VARCHAR(100) NOT NULL,
+    agency VARCHAR(255),
+    mission_type VARCHAR(100),
+    destination_category VARCHAR(100) NOT NULL DEFAULT 'Deep Space',
+    destination VARCHAR(100) DEFAULT 'Deep Space',
     launch_date VARCHAR(50),
+    end_date VARCHAR(50),
     mission_end_date VARCHAR(50),
     mission_status VARCHAR(100) NOT NULL DEFAULT 'Active',
     description TEXT,
+    objectives TEXT,
     official_url VARCHAR(500),
+    source_url VARCHAR(500),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE INDEX IF NOT EXISTS idx_missions_name ON missions(name);
+CREATE INDEX IF NOT EXISTS idx_missions_mission_name ON missions(mission_name);
 CREATE INDEX IF NOT EXISTS idx_missions_slug ON missions(slug);
 CREATE INDEX IF NOT EXISTS idx_missions_destination ON missions(destination_category);
 CREATE INDEX IF NOT EXISTS idx_missions_status ON missions(mission_status);
@@ -69,6 +79,7 @@ CREATE TABLE IF NOT EXISTS spacecraft (
     display_name VARCHAR(255) NOT NULL,
     full_name VARCHAR(255) NOT NULL,
     object_type VARCHAR(100) NOT NULL DEFAULT 'Spacecraft',
+    spacecraft_type VARCHAR(100) NOT NULL DEFAULT 'Spacecraft',
     destination_category VARCHAR(100) NOT NULL DEFAULT 'Deep Space',
     destination VARCHAR(100) NOT NULL DEFAULT 'Deep Space',
     operational_status VARCHAR(100) NOT NULL DEFAULT 'Active / operational',
@@ -79,6 +90,7 @@ CREATE TABLE IF NOT EXISTS spacecraft (
     location_description VARCHAR(255),
     latitude DOUBLE PRECISION,
     longitude DOUBLE PRECISION,
+    description TEXT,
     short_description TEXT NOT NULL,
     educational_description TEXT NOT NULL,
     how_it_works TEXT NOT NULL,
@@ -86,10 +98,18 @@ CREATE TABLE IF NOT EXISTS spacecraft (
     scientific_purpose TEXT NOT NULL,
     current_or_last_known_status TEXT NOT NULL,
     hardware_materials TEXT,
+    model_path VARCHAR(500),
+    model_format VARCHAR(50) DEFAULT 'glb',
+    thumbnail_path VARCHAR(500),
+    source_url VARCHAR(500),
     official_url VARCHAR(500) NOT NULL,
     eotss_url VARCHAR(500),
     verification_status VARCHAR(100) NOT NULL DEFAULT 'Verified from NASA/JPL Records',
     last_verified_at VARCHAR(50),
+    alternate_names TEXT,
+    agency VARCHAR(255),
+    manufacturer VARCHAR(255),
+    agency_id INTEGER REFERENCES organizations(id) ON DELETE SET NULL,
     primary_mission_id INTEGER REFERENCES missions(id) ON DELETE SET NULL,
     manufacturer_id INTEGER REFERENCES organizations(id) ON DELETE SET NULL,
     operator_id INTEGER REFERENCES organizations(id) ON DELETE SET NULL,
@@ -162,7 +182,9 @@ CREATE TABLE IF NOT EXISTS mission_spacecraft (
     mission_id INTEGER NOT NULL REFERENCES missions(id) ON DELETE CASCADE,
     spacecraft_id INTEGER NOT NULL REFERENCES spacecraft(id) ON DELETE CASCADE,
     role VARCHAR(100) NOT NULL DEFAULT 'Primary Spacecraft',
+    mission_role VARCHAR(100),
     notes TEXT,
+    relationship_description TEXT,
     CONSTRAINT uq_mission_spacecraft UNIQUE (mission_id, spacecraft_id)
 );
 
@@ -396,3 +418,40 @@ SELECT
     (SELECT COUNT(*) FROM spacecraft_models   m WHERE m.spacecraft_id = sc.id AND m.status IN ('ok', 'no_model')) AS models,
     (SELECT COUNT(*) FROM spacecraft_people   p WHERE p.spacecraft_id = sc.id) AS people
 FROM spacecraft sc;
+
+-- -------------------------------------------------------------------------
+-- 15. Map Objects (for 3D Solar System Map)
+-- -------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS map_objects (
+    id SERIAL PRIMARY KEY,
+    object_name VARCHAR(255) NOT NULL,
+    object_type VARCHAR(100) NOT NULL,
+    spacecraft_id INTEGER REFERENCES spacecraft(id) ON DELETE CASCADE,
+    mission_id INTEGER REFERENCES missions(id) ON DELETE SET NULL,
+    parent_body VARCHAR(100),
+    position_source VARCHAR(100) DEFAULT 'Keplerian Ephemeris / Analytic Position',
+    position_data TEXT,
+    model_path VARCHAR(500),
+    visibility_status VARCHAR(50) NOT NULL DEFAULT 'visible'
+);
+
+CREATE INDEX IF NOT EXISTS idx_map_objects_name ON map_objects(object_name);
+CREATE INDEX IF NOT EXISTS idx_map_objects_type ON map_objects(object_type);
+CREATE INDEX IF NOT EXISTS idx_map_objects_sc_id ON map_objects(spacecraft_id);
+CREATE INDEX IF NOT EXISTS idx_map_objects_mid ON map_objects(mission_id);
+CREATE INDEX IF NOT EXISTS idx_map_objects_visibility ON map_objects(visibility_status);
+
+-- -------------------------------------------------------------------------
+-- 16. Backward-compatibility view for spacecraft_missions
+-- -------------------------------------------------------------------------
+CREATE VIEW IF NOT EXISTS spacecraft_missions AS
+SELECT
+    id,
+    mission_id,
+    spacecraft_id,
+    role,
+    COALESCE(mission_role, role) AS mission_role,
+    notes,
+    COALESCE(relationship_description, notes) AS relationship_description
+FROM mission_spacecraft;
+

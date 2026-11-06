@@ -168,7 +168,8 @@ def ingest():
     print("=" * 60)
     print("Novaquest - Full 250-Mission Catalogue Ingestion")
     print("=" * 60)
-    Base.metadata.create_all(bind=engine)
+    from NovaBase.schema_tools import bootstrap_schema
+    bootstrap_schema(engine)
     db = SessionLocal()
     try:
         org_map = {o.slug: o for o in db.query(Organization).all()}

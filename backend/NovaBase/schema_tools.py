@@ -23,12 +23,37 @@ from sqlalchemy import inspect, text
 logger = logging.getLogger(__name__)
 
 SCHEMA_PATH = Path(__file__).with_name("schema.sql")
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 
 # Columns added by the NovaBase rebuild.  ``ALTER TABLE ADD COLUMN`` works on
 # both SQLite and PostgreSQL and is safe to run against an existing database.
 ADDITIVE_COLUMNS: dict[str, dict[str, str]] = {
+    "organizations": {
+        "description": "TEXT",
+    },
+    "missions": {
+        "mission_name": "VARCHAR(255)",
+        "agency": "VARCHAR(255)",
+        "mission_type": "VARCHAR(100)",
+        "destination": "VARCHAR(100) DEFAULT 'Deep Space'",
+        "end_date": "VARCHAR(50)",
+        "mission_end_date": "VARCHAR(50)",
+        "objectives": "TEXT",
+        "official_url": "VARCHAR(500)",
+        "source_url": "VARCHAR(500)",
+    },
     "spacecraft": {
+        "primary_mission_id": "INTEGER",
+        "agency_id": "INTEGER",
+        "alternate_names": "TEXT",
+        "agency": "VARCHAR(255)",
+        "manufacturer": "VARCHAR(255)",
+        "spacecraft_type": "VARCHAR(100) DEFAULT 'Spacecraft'",
+        "description": "TEXT",
+        "model_path": "VARCHAR(500)",
+        "model_format": "VARCHAR(50) DEFAULT 'glb'",
+        "thumbnail_path": "VARCHAR(500)",
+        "source_url": "VARCHAR(500)",
         "mission_type": "VARCHAR(50)",
         "primary_agency": "VARCHAR(255)",
         "summary": "TEXT",
@@ -42,6 +67,10 @@ ADDITIVE_COLUMNS: dict[str, dict[str, str]] = {
         "is_active_flag": "BOOLEAN DEFAULT FALSE",
         "extra": "TEXT",
         "updated_at": "TIMESTAMP",
+    },
+    "mission_spacecraft": {
+        "mission_role": "VARCHAR(100)",
+        "relationship_description": "TEXT",
     },
     "spacecraft_images": {
         "thumbnail_url": "VARCHAR(1000)",
@@ -66,6 +95,8 @@ ADDITIVE_COLUMNS: dict[str, dict[str, str]] = {
 # Reverse dependency order for the explicit --reset path only.
 RESET_ORDER = [
     "v_spacecraft_completeness",
+    "spacecraft_missions",
+    "map_objects",
     "spacecraft_people",
     "people",
     "spacecraft_models",
@@ -235,7 +266,7 @@ def apply_schema(engine) -> list[str]:
 
 
 def ensure_additive_columns(engine) -> list[str]:
-    """Add NovaBase columns to an existing legacy database."""
+    """Add NovaBase columns to an existing legacy database and synchronize column aliases."""
     inspector = inspect(engine)
     existing_tables = set(inspector.get_table_names())
     added: list[str] = []
@@ -252,6 +283,55 @@ def ensure_additive_columns(engine) -> list[str]:
                 conn.execute(text(sql))
                 added.append(sql)
                 logger.info("Added column %s.%s", table, name)
+
+        # Synchronize alias columns on missions if present
+        if "missions" in existing_tables:
+            conn.execute(text("UPDATE missions SET mission_name = name WHERE mission_name IS NULL AND name IS NOT NULL"))
+            conn.execute(text("UPDATE missions SET name = mission_name WHERE name IS NULL AND mission_name IS NOT NULL"))
+            conn.execute(text("UPDATE missions SET end_date = mission_end_date WHERE end_date IS NULL AND mission_end_date IS NOT NULL"))
+            conn.execute(text("UPDATE missions SET mission_end_date = end_date WHERE mission_end_date IS NULL AND end_date IS NOT NULL"))
+            conn.execute(text("UPDATE missions SET source_url = official_url WHERE source_url IS NULL AND official_url IS NOT NULL"))
+            conn.execute(text("UPDATE missions SET official_url = source_url WHERE official_url IS NULL AND source_url IS NOT NULL"))
+
+        # Synchronize alias columns on mission_spacecraft if present
+        if "mission_spacecraft" in existing_tables:
+            conn.execute(text("UPDATE mission_spacecraft SET mission_role = role WHERE mission_role IS NULL AND role IS NOT NULL"))
+            conn.execute(text("UPDATE mission_spacecraft SET role = mission_role WHERE role IS NULL AND mission_role IS NOT NULL"))
+            conn.execute(text("UPDATE mission_spacecraft SET relationship_description = notes WHERE relationship_description IS NULL AND notes IS NOT NULL"))
+            conn.execute(text("UPDATE mission_spacecraft SET notes = relationship_description WHERE notes IS NULL AND relationship_description IS NOT NULL"))
+
+        # If a legacy physical table 'spacecraft_missions' exists, migrate records to mission_spacecraft
+        if "spacecraft_missions" in existing_tables:
+            is_view = False
+            if engine.dialect.name == "sqlite":
+                row = conn.execute(text("SELECT type FROM sqlite_master WHERE name = 'spacecraft_missions'")).first()
+                is_view = row is not None and row[0] == "view"
+            if not is_view:
+                try:
+                    if engine.dialect.name == "sqlite":
+                        conn.execute(text("""
+                            INSERT OR IGNORE INTO mission_spacecraft (mission_id, spacecraft_id, role, mission_role, notes, relationship_description)
+                            SELECT mission_id, spacecraft_id,
+                                   COALESCE(mission_role, 'Primary Spacecraft'),
+                                   COALESCE(mission_role, 'Primary Spacecraft'),
+                                   relationship_description,
+                                   relationship_description
+                            FROM spacecraft_missions
+                        """))
+                    else:
+                        conn.execute(text("""
+                            INSERT INTO mission_spacecraft (mission_id, spacecraft_id, role, mission_role, notes, relationship_description)
+                            SELECT mission_id, spacecraft_id,
+                                   COALESCE(mission_role, 'Primary Spacecraft'),
+                                   COALESCE(mission_role, 'Primary Spacecraft'),
+                                   relationship_description,
+                                   relationship_description
+                            FROM spacecraft_missions
+                            ON CONFLICT DO NOTHING
+                        """))
+                except Exception as exc:
+                    logger.warning("Migration from legacy spacecraft_missions skipped: %s", exc)
+
     return added
 
 
@@ -265,7 +345,7 @@ def record_schema_version(engine) -> None:
                         "INSERT INTO schema_version (version, description) "
                         "VALUES (:v, :d)"
                     ),
-                    {"v": SCHEMA_VERSION, "d": "NovaBase 10-section schema"},
+                    {"v": SCHEMA_VERSION, "d": "NovaBase Phase 2 Schema Realignment"},
                 )
         except Exception as exc:
             logger.warning("Could not record schema_version: %s", exc)
