@@ -143,7 +143,8 @@ def run_migration_and_import():
 
     # 1. Initialize tables
     print("[1/5] Initializing new scalable database schema...")
-    Base.metadata.create_all(bind=engine)
+    from NovaBase.schema_tools import bootstrap_schema
+    bootstrap_schema(engine)
     print("       Schema tables verified/created successfully.")
 
     db = SessionLocal()
