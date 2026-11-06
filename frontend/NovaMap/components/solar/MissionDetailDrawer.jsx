@@ -26,6 +26,7 @@ import { fetchHardwareDetail } from '../../../Shared/services/api';
 import { getMappedSpacecraft, classifyCatalogueRecord } from './spacecraftRegistry';
 import { getSpacecraftCategoryIcon, getCategoryBadgeStyle } from './spacecraftIcons';
 import { getSpacecraftModelSpec } from './spacecraftModelRegistry';
+import SpacecraftPreview3D from './SpacecraftPreview3D';
 
 export default function MissionDetailDrawer({
   selectedSlug,
@@ -40,6 +41,7 @@ export default function MissionDetailDrawer({
   const [error, setError] = useState(null);
   const [imageError, setImageError] = useState(false);
   const [isOverviewExpanded, setIsOverviewExpanded] = useState(false);
+  const [mediaMode, setMediaMode] = useState('3d'); // '3d' | 'photo'
 
   useEffect(() => {
     if (!selectedSlug) {
@@ -51,6 +53,7 @@ export default function MissionDetailDrawer({
     setDetail(null);
     setImageError(false);
     setIsOverviewExpanded(false);
+    setMediaMode('3d');
 
     async function loadDetail() {
       setIsLoading(true);
@@ -149,48 +152,87 @@ export default function MissionDetailDrawer({
 
       {detail && (
         <>
-          {/* Spacecraft / Mission Image Stage (Objective 3) */}
-          <div className="relative rounded-xl overflow-hidden border border-purple-500/25 bg-slate-950 shadow-inner group">
-            {imageUrl ? (
-              <div className="relative h-44 w-full bg-slate-950">
-                <img
-                  src={imageUrl}
-                  alt={imageCaption}
-                  onError={() => setImageError(true)}
-                  className="w-full h-full object-cover object-center transition-transform duration-500 group-hover:scale-105"
-                  loading="lazy"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#0a071c] via-transparent to-transparent opacity-90" />
-                
-                {/* Image Attribution Tag */}
-                <div className="absolute bottom-2 left-2.5 right-2.5 flex items-center justify-between text-[9px] font-mono text-slate-300">
-                  <span className="truncate max-w-[200px] text-white font-medium drop-shadow-md">
-                    {imageCaption}
-                  </span>
-                  <span className="px-1.5 py-0.5 rounded bg-black/60 backdrop-blur-md border border-white/10 text-cyan-300 shrink-0">
-                    {imageAttribution}
-                  </span>
-                </div>
-              </div>
-            ) : (
-              /* Designed Scientific Fallback Badge (Objective 3) */
-              <div className="h-36 w-full bg-gradient-to-br from-purple-950/50 via-[#0d0922] to-slate-950 flex flex-col items-center justify-center p-4 text-center border border-dashed border-purple-500/20">
-                <div className="w-12 h-12 rounded-2xl bg-purple-900/40 border border-purple-500/30 flex items-center justify-center text-cyan-300 mb-2 shadow-lg shadow-purple-950/40">
-                  {getSpacecraftCategoryIcon(objectType, 'w-6 h-6')}
-                </div>
-                <span className="text-xs font-bold text-white tracking-wide">
-                  {detail.name || verified?.name}
-                </span>
-                <span className="text-[10px] text-purple-300 font-mono mt-0.5">
-                  Target: {detail.destination} • Official Telemetry Monitored
-                </span>
-                <div className="mt-2 flex items-center gap-1 text-[9px] text-slate-400 font-mono">
-                  <Camera className="w-3 h-3 text-slate-500" />
-                  <span>Archival Visual Insignia</span>
-                </div>
-              </div>
+          {/* Media View Selector (Interactive 3D Inspector vs Official Archival Photo) */}
+          <div className="flex items-center justify-between gap-1 p-0.5 rounded-lg bg-black/40 border border-purple-500/20 text-[10px] font-mono">
+            <button
+              type="button"
+              id="drawer-media-toggle-3d"
+              onClick={() => setMediaMode('3d')}
+              className={`flex-1 py-1 px-2 rounded-md flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                mediaMode === '3d'
+                  ? 'bg-gradient-to-r from-cyan-600 to-blue-600 text-white font-bold shadow-sm'
+                  : 'text-slate-400 hover:text-white hover:bg-purple-950/40'
+              }`}
+            >
+              <Sparkles className="w-3 h-3 text-cyan-200" />
+              <span>Interactive 3D View</span>
+            </button>
+            {imageUrl && (
+              <button
+                type="button"
+                id="drawer-media-toggle-photo"
+                onClick={() => setMediaMode('photo')}
+                className={`flex-1 py-1 px-2 rounded-md flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                  mediaMode === 'photo'
+                    ? 'bg-purple-600 text-white font-bold shadow-sm'
+                    : 'text-slate-400 hover:text-white hover:bg-purple-950/40'
+                }`}
+              >
+                <Camera className="w-3 h-3 text-purple-200" />
+                <span>Archival Photo</span>
+              </button>
             )}
           </div>
+
+          {/* Spacecraft Visual Display (3D Canvas or Archival Image) */}
+          {mediaMode === '3d' ? (
+            <SpacecraftPreview3D
+              slug={selectedSlug}
+              name={detail.name || verified?.name}
+            />
+          ) : (
+            <div className="relative rounded-xl overflow-hidden border border-purple-500/25 bg-slate-950 shadow-inner group">
+              {imageUrl ? (
+                <div className="relative h-44 w-full bg-slate-950">
+                  <img
+                    src={imageUrl}
+                    alt={imageCaption}
+                    onError={() => setImageError(true)}
+                    className="w-full h-full object-cover object-center transition-transform duration-500 group-hover:scale-105"
+                    loading="lazy"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#0a071c] via-transparent to-transparent opacity-90" />
+                  
+                  {/* Image Attribution Tag */}
+                  <div className="absolute bottom-2 left-2.5 right-2.5 flex items-center justify-between text-[9px] font-mono text-slate-300">
+                    <span className="truncate max-w-[200px] text-white font-medium drop-shadow-md">
+                      {imageCaption}
+                    </span>
+                    <span className="px-1.5 py-0.5 rounded bg-black/60 backdrop-blur-md border border-white/10 text-cyan-300 shrink-0">
+                      {imageAttribution}
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                /* Designed Scientific Fallback Badge (Objective 3) */
+                <div className="h-36 w-full bg-gradient-to-br from-purple-950/50 via-[#0d0922] to-slate-950 flex flex-col items-center justify-center p-4 text-center border border-dashed border-purple-500/20">
+                  <div className="w-12 h-12 rounded-2xl bg-purple-900/40 border border-purple-500/30 flex items-center justify-center text-cyan-300 mb-2 shadow-lg shadow-purple-950/40">
+                    {getSpacecraftCategoryIcon(objectType, 'w-6 h-6')}
+                  </div>
+                  <span className="text-xs font-bold text-white tracking-wide">
+                    {detail.name || verified?.name}
+                  </span>
+                  <span className="text-[10px] text-purple-300 font-mono mt-0.5">
+                    Target: {detail.destination} • Official Telemetry Monitored
+                  </span>
+                  <div className="mt-2 flex items-center gap-1 text-[9px] text-slate-400 font-mono">
+                    <Camera className="w-3 h-3 text-slate-500" />
+                    <span>Archival Visual Insignia</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Spacecraft 3D Model Provenance Badge */}
           {modelSpec && (
@@ -216,6 +258,16 @@ export default function MissionDetailDrawer({
 
           {/* Primary Action Deck (Focus on Map & Voyager Proximity) */}
           <div className="flex flex-col gap-2">
+            <button
+              type="button"
+              id="drawer-return-solar-btn"
+              onClick={onClose}
+              className="w-full flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl bg-slate-900/90 hover:bg-slate-800 text-slate-300 hover:text-white text-xs font-semibold border border-slate-700/60 hover:border-cyan-500/40 transition-all cursor-pointer active:scale-98"
+              title="Close mission telemetry and return to full Solar System exploration"
+            >
+              <span>← Return to Solar System</span>
+            </button>
+
             <Link
               to={`/spacecraft/${selectedSlug}`}
               id="drawer-open-spacecraft-page-btn"

@@ -552,6 +552,210 @@ export const CELESTIAL_BODIES = [
       }
     ],
     placeholderMissions: ['new-horizons']
+  },
+  {
+    id: 'vesta',
+    name: '4 Vesta',
+    type: 'asteroid',
+    radius: 0.52,
+    distance: 44.0,
+    orbitalPeriod: 1325.75, // 3.63 Earth years
+    rotationPeriod: 5.342,
+    axialTilt: 29.0,
+    color: '#d1d5db',
+    surfacePalette: ['#9ca3af', '#6b7280', '#d1d5db', '#4b5563'],
+    atmosphere: false,
+    atmosphereDesc: 'Extremely tenuous transient exosphere without substantial atmospheric pressure.',
+    interestingFacts: [
+      'The second-most massive body in the asteroid belt after Ceres, containing roughly 9% of the belt\'s total mass.',
+      'Features Rheasilvia Crater at its south pole, an impact basin 505 km wide with a central peak rising 22 km (nearly 3× Mount Everest).',
+      'Explored in exquisite detail by NASA\'s Dawn spacecraft from 2011 to 2012 before Dawn departed for Ceres.'
+    ],
+    overview: 'The brightest asteroid visible from Earth and second largest body in the asteroid belt, with a differentiated basaltic crust and colossal south polar mountain.',
+    realStats: {
+      diameter: '525.4 km',
+      distanceFromSun: '353.4 million km (2.36 AU)',
+      orbitalPeriod: '3.63 Earth years',
+      moons: '0',
+      surfaceTemp: '-188 °C to -3 °C'
+    },
+    placeholderMissions: ['dawn']
+  },
+  {
+    id: 'bennu',
+    name: '101955 Bennu',
+    type: 'asteroid',
+    radius: 0.35,
+    distance: 33.0,
+    orbitalPeriod: 436.6, // 1.20 Earth years
+    rotationPeriod: 4.296,
+    axialTilt: 175.0,
+    color: '#475569',
+    surfacePalette: ['#1e293b', '#334155', '#475569', '#0f172a'],
+    atmosphere: false,
+    atmosphereDesc: 'Airless rubble-pile asteroid in near-vacuum deep space.',
+    interestingFacts: [
+      'A primordial "rubble pile" asteroid consisting of rock fragments and boulders held together by weak microgravity (porosity ~50%).',
+      'Target of NASA\'s OSIRIS-REx mission, which successfully collected and returned 121.6 grams of pristine carbonaceous sample to Earth in 2023.',
+      'Contains abundant carbon compounds, hydrated clay minerals, and amino acid precursors dating back to the birth of the Solar System.'
+    ],
+    overview: 'Carbonaceous near-Earth asteroid sampled by NASA OSIRIS-REx, revealing primordial organic compounds and pristine solar nebula minerals.',
+    realStats: {
+      diameter: '492 m (Mean)',
+      distanceFromSun: '168.5 million km (1.13 AU)',
+      orbitalPeriod: '1.20 Earth years',
+      moons: '0',
+      surfaceTemp: '-73 °C to 7 °C'
+    },
+    placeholderMissions: ['osiris-rex']
+  },
+  {
+    id: 'ryugu',
+    name: '162173 Ryugu',
+    type: 'asteroid',
+    radius: 0.38,
+    distance: 35.0,
+    orbitalPeriod: 473.9, // 1.30 Earth years
+    rotationPeriod: 7.63,
+    axialTilt: 171.6,
+    color: '#334155',
+    surfacePalette: ['#0f172a', '#1e293b', '#334155', '#475569'],
+    atmosphere: false,
+    atmosphereDesc: 'Airless diamond-shaped spinning top asteroid.',
+    interestingFacts: [
+      'Characterized by a distinctive spinning-top oblate spheroidal shape formed by rapid rotational mass shedding.',
+      'Target of JAXA\'s Hayabusa2 mission, which deployed multiple rovers and returned 5.4 grams of pristine sample to Earth in 2020.',
+      'Samples revealed uracil (an RNA nucleobase) and vitamin B3, proving prebiotic building blocks formed in early asteroids.'
+    ],
+    overview: 'Near-Earth diamond-shaped C-type asteroid explored by JAXA Hayabusa2, holding ancient water-rich clay and RNA building blocks.',
+    realStats: {
+      diameter: '896 m',
+      distanceFromSun: '178.0 million km (1.19 AU)',
+      orbitalPeriod: '1.30 Earth years',
+      moons: '0',
+      surfaceTemp: '-90 °C to 20 °C'
+    },
+    placeholderMissions: ['hayabusa2']
+  },
+  {
+    id: 'eros',
+    name: '433 Eros',
+    type: 'asteroid',
+    radius: 0.40,
+    distance: 38.0,
+    orbitalPeriod: 643.0, // 1.76 Earth years
+    rotationPeriod: 5.27,
+    axialTilt: 89.0,
+    color: '#a1a1aa',
+    surfacePalette: ['#71717a', '#a1a1aa', '#52525b', '#3f3f46'],
+    atmosphere: false,
+    atmosphereDesc: 'Airless elongated S-type stony asteroid.',
+    interestingFacts: [
+      'Elongated peanut-shaped stony asteroid measuring 34.4 × 11.2 × 11.2 km, the second-largest near-Earth object.',
+      'First asteroid orbited and landed on by a robotic spacecraft (NASA\'s NEAR Shoemaker in February 2001).',
+      'Contains approximately 20 billion metric tons of aluminum and similar amounts of precious metals like platinum and gold.'
+    ],
+    overview: 'Iconic elongated stony near-Earth asteroid historically orbited and touched down on by NASA NEAR Shoemaker.',
+    realStats: {
+      diameter: '16.8 km (Equivalent)',
+      distanceFromSun: '218.1 million km (1.46 AU)',
+      orbitalPeriod: '1.76 Earth years',
+      moons: '0',
+      surfaceTemp: '-150 °C to 100 °C'
+    },
+    placeholderMissions: ['near-shoemaker']
+  },
+  {
+    id: 'halley',
+    name: '1P/Halley',
+    type: 'comet',
+    radius: 0.42,
+    distance: 85.0,
+    orbitalPeriod: 27500, // 75.3 Earth years
+    rotationPeriod: 52.8,
+    axialTilt: 18.0,
+    color: '#06b6d4',
+    surfacePalette: ['#083344', '#155e75', '#0e7490', '#06b6d4'],
+    atmosphere: {
+      color: '#06b6d4',
+      opacity: 0.35,
+      glowColor: '#22d3ee'
+    },
+    atmosphereDesc: 'Dynamic expanding coma of sublimated water vapor (80%), carbon monoxide, and dust when near the Sun.',
+    interestingFacts: [
+      'The most famous periodic comet in human history, recorded by astronomers across cultures since at least 240 BC.',
+      'Orbits the Sun in a steep retrograde inclination of 162.3°, moving backwards relative to planetary orbits.',
+      'Source of two annual meteor showers on Earth: the Eta Aquariids (May) and the Orionids (October).'
+    ],
+    overview: 'The most legendary periodic comet. Travels on a highly eccentric retrograde orbit from inside Venus out beyond Neptune once every 75–76 years.',
+    realStats: {
+      diameter: '11 km (15 × 8 km Nucleus)',
+      distanceFromSun: '0.59 AU (Perihelion) to 35.1 AU (Aphelion)',
+      orbitalPeriod: '75.3 Earth years',
+      moons: '0',
+      surfaceTemp: '-200 °C (Aphelion) to 47 °C (Perihelion)'
+    },
+    placeholderMissions: ['giotto']
+  },
+  {
+    id: 'churyumov-gerasimenko',
+    name: '67P/Churyumov-Gerasimenko',
+    type: 'comet',
+    radius: 0.38,
+    distance: 52.0,
+    orbitalPeriod: 2352, // 6.44 Earth years
+    rotationPeriod: 12.4,
+    axialTilt: 52.0,
+    color: '#10b981',
+    surfacePalette: ['#064e3b', '#065f46', '#047857', '#10b981'],
+    atmosphere: {
+      color: '#10b981',
+      opacity: 0.3,
+      glowColor: '#34d399'
+    },
+    atmosphereDesc: 'Active cryocoma venting water vapor, carbon monoxide, organic dust, and molecular oxygen.',
+    interestingFacts: [
+      'Famous contact-binary "rubber duck" comet composed of two lobes formed from the gentle collision of two protoplanetary bodies.',
+      'Explored by the ESA Rosetta spacecraft for two years, and site of humanity\'s first soft landing on a comet by the Philae lander in 2014.',
+      'Rosetta detected glycine (the simplest amino acid) and phosphorus, vital ingredients in cellular biochemistry.'
+    ],
+    overview: 'Jupiter-family contact binary comet famously orbited by ESA Rosetta and landed on by Philae, revealing comet outgassing and organic building blocks.',
+    realStats: {
+      diameter: '4.1 × 3.3 × 1.8 km',
+      distanceFromSun: '1.24 AU (Perihelion) to 5.68 AU (Aphelion)',
+      orbitalPeriod: '6.44 Earth years',
+      moons: '0',
+      surfaceTemp: '-70 °C to -40 °C'
+    },
+    placeholderMissions: ['rosetta']
+  },
+  {
+    id: 'oumuamua',
+    name: "1I/'Oumuamua",
+    type: 'comet',
+    radius: 0.36,
+    distance: 95.0,
+    orbitalPeriod: 0,
+    rotationPeriod: 8.1,
+    axialTilt: 122.7,
+    color: '#ec4899',
+    surfacePalette: ['#831843', '#9d174d', '#be185d', '#f43f5e'],
+    atmosphere: false,
+    atmosphereDesc: 'No detectable dust coma; non-gravitational acceleration likely caused by outgassing of volatile hydrogen or nitrogen ice.',
+    interestingFacts: [
+      'The first confirmed interstellar object ever detected passing through our Solar System, discovered by Pan-STARRS1 in October 2017.',
+      'Traveled on an extreme hyperbolic trajectory with an eccentricity of 1.20 and hyperbolic excess speed of 26.33 km/s.',
+      'Highly elongated shape (aspect ratio ~6:1) with dark reddish organic surface tholins irradiated by galactic cosmic rays for billions of years.'
+    ],
+    overview: 'The first interstellar interloper detected racing through the inner solar system from deep galactic space on an unbound hyperbolic escape trajectory.',
+    realStats: {
+      diameter: '100 – 400 m (Elongated)',
+      distanceFromSun: 'Passing >40 AU (Exiting Solar System)',
+      orbitalPeriod: 'Hyperbolic (Unbound Interstellar)',
+      moons: '0',
+      surfaceTemp: '-220 °C'
+    },
+    placeholderMissions: []
   }
 ];
 

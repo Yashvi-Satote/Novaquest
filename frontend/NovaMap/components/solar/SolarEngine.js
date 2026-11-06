@@ -38,7 +38,9 @@ export class SolarEngine {
     // Simulation states
     this.isPlaying = false;
     this.speedMultiplier = 1.0;
+    this.timeDirection = 1; // 1 = forward, -1 = reverse/backward
     this.simulationDate = new Date();
+    this.lastDateEmit = 0;
     this.daysPerSecond = 5.0; // Base time flow rate in live motion
     this.selectedBodyId = null;
     this.selectedSpacecraftSlug = null;
@@ -714,6 +716,18 @@ export class SolarEngine {
     this.isPlaying = play;
   }
 
+  setTimeDirection(direction) {
+    this.timeDirection = direction < 0 ? -1 : 1;
+  }
+
+  stepDays(days) {
+    this.simulationDate = new Date(this.simulationDate.getTime() + days * 86400000);
+    this.applyEphemeris();
+    if (this.onDateChange) {
+      this.onDateChange(this.simulationDate);
+    }
+  }
+
   setSpeed(multiplier) {
     this.speedMultiplier = Math.max(0.1, Math.min(multiplier, 100));
   }
@@ -730,7 +744,7 @@ export class SolarEngine {
   applyEphemeris() {
     const jd = dateToJulianDate(this.simulationDate);
 
-    // Update all major planets
+    // Update all major planets, dwarf planets, asteroids, and comets
     this.planetBodies.forEach((body, id) => {
       if (id !== 'sun') {
         const pos = getPlanetScenePosition(id, jd);
@@ -760,7 +774,6 @@ export class SolarEngine {
     }
   }
 
-  
   setMapObjects(objects) {
     if (this.markers && typeof this.markers.setDatabaseObjects === 'function') {
       this.markers.setDatabaseObjects(objects);
@@ -804,12 +817,30 @@ export class SolarEngine {
     } else if (layer === 'markers') {
       this.interstellar.setMarkersVisible(visible);
       this.markers.setMarkersVisible(visible);
+    } else if (layer === 'spacecraft') {
+      this.interstellar.setMarkersVisible(visible);
+      this.markers.setMarkersVisible(visible);
+      this.interstellar.setTrajectoriesVisible(visible);
+      this.markers.setTrajectoriesVisible(visible);
     } else if (layer === 'labels') {
       this.planetBodies.forEach(body => body.setLabelVisibility(visible));
     } else if (layer === 'asteroids') {
       if (this.asteroidBelt) {
         this.asteroidBelt.setVisible(visible);
       }
+      this.planetBodies.forEach((body, id) => {
+        if (body.data.type === 'asteroid' || id === 'ceres') {
+          body.container.visible = visible;
+          if (body.orbitLine) body.orbitLine.visible = visible && this.layerVisibility.orbits;
+        }
+      });
+    } else if (layer === 'comets') {
+      this.planetBodies.forEach((body) => {
+        if (body.data.type === 'comet') {
+          body.container.visible = visible;
+          if (body.orbitLine) body.orbitLine.visible = visible && this.layerVisibility.orbits;
+        }
+      });
     } else if (layer === 'stars') {
       if (this.starfield && this.starfield.group) {
         this.starfield.group.visible = visible;
@@ -835,12 +866,17 @@ export class SolarEngine {
     const delta = Math.min(this.clock.getDelta(), 0.1);
     const elapsedTime = this.clock.getElapsedTime();
 
-    // 1. Advance simulation time if playing
+    // 1. Advance simulation time if playing (single authoritative clock)
     if (this.isPlaying) {
-      // Advance by days per second multiplied by speedMultiplier
-      const msAdvance = delta * this.speedMultiplier * this.daysPerSecond * 86400000;
+      const msAdvance = delta * this.speedMultiplier * (this.timeDirection || 1) * this.daysPerSecond * 86400000;
       this.simulationDate = new Date(this.simulationDate.getTime() + msAdvance);
       this.applyEphemeris();
+
+      // Emit throttled date updates to React UI
+      if (this.onDateChange && (!this.lastDateEmit || performance.now() - this.lastDateEmit > 180)) {
+        this.lastDateEmit = performance.now();
+        this.onDateChange(this.simulationDate);
+      }
     }
 
     // 2. Update Tweens
