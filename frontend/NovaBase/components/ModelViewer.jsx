@@ -15,6 +15,29 @@ import {
 const NASA_EYES_URL = 'https://eyes.nasa.gov/apps/solar-system/';
 
 /**
+ * Resolve the best browser-loadable URL for a model row.
+ *
+ * 1. Prefer a bundled asset under /assets/... (real bytes, offline-safe).
+ * 2. GitHub's raw host serves Git-LFS *pointers* for large models, which are
+ *    plain text and break the GLTF loader. The /media/ host streams the real
+ *    object, so rewrite those URLs instead of downloading a pointer.
+ */
+function resolveModelUrl(model) {
+  const localPath = model?.file_path;
+  if (localPath && localPath.startsWith('/assets/')) {
+    return localPath;
+  }
+  const remote = model?.download_url || '';
+  if (remote.includes('raw.githubusercontent.com/')) {
+    return remote.replace(
+      'raw.githubusercontent.com/',
+      'media.githubusercontent.com/media/'
+    );
+  }
+  return remote;
+}
+
+/**
  * Interactive glb/gltf viewer with an explicit NASA Eyes fallback.
  * Props:
  *   models: array of spacecraft_models rows
@@ -26,8 +49,9 @@ export default function ModelViewer({ models = [], name = 'Spacecraft' }) {
   const [isLoading, setIsLoading] = useState(false);
 
   const webModel = models.find(
-    (m) => m && m.status === 'ok' && m.web_ready && m.download_url
+    (m) => m && m.status === 'ok' && m.web_ready && resolveModelUrl(m)
   );
+  const modelUrl = webModel ? resolveModelUrl(webModel) : null;
   const downloadable = models.filter((m) => m && m.status === 'ok' && m.download_url);
   const noModel = models.find((m) => m && m.status === 'no_model');
   const viewerUrl = models.find((m) => m && m.viewer_url)?.viewer_url || NASA_EYES_URL;
@@ -82,7 +106,7 @@ export default function ModelViewer({ models = [], name = 'Spacecraft' }) {
       dracoLoader.setDecoderPath(`${import.meta.env.BASE_URL}draco/`);
       loader.setDRACOLoader(dracoLoader);
       loader.load(
-        webModel.download_url,
+        modelUrl,
         (gltf) => {
           if (disposed) return;
           const object = gltf.scene;
@@ -146,7 +170,7 @@ export default function ModelViewer({ models = [], name = 'Spacecraft' }) {
         disposed = true;
       };
     }
-  }, [webModel]);
+  }, [modelUrl]);
 
   return (
     <div className="glass-panel rounded-2xl p-5 sm:p-6 bg-white/90 dark:bg-[#0c1222]/85 border border-slate-200/90 dark:border-white/10 shadow-xs space-y-3">
@@ -209,7 +233,7 @@ export default function ModelViewer({ models = [], name = 'Spacecraft' }) {
           {downloadable.map((model, index) => (
             <a
               key={model.id || `${model.download_url}-${index}`}
-              href={model.download_url}
+              href={resolveModelUrl(model)}
               target="_blank"
               rel="noopener noreferrer"
               download

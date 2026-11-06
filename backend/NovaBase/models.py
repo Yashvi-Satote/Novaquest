@@ -43,12 +43,14 @@ class Mission(Base):
     agency = Column(String(255), nullable=True)
     mission_type = Column(String(100), nullable=True)
     launch_date = Column(String(50), nullable=True)
+    mission_end_date = Column(String(50), nullable=True)
     end_date = Column(String(50), nullable=True)
     destination = Column(String(100), nullable=True, default="Deep Space")
     destination_category = Column(String(100), nullable=True, default="Deep Space")
     mission_status = Column(String(100), nullable=False, default="Active", index=True)
     description = Column(Text, nullable=True)
     objectives = Column(Text, nullable=True)
+    official_url = Column(String(500), nullable=True)
     source_url = Column(String(500), nullable=True)
     created_at = Column(DateTime, server_default=func.now())
 
@@ -68,6 +70,16 @@ class Mission(Base):
         "MapObject",
         back_populates="mission",
         cascade="all, delete-orphan"
+    )
+    hardware_components = relationship(
+        "HardwareComponent",
+        foreign_keys="HardwareComponent.mission_id",
+        back_populates="mission",
+    )
+    hardware_component_links = relationship(
+        "HardwareComponentMission",
+        back_populates="mission",
+        cascade="all, delete-orphan",
     )
 
     @property
@@ -135,10 +147,35 @@ class Spacecraft(Base):
     scientific_purpose = Column(Text, nullable=True)
     current_or_last_known_status = Column(Text, nullable=True)
     hardware_materials = Column(Text, nullable=True)
+    physical_status = Column(String(100), nullable=True)
+    decommission_date = Column(String(50), nullable=True)
+    landing_date = Column(String(50), nullable=True)
+    location_description = Column(String(255), nullable=True)
+    latitude = Column(Float, nullable=True)
+    longitude = Column(Float, nullable=True)
+    manufacturer_id = Column(Integer, ForeignKey("organizations.id", ondelete="SET NULL"), nullable=True)
+    operator_id = Column(Integer, ForeignKey("organizations.id", ondelete="SET NULL"), nullable=True)
+    mission_agency_id = Column(Integer, ForeignKey("organizations.id", ondelete="SET NULL"), nullable=True)
+    launch_provider_id = Column(Integer, ForeignKey("organizations.id", ondelete="SET NULL"), nullable=True)
     eotss_url = Column(String(500), nullable=True)
     official_url = Column(String(500), nullable=True)
     verification_status = Column(String(100), nullable=False, default="Verified NASA Record")
     agency_id = Column(Integer, ForeignKey("organizations.id", ondelete="SET NULL"), nullable=True)
+    last_verified_at = Column(String(50), nullable=True)
+
+    # NovaBase 10-section / catalogue enrichment fields (mirrors schema.sql)
+    mission_type = Column(String(50), nullable=True)
+    primary_agency = Column(String(255), nullable=True)
+    summary = Column(Text, nullable=True)
+    wiki_title = Column(String(255), nullable=True)
+    nssdca_id = Column(String(50), nullable=True)
+    arrival_or_landing_date = Column(String(50), nullable=True)
+    end_date = Column(String(50), nullable=True)
+    status_label = Column(String(50), nullable=True)
+    status_text = Column(Text, nullable=True)
+    status_as_of = Column(String(20), nullable=True)
+    is_active_flag = Column(Boolean, nullable=False, default=False)
+    extra = Column(Text, nullable=True)
 
     # Relationships
     agency_org = relationship("Organization", foreign_keys=[agency_id], back_populates="spacecraft_list")
@@ -189,6 +226,11 @@ class Spacecraft(Base):
         back_populates="spacecraft",
         cascade="all, delete-orphan",
         order_by="SpacecraftPerson.rank_order",
+    )
+    hardware_components = relationship(
+        "HardwareComponent",
+        back_populates="spacecraft",
+        cascade="all, delete-orphan",
     )
 
     @property
@@ -656,6 +698,184 @@ class SpacecraftModel(Base):
             "license": self.license,
             "viewer_url": self.viewer_url,
             "status": self.status
+        }
+
+
+class HardwareComponent(Base):
+    """One physical hardware item / 3D model asset from the NASA Eyes catalogue.
+
+    Every row links to the spacecraft entity it represents (``spacecraft_id``)
+    and to the mission that operated that hardware (``mission_id``).  The full
+    source JSON object is retained in ``raw_json`` so no source metadata is
+    lost, even when the remote ``models.json`` changes.
+    """
+
+    __tablename__ = "hardware_components"
+
+    id = Column(Integer, primary_key=True, index=True)
+    component_key = Column(String(255), nullable=False, unique=True, index=True)
+    model_name = Column(String(255), nullable=False, unique=True, index=True)
+    folder_name = Column(String(255), nullable=False)
+    display_name = Column(String(255), nullable=False)
+    full_name = Column(String(255), nullable=False)
+    component_type = Column(String(100), nullable=False, default="Spacecraft")
+    description = Column(Text, nullable=False)
+    description_html = Column(Text, nullable=False)
+    spacecraft_id = Column(
+        Integer, ForeignKey("spacecraft.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    mission_id = Column(
+        Integer, ForeignKey("missions.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    mission_match_method = Column(String(60), nullable=False, default="exact_match")
+    mission_match_confidence = Column(Float, nullable=False, default=1.0)
+    eotss_url = Column(String(1000), nullable=False)
+    viewer_url = Column(String(1000), nullable=False)
+    official_url = Column(String(1000), nullable=False)
+    gltf_filename = Column(String(255), nullable=False)
+    glb_filename = Column(String(255), nullable=False)
+    bin_filename = Column(String(255), nullable=False)
+    gltf_path = Column(String(1000), nullable=False)
+    glb_path = Column(String(1000), nullable=False)
+    bin_path = Column(String(1000), nullable=False)
+    download_gltf_url = Column(String(1500), nullable=False)
+    download_glb_url = Column(String(1500), nullable=False)
+    primary_format = Column(String(20), nullable=False, default="glb")
+    web_ready = Column(Boolean, nullable=False, default=True)
+    texture_files = Column(Text, nullable=False, default="[]")
+    texture_count = Column(Integer, nullable=False, default=0)
+    file_size_bytes = Column(BigInteger, nullable=False, default=0)
+    glb_size_bytes = Column(BigInteger, nullable=False, default=0)
+    gltf_size_bytes = Column(BigInteger, nullable=False, default=0)
+    binary_size_bytes = Column(BigInteger, nullable=False, default=0)
+    provenance = Column(
+        String(255),
+        nullable=False,
+        default="NASA Eyes on the Solar System (Official Public Domain)",
+    )
+    license = Column(
+        String(255),
+        nullable=False,
+        default="NASA 3D resources are free to use without copyright",
+    )
+    source_name = Column(
+        String(255), nullable=False, default="NASA Eyes on the Solar System"
+    )
+    source_url = Column(String(1000), nullable=False)
+    source_repository = Column(
+        String(1000),
+        nullable=False,
+        default="https://github.com/matthewgiarra/spacecraft-models",
+    )
+    raw_json = Column(Text, nullable=False)
+    ingestion_status = Column(String(30), nullable=False, default="complete")
+    created_at = Column(DateTime, server_default=func.now())
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+
+    spacecraft = relationship("Spacecraft", back_populates="hardware_components")
+    mission = relationship(
+        "Mission", foreign_keys=[mission_id], back_populates="hardware_components"
+    )
+    mission_links = relationship(
+        "HardwareComponentMission",
+        back_populates="component",
+        cascade="all, delete-orphan",
+        order_by="HardwareComponentMission.id",
+    )
+
+    def to_dict(self, include_raw: bool = False) -> dict:
+        data = {
+            "id": self.id,
+            "component_key": self.component_key,
+            "model_name": self.model_name,
+            "folder_name": self.folder_name,
+            "display_name": self.display_name,
+            "full_name": self.full_name,
+            "component_type": self.component_type,
+            "description": self.description,
+            "spacecraft_id": self.spacecraft_id,
+            "mission_id": self.mission_id,
+            "mission_match_method": self.mission_match_method,
+            "mission_match_confidence": self.mission_match_confidence,
+            "eotss_url": self.eotss_url,
+            "viewer_url": self.viewer_url,
+            "official_url": self.official_url,
+            "gltf_filename": self.gltf_filename,
+            "glb_filename": self.glb_filename,
+            "bin_filename": self.bin_filename,
+            "gltf_path": self.gltf_path,
+            "glb_path": self.glb_path,
+            "bin_path": self.bin_path,
+            "download_gltf_url": self.download_gltf_url,
+            "download_glb_url": self.download_glb_url,
+            "primary_format": self.primary_format,
+            "web_ready": bool(self.web_ready),
+            "texture_files": json.loads(self.texture_files) if self.texture_files else [],
+            "texture_count": self.texture_count,
+            "file_size_bytes": self.file_size_bytes,
+            "glb_size_bytes": self.glb_size_bytes,
+            "gltf_size_bytes": self.gltf_size_bytes,
+            "binary_size_bytes": self.binary_size_bytes,
+            "provenance": self.provenance,
+            "license": self.license,
+            "source_name": self.source_name,
+            "source_url": self.source_url,
+            "source_repository": self.source_repository,
+            "ingestion_status": self.ingestion_status,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+        }
+        if include_raw:
+            try:
+                data["raw_json"] = json.loads(self.raw_json)
+            except (TypeError, ValueError):
+                data["raw_json"] = self.raw_json
+        return data
+
+
+class HardwareComponentMission(Base):
+    """Many-to-many bridge between hardware components and missions."""
+
+    __tablename__ = "hardware_component_missions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    component_id = Column(
+        Integer,
+        ForeignKey("hardware_components.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    mission_id = Column(
+        Integer, ForeignKey("missions.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    role = Column(String(150), nullable=False, default="Hardware / 3D model")
+    is_primary = Column(Boolean, nullable=False, default=False)
+    match_method = Column(String(60), nullable=False, default="exact_match")
+    match_confidence = Column(Float, nullable=False, default=1.0)
+    created_at = Column(DateTime, server_default=func.now())
+
+    component = relationship("HardwareComponent", back_populates="mission_links")
+    mission = relationship("Mission", back_populates="hardware_component_links")
+
+    __table_args__ = (
+        UniqueConstraint(
+            "component_id", "mission_id", name="uq_hardware_component_mission"
+        ),
+    )
+
+    def to_dict(self) -> dict:
+        return {
+            "id": self.id,
+            "component_id": self.component_id,
+            "mission_id": self.mission_id,
+            "mission_name": self.mission.mission_name or self.mission.name
+            if self.mission
+            else None,
+            "mission_slug": self.mission.slug if self.mission else None,
+            "role": self.role,
+            "is_primary": bool(self.is_primary),
+            "match_method": self.match_method,
+            "match_confidence": self.match_confidence,
         }
 
 

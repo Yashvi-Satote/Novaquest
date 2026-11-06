@@ -171,7 +171,6 @@ def _upsert_spacecraft(
         "official_url": (mission.get("sources") or [{}])[0].get("url") or "https://science.nasa.gov/",
         "verification_status": "Wikipedia + NASA sources; run verify_db to check links",
         "last_verified_at": datetime.now(timezone.utc).date().isoformat(),
-        "primary_mission_id": mission_row.id,
         "mission_agency_id": organizations.get("agency").id if organizations.get("agency") else None,
         "operator_id": organizations.get("operator").id if organizations.get("operator") else None,
         "manufacturer_id": organizations.get("manufacturer").id if organizations.get("manufacturer") else None,
@@ -303,7 +302,7 @@ def ingest_mission(
             MissionSpacecraft(
                 mission_id=mission_row.id,
                 spacecraft_id=spacecraft.id,
-                role=mission.get("mission_type") or "Primary Spacecraft",
+                mission_role=mission.get("mission_type") or "Primary Spacecraft",
             )
         )
 

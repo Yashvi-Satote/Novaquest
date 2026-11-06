@@ -36,7 +36,7 @@ def spacecraft_completeness(spacecraft: Spacecraft) -> dict[str, dict[str, Any]]
     sources = [s for s in (spacecraft.sources or []) if s.source_url]
     timeline = list(spacecraft.timeline or [])
     stakeholders = list(spacecraft.stakeholder_links or [])
-    models = [m for m in (spacecraft.models or []) if m.status in ("ok", "no_model")]
+    models = [m for m in (spacecraft.models or []) if m.status == "ok"]
     people = list(spacecraft.people_links or [])
 
     def content_ok(key: str) -> bool:

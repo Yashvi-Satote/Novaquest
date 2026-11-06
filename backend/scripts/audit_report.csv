@@ -1,0 +1,1331 @@
+slug,section,status,reason,source_url
+ace,what_is_it,COMPLETE,1194 chars; source: en.wikipedia.org,https://en.wikipedia.org/wiki/Advanced_Composition_Explorer
+ace,how_it_works,COMPLETE,2614 chars; source: en.wikipedia.org; 3 documented parts/instruments,https://en.wikipedia.org/wiki/Advanced_Composition_Explorer
+ace,why_important,COMPLETE,2689 chars; source: en.wikipedia.org,https://en.wikipedia.org/wiki/Advanced_Composition_Explorer
+ace,status,COMPLETE,3795 chars; source: en.wikipedia.org,https://en.wikipedia.org/wiki/Advanced_Composition_Explorer
+ace,imagery,COMPLETE,8 images (8 source-linked),https://en.wikipedia.org/wiki/Advanced_Composition_Explorer
+ace,sources,COMPLETE,9 source URLs (4 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_ace
+ace,timeline,UNVERIFIED,"5 events, none linked to a source record",
+ace,stakeholders,COMPLETE,5 organizations (3 with official URLs),https://www.nasa.gov
+ace,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/ace/ace.glb
+ace,people,MISSING,no individual contributors,
+acrimsat,what_is_it,COMPLETE,889 chars; source: en.wikipedia.org,https://en.wikipedia.org/wiki/ACRIMSAT
+acrimsat,how_it_works,COMPLETE,1341 chars; source: en.wikipedia.org; 3 documented parts/instruments,https://en.wikipedia.org/wiki/ACRIMSAT
+acrimsat,why_important,COMPLETE,2723 chars; source: en.wikipedia.org,https://en.wikipedia.org/wiki/ACRIMSAT
+acrimsat,status,PLACEHOLDER,generic template (generic_status_sentence); no mission-specific facts,https://en.wikipedia.org/wiki/ACRIMSAT
+acrimsat,imagery,COMPLETE,3 images (3 source-linked),https://en.wikipedia.org/wiki/ACRIMSAT
+acrimsat,sources,COMPLETE,9 source URLs (4 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_acrimsat
+acrimsat,timeline,UNVERIFIED,"3 events, none linked to a source record",
+acrimsat,stakeholders,COMPLETE,5 organizations (2 with official URLs),https://www.nasa.gov
+acrimsat,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/acrimsat/acrimsat.glb
+acrimsat,people,UNVERIFIED,"1 people, none with a source link",
+acs3,what_is_it,COMPLETE,2408 chars; source: en.wikipedia.org,https://en.wikipedia.org/wiki/Solar_sail
+acs3,how_it_works,COMPLETE,5634 chars; source: en.wikipedia.org; 6 documented parts/instruments,https://en.wikipedia.org/wiki/Solar_sail
+acs3,why_important,COMPLETE,6919 chars; source: en.wikipedia.org,https://en.wikipedia.org/wiki/Solar_sail
+acs3,status,COMPLETE,4345 chars; source: en.wikipedia.org,https://en.wikipedia.org/wiki/Solar_sail
+acs3,imagery,COMPLETE,8 images (8 source-linked),https://en.wikipedia.org/wiki/Solar_sail
+acs3,sources,COMPLETE,10 source URLs (4 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_acs3
+acs3,timeline,UNVERIFIED,"20 events, none linked to a source record",
+acs3,stakeholders,COMPLETE,2 organizations (2 with official URLs),https://www.esa.int
+acs3,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/acs3/acs3.glb
+acs3,people,MISSING,no individual contributors,
+apollo-lrv,what_is_it,COMPLETE,848 chars; source: en.wikipedia.org,https://en.wikipedia.org/wiki/Lunar_Roving_Vehicle
+apollo-lrv,how_it_works,COMPLETE,1266 chars; source: en.wikipedia.org,https://en.wikipedia.org/wiki/Lunar_Roving_Vehicle
+apollo-lrv,why_important,COMPLETE,6819 chars; source: en.wikipedia.org,https://en.wikipedia.org/wiki/Lunar_Roving_Vehicle
+apollo-lrv,status,COMPLETE,6941 chars; source: en.wikipedia.org,https://en.wikipedia.org/wiki/Lunar_Roving_Vehicle
+apollo-lrv,imagery,COMPLETE,10 images (10 source-linked),https://en.wikipedia.org/wiki/Lunar_Roving_Vehicle
+apollo-lrv,sources,COMPLETE,2 source URLs (2 marked verified),https://www.nasa.gov/history/alsj/a15/a15.lrv.html
+apollo-lrv,timeline,UNVERIFIED,"5 events, none linked to a source record",
+apollo-lrv,stakeholders,COMPLETE,3 organizations (2 with official URLs),https://www.nasa.gov
+apollo-lrv,model,MISSING,no web-ready model (all rows are no_model),
+apollo-lrv,people,COMPLETE,10 people (7 with a source link),https://en.wikipedia.org/wiki/Eberhard_Rees
+apollo-lunar-module,what_is_it,COMPLETE,2433 chars; source: en.wikipedia.org,https://en.wikipedia.org/wiki/Apollo_Lunar_Module
+apollo-lunar-module,how_it_works,COMPLETE,6993 chars; source: en.wikipedia.org; 5 documented parts/instruments,https://en.wikipedia.org/wiki/Apollo_Lunar_Module
+apollo-lunar-module,why_important,COMPLETE,4539 chars; source: en.wikipedia.org,https://en.wikipedia.org/wiki/Apollo_Lunar_Module
+apollo-lunar-module,status,COMPLETE,4902 chars; source: en.wikipedia.org,https://en.wikipedia.org/wiki/Apollo_Lunar_Module
+apollo-lunar-module,imagery,COMPLETE,10 images (10 source-linked),https://en.wikipedia.org/wiki/Apollo_Lunar_Module
+apollo-lunar-module,sources,COMPLETE,2 source URLs (2 marked verified),https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1969-059C
+apollo-lunar-module,timeline,UNVERIFIED,"11 events, none linked to a source record",
+apollo-lunar-module,stakeholders,COMPLETE,5 organizations (3 with official URLs),https://www.nasa.gov
+apollo-lunar-module,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/nasa/NASA-3D-Resources/master/3D%20Models/Apollo%20Lunar%20Module/Apollo%20Lunar%20Module.glb
+apollo-lunar-module,people,COMPLETE,10 people (7 with a source link),https://en.wikipedia.org/wiki/Owen_Maynard
+aqua,what_is_it,COMPLETE,1042 chars; source: en.wikipedia.org,https://en.wikipedia.org/wiki/Aqua_%28satellite%29
+aqua,how_it_works,COMPLETE,3502 chars; source: en.wikipedia.org; 6 documented parts/instruments,https://en.wikipedia.org/wiki/Aqua_%28satellite%29
+aqua,why_important,COMPLETE,6948 chars; source: en.wikipedia.org,https://en.wikipedia.org/wiki/Aqua_%28satellite%29
+aqua,status,COMPLETE,6337 chars; source: en.wikipedia.org,https://en.wikipedia.org/wiki/Aqua_%28satellite%29
+aqua,imagery,COMPLETE,6 images (6 source-linked),https://en.wikipedia.org/wiki/Aqua_%28satellite%29
+aqua,sources,COMPLETE,11 source URLs (4 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_aqua
+aqua,timeline,UNVERIFIED,"6 events, none linked to a source record",
+aqua,stakeholders,COMPLETE,5 organizations (3 with official URLs),https://www.nasa.gov
+aqua,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/aqua/Aqua.glb
+aqua,people,MISSING,no individual contributors,
+aquarius,what_is_it,COMPLETE,1218 chars; source: en.wikipedia.org,https://en.wikipedia.org/wiki/Aquarius_%28SAC-D_instrument%29
+aquarius,how_it_works,COMPLETE,2266 chars; source: en.wikipedia.org,https://en.wikipedia.org/wiki/Aquarius_%28SAC-D_instrument%29
+aquarius,why_important,COMPLETE,1138 chars; source: en.wikipedia.org,https://en.wikipedia.org/wiki/Aquarius_%28SAC-D_instrument%29
+aquarius,status,COMPLETE,1191 chars; source: en.wikipedia.org,https://en.wikipedia.org/wiki/Aquarius_%28SAC-D_instrument%29
+aquarius,imagery,COMPLETE,3 images (3 source-linked),https://en.wikipedia.org/wiki/Aquarius_%28SAC-D_instrument%29
+aquarius,sources,COMPLETE,11 source URLs (4 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_sac_d
+aquarius,timeline,UNVERIFIED,"3 events, none linked to a source record",
+aquarius,stakeholders,COMPLETE,3 organizations (1 with official URLs),https://www.nasa.gov
+aquarius,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/aquarius/aquarius.glb
+aquarius,people,MISSING,no individual contributors,
+artemis,what_is_it,COMPLETE,2037 chars; source: en.wikipedia.org,https://en.wikipedia.org/wiki/Artemis_I
+artemis,how_it_works,COMPLETE,2197 chars; source: en.wikipedia.org; 1 documented parts/instruments,https://en.wikipedia.org/wiki/Artemis_I
+artemis,why_important,COMPLETE,5481 chars; source: en.wikipedia.org,https://en.wikipedia.org/wiki/Artemis_I
+artemis,status,COMPLETE,3562 chars; source: en.wikipedia.org,https://en.wikipedia.org/wiki/Artemis_I
+artemis,imagery,COMPLETE,8 images (8 source-linked),https://en.wikipedia.org/wiki/Artemis_I
+artemis,sources,COMPLETE,11 source URLs (4 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_artemis_2
+artemis,timeline,UNVERIFIED,"15 events, none linked to a source record",
+artemis,stakeholders,COMPLETE,3 organizations (3 with official URLs),https://www.nasa.gov
+artemis,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/artemis/artemis_ii.glb
+artemis,people,MISSING,no individual contributors,
+aura,what_is_it,COMPLETE,1676 chars; source: en.wikipedia.org,https://en.wikipedia.org/wiki/Aura_%28satellite%29
+aura,how_it_works,COMPLETE,2655 chars; source: en.wikipedia.org; 4 documented parts/instruments,https://en.wikipedia.org/wiki/Aura_%28satellite%29
+aura,why_important,COMPLETE,6257 chars; source: en.wikipedia.org,https://en.wikipedia.org/wiki/Aura_%28satellite%29
+aura,status,COMPLETE,5231 chars; source: en.wikipedia.org,https://en.wikipedia.org/wiki/Aura_%28satellite%29
+aura,imagery,COMPLETE,3 images (3 source-linked),https://en.wikipedia.org/wiki/Aura_%28satellite%29
+aura,sources,COMPLETE,11 source URLs (4 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_aura
+aura,timeline,UNVERIFIED,"5 events, none linked to a source record",
+aura,stakeholders,COMPLETE,4 organizations (3 with official URLs),https://www.nasa.gov
+aura,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/aura/Aura.glb
+aura,people,MISSING,no individual contributors,
+biosentinel,what_is_it,COMPLETE,1067 chars; source: en.wikipedia.org,https://en.wikipedia.org/wiki/BioSentinel
+biosentinel,how_it_works,COMPLETE,1525 chars; source: en.wikipedia.org; 1 documented parts/instruments,https://en.wikipedia.org/wiki/BioSentinel
+biosentinel,why_important,COMPLETE,2045 chars; source: en.wikipedia.org,https://en.wikipedia.org/wiki/BioSentinel
+biosentinel,status,PLACEHOLDER,generic template (generic_status_sentence); no mission-specific facts,https://en.wikipedia.org/wiki/BioSentinel
+biosentinel,imagery,COMPLETE,3 images (3 source-linked),https://en.wikipedia.org/wiki/BioSentinel
+biosentinel,sources,COMPLETE,10 source URLs (4 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_biosentinel
+biosentinel,timeline,UNVERIFIED,"6 events, none linked to a source record",
+biosentinel,stakeholders,COMPLETE,5 organizations (4 with official URLs),https://www.nasa.gov
+biosentinel,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/biosentinel/biosentinel.glb
+biosentinel,people,MISSING,no individual contributors,
+calipso,what_is_it,COMPLETE,733 chars; source: en.wikipedia.org,https://en.wikipedia.org/wiki/CALIPSO
+calipso,how_it_works,COMPLETE,1634 chars; source: en.wikipedia.org; 1 documented parts/instruments,https://en.wikipedia.org/wiki/CALIPSO
+calipso,why_important,COMPLETE,1974 chars; source: en.wikipedia.org,https://en.wikipedia.org/wiki/CALIPSO
+calipso,status,COMPLETE,1720 chars; source: en.wikipedia.org,https://en.wikipedia.org/wiki/CALIPSO
+calipso,imagery,COMPLETE,2 images (2 source-linked),https://en.wikipedia.org/wiki/CALIPSO
+calipso,sources,COMPLETE,9 source URLs (4 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_calipso
+calipso,timeline,UNVERIFIED,"5 events, none linked to a source record",
+calipso,stakeholders,COMPLETE,3 organizations (2 with official URLs),https://www.nasa.gov
+calipso,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/calipso/calipso.glb
+calipso,people,MISSING,no individual contributors,
+capstone,what_is_it,COMPLETE,1154 chars; source: en.wikipedia.org,https://en.wikipedia.org/wiki/CAPSTONE
+capstone,how_it_works,COMPLETE,565 chars; source: en.wikipedia.org,https://en.wikipedia.org/wiki/CAPSTONE
+capstone,why_important,COMPLETE,3958 chars; source: en.wikipedia.org,https://en.wikipedia.org/wiki/CAPSTONE
+capstone,status,COMPLETE,810 chars; source: en.wikipedia.org,https://en.wikipedia.org/wiki/CAPSTONE
+capstone,imagery,COMPLETE,8 images (8 source-linked),https://en.wikipedia.org/wiki/CAPSTONE
+capstone,sources,COMPLETE,9 source URLs (4 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_capstone
+capstone,timeline,UNVERIFIED,"9 events, none linked to a source record",
+capstone,stakeholders,COMPLETE,5 organizations (2 with official URLs),https://www.nasa.gov
+capstone,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/capstone/capstone.glb
+capstone,people,MISSING,no individual contributors,
+cassini-huygens,what_is_it,COMPLETE,1858 chars; source: en.wikipedia.org,https://en.wikipedia.org/wiki/Cassini%E2%80%93Huygens
+cassini-huygens,how_it_works,COMPLETE,2851 chars; source: en.wikipedia.org; 1 documented parts/instruments,https://en.wikipedia.org/wiki/Cassini%E2%80%93Huygens
+cassini-huygens,why_important,COMPLETE,5631 chars; source: en.wikipedia.org,https://en.wikipedia.org/wiki/Cassini%E2%80%93Huygens
+cassini-huygens,status,COMPLETE,2907 chars; source: en.wikipedia.org,https://en.wikipedia.org/wiki/Cassini%E2%80%93Huygens
+cassini-huygens,imagery,COMPLETE,10 images (10 source-linked),https://en.wikipedia.org/wiki/Cassini%E2%80%93Huygens
+cassini-huygens,sources,COMPLETE,9 source URLs (3 marked verified),https://science.nasa.gov/mission/cassini/
+cassini-huygens,timeline,UNVERIFIED,"24 events, none linked to a source record",
+cassini-huygens,stakeholders,UNVERIFIED,"6 organizations, none with an official URL",
+cassini-huygens,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/nasa/NASA-3D-Resources/master/3D%20Models/Cassini%20Assembly/Cassini%20Assembly.glb
+cassini-huygens,people,COMPLETE,10 people (4 with a source link),https://en.wikipedia.org/wiki/Linda_Spilker
+chandra,what_is_it,COMPLETE,622 chars; source: science.nasa.gov,https://science.nasa.gov/mission/chandra/
+chandra,how_it_works,COMPLETE,531 chars; source: nssdc.gsfc.nasa.gov,https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1999-040B
+chandra,why_important,COMPLETE,518 chars; source: science.nasa.gov,https://science.nasa.gov/mission/chandra/
+chandra,status,COMPLETE,294 chars; source: science.nasa.gov,https://science.nasa.gov/mission/chandra/
+chandra,imagery,COMPLETE,3 images (3 source-linked),https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1999-040B
+chandra,sources,COMPLETE,11 source URLs (4 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_chandra
+chandra,timeline,COMPLETE,6 events (6 source-linked),https://chandra.harvard.edu/about/mission_milestones.html
+chandra,stakeholders,COMPLETE,5 organizations (5 with official URLs),https://www.nasa.gov/marshall/
+chandra,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/chandra/chandra.glb
+chandra,people,COMPLETE,10 people (10 with a source link),
+clementine,what_is_it,COMPLETE,883 chars; source: science.nasa.gov,https://science.nasa.gov/mission/clementine/
+clementine,how_it_works,COMPLETE,595 chars; source: science.nasa.gov,https://science.nasa.gov/mission/clementine/
+clementine,why_important,COMPLETE,560 chars; source: science.nasa.gov,https://science.nasa.gov/mission/clementine/
+clementine,status,COMPLETE,372 chars; source: science.nasa.gov,https://science.nasa.gov/mission/clementine/
+clementine,imagery,COMPLETE,2 images (2 source-linked),https://science.nasa.gov/mission/clementine/
+clementine,sources,COMPLETE,11 source URLs (3 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_clementine
+clementine,timeline,COMPLETE,7 events (7 source-linked),https://science.nasa.gov/mission/clementine/
+clementine,stakeholders,COMPLETE,3 organizations (3 with official URLs),https://www.acq.osd.mil/
+clementine,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/clementine/clementine_isas.glb
+clementine,people,COMPLETE,6 people (6 with a source link),
+cloudsat,what_is_it,COMPLETE,626 chars; source: science.nasa.gov,https://science.nasa.gov/mission/cloudsat/
+cloudsat,how_it_works,COMPLETE,502 chars; source: science.nasa.gov,https://science.nasa.gov/mission/cloudsat/
+cloudsat,why_important,COMPLETE,455 chars; source: science.nasa.gov,https://science.nasa.gov/mission/cloudsat/
+cloudsat,status,COMPLETE,313 chars; source: science.nasa.gov,https://science.nasa.gov/mission/cloudsat/
+cloudsat,imagery,COMPLETE,1 images (1 source-linked),https://science.nasa.gov/mission/cloudsat/
+cloudsat,sources,COMPLETE,11 source URLs (4 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_cloudsat
+cloudsat,timeline,COMPLETE,4 events (4 source-linked),https://science.nasa.gov/mission/cloudsat/
+cloudsat,stakeholders,COMPLETE,5 organizations (5 with official URLs),https://www.nasa.gov
+cloudsat,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/cloudsat/CloudSat.glb
+cloudsat,people,COMPLETE,3 people (3 with a source link),
+cluster-ii,what_is_it,COMPLETE,559 chars; source: eyes.nasa.gov,https://eyes.nasa.gov/apps/solar-system/#/sc_cluster_ii_fm5
+cluster-ii,how_it_works,COMPLETE,596 chars; source: science.nasa.gov,https://science.nasa.gov/mission/cluster/
+cluster-ii,why_important,COMPLETE,529 chars; source: science.nasa.gov,https://science.nasa.gov/mission/cluster/
+cluster-ii,status,COMPLETE,346 chars; source: www.esa.int,https://www.esa.int/Space_Safety/Space_Debris/Cluster_s_encore_for_reentry_science_a_success
+cluster-ii,imagery,COMPLETE,1 images (1 source-linked),https://sci.esa.int/web/cluster/-/53694-mission-team
+cluster-ii,sources,COMPLETE,13 source URLs (5 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_cluster_ii_fm5
+cluster-ii,timeline,COMPLETE,6 events (6 source-linked),https://science.nasa.gov/mission/cluster/
+cluster-ii,stakeholders,COMPLETE,2 organizations (2 with official URLs),https://www.esa.int/
+cluster-ii,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/cluster-ii/cluster_ii.glb
+cluster-ii,people,COMPLETE,10 people (10 with a source link),
+curiosity,what_is_it,COMPLETE,1104 chars; source: science.nasa.gov,https://science.nasa.gov/mission/msl-curiosity/
+curiosity,how_it_works,COMPLETE,553 chars; source: nssdc.gsfc.nasa.gov,https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=2011-070A
+curiosity,why_important,COMPLETE,474 chars; source: science.nasa.gov,https://science.nasa.gov/mission/msl-curiosity/
+curiosity,status,COMPLETE,232 chars; source: science.nasa.gov,https://science.nasa.gov/mission/msl-curiosity/
+curiosity,imagery,COMPLETE,1 images (1 source-linked),https://science.nasa.gov/mission/msl-curiosity/
+curiosity,sources,COMPLETE,10 source URLs (3 marked verified),https://nasa.gov/apps/solar-system/#/sc_mars_science_laboratory
+curiosity,timeline,COMPLETE,4 events (4 source-linked),https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=2011-070A
+curiosity,stakeholders,COMPLETE,3 organizations (3 with official URLs),https://www.nasa.gov
+curiosity,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/curiosity/curiosity_static.glb
+curiosity,people,COMPLETE,4 people (4 with a source link),
+cygnss,what_is_it,COMPLETE,355 chars; source: eyes.nasa.gov,https://eyes.nasa.gov/apps/solar-system/#/sc_cygnss_1
+cygnss,how_it_works,COMPLETE,489 chars; source: nssdc.gsfc.nasa.gov,https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=2016-078A
+cygnss,why_important,COMPLETE,379 chars; source: science.nasa.gov,https://science.nasa.gov/mission/cygnss/
+cygnss,status,COMPLETE,185 chars; source: science.nasa.gov,https://science.nasa.gov/mission/cygnss/
+cygnss,imagery,COMPLETE,1 images (1 source-linked),https://science.nasa.gov/mission/cygnss/
+cygnss,sources,COMPLETE,11 source URLs (3 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_cygnss_1
+cygnss,timeline,COMPLETE,1 events (1 source-linked),https://science.nasa.gov/mission/cygnss/
+cygnss,stakeholders,COMPLETE,4 organizations (4 with official URLs),https://www.nasa.gov
+cygnss,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/cygnss/CYGNSS.glb
+cygnss,people,COMPLETE,3 people (3 with a source link),
+danuri,what_is_it,COMPLETE,503 chars; source: eyes.nasa.gov,https://eyes.nasa.gov/apps/solar-system/#/sc_danuri
+danuri,how_it_works,COMPLETE,519 chars; source: www.kari.re.kr,https://www.kari.re.kr/eng/contents/194
+danuri,why_important,COMPLETE,435 chars; source: www.nasa.gov,https://www.nasa.gov/solar-system/nasa-selects-nine-scientists-to-join-korea-pathfinder-lunar-orbiter-mission/
+danuri,status,COMPLETE,134 chars; source: www.kari.re.kr,https://www.kari.re.kr/eng/contents/193
+danuri,imagery,COMPLETE,1 images (1 source-linked),https://commons.wikimedia.org/wiki/File:Kplo_rendered_image.png
+danuri,sources,COMPLETE,11 source URLs (4 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_danuri
+danuri,timeline,COMPLETE,3 events (3 source-linked),https://www.kari.re.kr/eng/contents/193
+danuri,stakeholders,COMPLETE,3 organizations (3 with official URLs),https://www.kari.re.kr/
+danuri,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/danuri/danuri.glb
+danuri,people,COMPLETE,2 people (2 with a source link),
+dart,what_is_it,COMPLETE,1914 chars; source: en.wikipedia.org,https://en.wikipedia.org/wiki/Double_Asteroid_Redirection_Test
+dart,how_it_works,COMPLETE,748 chars; source: en.wikipedia.org; 4 documented parts/instruments,https://en.wikipedia.org/wiki/Double_Asteroid_Redirection_Test
+dart,why_important,COMPLETE,6733 chars; source: en.wikipedia.org,https://en.wikipedia.org/wiki/Double_Asteroid_Redirection_Test
+dart,status,COMPLETE,2419 chars; source: en.wikipedia.org,https://en.wikipedia.org/wiki/Double_Asteroid_Redirection_Test
+dart,imagery,COMPLETE,10 images (10 source-linked),https://en.wikipedia.org/wiki/Double_Asteroid_Redirection_Test
+dart,sources,COMPLETE,11 source URLs (4 marked verified),https://science.nasa.gov/mission/dart/
+dart,timeline,UNVERIFIED,"20 events, none linked to a source record",
+dart,stakeholders,UNVERIFIED,"6 organizations, none with an official URL",
+dart,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/dart/dart.glb
+dart,people,COMPLETE,10 people (3 with a source link),https://en.wikipedia.org/wiki/Andrew_Cheng
+dawn,what_is_it,COMPLETE,843 chars; source: solarsystem.nasa.gov,https://solarsystem.nasa.gov/missions/dawn/overview/
+dawn,how_it_works,COMPLETE,508 chars; source: nssdc.gsfc.nasa.gov,https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=2007-043A
+dawn,why_important,COMPLETE,471 chars; source: science.nasa.gov,https://science.nasa.gov/mission/dawn/
+dawn,status,COMPLETE,161 chars; source: science.nasa.gov,https://science.nasa.gov/mission/dawn/
+dawn,imagery,COMPLETE,1 images (1 source-linked),https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=2007-043A
+dawn,sources,COMPLETE,14 source URLs (5 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_dawn
+dawn,timeline,COMPLETE,5 events (5 source-linked),https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=2007-043A
+dawn,stakeholders,COMPLETE,4 organizations (4 with official URLs),https://www.nasa.gov
+dawn,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/dawn/model.glb
+dawn,people,COMPLETE,4 people (4 with a source link),
+deep-impact,what_is_it,COMPLETE,848 chars; source: science.nasa.gov,https://science.nasa.gov/mission/deep-impact-epoxi/
+deep-impact,how_it_works,COMPLETE,449 chars; source: nssdc.gsfc.nasa.gov,https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=2005-001A
+deep-impact,why_important,COMPLETE,385 chars; source: science.nasa.gov,https://science.nasa.gov/mission/deep-impact-epoxi/
+deep-impact,status,COMPLETE,266 chars; source: science.nasa.gov,https://science.nasa.gov/mission/deep-impact-epoxi/
+deep-impact,imagery,COMPLETE,1 images (1 source-linked),https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=2005-001A
+deep-impact,sources,COMPLETE,10 source URLs (2 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_deep_impact
+deep-impact,timeline,COMPLETE,4 events (4 source-linked),https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=2005-001A
+deep-impact,stakeholders,COMPLETE,3 organizations (3 with official URLs),https://www.nasa.gov
+deep-impact,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/deep-impact/deep_impact_wo_impactor.glb
+deep-impact,people,COMPLETE,2 people (2 with a source link),
+deep-space-1,what_is_it,COMPLETE,789 chars; source: science.nasa.gov,https://science.nasa.gov/mission/deep-space-1
+deep-space-1,how_it_works,COMPLETE,491 chars; source: nssdc.gsfc.nasa.gov,https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1998-061A
+deep-space-1,why_important,COMPLETE,401 chars; source: science.nasa.gov,https://science.nasa.gov/mission/deep-space-1/
+deep-space-1,status,COMPLETE,168 chars; source: science.nasa.gov,https://science.nasa.gov/mission/deep-space-1/
+deep-space-1,imagery,COMPLETE,1 images (1 source-linked),https://science.nasa.gov/mission/deep-space-1/
+deep-space-1,sources,COMPLETE,10 source URLs (3 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_deep_space_1
+deep-space-1,timeline,COMPLETE,4 events (4 source-linked),https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1998-061A
+deep-space-1,stakeholders,COMPLETE,3 organizations (3 with official URLs),https://www.nasa.gov
+deep-space-1,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/deep-space-1/deep_space_1.glb
+deep-space-1,people,COMPLETE,5 people (5 with a source link),
+dscovr,what_is_it,COMPLETE,740 chars; source: science.nasa.gov,https://science.nasa.gov/mission/DSCOVR/
+dscovr,how_it_works,COMPLETE,453 chars; source: science.nasa.gov,https://science.nasa.gov/mission/dscovr/
+dscovr,why_important,COMPLETE,419 chars; source: science.nasa.gov,https://science.nasa.gov/mission/dscovr/
+dscovr,status,COMPLETE,142 chars; source: science.nasa.gov,https://science.nasa.gov/mission/dscovr/
+dscovr,imagery,COMPLETE,1 images (1 source-linked),https://science.nasa.gov/mission/dscovr/
+dscovr,sources,COMPLETE,11 source URLs (3 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_dscovr
+dscovr,timeline,COMPLETE,3 events (3 source-linked),https://science.nasa.gov/mission/dscovr/
+dscovr,stakeholders,COMPLETE,4 organizations (3 with official URLs),https://www.noaa.gov/
+dscovr,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/dscovr/dscovr.glb
+dscovr,people,COMPLETE,5 people (5 with a source link),
+eo-1,what_is_it,COMPLETE,564 chars; source: science.nasa.gov,https://science.nasa.gov/mission/eo-1/
+eo-1,how_it_works,PLACEHOLDER,generic template (generic_eyes_model_sentence); no mission-specific facts,https://science.nasa.gov/mission/eo-1/
+eo-1,why_important,PLACEHOLDER,generic template (generic_contributes_sentence); no mission-specific facts,https://science.nasa.gov/mission/eo-1/
+eo-1,status,PLACEHOLDER,generic template (generic_status_sentence); no mission-specific facts,https://science.nasa.gov/mission/eo-1/
+eo-1,imagery,MISSING,no image records,
+eo-1,sources,COMPLETE,8 source URLs (0 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_eo_1
+eo-1,timeline,MISSING,no dated timeline events,
+eo-1,stakeholders,MISSING,no stakeholder organizations,
+eo-1,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/eo-1/eo-1.glb
+eo-1,people,MISSING,no individual contributors,
+escapade,what_is_it,COMPLETE,1002 chars; source: science.nasa.gov,https://science.nasa.gov/mission/escapade/
+escapade,how_it_works,PLACEHOLDER,generic template (generic_eyes_model_sentence); no mission-specific facts,https://science.nasa.gov/mission/escapade/
+escapade,why_important,PLACEHOLDER,generic template (generic_contributes_sentence); no mission-specific facts,https://science.nasa.gov/mission/escapade/
+escapade,status,PLACEHOLDER,generic template (generic_status_sentence); no mission-specific facts,https://science.nasa.gov/mission/escapade/
+escapade,imagery,MISSING,no image records,
+escapade,sources,COMPLETE,9 source URLs (0 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_escapade_blue
+escapade,timeline,MISSING,no dated timeline events,
+escapade,stakeholders,MISSING,no stakeholder organizations,
+escapade,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/escapade/escapade.glb
+escapade,people,MISSING,no individual contributors,
+euclid,what_is_it,COMPLETE,556 chars; source: science.nasa.gov,https://science.nasa.gov/mission/euclid/
+euclid,how_it_works,PLACEHOLDER,generic template (generic_eyes_model_sentence); no mission-specific facts,https://science.nasa.gov/mission/euclid/
+euclid,why_important,PLACEHOLDER,generic template (generic_contributes_sentence); no mission-specific facts,https://science.nasa.gov/mission/euclid/
+euclid,status,PLACEHOLDER,generic template (generic_status_sentence); no mission-specific facts,https://science.nasa.gov/mission/euclid/
+euclid,imagery,MISSING,no image records,
+euclid,sources,COMPLETE,8 source URLs (0 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_euclid
+euclid,timeline,MISSING,no dated timeline events,
+euclid,stakeholders,MISSING,no stakeholder organizations,
+euclid,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/euclid/euclid.glb
+euclid,people,MISSING,no individual contributors,
+europa-clipper,what_is_it,COMPLETE,535 chars; source: science.nasa.gov,https://science.nasa.gov/mission/europa-clipper/
+europa-clipper,how_it_works,PLACEHOLDER,generic template (generic_eyes_model_sentence); no mission-specific facts,https://science.nasa.gov/mission/europa-clipper/
+europa-clipper,why_important,PLACEHOLDER,generic template (generic_contributes_sentence); no mission-specific facts,https://science.nasa.gov/mission/europa-clipper/
+europa-clipper,status,PLACEHOLDER,generic template (generic_status_sentence); no mission-specific facts,https://science.nasa.gov/mission/europa-clipper/
+europa-clipper,imagery,MISSING,no image records,
+europa-clipper,sources,COMPLETE,8 source URLs (0 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_europa_clipper
+europa-clipper,timeline,MISSING,no dated timeline events,
+europa-clipper,stakeholders,MISSING,no stakeholder organizations,
+europa-clipper,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/europa-clipper/europa_clipper.glb
+europa-clipper,people,MISSING,no individual contributors,
+explorer-1,what_is_it,COMPLETE,363 chars; source: science.nasa.gov,https://science.nasa.gov/mission/explorer-1/
+explorer-1,how_it_works,PLACEHOLDER,generic template (generic_eyes_model_sentence); no mission-specific facts,https://science.nasa.gov/mission/explorer-1/
+explorer-1,why_important,PLACEHOLDER,generic template (generic_contributes_sentence); no mission-specific facts,https://science.nasa.gov/mission/explorer-1/
+explorer-1,status,PLACEHOLDER,generic template (generic_status_sentence); no mission-specific facts,https://science.nasa.gov/mission/explorer-1/
+explorer-1,imagery,MISSING,no image records,
+explorer-1,sources,COMPLETE,7 source URLs (0 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_explorer_1
+explorer-1,timeline,MISSING,no dated timeline events,
+explorer-1,stakeholders,MISSING,no stakeholder organizations,
+explorer-1,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/explorer-1/explorer_1.glb
+explorer-1,people,MISSING,no individual contributors,
+galileo,what_is_it,COMPLETE,1663 chars; source: en.wikipedia.org,https://en.wikipedia.org/wiki/Galileo_%28spacecraft%29
+galileo,how_it_works,COMPLETE,1729 chars; source: en.wikipedia.org; 3 documented parts/instruments,https://en.wikipedia.org/wiki/Galileo_%28spacecraft%29
+galileo,why_important,COMPLETE,202 chars; source: en.wikipedia.org,https://en.wikipedia.org/wiki/Galileo_%28spacecraft%29
+galileo,status,COMPLETE,1885 chars; source: en.wikipedia.org,https://en.wikipedia.org/wiki/Galileo_%28spacecraft%29
+galileo,imagery,COMPLETE,10 images (10 source-linked),https://en.wikipedia.org/wiki/Galileo_%28spacecraft%29
+galileo,sources,COMPLETE,10 source URLs (4 marked verified),https://science.nasa.gov/mission/galileo/
+galileo,timeline,UNVERIFIED,"7 events, none linked to a source record",
+galileo,stakeholders,COMPLETE,4 organizations (1 with official URLs),https://www.nasa.gov
+galileo,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/nasa/NASA-3D-Resources/master/3D%20Models/Galileo/Galileo.glb
+galileo,people,COMPLETE,10 people (6 with a source link),https://en.wikipedia.org/wiki/John_R._Casani
+galileo-probe,what_is_it,COMPLETE,448 chars; source: eyes.nasa.gov,https://eyes.nasa.gov/apps/solar-system/#/sc_galileo_probe
+galileo-probe,how_it_works,PLACEHOLDER,generic template (generic_eyes_model_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_galileo_probe
+galileo-probe,why_important,PLACEHOLDER,generic template (generic_contributes_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_galileo_probe
+galileo-probe,status,PLACEHOLDER,generic template (generic_status_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_galileo_probe
+galileo-probe,imagery,MISSING,no image records,
+galileo-probe,sources,COMPLETE,8 source URLs (0 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_galileo_probe
+galileo-probe,timeline,MISSING,no dated timeline events,
+galileo-probe,stakeholders,MISSING,no stakeholder organizations,
+galileo-probe,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/galileo-probe/galileo_probe.glb
+galileo-probe,people,MISSING,no individual contributors,
+geotail,what_is_it,COMPLETE,834 chars; source: science.nasa.gov,https://science.nasa.gov/mission/geotail/
+geotail,how_it_works,PLACEHOLDER,generic template (generic_eyes_model_sentence); no mission-specific facts,https://science.nasa.gov/mission/geotail/
+geotail,why_important,PLACEHOLDER,generic template (generic_contributes_sentence); no mission-specific facts,https://science.nasa.gov/mission/geotail/
+geotail,status,PLACEHOLDER,generic template (generic_status_sentence); no mission-specific facts,https://science.nasa.gov/mission/geotail/
+geotail,imagery,MISSING,no image records,
+geotail,sources,COMPLETE,7 source URLs (0 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_geotail
+geotail,timeline,MISSING,no dated timeline events,
+geotail,stakeholders,MISSING,no stakeholder organizations,
+geotail,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/geotail/geotail.glb
+geotail,people,MISSING,no individual contributors,
+gpm,what_is_it,COMPLETE,855 chars; source: science.nasa.gov,https://science.nasa.gov/mission/gpm/
+gpm,how_it_works,PLACEHOLDER,generic template (generic_eyes_model_sentence); no mission-specific facts,https://science.nasa.gov/mission/gpm/
+gpm,why_important,PLACEHOLDER,generic template (generic_contributes_sentence); no mission-specific facts,https://science.nasa.gov/mission/gpm/
+gpm,status,PLACEHOLDER,generic template (generic_status_sentence); no mission-specific facts,https://science.nasa.gov/mission/gpm/
+gpm,imagery,MISSING,no image records,
+gpm,sources,COMPLETE,7 source URLs (0 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_gpm
+gpm,timeline,MISSING,no dated timeline events,
+gpm,stakeholders,MISSING,no stakeholder organizations,
+gpm,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/gpm/GPM.glb
+gpm,people,MISSING,no individual contributors,
+grace,what_is_it,COMPLETE,1424 chars; source: science.nasa.gov,https://science.nasa.gov/mission/grace/
+grace,how_it_works,PLACEHOLDER,generic template (generic_eyes_model_sentence); no mission-specific facts,https://science.nasa.gov/mission/grace/
+grace,why_important,PLACEHOLDER,generic template (generic_contributes_sentence); no mission-specific facts,https://science.nasa.gov/mission/grace/
+grace,status,PLACEHOLDER,generic template (generic_status_sentence); no mission-specific facts,https://science.nasa.gov/mission/grace/
+grace,imagery,MISSING,no image records,
+grace,sources,COMPLETE,9 source URLs (0 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_grace_1
+grace,timeline,MISSING,no dated timeline events,
+grace,stakeholders,MISSING,no stakeholder organizations,
+grace,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/grace/grace.glb
+grace,people,MISSING,no individual contributors,
+grace-fo1,what_is_it,COMPLETE,1360 chars; source: science.nasa.gov,https://science.nasa.gov/mission/grace-fo/
+grace-fo1,how_it_works,PLACEHOLDER,generic template (generic_eyes_model_sentence); no mission-specific facts,https://science.nasa.gov/mission/grace-fo/
+grace-fo1,why_important,PLACEHOLDER,generic template (generic_contributes_sentence); no mission-specific facts,https://science.nasa.gov/mission/grace-fo/
+grace-fo1,status,PLACEHOLDER,generic template (generic_status_sentence); no mission-specific facts,https://science.nasa.gov/mission/grace-fo/
+grace-fo1,imagery,MISSING,no image records,
+grace-fo1,sources,COMPLETE,8 source URLs (0 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_grace_fo1
+grace-fo1,timeline,MISSING,no dated timeline events,
+grace-fo1,stakeholders,MISSING,no stakeholder organizations,
+grace-fo1,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/grace-fo1/graceFO.glb
+grace-fo1,people,MISSING,no individual contributors,
+grail,what_is_it,COMPLETE,478 chars; source: science.nasa.gov,https://science.nasa.gov/mission/grail/
+grail,how_it_works,PLACEHOLDER,generic template (generic_eyes_model_sentence); no mission-specific facts,https://science.nasa.gov/mission/grail/
+grail,why_important,PLACEHOLDER,generic template (generic_contributes_sentence); no mission-specific facts,https://science.nasa.gov/mission/grail/
+grail,status,PLACEHOLDER,generic template (generic_status_sentence); no mission-specific facts,https://science.nasa.gov/mission/grail/
+grail,imagery,MISSING,no image records,
+grail,sources,COMPLETE,9 source URLs (0 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_grail_b
+grail,timeline,MISSING,no dated timeline events,
+grail,stakeholders,MISSING,no stakeholder organizations,
+grail,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/grail/grail_b.glb
+grail,people,MISSING,no individual contributors,
+grifex,what_is_it,COMPLETE,387 chars; source: www.jpl.nasa.gov,https://www.jpl.nasa.gov/missions/geo-cape-roic-in-flight-performance-experiment-grifex/
+grifex,how_it_works,PLACEHOLDER,generic template (generic_eyes_model_sentence); no mission-specific facts,https://www.jpl.nasa.gov/missions/geo-cape-roic-in-flight-performance-experiment-grifex/
+grifex,why_important,PLACEHOLDER,generic template (generic_contributes_sentence); no mission-specific facts,https://www.jpl.nasa.gov/missions/geo-cape-roic-in-flight-performance-experiment-grifex/
+grifex,status,PLACEHOLDER,generic template (generic_status_sentence); no mission-specific facts,https://www.jpl.nasa.gov/missions/geo-cape-roic-in-flight-performance-experiment-grifex/
+grifex,imagery,MISSING,no image records,
+grifex,sources,COMPLETE,10 source URLs (0 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_grifex
+grifex,timeline,MISSING,no dated timeline events,
+grifex,stakeholders,MISSING,no stakeholder organizations,
+grifex,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/grifex/grifex.glb
+grifex,people,MISSING,no individual contributors,
+hubble,what_is_it,COMPLETE,1154 chars; source: science.nasa.gov,https://science.nasa.gov/mission/hubble/
+hubble,how_it_works,PLACEHOLDER,generic template (generic_eyes_model_sentence); no mission-specific facts,https://science.nasa.gov/mission/hubble/
+hubble,why_important,PLACEHOLDER,generic template (generic_contributes_sentence); no mission-specific facts,https://science.nasa.gov/mission/hubble/
+hubble,status,PLACEHOLDER,generic template (generic_status_sentence); no mission-specific facts,https://science.nasa.gov/mission/hubble/
+hubble,imagery,MISSING,no image records,
+hubble,sources,COMPLETE,8 source URLs (0 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_hubble_space_telescope
+hubble,timeline,MISSING,no dated timeline events,
+hubble,stakeholders,MISSING,no stakeholder organizations,
+hubble,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/hubble/Hubble.glb
+hubble,people,MISSING,no individual contributors,
+huygens,what_is_it,COMPLETE,478 chars; source: science.nasa.gov,https://science.nasa.gov/mission/cassini/spacecraft/huygens-probe/
+huygens,how_it_works,PLACEHOLDER,generic template (generic_eyes_model_sentence); no mission-specific facts,https://science.nasa.gov/mission/cassini/spacecraft/huygens-probe/
+huygens,why_important,PLACEHOLDER,generic template (generic_contributes_sentence); no mission-specific facts,https://science.nasa.gov/mission/cassini/spacecraft/huygens-probe/
+huygens,status,PLACEHOLDER,generic template (generic_status_sentence); no mission-specific facts,https://science.nasa.gov/mission/cassini/spacecraft/huygens-probe/
+huygens,imagery,MISSING,no image records,
+huygens,sources,COMPLETE,8 source URLs (0 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_huygens
+huygens,timeline,MISSING,no dated timeline events,
+huygens,stakeholders,MISSING,no stakeholder organizations,
+huygens,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/huygens/Huygens.glb
+huygens,people,MISSING,no individual contributors,
+ibex,what_is_it,COMPLETE,451 chars; source: science.nasa.gov,https://science.nasa.gov/mission/ibex/
+ibex,how_it_works,PLACEHOLDER,generic template (generic_eyes_model_sentence); no mission-specific facts,https://science.nasa.gov/mission/ibex/
+ibex,why_important,PLACEHOLDER,generic template (generic_contributes_sentence); no mission-specific facts,https://science.nasa.gov/mission/ibex/
+ibex,status,PLACEHOLDER,generic template (generic_status_sentence); no mission-specific facts,https://science.nasa.gov/mission/ibex/
+ibex,imagery,MISSING,no image records,
+ibex,sources,COMPLETE,9 source URLs (0 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_ibex
+ibex,timeline,MISSING,no dated timeline events,
+ibex,stakeholders,MISSING,no stakeholder organizations,
+ibex,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/ibex/iBEX.glb
+ibex,people,MISSING,no individual contributors,
+icesat-2,what_is_it,COMPLETE,887 chars; source: science.nasa.gov,https://science.nasa.gov/mission/icesat-2/
+icesat-2,how_it_works,PLACEHOLDER,generic template (generic_eyes_model_sentence); no mission-specific facts,https://science.nasa.gov/mission/icesat-2/
+icesat-2,why_important,PLACEHOLDER,generic template (generic_contributes_sentence); no mission-specific facts,https://science.nasa.gov/mission/icesat-2/
+icesat-2,status,PLACEHOLDER,generic template (generic_status_sentence); no mission-specific facts,https://science.nasa.gov/mission/icesat-2/
+icesat-2,imagery,MISSING,no image records,
+icesat-2,sources,COMPLETE,9 source URLs (0 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_icesat_2
+icesat-2,timeline,MISSING,no dated timeline events,
+icesat-2,stakeholders,MISSING,no stakeholder organizations,
+icesat-2,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/icesat-2/ICESat2.glb
+icesat-2,people,MISSING,no individual contributors,
+image,what_is_it,COMPLETE,325 chars; source: science.nasa.gov,https://science.nasa.gov/mission/image/
+image,how_it_works,PLACEHOLDER,generic template (generic_eyes_model_sentence); no mission-specific facts,https://science.nasa.gov/mission/image/
+image,why_important,PLACEHOLDER,generic template (generic_contributes_sentence); no mission-specific facts,https://science.nasa.gov/mission/image/
+image,status,PLACEHOLDER,generic template (generic_status_sentence); no mission-specific facts,https://science.nasa.gov/mission/image/
+image,imagery,MISSING,no image records,
+image,sources,COMPLETE,9 source URLs (0 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_image
+image,timeline,MISSING,no dated timeline events,
+image,stakeholders,MISSING,no stakeholder organizations,
+image,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/image/image.glb
+image,people,MISSING,no individual contributors,
+imap,what_is_it,COMPLETE,802 chars; source: science.nasa.gov,https://science.nasa.gov/mission/imap/
+imap,how_it_works,PLACEHOLDER,generic template (generic_eyes_model_sentence); no mission-specific facts,https://science.nasa.gov/mission/imap/
+imap,why_important,PLACEHOLDER,generic template (generic_contributes_sentence); no mission-specific facts,https://science.nasa.gov/mission/imap/
+imap,status,PLACEHOLDER,generic template (generic_status_sentence); no mission-specific facts,https://science.nasa.gov/mission/imap/
+imap,imagery,MISSING,no image records,
+imap,sources,COMPLETE,9 source URLs (0 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_imap
+imap,timeline,MISSING,no dated timeline events,
+imap,stakeholders,MISSING,no stakeholder organizations,
+imap,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/imap/imap.glb
+imap,people,MISSING,no individual contributors,
+insight,what_is_it,COMPLETE,878 chars; source: science.nasa.gov,https://science.nasa.gov/mission/insight/
+insight,how_it_works,PLACEHOLDER,generic template (generic_eyes_model_sentence); no mission-specific facts,https://science.nasa.gov/mission/insight/
+insight,why_important,PLACEHOLDER,generic template (generic_contributes_sentence); no mission-specific facts,https://science.nasa.gov/mission/insight/
+insight,status,PLACEHOLDER,generic template (generic_status_sentence); no mission-specific facts,https://science.nasa.gov/mission/insight/
+insight,imagery,MISSING,no image records,
+insight,sources,COMPLETE,9 source URLs (0 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_insight
+insight,timeline,MISSING,no dated timeline events,
+insight,stakeholders,MISSING,no stakeholder organizations,
+insight,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/insight/insight.glb
+insight,people,MISSING,no individual contributors,
+ipex,what_is_it,COMPLETE,285 chars; source: www.jpl.nasa.gov,https://www.jpl.nasa.gov/missions/intelligent-payload-experiment-ipex/
+ipex,how_it_works,PLACEHOLDER,generic template (generic_eyes_model_sentence); no mission-specific facts,https://www.jpl.nasa.gov/missions/intelligent-payload-experiment-ipex/
+ipex,why_important,PLACEHOLDER,generic template (generic_contributes_sentence); no mission-specific facts,https://www.jpl.nasa.gov/missions/intelligent-payload-experiment-ipex/
+ipex,status,PLACEHOLDER,generic template (generic_status_sentence); no mission-specific facts,https://www.jpl.nasa.gov/missions/intelligent-payload-experiment-ipex/
+ipex,imagery,MISSING,no image records,
+ipex,sources,COMPLETE,10 source URLs (0 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_ipex
+ipex,timeline,MISSING,no dated timeline events,
+ipex,stakeholders,MISSING,no stakeholder organizations,
+ipex,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/ipex/IPEX.glb
+ipex,people,MISSING,no individual contributors,
+iss,what_is_it,COMPLETE,561 chars; source: www.nasa.gov,https://www.nasa.gov/international-space-station/
+iss,how_it_works,PLACEHOLDER,generic template (generic_eyes_model_sentence); no mission-specific facts,https://www.nasa.gov/international-space-station/
+iss,why_important,PLACEHOLDER,generic template (generic_contributes_sentence); no mission-specific facts,https://www.nasa.gov/international-space-station/
+iss,status,PLACEHOLDER,generic template (generic_status_sentence); no mission-specific facts,https://www.nasa.gov/international-space-station/
+iss,imagery,MISSING,no image records,
+iss,sources,COMPLETE,9 source URLs (0 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_iss
+iss,timeline,MISSING,no dated timeline events,
+iss,stakeholders,MISSING,no stakeholder organizations,
+iss,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/iss/ISS_stationary.glb
+iss,people,MISSING,no individual contributors,
+ixpe,what_is_it,COMPLETE,253 chars; source: science.nasa.gov,https://science.nasa.gov/mission/ixpe/
+ixpe,how_it_works,PLACEHOLDER,generic template (generic_eyes_model_sentence); no mission-specific facts,https://science.nasa.gov/mission/ixpe/
+ixpe,why_important,PLACEHOLDER,generic template (generic_contributes_sentence); no mission-specific facts,https://science.nasa.gov/mission/ixpe/
+ixpe,status,PLACEHOLDER,generic template (generic_status_sentence); no mission-specific facts,https://science.nasa.gov/mission/ixpe/
+ixpe,imagery,MISSING,no image records,
+ixpe,sources,COMPLETE,8 source URLs (0 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_ixpe
+ixpe,timeline,MISSING,no dated timeline events,
+ixpe,stakeholders,MISSING,no stakeholder organizations,
+ixpe,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/ixpe/ixpe.glb
+ixpe,people,MISSING,no individual contributors,
+jason,what_is_it,COMPLETE,1920 chars; source: www.jpl.nasa.gov,https://www.jpl.nasa.gov/missions/jason-1/
+jason,how_it_works,PLACEHOLDER,generic template (generic_eyes_model_sentence); no mission-specific facts,https://www.jpl.nasa.gov/missions/jason-1/
+jason,why_important,PLACEHOLDER,generic template (generic_contributes_sentence); no mission-specific facts,https://www.jpl.nasa.gov/missions/jason-1/
+jason,status,PLACEHOLDER,generic template (generic_status_sentence); no mission-specific facts,https://www.jpl.nasa.gov/missions/jason-1/
+jason,imagery,MISSING,no image records,
+jason,sources,COMPLETE,9 source URLs (0 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_jason_1
+jason,timeline,MISSING,no dated timeline events,
+jason,stakeholders,MISSING,no stakeholder organizations,
+jason,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/jason/ostm.glb
+jason,people,MISSING,no individual contributors,
+juice,what_is_it,COMPLETE,674 chars; source: science.nasa.gov,https://science.nasa.gov/mission/juice/
+juice,how_it_works,PLACEHOLDER,generic template (generic_eyes_model_sentence); no mission-specific facts,https://science.nasa.gov/mission/juice/
+juice,why_important,PLACEHOLDER,generic template (generic_contributes_sentence); no mission-specific facts,https://science.nasa.gov/mission/juice/
+juice,status,PLACEHOLDER,generic template (generic_status_sentence); no mission-specific facts,https://science.nasa.gov/mission/juice/
+juice,imagery,MISSING,no image records,
+juice,sources,COMPLETE,7 source URLs (0 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_juice
+juice,timeline,MISSING,no dated timeline events,
+juice,stakeholders,MISSING,no stakeholder organizations,
+juice,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/juice/juice.glb
+juice,people,MISSING,no individual contributors,
+juno,what_is_it,COMPLETE,1998 chars; source: en.wikipedia.org,https://en.wikipedia.org/wiki/Juno_%28spacecraft%29
+juno,how_it_works,COMPLETE,2212 chars; source: en.wikipedia.org; 1 documented parts/instruments,https://en.wikipedia.org/wiki/Juno_%28spacecraft%29
+juno,why_important,COMPLETE,2254 chars; source: en.wikipedia.org,https://en.wikipedia.org/wiki/Juno_%28spacecraft%29
+juno,status,COMPLETE,2779 chars; source: en.wikipedia.org,https://en.wikipedia.org/wiki/Juno_%28spacecraft%29
+juno,imagery,COMPLETE,10 images (10 source-linked),https://en.wikipedia.org/wiki/Juno_%28spacecraft%29
+juno,sources,COMPLETE,11 source URLs (5 marked verified),https://science.nasa.gov/mission/juno/
+juno,timeline,UNVERIFIED,"24 events, none linked to a source record",
+juno,stakeholders,UNVERIFIED,"6 organizations, none with an official URL",
+juno,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/nasa/NASA-3D-Resources/master/3D%20Models/Juno%20%28A%29/Juno%20%28A%29.glb
+juno,people,COMPLETE,10 people (1 with a source link),https://en.wikipedia.org/wiki/David_J._McComas
+jwst,what_is_it,COMPLETE,450 chars; source: science.nasa.gov,https://science.nasa.gov/mission/webb/
+jwst,how_it_works,PLACEHOLDER,generic template (generic_eyes_model_sentence); no mission-specific facts,https://science.nasa.gov/mission/webb/
+jwst,why_important,PLACEHOLDER,generic template (generic_contributes_sentence); no mission-specific facts,https://science.nasa.gov/mission/webb/
+jwst,status,PLACEHOLDER,generic template (generic_status_sentence); no mission-specific facts,https://science.nasa.gov/mission/webb/
+jwst,imagery,MISSING,no image records,
+jwst,sources,COMPLETE,9 source URLs (0 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_jwst
+jwst,timeline,MISSING,no dated timeline events,
+jwst,stakeholders,MISSING,no stakeholder organizations,
+jwst,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/jwst/webb_deployed.glb
+jwst,people,MISSING,no individual contributors,
+kepler,what_is_it,COMPLETE,473 chars; source: science.nasa.gov,https://science.nasa.gov/mission/kepler/
+kepler,how_it_works,PLACEHOLDER,generic template (generic_eyes_model_sentence); no mission-specific facts,https://science.nasa.gov/mission/kepler/
+kepler,why_important,PLACEHOLDER,generic template (generic_contributes_sentence); no mission-specific facts,https://science.nasa.gov/mission/kepler/
+kepler,status,PLACEHOLDER,generic template (generic_status_sentence); no mission-specific facts,https://science.nasa.gov/mission/kepler/
+kepler,imagery,MISSING,no image records,
+kepler,sources,COMPLETE,9 source URLs (0 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_kepler_space_telescope
+kepler,timeline,MISSING,no dated timeline events,
+kepler,stakeholders,MISSING,no stakeholder organizations,
+kepler,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/kepler/Kepler.glb
+kepler,people,MISSING,no individual contributors,
+ladee,what_is_it,COMPLETE,517 chars; source: science.nasa.gov,https://science.nasa.gov/mission/ladee/
+ladee,how_it_works,PLACEHOLDER,generic template (generic_eyes_model_sentence); no mission-specific facts,https://science.nasa.gov/mission/ladee/
+ladee,why_important,PLACEHOLDER,generic template (generic_contributes_sentence); no mission-specific facts,https://science.nasa.gov/mission/ladee/
+ladee,status,PLACEHOLDER,generic template (generic_status_sentence); no mission-specific facts,https://science.nasa.gov/mission/ladee/
+ladee,imagery,MISSING,no image records,
+ladee,sources,COMPLETE,9 source URLs (0 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_ladee
+ladee,timeline,MISSING,no dated timeline events,
+ladee,stakeholders,MISSING,no stakeholder organizations,
+ladee,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/ladee/ladee.glb
+ladee,people,MISSING,no individual contributors,
+landsat-7,what_is_it,COMPLETE,536 chars; source: science.nasa.gov,https://science.nasa.gov/mission/landsat/
+landsat-7,how_it_works,PLACEHOLDER,generic template (generic_eyes_model_sentence); no mission-specific facts,https://science.nasa.gov/mission/landsat/
+landsat-7,why_important,PLACEHOLDER,generic template (generic_contributes_sentence); no mission-specific facts,https://science.nasa.gov/mission/landsat/
+landsat-7,status,PLACEHOLDER,generic template (generic_status_sentence); no mission-specific facts,https://science.nasa.gov/mission/landsat/
+landsat-7,imagery,MISSING,no image records,
+landsat-7,sources,COMPLETE,8 source URLs (0 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_landsat_7
+landsat-7,timeline,MISSING,no dated timeline events,
+landsat-7,stakeholders,MISSING,no stakeholder organizations,
+landsat-7,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/landsat-7/LandSat7.glb
+landsat-7,people,MISSING,no individual contributors,
+landsat-8,what_is_it,COMPLETE,849 chars; source: science.nasa.gov,https://science.nasa.gov/mission/landsat/
+landsat-8,how_it_works,PLACEHOLDER,generic template (generic_eyes_model_sentence); no mission-specific facts,https://science.nasa.gov/mission/landsat/
+landsat-8,why_important,PLACEHOLDER,generic template (generic_contributes_sentence); no mission-specific facts,https://science.nasa.gov/mission/landsat/
+landsat-8,status,PLACEHOLDER,generic template (generic_status_sentence); no mission-specific facts,https://science.nasa.gov/mission/landsat/
+landsat-8,imagery,MISSING,no image records,
+landsat-8,sources,COMPLETE,9 source URLs (0 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_landsat_8
+landsat-8,timeline,MISSING,no dated timeline events,
+landsat-8,stakeholders,MISSING,no stakeholder organizations,
+landsat-8,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/landsat-8/LandSat8.glb
+landsat-8,people,MISSING,no individual contributors,
+landsat-9,what_is_it,COMPLETE,846 chars; source: science.nasa.gov,https://science.nasa.gov/mission/landsat/
+landsat-9,how_it_works,PLACEHOLDER,generic template (generic_eyes_model_sentence); no mission-specific facts,https://science.nasa.gov/mission/landsat/
+landsat-9,why_important,PLACEHOLDER,generic template (generic_contributes_sentence); no mission-specific facts,https://science.nasa.gov/mission/landsat/
+landsat-9,status,PLACEHOLDER,generic template (generic_status_sentence); no mission-specific facts,https://science.nasa.gov/mission/landsat/
+landsat-9,imagery,MISSING,no image records,
+landsat-9,sources,COMPLETE,9 source URLs (0 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_landsat_9
+landsat-9,timeline,MISSING,no dated timeline events,
+landsat-9,stakeholders,MISSING,no stakeholder organizations,
+landsat-9,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/landsat-9/Landsat9.glb
+landsat-9,people,MISSING,no individual contributors,
+lcross,what_is_it,COMPLETE,862 chars; source: science.nasa.gov,https://science.nasa.gov/mission/lcross/
+lcross,how_it_works,PLACEHOLDER,generic template (generic_eyes_model_sentence); no mission-specific facts,https://science.nasa.gov/mission/lcross/
+lcross,why_important,PLACEHOLDER,generic template (generic_contributes_sentence); no mission-specific facts,https://science.nasa.gov/mission/lcross/
+lcross,status,PLACEHOLDER,generic template (generic_status_sentence); no mission-specific facts,https://science.nasa.gov/mission/lcross/
+lcross,imagery,MISSING,no image records,
+lcross,sources,COMPLETE,9 source URLs (0 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_lcross
+lcross,timeline,MISSING,no dated timeline events,
+lcross,stakeholders,MISSING,no stakeholder organizations,
+lcross,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/lcross/lcross.glb
+lcross,people,MISSING,no individual contributors,
+lucy,what_is_it,COMPLETE,470 chars; source: science.nasa.gov,https://science.nasa.gov/mission/lucy/
+lucy,how_it_works,PLACEHOLDER,generic template (generic_eyes_model_sentence); no mission-specific facts,https://science.nasa.gov/mission/lucy/
+lucy,why_important,PLACEHOLDER,generic template (generic_contributes_sentence); no mission-specific facts,https://science.nasa.gov/mission/lucy/
+lucy,status,PLACEHOLDER,generic template (generic_status_sentence); no mission-specific facts,https://science.nasa.gov/mission/lucy/
+lucy,imagery,MISSING,no image records,
+lucy,sources,COMPLETE,10 source URLs (0 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_lucy
+lucy,timeline,MISSING,no dated timeline events,
+lucy,stakeholders,MISSING,no stakeholder organizations,
+lucy,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/lucy/lucy.glb
+lucy,people,MISSING,no individual contributors,
+luna-17-lunokhod-1,what_is_it,COMPLETE,805 chars; source: en.wikipedia.org,https://en.wikipedia.org/wiki/Lunokhod_1
+luna-17-lunokhod-1,how_it_works,COMPLETE,1253 chars; source: en.wikipedia.org; 11 documented parts/instruments,https://en.wikipedia.org/wiki/Lunokhod_1
+luna-17-lunokhod-1,why_important,COMPLETE,604 chars; source: en.wikipedia.org,https://en.wikipedia.org/wiki/Lunokhod_1
+luna-17-lunokhod-1,status,COMPLETE,636 chars; source: en.wikipedia.org,https://en.wikipedia.org/wiki/Lunokhod_1
+luna-17-lunokhod-1,imagery,COMPLETE,10 images (10 source-linked),https://en.wikipedia.org/wiki/Lunokhod_1
+luna-17-lunokhod-1,sources,COMPLETE,2 source URLs (2 marked verified),https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1970-095A
+luna-17-lunokhod-1,timeline,UNVERIFIED,"8 events, none linked to a source record",
+luna-17-lunokhod-1,stakeholders,UNVERIFIED,"3 organizations, none with an official URL",
+luna-17-lunokhod-1,model,MISSING,no web-ready model (all rows are no_model),
+luna-17-lunokhod-1,people,COMPLETE,10 people (5 with a source link),https://en.wikipedia.org/wiki/Georgy_Babakin
+lunar-flashlight,what_is_it,COMPLETE,1025 chars; source: www.jpl.nasa.gov,https://www.jpl.nasa.gov/missions/lunar-flashlight/
+lunar-flashlight,how_it_works,PLACEHOLDER,generic template (generic_eyes_model_sentence); no mission-specific facts,https://www.jpl.nasa.gov/missions/lunar-flashlight/
+lunar-flashlight,why_important,PLACEHOLDER,generic template (generic_contributes_sentence); no mission-specific facts,https://www.jpl.nasa.gov/missions/lunar-flashlight/
+lunar-flashlight,status,PLACEHOLDER,generic template (generic_status_sentence); no mission-specific facts,https://www.jpl.nasa.gov/missions/lunar-flashlight/
+lunar-flashlight,imagery,MISSING,no image records,
+lunar-flashlight,sources,COMPLETE,9 source URLs (0 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_lunar_flashlight
+lunar-flashlight,timeline,MISSING,no dated timeline events,
+lunar-flashlight,stakeholders,MISSING,no stakeholder organizations,
+lunar-flashlight,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/lunar-flashlight/lunar_flashlight.glb
+lunar-flashlight,people,MISSING,no individual contributors,
+lunar-prospector,what_is_it,COMPLETE,314 chars; source: science.nasa.gov,https://science.nasa.gov/mission/lunar-prospector/
+lunar-prospector,how_it_works,PLACEHOLDER,generic template (generic_eyes_model_sentence); no mission-specific facts,https://science.nasa.gov/mission/lunar-prospector/
+lunar-prospector,why_important,PLACEHOLDER,generic template (generic_contributes_sentence); no mission-specific facts,https://science.nasa.gov/mission/lunar-prospector/
+lunar-prospector,status,PLACEHOLDER,generic template (generic_status_sentence); no mission-specific facts,https://science.nasa.gov/mission/lunar-prospector/
+lunar-prospector,imagery,MISSING,no image records,
+lunar-prospector,sources,COMPLETE,9 source URLs (0 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_lunar_prospector
+lunar-prospector,timeline,MISSING,no dated timeline events,
+lunar-prospector,stakeholders,MISSING,no stakeholder organizations,
+lunar-prospector,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/lunar-prospector/lunar_prospector.glb
+lunar-prospector,people,MISSING,no individual contributors,
+lunar-reconnaissance-orbiter,what_is_it,COMPLETE,824 chars; source: science.nasa.gov,https://science.nasa.gov/mission/LRO/
+lunar-reconnaissance-orbiter,how_it_works,PLACEHOLDER,generic template (generic_eyes_model_sentence); no mission-specific facts,https://science.nasa.gov/mission/LRO/
+lunar-reconnaissance-orbiter,why_important,PLACEHOLDER,generic template (generic_contributes_sentence); no mission-specific facts,https://science.nasa.gov/mission/LRO/
+lunar-reconnaissance-orbiter,status,PLACEHOLDER,generic template (generic_status_sentence); no mission-specific facts,https://science.nasa.gov/mission/LRO/
+lunar-reconnaissance-orbiter,imagery,MISSING,no image records,
+lunar-reconnaissance-orbiter,sources,COMPLETE,9 source URLs (0 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_lunar_reconnaissance_orbiter
+lunar-reconnaissance-orbiter,timeline,MISSING,no dated timeline events,
+lunar-reconnaissance-orbiter,stakeholders,MISSING,no stakeholder organizations,
+lunar-reconnaissance-orbiter,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/lunar-reconnaissance-orbiter/LRO.glb
+lunar-reconnaissance-orbiter,people,MISSING,no individual contributors,
+magellan,what_is_it,COMPLETE,550 chars; source: science.nasa.gov,https://science.nasa.gov/mission/magellan/
+magellan,how_it_works,PLACEHOLDER,generic template (generic_eyes_model_sentence); no mission-specific facts,https://science.nasa.gov/mission/magellan/
+magellan,why_important,PLACEHOLDER,generic template (generic_contributes_sentence); no mission-specific facts,https://science.nasa.gov/mission/magellan/
+magellan,status,PLACEHOLDER,generic template (generic_status_sentence); no mission-specific facts,https://science.nasa.gov/mission/magellan/
+magellan,imagery,MISSING,no image records,
+magellan,sources,COMPLETE,9 source URLs (0 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_magellan
+magellan,timeline,MISSING,no dated timeline events,
+magellan,stakeholders,MISSING,no stakeholder organizations,
+magellan,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/magellan/magellan.glb
+magellan,people,MISSING,no individual contributors,
+marco,what_is_it,COMPLETE,260 chars; source: science.nasa.gov,https://science.nasa.gov/mission/marco/
+marco,how_it_works,PLACEHOLDER,generic template (generic_eyes_model_sentence); no mission-specific facts,https://science.nasa.gov/mission/marco/
+marco,why_important,PLACEHOLDER,generic template (generic_contributes_sentence); no mission-specific facts,https://science.nasa.gov/mission/marco/
+marco,status,PLACEHOLDER,generic template (generic_status_sentence); no mission-specific facts,https://science.nasa.gov/mission/marco/
+marco,imagery,MISSING,no image records,
+marco,sources,COMPLETE,9 source URLs (0 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_marco_a
+marco,timeline,MISSING,no dated timeline events,
+marco,stakeholders,MISSING,no stakeholder organizations,
+marco,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/marco/model.glb
+marco,people,MISSING,no individual contributors,
+mariner-2,what_is_it,COMPLETE,699 chars; source: science.nasa.gov,https://science.nasa.gov/mission/mariner-2/
+mariner-2,how_it_works,PLACEHOLDER,generic template (generic_eyes_model_sentence); no mission-specific facts,https://science.nasa.gov/mission/mariner-2/
+mariner-2,why_important,PLACEHOLDER,generic template (generic_contributes_sentence); no mission-specific facts,https://science.nasa.gov/mission/mariner-2/
+mariner-2,status,PLACEHOLDER,generic template (generic_status_sentence); no mission-specific facts,https://science.nasa.gov/mission/mariner-2/
+mariner-2,imagery,MISSING,no image records,
+mariner-2,sources,COMPLETE,9 source URLs (0 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_mariner_2
+mariner-2,timeline,MISSING,no dated timeline events,
+mariner-2,stakeholders,MISSING,no stakeholder organizations,
+mariner-2,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/mariner-2/mariner2.glb
+mariner-2,people,MISSING,no individual contributors,
+mars-express,what_is_it,COMPLETE,952 chars; source: science.nasa.gov,https://science.nasa.gov/mission/mars-express/
+mars-express,how_it_works,PLACEHOLDER,generic template (generic_eyes_model_sentence); no mission-specific facts,https://science.nasa.gov/mission/mars-express/
+mars-express,why_important,PLACEHOLDER,generic template (generic_contributes_sentence); no mission-specific facts,https://science.nasa.gov/mission/mars-express/
+mars-express,status,PLACEHOLDER,generic template (generic_status_sentence); no mission-specific facts,https://science.nasa.gov/mission/mars-express/
+mars-express,imagery,MISSING,no image records,
+mars-express,sources,COMPLETE,7 source URLs (0 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_mars_express
+mars-express,timeline,MISSING,no dated timeline events,
+mars-express,stakeholders,MISSING,no stakeholder organizations,
+mars-express,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/mars-express/mars_express.glb
+mars-express,people,MISSING,no individual contributors,
+mars-global-surveyor,what_is_it,COMPLETE,710 chars; source: science.nasa.gov,https://science.nasa.gov/mission/mars-global-surveyor/
+mars-global-surveyor,how_it_works,PLACEHOLDER,generic template (generic_eyes_model_sentence); no mission-specific facts,https://science.nasa.gov/mission/mars-global-surveyor/
+mars-global-surveyor,why_important,PLACEHOLDER,generic template (generic_contributes_sentence); no mission-specific facts,https://science.nasa.gov/mission/mars-global-surveyor/
+mars-global-surveyor,status,PLACEHOLDER,generic template (generic_status_sentence); no mission-specific facts,https://science.nasa.gov/mission/mars-global-surveyor/
+mars-global-surveyor,imagery,MISSING,no image records,
+mars-global-surveyor,sources,COMPLETE,9 source URLs (0 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_mars_global_surveyor
+mars-global-surveyor,timeline,MISSING,no dated timeline events,
+mars-global-surveyor,stakeholders,MISSING,no stakeholder organizations,
+mars-global-surveyor,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/mars-global-surveyor/mars_global_surveyor.glb
+mars-global-surveyor,people,MISSING,no individual contributors,
+mars-odyssey,what_is_it,COMPLETE,1148 chars; source: science.nasa.gov,https://science.nasa.gov/mission/odyssey/
+mars-odyssey,how_it_works,PLACEHOLDER,generic template (generic_eyes_model_sentence); no mission-specific facts,https://science.nasa.gov/mission/odyssey/
+mars-odyssey,why_important,PLACEHOLDER,generic template (generic_contributes_sentence); no mission-specific facts,https://science.nasa.gov/mission/odyssey/
+mars-odyssey,status,PLACEHOLDER,generic template (generic_status_sentence); no mission-specific facts,https://science.nasa.gov/mission/odyssey/
+mars-odyssey,imagery,MISSING,no image records,
+mars-odyssey,sources,COMPLETE,9 source URLs (0 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_mars_odyssey
+mars-odyssey,timeline,MISSING,no dated timeline events,
+mars-odyssey,stakeholders,MISSING,no stakeholder organizations,
+mars-odyssey,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/mars-odyssey/mars_odyssey.glb
+mars-odyssey,people,MISSING,no individual contributors,
+mars-pathfinder,what_is_it,COMPLETE,1644 chars; source: en.wikipedia.org,https://en.wikipedia.org/wiki/Mars_Pathfinder
+mars-pathfinder,how_it_works,COMPLETE,232 chars; source: en.wikipedia.org; 6 documented parts/instruments,https://en.wikipedia.org/wiki/Mars_Pathfinder
+mars-pathfinder,why_important,COMPLETE,4074 chars; source: en.wikipedia.org,https://en.wikipedia.org/wiki/Mars_Pathfinder
+mars-pathfinder,status,COMPLETE,1227 chars; source: en.wikipedia.org,https://en.wikipedia.org/wiki/Mars_Pathfinder
+mars-pathfinder,imagery,COMPLETE,10 images (10 source-linked),https://en.wikipedia.org/wiki/Mars_Pathfinder
+mars-pathfinder,sources,COMPLETE,3 source URLs (3 marked verified),https://science.nasa.gov/mission/mars-pathfinder/
+mars-pathfinder,timeline,UNVERIFIED,"8 events, none linked to a source record",
+mars-pathfinder,stakeholders,UNVERIFIED,"5 organizations, none with an official URL",
+mars-pathfinder,model,MISSING,no web-ready model (all rows are no_model),
+mars-pathfinder,people,COMPLETE,10 people (6 with a source link),https://en.wikipedia.org/wiki/Tony_Spear
+mars-reconnaissance-orbiter,what_is_it,COMPLETE,579 chars; source: science.nasa.gov,https://science.nasa.gov/mission/mars-reconnaissance-orbiter/
+mars-reconnaissance-orbiter,how_it_works,PLACEHOLDER,generic template (generic_eyes_model_sentence); no mission-specific facts,https://science.nasa.gov/mission/mars-reconnaissance-orbiter/
+mars-reconnaissance-orbiter,why_important,PLACEHOLDER,generic template (generic_contributes_sentence); no mission-specific facts,https://science.nasa.gov/mission/mars-reconnaissance-orbiter/
+mars-reconnaissance-orbiter,status,PLACEHOLDER,generic template (generic_status_sentence); no mission-specific facts,https://science.nasa.gov/mission/mars-reconnaissance-orbiter/
+mars-reconnaissance-orbiter,imagery,MISSING,no image records,
+mars-reconnaissance-orbiter,sources,COMPLETE,9 source URLs (0 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_mars_reconnaissance_orbiter
+mars-reconnaissance-orbiter,timeline,MISSING,no dated timeline events,
+mars-reconnaissance-orbiter,stakeholders,MISSING,no stakeholder organizations,
+mars-reconnaissance-orbiter,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/mars-reconnaissance-orbiter/MRO.glb
+mars-reconnaissance-orbiter,people,MISSING,no individual contributors,
+maven,what_is_it,COMPLETE,461 chars; source: science.nasa.gov,https://science.nasa.gov/mission/maven/
+maven,how_it_works,PLACEHOLDER,generic template (generic_eyes_model_sentence); no mission-specific facts,https://science.nasa.gov/mission/maven/
+maven,why_important,PLACEHOLDER,generic template (generic_contributes_sentence); no mission-specific facts,https://science.nasa.gov/mission/maven/
+maven,status,PLACEHOLDER,generic template (generic_status_sentence); no mission-specific facts,https://science.nasa.gov/mission/maven/
+maven,imagery,MISSING,no image records,
+maven,sources,COMPLETE,9 source URLs (0 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_maven
+maven,timeline,MISSING,no dated timeline events,
+maven,stakeholders,MISSING,no stakeholder organizations,
+maven,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/maven/Maven.glb
+maven,people,MISSING,no individual contributors,
+mcubed-2,what_is_it,COMPLETE,294 chars; source: www.jpl.nasa.gov,https://www.jpl.nasa.gov/missions/m-cubed-cove-2/
+mcubed-2,how_it_works,PLACEHOLDER,generic template (generic_eyes_model_sentence); no mission-specific facts,https://www.jpl.nasa.gov/missions/m-cubed-cove-2/
+mcubed-2,why_important,PLACEHOLDER,generic template (generic_contributes_sentence); no mission-specific facts,https://www.jpl.nasa.gov/missions/m-cubed-cove-2/
+mcubed-2,status,PLACEHOLDER,generic template (generic_status_sentence); no mission-specific facts,https://www.jpl.nasa.gov/missions/m-cubed-cove-2/
+mcubed-2,imagery,MISSING,no image records,
+mcubed-2,sources,COMPLETE,11 source URLs (0 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_mcubed_2
+mcubed-2,timeline,MISSING,no dated timeline events,
+mcubed-2,stakeholders,MISSING,no stakeholder organizations,
+mcubed-2,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/mcubed-2/M-Cubed2.glb
+mcubed-2,people,MISSING,no individual contributors,
+messenger,what_is_it,COMPLETE,1138 chars; source: en.wikipedia.org,https://en.wikipedia.org/wiki/MESSENGER
+messenger,how_it_works,COMPLETE,957 chars; source: en.wikipedia.org; 1 documented parts/instruments,https://en.wikipedia.org/wiki/MESSENGER
+messenger,why_important,COMPLETE,2200 chars; source: en.wikipedia.org,https://en.wikipedia.org/wiki/MESSENGER
+messenger,status,COMPLETE,1079 chars; source: en.wikipedia.org,https://en.wikipedia.org/wiki/MESSENGER
+messenger,imagery,COMPLETE,10 images (10 source-linked),https://en.wikipedia.org/wiki/MESSENGER
+messenger,sources,COMPLETE,11 source URLs (4 marked verified),https://science.nasa.gov/mission/messenger/
+messenger,timeline,UNVERIFIED,"24 events, none linked to a source record",
+messenger,stakeholders,COMPLETE,5 organizations (1 with official URLs),https://www.nasa.gov
+messenger,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/nasa/NASA-3D-Resources/master/3D%20Models/MErcury%20Surface%2C%20Space%20ENvironment%2C%20GEochemistry%2C%20and%20Ranging%20%28MESSENGER%29/MErcury%20Surface%2C%20Space%20ENvironment%2C%20GEochemistry%2C%20and%20Ranging%20%28MESSENGER%29.glb
+messenger,people,COMPLETE,10 people (2 with a source link),https://en.wikipedia.org/wiki/Sean_Solomon
+mms,what_is_it,COMPLETE,760 chars; source: science.nasa.gov,https://science.nasa.gov/mission/MMS/
+mms,how_it_works,PLACEHOLDER,generic template (generic_eyes_model_sentence); no mission-specific facts,https://science.nasa.gov/mission/MMS/
+mms,why_important,PLACEHOLDER,generic template (generic_contributes_sentence); no mission-specific facts,https://science.nasa.gov/mission/MMS/
+mms,status,PLACEHOLDER,generic template (generic_status_sentence); no mission-specific facts,https://science.nasa.gov/mission/MMS/
+mms,imagery,MISSING,no image records,
+mms,sources,COMPLETE,10 source URLs (0 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_mms_1
+mms,timeline,MISSING,no dated timeline events,
+mms,stakeholders,MISSING,no stakeholder organizations,
+mms,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/mms/MMS.glb
+mms,people,MISSING,no individual contributors,
+near-shoemaker,what_is_it,COMPLETE,398 chars; source: solarsystem.nasa.gov,https://solarsystem.nasa.gov/missions/near-shoemaker/in-depth/
+near-shoemaker,how_it_works,PLACEHOLDER,generic template (generic_eyes_model_sentence); no mission-specific facts,https://solarsystem.nasa.gov/missions/near-shoemaker/in-depth/
+near-shoemaker,why_important,PLACEHOLDER,generic template (generic_contributes_sentence); no mission-specific facts,https://solarsystem.nasa.gov/missions/near-shoemaker/in-depth/
+near-shoemaker,status,PLACEHOLDER,generic template (generic_status_sentence); no mission-specific facts,https://solarsystem.nasa.gov/missions/near-shoemaker/in-depth/
+near-shoemaker,imagery,MISSING,no image records,
+near-shoemaker,sources,COMPLETE,9 source URLs (0 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_near_shoemaker
+near-shoemaker,timeline,MISSING,no dated timeline events,
+near-shoemaker,stakeholders,MISSING,no stakeholder organizations,
+near-shoemaker,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/near-shoemaker/near.glb
+near-shoemaker,people,MISSING,no individual contributors,
+neo-surveyor,what_is_it,COMPLETE,1452 chars; source: en.wikipedia.org,https://en.wikipedia.org/wiki/NEO_Surveyor
+neo-surveyor,how_it_works,COMPLETE,2109 chars; source: en.wikipedia.org; 1 documented parts/instruments,https://en.wikipedia.org/wiki/NEO_Surveyor
+neo-surveyor,why_important,COMPLETE,4001 chars; source: en.wikipedia.org,https://en.wikipedia.org/wiki/NEO_Surveyor
+neo-surveyor,status,COMPLETE,1871 chars; source: en.wikipedia.org,https://en.wikipedia.org/wiki/NEO_Surveyor
+neo-surveyor,imagery,COMPLETE,8 images (8 source-linked),https://en.wikipedia.org/wiki/NEO_Surveyor
+neo-surveyor,sources,COMPLETE,8 source URLs (3 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_neo_surveyor
+neo-surveyor,timeline,UNVERIFIED,"4 events, none linked to a source record",
+neo-surveyor,stakeholders,COMPLETE,5 organizations (2 with official URLs),https://www.nasa.gov
+neo-surveyor,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/neo-surveyor/neosurveyor.glb
+neo-surveyor,people,COMPLETE,1 people (1 with a source link),https://en.wikipedia.org/wiki/Amy_Mainzer
+new-horizons,what_is_it,COMPLETE,3319 chars; source: en.wikipedia.org,https://en.wikipedia.org/wiki/New_Horizons
+new-horizons,how_it_works,COMPLETE,2864 chars; source: en.wikipedia.org; 1 documented parts/instruments,https://en.wikipedia.org/wiki/New_Horizons
+new-horizons,why_important,COMPLETE,2213 chars; source: en.wikipedia.org,https://en.wikipedia.org/wiki/New_Horizons
+new-horizons,status,COMPLETE,6283 chars; source: en.wikipedia.org,https://en.wikipedia.org/wiki/New_Horizons
+new-horizons,imagery,COMPLETE,10 images (10 source-linked),https://en.wikipedia.org/wiki/New_Horizons
+new-horizons,sources,COMPLETE,11 source URLs (4 marked verified),https://science.nasa.gov/mission/new-horizons/
+new-horizons,timeline,UNVERIFIED,"24 events, none linked to a source record",
+new-horizons,stakeholders,COMPLETE,6 organizations (1 with official URLs),https://www.nasa.gov
+new-horizons,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/new-horizons/new_horizons.glb
+new-horizons,people,COMPLETE,10 people (5 with a source link),https://en.wikipedia.org/wiki/Alan_Stern
+nisar,what_is_it,COMPLETE,947 chars; source: science.nasa.gov,https://science.nasa.gov/mission/nisar/
+nisar,how_it_works,PLACEHOLDER,generic template (generic_eyes_model_sentence); no mission-specific facts,https://science.nasa.gov/mission/nisar/
+nisar,why_important,PLACEHOLDER,generic template (generic_contributes_sentence); no mission-specific facts,https://science.nasa.gov/mission/nisar/
+nisar,status,PLACEHOLDER,generic template (generic_status_sentence); no mission-specific facts,https://science.nasa.gov/mission/nisar/
+nisar,imagery,MISSING,no image records,
+nisar,sources,COMPLETE,7 source URLs (0 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_nisar
+nisar,timeline,MISSING,no dated timeline events,
+nisar,stakeholders,MISSING,no stakeholder organizations,
+nisar,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/nisar/Nisar.glb
+nisar,people,MISSING,no individual contributors,
+nustar,what_is_it,COMPLETE,784 chars; source: science.nasa.gov,https://science.nasa.gov/mission/nustar/
+nustar,how_it_works,PLACEHOLDER,generic template (generic_eyes_model_sentence); no mission-specific facts,https://science.nasa.gov/mission/nustar/
+nustar,why_important,PLACEHOLDER,generic template (generic_contributes_sentence); no mission-specific facts,https://science.nasa.gov/mission/nustar/
+nustar,status,PLACEHOLDER,generic template (generic_status_sentence); no mission-specific facts,https://science.nasa.gov/mission/nustar/
+nustar,imagery,MISSING,no image records,
+nustar,sources,COMPLETE,8 source URLs (0 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_nustar
+nustar,timeline,MISSING,no dated timeline events,
+nustar,stakeholders,MISSING,no stakeholder organizations,
+nustar,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/nustar/nustar.glb
+nustar,people,MISSING,no individual contributors,
+oco-2,what_is_it,COMPLETE,947 chars; source: science.nasa.gov,https://science.nasa.gov/mission/oco-2/
+oco-2,how_it_works,PLACEHOLDER,generic template (generic_eyes_model_sentence); no mission-specific facts,https://science.nasa.gov/mission/oco-2/
+oco-2,why_important,PLACEHOLDER,generic template (generic_contributes_sentence); no mission-specific facts,https://science.nasa.gov/mission/oco-2/
+oco-2,status,PLACEHOLDER,generic template (generic_status_sentence); no mission-specific facts,https://science.nasa.gov/mission/oco-2/
+oco-2,imagery,MISSING,no image records,
+oco-2,sources,COMPLETE,9 source URLs (0 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_oco_2
+oco-2,timeline,MISSING,no dated timeline events,
+oco-2,stakeholders,MISSING,no stakeholder organizations,
+oco-2,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/oco-2/oco2.glb
+oco-2,people,MISSING,no individual contributors,
+opportunity,what_is_it,COMPLETE,2287 chars; source: en.wikipedia.org,https://en.wikipedia.org/wiki/Opportunity_%28rover%29
+opportunity,how_it_works,COMPLETE,2640 chars; source: en.wikipedia.org; 9 documented parts/instruments,https://en.wikipedia.org/wiki/Opportunity_%28rover%29
+opportunity,why_important,COMPLETE,3968 chars; source: en.wikipedia.org,https://en.wikipedia.org/wiki/Opportunity_%28rover%29
+opportunity,status,COMPLETE,2321 chars; source: en.wikipedia.org,https://en.wikipedia.org/wiki/Opportunity_%28rover%29
+opportunity,imagery,COMPLETE,10 images (10 source-linked),https://en.wikipedia.org/wiki/Opportunity_%28rover%29
+opportunity,sources,COMPLETE,4 source URLs (4 marked verified),https://science.nasa.gov/mission/mars-exploration-rovers-spirit-and-opportunity/
+opportunity,timeline,UNVERIFIED,"13 events, none linked to a source record",
+opportunity,stakeholders,COMPLETE,5 organizations (1 with official URLs),https://www.nasa.gov
+opportunity,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/nasa/NASA-3D-Resources/master/3D%20Models/Mars%20Exploration%20Rover%20-%20Opportunity%20%28MER-B%29/Mars%20Exploration%20Rover%20-%20Opportunity%20%28MER-B%29.glb
+opportunity,people,COMPLETE,10 people (7 with a source link),https://en.wikipedia.org/wiki/Steve_Squyres
+opportunity-cruise,what_is_it,COMPLETE,353 chars; source: science.nasa.gov,https://science.nasa.gov/mission/mer-opportunity/
+opportunity-cruise,how_it_works,PLACEHOLDER,generic template (generic_eyes_model_sentence); no mission-specific facts,https://science.nasa.gov/mission/mer-opportunity/
+opportunity-cruise,why_important,PLACEHOLDER,generic template (generic_contributes_sentence); no mission-specific facts,https://science.nasa.gov/mission/mer-opportunity/
+opportunity-cruise,status,PLACEHOLDER,generic template (generic_status_sentence); no mission-specific facts,https://science.nasa.gov/mission/mer-opportunity/
+opportunity-cruise,imagery,MISSING,no image records,
+opportunity-cruise,sources,COMPLETE,9 source URLs (0 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_mars_exploration_rover_1
+opportunity-cruise,timeline,MISSING,no dated timeline events,
+opportunity-cruise,stakeholders,MISSING,no stakeholder organizations,
+opportunity-cruise,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/opportunity-cruise/mpf_mera_merb_cruise.glb
+opportunity-cruise,people,MISSING,no individual contributors,
+opportunity-rover,what_is_it,COMPLETE,353 chars; source: science.nasa.gov,https://science.nasa.gov/mission/mer-opportunity/
+opportunity-rover,how_it_works,PLACEHOLDER,generic template (generic_eyes_model_sentence); no mission-specific facts,https://science.nasa.gov/mission/mer-opportunity/
+opportunity-rover,why_important,PLACEHOLDER,generic template (generic_contributes_sentence); no mission-specific facts,https://science.nasa.gov/mission/mer-opportunity/
+opportunity-rover,status,PLACEHOLDER,generic template (generic_status_sentence); no mission-specific facts,https://science.nasa.gov/mission/mer-opportunity/
+opportunity-rover,imagery,MISSING,no image records,
+opportunity-rover,sources,COMPLETE,9 source URLs (0 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_mars_exploration_rover_1
+opportunity-rover,timeline,MISSING,no dated timeline events,
+opportunity-rover,stakeholders,MISSING,no stakeholder organizations,
+opportunity-rover,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/opportunity-rover/mer_static.glb
+opportunity-rover,people,MISSING,no individual contributors,
+osiris-apex,what_is_it,COMPLETE,1816 chars; source: www.nasa.gov,https://www.nasa.gov/osiris-rex
+osiris-apex,how_it_works,PLACEHOLDER,generic template (generic_eyes_model_sentence); no mission-specific facts,https://www.nasa.gov/osiris-rex
+osiris-apex,why_important,PLACEHOLDER,generic template (generic_contributes_sentence); no mission-specific facts,https://www.nasa.gov/osiris-rex
+osiris-apex,status,PLACEHOLDER,generic template (generic_status_sentence); no mission-specific facts,https://www.nasa.gov/osiris-rex
+osiris-apex,imagery,MISSING,no image records,
+osiris-apex,sources,COMPLETE,9 source URLs (0 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_osiris_rex
+osiris-apex,timeline,MISSING,no dated timeline events,
+osiris-apex,stakeholders,MISSING,no stakeholder organizations,
+osiris-apex,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/osiris-apex/osiris_rex_articulated_panels.glb
+osiris-apex,people,MISSING,no individual contributors,
+osiris-rex-sample-return-capsule,what_is_it,COMPLETE,746 chars; source: www.nasa.gov,https://www.nasa.gov/osiris-rex
+osiris-rex-sample-return-capsule,how_it_works,PLACEHOLDER,generic template (generic_eyes_model_sentence); no mission-specific facts,https://www.nasa.gov/osiris-rex
+osiris-rex-sample-return-capsule,why_important,PLACEHOLDER,generic template (generic_contributes_sentence); no mission-specific facts,https://www.nasa.gov/osiris-rex
+osiris-rex-sample-return-capsule,status,PLACEHOLDER,generic template (generic_status_sentence); no mission-specific facts,https://www.nasa.gov/osiris-rex
+osiris-rex-sample-return-capsule,imagery,MISSING,no image records,
+osiris-rex-sample-return-capsule,sources,COMPLETE,9 source URLs (0 marked verified),https://eyes.nasa.gov/apps/solar-system/descriptions/sc_osiris_rex_src.json
+osiris-rex-sample-return-capsule,timeline,MISSING,no dated timeline events,
+osiris-rex-sample-return-capsule,stakeholders,MISSING,no stakeholder organizations,
+osiris-rex-sample-return-capsule,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/osiris-rex-sample-return-capsule/osiris_rex_heatshield.glb
+osiris-rex-sample-return-capsule,people,MISSING,no individual contributors,
+pace,what_is_it,COMPLETE,907 chars; source: science.nasa.gov,https://science.nasa.gov/mission/pace/
+pace,how_it_works,PLACEHOLDER,generic template (generic_eyes_model_sentence); no mission-specific facts,https://science.nasa.gov/mission/pace/
+pace,why_important,PLACEHOLDER,generic template (generic_contributes_sentence); no mission-specific facts,https://science.nasa.gov/mission/pace/
+pace,status,PLACEHOLDER,generic template (generic_status_sentence); no mission-specific facts,https://science.nasa.gov/mission/pace/
+pace,imagery,MISSING,no image records,
+pace,sources,COMPLETE,9 source URLs (0 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_pace
+pace,timeline,MISSING,no dated timeline events,
+pace,stakeholders,MISSING,no stakeholder organizations,
+pace,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/pace/pace.glb
+pace,people,MISSING,no individual contributors,
+parker-solar-probe,what_is_it,COMPLETE,1907 chars; source: en.wikipedia.org,https://en.wikipedia.org/wiki/Parker_Solar_Probe
+parker-solar-probe,how_it_works,COMPLETE,6969 chars; source: en.wikipedia.org; 4 documented parts/instruments,https://en.wikipedia.org/wiki/Parker_Solar_Probe
+parker-solar-probe,why_important,COMPLETE,2907 chars; source: en.wikipedia.org,https://en.wikipedia.org/wiki/Parker_Solar_Probe
+parker-solar-probe,status,COMPLETE,1372 chars; source: en.wikipedia.org,https://en.wikipedia.org/wiki/Parker_Solar_Probe
+parker-solar-probe,imagery,COMPLETE,10 images (10 source-linked),https://en.wikipedia.org/wiki/Parker_Solar_Probe
+parker-solar-probe,sources,COMPLETE,11 source URLs (4 marked verified),https://science.nasa.gov/mission/parker-solar-probe/
+parker-solar-probe,timeline,UNVERIFIED,"18 events, none linked to a source record",
+parker-solar-probe,stakeholders,UNVERIFIED,"5 organizations, none with an official URL",
+parker-solar-probe,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/nasa/NASA-3D-Resources/master/3D%20Models/Parker%20Solar%20Probe/Parker%20Solar%20Probe.glb
+parker-solar-probe,people,COMPLETE,10 people (5 with a source link),https://en.wikipedia.org/wiki/Eugene_Parker
+perseverance-ingenuity,what_is_it,COMPLETE,1679 chars; source: en.wikipedia.org,https://en.wikipedia.org/wiki/Perseverance_%28rover%29
+perseverance-ingenuity,how_it_works,COMPLETE,5897 chars; source: en.wikipedia.org; 7 documented parts/instruments,https://en.wikipedia.org/wiki/Perseverance_%28rover%29
+perseverance-ingenuity,why_important,COMPLETE,4085 chars; source: en.wikipedia.org,https://en.wikipedia.org/wiki/Perseverance_%28rover%29
+perseverance-ingenuity,status,COMPLETE,4021 chars; source: en.wikipedia.org,https://en.wikipedia.org/wiki/Perseverance_%28rover%29
+perseverance-ingenuity,imagery,COMPLETE,10 images (10 source-linked),https://en.wikipedia.org/wiki/Perseverance_%28rover%29
+perseverance-ingenuity,sources,COMPLETE,4 source URLs (4 marked verified),https://science.nasa.gov/mission/mars-2020-perseverance/
+perseverance-ingenuity,timeline,UNVERIFIED,"23 events, none linked to a source record",
+perseverance-ingenuity,stakeholders,UNVERIFIED,"4 organizations, none with an official URL",
+perseverance-ingenuity,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/nasa/NASA-3D-Resources/master/3D%20Models/Mars%202020%20Perseverance%20Rover/Mars%202020%20Perseverance%20Rover.glb
+perseverance-ingenuity,people,COMPLETE,10 people (6 with a source link),https://en.wikipedia.org/wiki/John_McNamee
+perseverence,what_is_it,COMPLETE,622 chars; source: science.nasa.gov,https://science.nasa.gov/mission/mars-2020-perseverance/
+perseverence,how_it_works,PLACEHOLDER,generic template (generic_eyes_model_sentence); no mission-specific facts,https://science.nasa.gov/mission/mars-2020-perseverance/
+perseverence,why_important,PLACEHOLDER,generic template (generic_contributes_sentence); no mission-specific facts,https://science.nasa.gov/mission/mars-2020-perseverance/
+perseverence,status,PLACEHOLDER,generic template (generic_status_sentence); no mission-specific facts,https://science.nasa.gov/mission/mars-2020-perseverance/
+perseverence,imagery,MISSING,no image records,
+perseverence,sources,COMPLETE,9 source URLs (0 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_mars_2020
+perseverence,timeline,MISSING,no dated timeline events,
+perseverence,stakeholders,MISSING,no stakeholder organizations,
+perseverence,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/perseverence/perseverance.glb
+perseverence,people,MISSING,no individual contributors,
+philae,what_is_it,COMPLETE,2455 chars; source: en.wikipedia.org,https://en.wikipedia.org/wiki/Philae_%28spacecraft%29
+philae,how_it_works,COMPLETE,3738 chars; source: en.wikipedia.org; 1 documented parts/instruments,https://en.wikipedia.org/wiki/Philae_%28spacecraft%29
+philae,why_important,COMPLETE,1948 chars; source: en.wikipedia.org,https://en.wikipedia.org/wiki/Philae_%28spacecraft%29
+philae,status,COMPLETE,3112 chars; source: en.wikipedia.org,https://en.wikipedia.org/wiki/Philae_%28spacecraft%29
+philae,imagery,COMPLETE,10 images (10 source-linked),https://en.wikipedia.org/wiki/Philae_%28spacecraft%29
+philae,sources,COMPLETE,10 source URLs (4 marked verified),https://www.esa.int/Science_Exploration/Space_Science/Rosetta
+philae,timeline,UNVERIFIED,"12 events, none linked to a source record",
+philae,stakeholders,COMPLETE,6 organizations (2 with official URLs),https://www.esa.int
+philae,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/philae/philae.glb
+philae,people,COMPLETE,10 people (2 with a source link),https://en.wikipedia.org/wiki/Stephan_Ulamec
+phoenix-cruise,what_is_it,COMPLETE,593 chars; source: eyes.nasa.gov,https://eyes.nasa.gov/apps/solar-system/#/sc_phoenix
+phoenix-cruise,how_it_works,PLACEHOLDER,generic template (generic_eyes_model_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_phoenix
+phoenix-cruise,why_important,PLACEHOLDER,generic template (generic_contributes_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_phoenix
+phoenix-cruise,status,PLACEHOLDER,generic template (generic_status_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_phoenix
+phoenix-cruise,imagery,MISSING,no image records,
+phoenix-cruise,sources,COMPLETE,9 source URLs (0 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_phoenix
+phoenix-cruise,timeline,MISSING,no dated timeline events,
+phoenix-cruise,stakeholders,MISSING,no stakeholder organizations,
+phoenix-cruise,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/phoenix-cruise/phoenix_cruise.glb
+phoenix-cruise,people,MISSING,no individual contributors,
+phoenix-edl,what_is_it,COMPLETE,52 chars; source: eyes.nasa.gov,https://eyes.nasa.gov/apps/solar-system/#/sc_phoenix
+phoenix-edl,how_it_works,PLACEHOLDER,generic template (generic_eyes_model_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_phoenix
+phoenix-edl,why_important,PLACEHOLDER,generic template (generic_contributes_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_phoenix
+phoenix-edl,status,PLACEHOLDER,generic template (generic_status_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_phoenix
+phoenix-edl,imagery,MISSING,no image records,
+phoenix-edl,sources,COMPLETE,9 source URLs (0 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_phoenix?rate=1&time=2008-05-25T23:24:51.554+00:00
+phoenix-edl,timeline,MISSING,no dated timeline events,
+phoenix-edl,stakeholders,MISSING,no stakeholder organizations,
+phoenix-edl,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/phoenix-edl/phoenix_edl.glb
+phoenix-edl,people,MISSING,no individual contributors,
+pioneer,what_is_it,COMPLETE,643 chars; source: eyes.nasa.gov,https://eyes.nasa.gov/apps/solar-system/#/sc_pioneer_10
+pioneer,how_it_works,PLACEHOLDER,generic template (generic_eyes_model_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_pioneer_10
+pioneer,why_important,PLACEHOLDER,generic template (generic_contributes_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_pioneer_10
+pioneer,status,PLACEHOLDER,generic template (generic_status_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_pioneer_10
+pioneer,imagery,MISSING,no image records,
+pioneer,sources,COMPLETE,12 source URLs (0 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_pioneer_10
+pioneer,timeline,MISSING,no dated timeline events,
+pioneer,stakeholders,MISSING,no stakeholder organizations,
+pioneer,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/pioneer/pioneer.glb
+pioneer,people,MISSING,no individual contributors,
+polar,what_is_it,COMPLETE,398 chars; source: eyes.nasa.gov,https://eyes.nasa.gov/apps/solar-system/#/sc_polar
+polar,how_it_works,PLACEHOLDER,generic template (generic_eyes_model_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_polar
+polar,why_important,PLACEHOLDER,generic template (generic_contributes_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_polar
+polar,status,PLACEHOLDER,generic template (generic_status_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_polar
+polar,imagery,MISSING,no image records,
+polar,sources,COMPLETE,10 source URLs (0 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_polar
+polar,timeline,MISSING,no dated timeline events,
+polar,stakeholders,MISSING,no stakeholder organizations,
+polar,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/polar/polar.glb
+polar,people,MISSING,no individual contributors,
+prefire,what_is_it,COMPLETE,639 chars; source: eyes.nasa.gov,https://eyes.nasa.gov/apps/solar-system/#/sc_prefire_1
+prefire,how_it_works,PLACEHOLDER,generic template (generic_eyes_model_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_prefire_1
+prefire,why_important,PLACEHOLDER,generic template (generic_contributes_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_prefire_1
+prefire,status,PLACEHOLDER,generic template (generic_status_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_prefire_1
+prefire,imagery,MISSING,no image records,
+prefire,sources,COMPLETE,9 source URLs (0 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_prefire_1
+prefire,timeline,MISSING,no dated timeline events,
+prefire,stakeholders,MISSING,no stakeholder organizations,
+prefire,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/prefire/prefire.glb
+prefire,people,MISSING,no individual contributors,
+psyche,what_is_it,COMPLETE,491 chars; source: www.jpl.nasa.gov,https://www.jpl.nasa.gov/missions/psyche
+psyche,how_it_works,PLACEHOLDER,generic template (generic_eyes_model_sentence); no mission-specific facts,https://www.jpl.nasa.gov/missions/psyche
+psyche,why_important,PLACEHOLDER,generic template (generic_contributes_sentence); no mission-specific facts,https://www.jpl.nasa.gov/missions/psyche
+psyche,status,PLACEHOLDER,generic template (generic_status_sentence); no mission-specific facts,https://www.jpl.nasa.gov/missions/psyche
+psyche,imagery,MISSING,no image records,
+psyche,sources,COMPLETE,10 source URLs (0 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_psyche
+psyche,timeline,MISSING,no dated timeline events,
+psyche,stakeholders,MISSING,no stakeholder organizations,
+psyche,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/psyche/psyche.glb
+psyche,people,MISSING,no individual contributors,
+qikscat,what_is_it,COMPLETE,496 chars; source: eyes.nasa.gov,https://eyes.nasa.gov/apps/solar-system/#/sc_quikscat
+qikscat,how_it_works,PLACEHOLDER,generic template (generic_eyes_model_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_quikscat
+qikscat,why_important,PLACEHOLDER,generic template (generic_contributes_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_quikscat
+qikscat,status,PLACEHOLDER,generic template (generic_status_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_quikscat
+qikscat,imagery,MISSING,no image records,
+qikscat,sources,COMPLETE,9 source URLs (0 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_quikscat
+qikscat,timeline,MISSING,no dated timeline events,
+qikscat,stakeholders,MISSING,no stakeholder organizations,
+qikscat,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/qikscat/QuikSCAT.glb
+qikscat,people,MISSING,no individual contributors,
+raincube,what_is_it,COMPLETE,520 chars; source: eyes.nasa.gov,https://eyes.nasa.gov/apps/solar-system/#/sc_raincube
+raincube,how_it_works,PLACEHOLDER,generic template (generic_eyes_model_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_raincube
+raincube,why_important,PLACEHOLDER,generic template (generic_contributes_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_raincube
+raincube,status,PLACEHOLDER,generic template (generic_status_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_raincube
+raincube,imagery,MISSING,no image records,
+raincube,sources,COMPLETE,9 source URLs (0 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_raincube
+raincube,timeline,MISSING,no dated timeline events,
+raincube,stakeholders,MISSING,no stakeholder organizations,
+raincube,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/raincube/Raincube.glb
+raincube,people,MISSING,no individual contributors,
+rosetta,what_is_it,COMPLETE,1239 chars; source: en.wikipedia.org,https://en.wikipedia.org/wiki/Rosetta_%28spacecraft%29
+rosetta,how_it_works,COMPLETE,2213 chars; source: en.wikipedia.org; 1 documented parts/instruments,https://en.wikipedia.org/wiki/Rosetta_%28spacecraft%29
+rosetta,why_important,COMPLETE,96 chars; source: en.wikipedia.org,https://en.wikipedia.org/wiki/Rosetta_%28spacecraft%29
+rosetta,status,COMPLETE,3021 chars; source: en.wikipedia.org,https://en.wikipedia.org/wiki/Rosetta_%28spacecraft%29
+rosetta,imagery,COMPLETE,10 images (10 source-linked),https://en.wikipedia.org/wiki/Rosetta_%28spacecraft%29
+rosetta,sources,COMPLETE,10 source URLs (4 marked verified),https://www.esa.int/Science_Exploration/Space_Science/Rosetta
+rosetta,timeline,UNVERIFIED,"24 events, none linked to a source record",
+rosetta,stakeholders,COMPLETE,6 organizations (3 with official URLs),https://www.esa.int
+rosetta,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/nasa/NASA-3D-Resources/master/3D%20Models/Rosetta/Rosetta.glb
+rosetta,people,COMPLETE,10 people (4 with a source link),https://en.wikipedia.org/wiki/Gerhard_Schwehm
+sentinel-6,what_is_it,COMPLETE,547 chars; source: eyes.nasa.gov,https://eyes.nasa.gov/apps/solar-system/#/sc_sentinel_6
+sentinel-6,how_it_works,PLACEHOLDER,generic template (generic_eyes_model_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_sentinel_6
+sentinel-6,why_important,PLACEHOLDER,generic template (generic_contributes_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_sentinel_6
+sentinel-6,status,PLACEHOLDER,generic template (generic_status_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_sentinel_6
+sentinel-6,imagery,MISSING,no image records,
+sentinel-6,sources,COMPLETE,9 source URLs (0 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_sentinel_6
+sentinel-6,timeline,MISSING,no dated timeline events,
+sentinel-6,stakeholders,MISSING,no stakeholder organizations,
+sentinel-6,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/sentinel-6/Sentinel6.glb
+sentinel-6,people,MISSING,no individual contributors,
+smap,what_is_it,COMPLETE,1173 chars; source: eyes.nasa.gov,https://eyes.nasa.gov/apps/solar-system/#/sc_smap
+smap,how_it_works,PLACEHOLDER,generic template (generic_eyes_model_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_smap
+smap,why_important,PLACEHOLDER,generic template (generic_contributes_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_smap
+smap,status,PLACEHOLDER,generic template (generic_status_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_smap
+smap,imagery,MISSING,no image records,
+smap,sources,COMPLETE,9 source URLs (0 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_smap
+smap,timeline,MISSING,no dated timeline events,
+smap,stakeholders,MISSING,no stakeholder organizations,
+smap,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/smap/SMAP.glb
+smap,people,MISSING,no individual contributors,
+soho,what_is_it,COMPLETE,512 chars; source: eyes.nasa.gov,https://eyes.nasa.gov/apps/solar-system/#/sc_soho
+soho,how_it_works,PLACEHOLDER,generic template (generic_eyes_model_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_soho
+soho,why_important,PLACEHOLDER,generic template (generic_contributes_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_soho
+soho,status,PLACEHOLDER,generic template (generic_status_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_soho
+soho,imagery,MISSING,no image records,
+soho,sources,COMPLETE,7 source URLs (0 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_soho
+soho,timeline,MISSING,no dated timeline events,
+soho,stakeholders,MISSING,no stakeholder organizations,
+soho,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/soho/soho.glb
+soho,people,MISSING,no individual contributors,
+solar-dynamics-observatory,what_is_it,COMPLETE,403 chars; source: eyes.nasa.gov,https://eyes.nasa.gov/apps/solar-system/#/sc_sdo
+solar-dynamics-observatory,how_it_works,PLACEHOLDER,generic template (generic_eyes_model_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_sdo
+solar-dynamics-observatory,why_important,PLACEHOLDER,generic template (generic_contributes_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_sdo
+solar-dynamics-observatory,status,PLACEHOLDER,generic template (generic_status_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_sdo
+solar-dynamics-observatory,imagery,MISSING,no image records,
+solar-dynamics-observatory,sources,COMPLETE,9 source URLs (0 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_sdo
+solar-dynamics-observatory,timeline,MISSING,no dated timeline events,
+solar-dynamics-observatory,stakeholders,MISSING,no stakeholder organizations,
+solar-dynamics-observatory,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/solar-dynamics-observatory/sdo.glb
+solar-dynamics-observatory,people,MISSING,no individual contributors,
+sorce,what_is_it,COMPLETE,511 chars; source: eyes.nasa.gov,https://eyes.nasa.gov/apps/solar-system/#/sc_sorce
+sorce,how_it_works,PLACEHOLDER,generic template (generic_eyes_model_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_sorce
+sorce,why_important,PLACEHOLDER,generic template (generic_contributes_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_sorce
+sorce,status,PLACEHOLDER,generic template (generic_status_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_sorce
+sorce,imagery,MISSING,no image records,
+sorce,sources,COMPLETE,9 source URLs (0 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_sorce
+sorce,timeline,MISSING,no dated timeline events,
+sorce,stakeholders,MISSING,no stakeholder organizations,
+sorce,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/sorce/sorce.glb
+sorce,people,MISSING,no individual contributors,
+spherex,what_is_it,COMPLETE,906 chars; source: eyes.nasa.gov,https://eyes.nasa.gov/apps/solar-system/#/sc_spherex
+spherex,how_it_works,PLACEHOLDER,generic template (generic_eyes_model_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_spherex
+spherex,why_important,PLACEHOLDER,generic template (generic_contributes_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_spherex
+spherex,status,PLACEHOLDER,generic template (generic_status_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_spherex
+spherex,imagery,MISSING,no image records,
+spherex,sources,COMPLETE,9 source URLs (0 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_spherex
+spherex,timeline,MISSING,no dated timeline events,
+spherex,stakeholders,MISSING,no stakeholder organizations,
+spherex,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/spherex/spherex.glb
+spherex,people,MISSING,no individual contributors,
+spirit-cruise,what_is_it,COMPLETE,673 chars; source: eyes.nasa.gov,https://eyes.nasa.gov/apps/solar-system/#/sc_mars_exploration_rover_2
+spirit-cruise,how_it_works,PLACEHOLDER,generic template (generic_eyes_model_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_mars_exploration_rover_2
+spirit-cruise,why_important,PLACEHOLDER,generic template (generic_contributes_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_mars_exploration_rover_2
+spirit-cruise,status,PLACEHOLDER,generic template (generic_status_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_mars_exploration_rover_2
+spirit-cruise,imagery,MISSING,no image records,
+spirit-cruise,sources,COMPLETE,9 source URLs (0 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_mars_exploration_rover_2
+spirit-cruise,timeline,MISSING,no dated timeline events,
+spirit-cruise,stakeholders,MISSING,no stakeholder organizations,
+spirit-cruise,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/spirit-cruise/mpf_mera_merb_cruise.glb
+spirit-cruise,people,MISSING,no individual contributors,
+spirit-rover,what_is_it,COMPLETE,673 chars; source: eyes.nasa.gov,https://eyes.nasa.gov/apps/solar-system/#/sc_mars_exploration_rover_2?rate=1&time=2004-01-04T04:56:06.939+00:00
+spirit-rover,how_it_works,PLACEHOLDER,generic template (generic_eyes_model_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_mars_exploration_rover_2?rate=1&time=2004-01-04T04:56:06.939+00:00
+spirit-rover,why_important,PLACEHOLDER,generic template (generic_contributes_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_mars_exploration_rover_2?rate=1&time=2004-01-04T04:56:06.939+00:00
+spirit-rover,status,PLACEHOLDER,generic template (generic_status_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_mars_exploration_rover_2?rate=1&time=2004-01-04T04:56:06.939+00:00
+spirit-rover,imagery,MISSING,no image records,
+spirit-rover,sources,COMPLETE,10 source URLs (0 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_mars_exploration_rover_2?rate=1&time=2004-01-04T04:56:06.939+00:00
+spirit-rover,timeline,MISSING,no dated timeline events,
+spirit-rover,stakeholders,MISSING,no stakeholder organizations,
+spirit-rover,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/spirit-rover/mer_static.glb
+spirit-rover,people,MISSING,no individual contributors,
+spitzer-space-telescope,what_is_it,COMPLETE,404 chars; source: eyes.nasa.gov,https://eyes.nasa.gov/apps/solar-system/#/sc_spitzer
+spitzer-space-telescope,how_it_works,PLACEHOLDER,generic template (generic_eyes_model_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_spitzer
+spitzer-space-telescope,why_important,PLACEHOLDER,generic template (generic_contributes_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_spitzer
+spitzer-space-telescope,status,PLACEHOLDER,generic template (generic_status_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_spitzer
+spitzer-space-telescope,imagery,MISSING,no image records,
+spitzer-space-telescope,sources,COMPLETE,9 source URLs (0 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_spitzer
+spitzer-space-telescope,timeline,MISSING,no dated timeline events,
+spitzer-space-telescope,stakeholders,MISSING,no stakeholder organizations,
+spitzer-space-telescope,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/spitzer-space-telescope/SPITZER.glb
+spitzer-space-telescope,people,MISSING,no individual contributors,
+stardust,what_is_it,COMPLETE,528 chars; source: solarsystem.nasa.gov,https://solarsystem.nasa.gov/missions/stardust/in-depth/
+stardust,how_it_works,PLACEHOLDER,generic template (generic_eyes_model_sentence); no mission-specific facts,https://solarsystem.nasa.gov/missions/stardust/in-depth/
+stardust,why_important,PLACEHOLDER,generic template (generic_contributes_sentence); no mission-specific facts,https://solarsystem.nasa.gov/missions/stardust/in-depth/
+stardust,status,PLACEHOLDER,generic template (generic_status_sentence); no mission-specific facts,https://solarsystem.nasa.gov/missions/stardust/in-depth/
+stardust,imagery,MISSING,no image records,
+stardust,sources,COMPLETE,12 source URLs (0 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_stardust
+stardust,timeline,MISSING,no dated timeline events,
+stardust,stakeholders,MISSING,no stakeholder organizations,
+stardust,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/stardust/stardust_articulated.glb
+stardust,people,MISSING,no individual contributors,
+stardust-sample-return-capsule,what_is_it,COMPLETE,711 chars; source: eyes.nasa.gov,https://eyes.nasa.gov/apps/solar-system/#/sc_stardust_src
+stardust-sample-return-capsule,how_it_works,PLACEHOLDER,generic template (generic_eyes_model_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_stardust_src
+stardust-sample-return-capsule,why_important,PLACEHOLDER,generic template (generic_contributes_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_stardust_src
+stardust-sample-return-capsule,status,PLACEHOLDER,generic template (generic_status_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_stardust_src
+stardust-sample-return-capsule,imagery,MISSING,no image records,
+stardust-sample-return-capsule,sources,COMPLETE,9 source URLs (0 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_stardust_src
+stardust-sample-return-capsule,timeline,MISSING,no dated timeline events,
+stardust-sample-return-capsule,stakeholders,MISSING,no stakeholder organizations,
+stardust-sample-return-capsule,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/stardust-sample-return-capsule/stardust_capsule.glb
+stardust-sample-return-capsule,people,MISSING,no individual contributors,
+starling,what_is_it,COMPLETE,478 chars; source: eyes.nasa.gov,https://eyes.nasa.gov/apps/solar-system/#/sc_starling_1
+starling,how_it_works,PLACEHOLDER,generic template (generic_eyes_model_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_starling_1
+starling,why_important,PLACEHOLDER,generic template (generic_contributes_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_starling_1
+starling,status,PLACEHOLDER,generic template (generic_status_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_starling_1
+starling,imagery,MISSING,no image records,
+starling,sources,COMPLETE,10 source URLs (0 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_starling_1
+starling,timeline,MISSING,no dated timeline events,
+starling,stakeholders,MISSING,no stakeholder organizations,
+starling,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/starling/starling.glb
+starling,people,MISSING,no individual contributors,
+stereo-ahead,what_is_it,COMPLETE,1212 chars; source: eyes.nasa.gov,https://eyes.nasa.gov/apps/solar-system/#/sc_stereo_ahead
+stereo-ahead,how_it_works,PLACEHOLDER,generic template (generic_eyes_model_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_stereo_ahead
+stereo-ahead,why_important,PLACEHOLDER,generic template (generic_contributes_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_stereo_ahead
+stereo-ahead,status,PLACEHOLDER,generic template (generic_status_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_stereo_ahead
+stereo-ahead,imagery,MISSING,no image records,
+stereo-ahead,sources,COMPLETE,9 source URLs (0 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_stereo_ahead
+stereo-ahead,timeline,MISSING,no dated timeline events,
+stereo-ahead,stakeholders,MISSING,no stakeholder organizations,
+stereo-ahead,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/stereo-ahead/stereo_a.glb
+stereo-ahead,people,MISSING,no individual contributors,
+stereo-behind,what_is_it,COMPLETE,1219 chars; source: eyes.nasa.gov,https://eyes.nasa.gov/apps/solar-system/#/sc_stereo_behind
+stereo-behind,how_it_works,PLACEHOLDER,generic template (generic_eyes_model_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_stereo_behind
+stereo-behind,why_important,PLACEHOLDER,generic template (generic_contributes_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_stereo_behind
+stereo-behind,status,PLACEHOLDER,generic template (generic_status_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_stereo_behind
+stereo-behind,imagery,MISSING,no image records,
+stereo-behind,sources,COMPLETE,9 source URLs (0 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_stereo_behind
+stereo-behind,timeline,MISSING,no dated timeline events,
+stereo-behind,stakeholders,MISSING,no stakeholder organizations,
+stereo-behind,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/stereo-behind/stereo_b.glb
+stereo-behind,people,MISSING,no individual contributors,
+suomi-npp,what_is_it,COMPLETE,755 chars; source: eyes.nasa.gov,https://eyes.nasa.gov/apps/solar-system/#/sc_suomi_npp
+suomi-npp,how_it_works,PLACEHOLDER,generic template (generic_eyes_model_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_suomi_npp
+suomi-npp,why_important,PLACEHOLDER,generic template (generic_contributes_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_suomi_npp
+suomi-npp,status,PLACEHOLDER,generic template (generic_status_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_suomi_npp
+suomi-npp,imagery,MISSING,no image records,
+suomi-npp,sources,COMPLETE,8 source URLs (0 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_suomi_npp
+suomi-npp,timeline,MISSING,no dated timeline events,
+suomi-npp,stakeholders,MISSING,no stakeholder organizations,
+suomi-npp,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/suomi-npp/NPP.glb
+suomi-npp,people,MISSING,no individual contributors,
+surveyor-1,what_is_it,COMPLETE,1120 chars; source: en.wikipedia.org,https://en.wikipedia.org/wiki/Surveyor_1
+surveyor-1,how_it_works,COMPLETE,5948 chars; source: en.wikipedia.org,https://en.wikipedia.org/wiki/Surveyor_1
+surveyor-1,why_important,COMPLETE,274 chars; source: en.wikipedia.org,https://en.wikipedia.org/wiki/Surveyor_1
+surveyor-1,status,COMPLETE,354 chars; source: en.wikipedia.org,https://en.wikipedia.org/wiki/Surveyor_1
+surveyor-1,imagery,COMPLETE,10 images (10 source-linked),https://en.wikipedia.org/wiki/Surveyor_1
+surveyor-1,sources,COMPLETE,2 source URLs (2 marked verified),https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1966-045A
+surveyor-1,timeline,UNVERIFIED,"8 events, none linked to a source record",
+surveyor-1,stakeholders,COMPLETE,5 organizations (1 with official URLs),https://www.nasa.gov
+surveyor-1,model,MISSING,no web-ready model (all rows are no_model),
+surveyor-1,people,COMPLETE,10 people (2 with a source link),https://en.wikipedia.org/wiki/Robert_J._Parks
+surveyor-3,what_is_it,COMPLETE,617 chars; source: en.wikipedia.org,https://en.wikipedia.org/wiki/Surveyor_3
+surveyor-3,how_it_works,COMPLETE,5111 chars; source: en.wikipedia.org,https://en.wikipedia.org/wiki/Surveyor_3
+surveyor-3,why_important,COMPLETE,5065 chars; source: en.wikipedia.org,https://en.wikipedia.org/wiki/Surveyor_3
+surveyor-3,status,COMPLETE,2060 chars; source: en.wikipedia.org,https://en.wikipedia.org/wiki/Surveyor_3
+surveyor-3,imagery,COMPLETE,10 images (10 source-linked),https://en.wikipedia.org/wiki/Surveyor_3
+surveyor-3,sources,COMPLETE,2 source URLs (2 marked verified),https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1967-035A
+surveyor-3,timeline,UNVERIFIED,"9 events, none linked to a source record",
+surveyor-3,stakeholders,COMPLETE,5 organizations (1 with official URLs),https://www.nasa.gov
+surveyor-3,model,MISSING,no web-ready model (all rows are no_model),
+surveyor-3,people,COMPLETE,10 people (3 with a source link),https://en.wikipedia.org/wiki/Eugene_Merle_Shoemaker
+swot,what_is_it,COMPLETE,206 chars; source: eyes.nasa.gov,https://eyes.nasa.gov/apps/solar-system/#/sc_swot
+swot,how_it_works,PLACEHOLDER,generic template (generic_eyes_model_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_swot
+swot,why_important,PLACEHOLDER,generic template (generic_contributes_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_swot
+swot,status,PLACEHOLDER,generic template (generic_status_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_swot
+swot,imagery,MISSING,no image records,
+swot,sources,COMPLETE,9 source URLs (0 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_swot
+swot,timeline,MISSING,no dated timeline events,
+swot,stakeholders,MISSING,no stakeholder organizations,
+swot,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/swot/swot.glb
+swot,people,MISSING,no individual contributors,
+tdrs,what_is_it,COMPLETE,863 chars; source: eyes.nasa.gov,https://eyes.nasa.gov/apps/solar-system/#/sc_tdrs_10
+tdrs,how_it_works,PLACEHOLDER,generic template (generic_eyes_model_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_tdrs_10
+tdrs,why_important,PLACEHOLDER,generic template (generic_contributes_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_tdrs_10
+tdrs,status,PLACEHOLDER,generic template (generic_status_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_tdrs_10
+tdrs,imagery,MISSING,no image records,
+tdrs,sources,COMPLETE,9 source URLs (0 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_tdrs_10
+tdrs,timeline,MISSING,no dated timeline events,
+tdrs,stakeholders,MISSING,no stakeholder organizations,
+tdrs,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/tdrs/tdrs.glb
+tdrs,people,MISSING,no individual contributors,
+tempo,what_is_it,COMPLETE,532 chars; source: eyes.nasa.gov,https://eyes.nasa.gov/apps/solar-system/#/sc_tempo
+tempo,how_it_works,PLACEHOLDER,generic template (generic_eyes_model_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_tempo
+tempo,why_important,PLACEHOLDER,generic template (generic_contributes_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_tempo
+tempo,status,PLACEHOLDER,generic template (generic_status_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_tempo
+tempo,imagery,MISSING,no image records,
+tempo,sources,COMPLETE,8 source URLs (0 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_tempo
+tempo,timeline,MISSING,no dated timeline events,
+tempo,stakeholders,MISSING,no stakeholder organizations,
+tempo,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/tempo/tempo.glb
+tempo,people,MISSING,no individual contributors,
+terra,what_is_it,COMPLETE,698 chars; source: eyes.nasa.gov,https://eyes.nasa.gov/apps/solar-system/#/sc_terra
+terra,how_it_works,PLACEHOLDER,generic template (generic_eyes_model_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_terra
+terra,why_important,PLACEHOLDER,generic template (generic_contributes_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_terra
+terra,status,PLACEHOLDER,generic template (generic_status_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_terra
+terra,imagery,MISSING,no image records,
+terra,sources,COMPLETE,10 source URLs (0 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_terra
+terra,timeline,MISSING,no dated timeline events,
+terra,stakeholders,MISSING,no stakeholder organizations,
+terra,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/terra/Terra.glb
+terra,people,MISSING,no individual contributors,
+tess,what_is_it,COMPLETE,1062 chars; source: eyes.nasa.gov,https://eyes.nasa.gov/apps/solar-system/#/sc_tess
+tess,how_it_works,PLACEHOLDER,generic template (generic_eyes_model_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_tess
+tess,why_important,PLACEHOLDER,generic template (generic_contributes_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_tess
+tess,status,PLACEHOLDER,generic template (generic_status_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_tess
+tess,imagery,MISSING,no image records,
+tess,sources,COMPLETE,9 source URLs (0 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_tess
+tess,timeline,MISSING,no dated timeline events,
+tess,stakeholders,MISSING,no stakeholder organizations,
+tess,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/tess/TESS.glb
+tess,people,MISSING,no individual contributors,
+themis,what_is_it,COMPLETE,861 chars; source: eyes.nasa.gov,https://eyes.nasa.gov/apps/solar-system/#/sc_themis_a
+themis,how_it_works,PLACEHOLDER,generic template (generic_eyes_model_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_themis_a
+themis,why_important,PLACEHOLDER,generic template (generic_contributes_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_themis_a
+themis,status,PLACEHOLDER,generic template (generic_status_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_themis_a
+themis,imagery,MISSING,no image records,
+themis,sources,COMPLETE,9 source URLs (0 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_themis_a
+themis,timeline,MISSING,no dated timeline events,
+themis,stakeholders,MISSING,no stakeholder organizations,
+themis,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/themis/themis.glb
+themis,people,MISSING,no individual contributors,
+trace-gas-orbiter,what_is_it,COMPLETE,932 chars; source: eyes.nasa.gov,https://eyes.nasa.gov/apps/solar-system/#/sc_trace_gas_orbiter
+trace-gas-orbiter,how_it_works,PLACEHOLDER,generic template (generic_eyes_model_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_trace_gas_orbiter
+trace-gas-orbiter,why_important,PLACEHOLDER,generic template (generic_contributes_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_trace_gas_orbiter
+trace-gas-orbiter,status,PLACEHOLDER,generic template (generic_status_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_trace_gas_orbiter
+trace-gas-orbiter,imagery,MISSING,no image records,
+trace-gas-orbiter,sources,COMPLETE,7 source URLs (0 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_trace_gas_orbiter
+trace-gas-orbiter,timeline,MISSING,no dated timeline events,
+trace-gas-orbiter,stakeholders,MISSING,no stakeholder organizations,
+trace-gas-orbiter,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/trace-gas-orbiter/TGO.glb
+trace-gas-orbiter,people,MISSING,no individual contributors,
+trmm,what_is_it,COMPLETE,555 chars; source: eyes.nasa.gov,https://eyes.nasa.gov/apps/solar-system/#/sc_trmm
+trmm,how_it_works,PLACEHOLDER,generic template (generic_eyes_model_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_trmm
+trmm,why_important,PLACEHOLDER,generic template (generic_contributes_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_trmm
+trmm,status,PLACEHOLDER,generic template (generic_status_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_trmm
+trmm,imagery,MISSING,no image records,
+trmm,sources,COMPLETE,7 source URLs (0 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_trmm
+trmm,timeline,MISSING,no dated timeline events,
+trmm,stakeholders,MISSING,no stakeholder organizations,
+trmm,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/trmm/TRMM.glb
+trmm,people,MISSING,no individual contributors,
+tropics,what_is_it,COMPLETE,587 chars; source: eyes.nasa.gov,https://eyes.nasa.gov/apps/solar-system/#/sc_tropics_01
+tropics,how_it_works,PLACEHOLDER,generic template (generic_eyes_model_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_tropics_01
+tropics,why_important,PLACEHOLDER,generic template (generic_contributes_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_tropics_01
+tropics,status,PLACEHOLDER,generic template (generic_status_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_tropics_01
+tropics,imagery,MISSING,no image records,
+tropics,sources,COMPLETE,9 source URLs (0 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_tropics_01
+tropics,timeline,MISSING,no dated timeline events,
+tropics,stakeholders,MISSING,no stakeholder organizations,
+tropics,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/tropics/tropics.glb
+tropics,people,MISSING,no individual contributors,
+ulysses,what_is_it,COMPLETE,502 chars; source: eyes.nasa.gov,https://eyes.nasa.gov/apps/solar-system/#/sc_ulysses
+ulysses,how_it_works,PLACEHOLDER,generic template (generic_eyes_model_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_ulysses
+ulysses,why_important,PLACEHOLDER,generic template (generic_contributes_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_ulysses
+ulysses,status,PLACEHOLDER,generic template (generic_status_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_ulysses
+ulysses,imagery,MISSING,no image records,
+ulysses,sources,COMPLETE,9 source URLs (0 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_ulysses
+ulysses,timeline,MISSING,no dated timeline events,
+ulysses,stakeholders,MISSING,no stakeholder organizations,
+ulysses,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/ulysses/ulysses.glb
+ulysses,people,MISSING,no individual contributors,
+van-allen-probe,what_is_it,COMPLETE,404 chars; source: eyes.nasa.gov,https://eyes.nasa.gov/apps/solar-system/#/sc_rbsp_a
+van-allen-probe,how_it_works,PLACEHOLDER,generic template (generic_eyes_model_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_rbsp_a
+van-allen-probe,why_important,PLACEHOLDER,generic template (generic_contributes_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_rbsp_a
+van-allen-probe,status,PLACEHOLDER,generic template (generic_status_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_rbsp_a
+van-allen-probe,imagery,MISSING,no image records,
+van-allen-probe,sources,COMPLETE,9 source URLs (0 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_rbsp_a
+van-allen-probe,timeline,MISSING,no dated timeline events,
+van-allen-probe,stakeholders,MISSING,no stakeholder organizations,
+van-allen-probe,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/van-allen-probe/rbsp.glb
+van-allen-probe,people,MISSING,no individual contributors,
+venera-13,what_is_it,COMPLETE,1053 chars; source: en.wikipedia.org,https://en.wikipedia.org/wiki/Venera_13
+venera-13,how_it_works,COMPLETE,3877 chars; source: en.wikipedia.org,https://en.wikipedia.org/wiki/Venera_13
+venera-13,why_important,COMPLETE,2822 chars; source: en.wikipedia.org,https://en.wikipedia.org/wiki/Venera_13
+venera-13,status,COMPLETE,2078 chars; source: en.wikipedia.org,https://en.wikipedia.org/wiki/Venera_13
+venera-13,imagery,COMPLETE,6 images (6 source-linked),https://en.wikipedia.org/wiki/Venera_13
+venera-13,sources,COMPLETE,2 source URLs (2 marked verified),https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1981-106A
+venera-13,timeline,UNVERIFIED,"6 events, none linked to a source record",
+venera-13,stakeholders,UNVERIFIED,"5 organizations, none with an official URL",
+venera-13,model,MISSING,no web-ready model (all rows are no_model),
+venera-13,people,COMPLETE,10 people (4 with a source link),https://en.wikipedia.org/wiki/Oleg_Ivanovsky
+voyager,what_is_it,COMPLETE,1489 chars; source: eyes.nasa.gov,https://eyes.nasa.gov/apps/solar-system/#/sc_voyager_1
+voyager,how_it_works,PLACEHOLDER,generic template (generic_eyes_model_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_voyager_1
+voyager,why_important,PLACEHOLDER,generic template (generic_contributes_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_voyager_1
+voyager,status,PLACEHOLDER,generic template (generic_status_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_voyager_1
+voyager,imagery,MISSING,no image records,
+voyager,sources,COMPLETE,10 source URLs (0 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_voyager_1
+voyager,timeline,MISSING,no dated timeline events,
+voyager,stakeholders,MISSING,no stakeholder organizations,
+voyager,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/voyager/Voyager.glb
+voyager,people,MISSING,no individual contributors,
+voyager-1,what_is_it,COMPLETE,2377 chars; source: en.wikipedia.org,https://en.wikipedia.org/wiki/Voyager_1
+voyager-1,how_it_works,COMPLETE,591 chars; source: en.wikipedia.org; 1 documented parts/instruments,https://en.wikipedia.org/wiki/Voyager_1
+voyager-1,why_important,COMPLETE,3268 chars; source: en.wikipedia.org,https://en.wikipedia.org/wiki/Voyager_1
+voyager-1,status,COMPLETE,2125 chars; source: en.wikipedia.org,https://en.wikipedia.org/wiki/Voyager_1
+voyager-1,imagery,COMPLETE,10 images (10 source-linked),https://en.wikipedia.org/wiki/Voyager_1
+voyager-1,sources,COMPLETE,4 source URLs (4 marked verified),https://science.nasa.gov/mission/voyager/
+voyager-1,timeline,UNVERIFIED,"24 events, none linked to a source record",
+voyager-1,stakeholders,UNVERIFIED,"5 organizations, none with an official URL",
+voyager-1,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/nasa/NASA-3D-Resources/master/3D%20Models/Voyager%20Probe%20%28A%29/Voyager%20Probe%20%28A%29.glb
+voyager-1,people,COMPLETE,10 people (9 with a source link),https://en.wikipedia.org/wiki/Edward_C._Stone
+voyager-2,what_is_it,COMPLETE,1932 chars; source: en.wikipedia.org,https://en.wikipedia.org/wiki/Voyager_2
+voyager-2,how_it_works,COMPLETE,633 chars; source: en.wikipedia.org; 1 documented parts/instruments,https://en.wikipedia.org/wiki/Voyager_2
+voyager-2,why_important,COMPLETE,4126 chars; source: en.wikipedia.org,https://en.wikipedia.org/wiki/Voyager_2
+voyager-2,status,COMPLETE,2284 chars; source: en.wikipedia.org,https://en.wikipedia.org/wiki/Voyager_2
+voyager-2,imagery,COMPLETE,10 images (10 source-linked),https://en.wikipedia.org/wiki/Voyager_2
+voyager-2,sources,COMPLETE,4 source URLs (4 marked verified),https://science.nasa.gov/mission/voyager/
+voyager-2,timeline,UNVERIFIED,"19 events, none linked to a source record",
+voyager-2,stakeholders,UNVERIFIED,"5 organizations, none with an official URL",
+voyager-2,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/nasa/NASA-3D-Resources/master/3D%20Models/Voyager%20Probe%20%28A%29/Voyager%20Probe%20%28A%29.glb
+voyager-2,people,COMPLETE,10 people (8 with a source link),https://en.wikipedia.org/wiki/Edward_C._Stone
+wind,what_is_it,COMPLETE,95 chars; source: eyes.nasa.gov,https://eyes.nasa.gov/apps/solar-system/#/sc_wind
+wind,how_it_works,PLACEHOLDER,generic template (generic_eyes_model_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_wind
+wind,why_important,PLACEHOLDER,generic template (generic_contributes_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_wind
+wind,status,PLACEHOLDER,generic template (generic_status_sentence); no mission-specific facts,https://eyes.nasa.gov/apps/solar-system/#/sc_wind
+wind,imagery,MISSING,no image records,
+wind,sources,COMPLETE,10 source URLs (0 marked verified),https://eyes.nasa.gov/apps/solar-system/#/sc_wind
+wind,timeline,MISSING,no dated timeline events,
+wind,stakeholders,MISSING,no stakeholder organizations,
+wind,model,COMPLETE,glb model reference stored,https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/models/wind/wind.glb
+wind,people,MISSING,no individual contributors,

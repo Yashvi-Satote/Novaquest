@@ -45,13 +45,20 @@ CREATE INDEX IF NOT EXISTS idx_organizations_type ON organizations(organization_
 CREATE TABLE IF NOT EXISTS missions (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL UNIQUE,
+    mission_name VARCHAR(255),
     slug VARCHAR(255) NOT NULL UNIQUE,
+    agency VARCHAR(255),
+    mission_type VARCHAR(100),
     destination_category VARCHAR(100) NOT NULL,
+    destination VARCHAR(100) DEFAULT 'Deep Space',
     launch_date VARCHAR(50),
     mission_end_date VARCHAR(50),
+    end_date VARCHAR(50),
     mission_status VARCHAR(100) NOT NULL DEFAULT 'Active',
     description TEXT,
+    objectives TEXT,
     official_url VARCHAR(500),
+    source_url VARCHAR(500),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -66,6 +73,15 @@ CREATE TABLE IF NOT EXISTS spacecraft (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL UNIQUE,
     slug VARCHAR(255) NOT NULL UNIQUE,
+    alternate_names TEXT,
+    agency VARCHAR(255),
+    manufacturer VARCHAR(255),
+    spacecraft_type VARCHAR(100) NOT NULL DEFAULT 'Spacecraft',
+    description TEXT,
+    model_path VARCHAR(500),
+    model_format VARCHAR(50) DEFAULT 'glb',
+    thumbnail_path VARCHAR(500),
+    source_url VARCHAR(500),
     display_name VARCHAR(255) NOT NULL,
     full_name VARCHAR(255) NOT NULL,
     object_type VARCHAR(100) NOT NULL DEFAULT 'Spacecraft',
@@ -91,6 +107,7 @@ CREATE TABLE IF NOT EXISTS spacecraft (
     verification_status VARCHAR(100) NOT NULL DEFAULT 'Verified from NASA/JPL Records',
     last_verified_at VARCHAR(50),
     primary_mission_id INTEGER REFERENCES missions(id) ON DELETE SET NULL,
+    agency_id INTEGER REFERENCES organizations(id) ON DELETE SET NULL,
     manufacturer_id INTEGER REFERENCES organizations(id) ON DELETE SET NULL,
     operator_id INTEGER REFERENCES organizations(id) ON DELETE SET NULL,
     mission_agency_id INTEGER REFERENCES organizations(id) ON DELETE SET NULL,
@@ -324,7 +341,88 @@ CREATE INDEX IF NOT EXISTS idx_spacecraft_models_sc ON spacecraft_models(spacecr
 CREATE INDEX IF NOT EXISTS idx_spacecraft_models_status ON spacecraft_models(status);
 
 -- -------------------------------------------------------------------------
--- 12. People (section 10)
+-- 12. Hardware components / 3D model catalogue
+--
+-- One row per 3D model asset in
+-- https://raw.githubusercontent.com/matthewgiarra/spacecraft-models/main/viewer/models.json
+-- Every row is linked to the physical spacecraft record it represents and to
+-- the mission that deployed/operated that hardware.  The table stores the
+-- complete raw metadata payload as well as the resolved local asset paths,
+-- download URLs, formats and file sizes so that nothing is lost if the remote
+-- catalogue changes.
+-- -------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS hardware_components (
+    id SERIAL PRIMARY KEY,
+    component_key VARCHAR(255) NOT NULL UNIQUE,
+    model_name VARCHAR(255) NOT NULL UNIQUE,
+    folder_name VARCHAR(255) NOT NULL,
+    display_name VARCHAR(255) NOT NULL,
+    full_name VARCHAR(255) NOT NULL,
+    component_type VARCHAR(100) NOT NULL DEFAULT 'Spacecraft',
+    description TEXT NOT NULL,
+    description_html TEXT NOT NULL,
+    spacecraft_id INTEGER NOT NULL REFERENCES spacecraft(id) ON DELETE CASCADE,
+    mission_id INTEGER NOT NULL REFERENCES missions(id) ON DELETE CASCADE,
+    mission_match_method VARCHAR(60) NOT NULL DEFAULT 'exact_match',
+    mission_match_confidence DOUBLE PRECISION NOT NULL DEFAULT 1.0,
+    eotss_url VARCHAR(1000) NOT NULL,
+    viewer_url VARCHAR(1000) NOT NULL,
+    official_url VARCHAR(1000) NOT NULL,
+    gltf_filename VARCHAR(255) NOT NULL,
+    glb_filename VARCHAR(255) NOT NULL,
+    bin_filename VARCHAR(255) NOT NULL,
+    gltf_path VARCHAR(1000) NOT NULL,
+    glb_path VARCHAR(1000) NOT NULL,
+    bin_path VARCHAR(1000) NOT NULL,
+    download_gltf_url VARCHAR(1500) NOT NULL,
+    download_glb_url VARCHAR(1500) NOT NULL,
+    primary_format VARCHAR(20) NOT NULL DEFAULT 'glb',
+    web_ready BOOLEAN NOT NULL DEFAULT TRUE,
+    texture_files TEXT NOT NULL DEFAULT '[]',
+    texture_count INTEGER NOT NULL DEFAULT 0,
+    file_size_bytes BIGINT NOT NULL DEFAULT 0,
+    glb_size_bytes BIGINT NOT NULL DEFAULT 0,
+    gltf_size_bytes BIGINT NOT NULL DEFAULT 0,
+    binary_size_bytes BIGINT NOT NULL DEFAULT 0,
+    provenance VARCHAR(255) NOT NULL DEFAULT 'NASA Eyes on the Solar System (Official Public Domain)',
+    license VARCHAR(255) NOT NULL DEFAULT 'NASA 3D resources are free to use without copyright',
+    source_name VARCHAR(255) NOT NULL DEFAULT 'NASA Eyes on the Solar System',
+    source_url VARCHAR(1000) NOT NULL,
+    source_repository VARCHAR(1000) NOT NULL DEFAULT 'https://github.com/matthewgiarra/spacecraft-models',
+    raw_json TEXT NOT NULL,
+    ingestion_status VARCHAR(30) NOT NULL DEFAULT 'complete',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_hardware_components_spacecraft ON hardware_components(spacecraft_id);
+CREATE INDEX IF NOT EXISTS idx_hardware_components_mission ON hardware_components(mission_id);
+CREATE INDEX IF NOT EXISTS idx_hardware_components_model ON hardware_components(model_name);
+CREATE INDEX IF NOT EXISTS idx_hardware_components_folder ON hardware_components(folder_name);
+CREATE INDEX IF NOT EXISTS idx_hardware_components_type ON hardware_components(component_type);
+CREATE INDEX IF NOT EXISTS idx_hardware_components_status ON hardware_components(ingestion_status);
+
+-- Optional many-to-many bridge for hardware / model variants that are shared
+-- by more than one mission (for example Voyager 1 + Voyager 2, or the twin
+-- STEREO observatories).  hardware_components.mission_id remains the primary
+-- mission; this table records every additional mission association.
+CREATE TABLE IF NOT EXISTS hardware_component_missions (
+    id SERIAL PRIMARY KEY,
+    component_id INTEGER NOT NULL REFERENCES hardware_components(id) ON DELETE CASCADE,
+    mission_id INTEGER NOT NULL REFERENCES missions(id) ON DELETE CASCADE,
+    role VARCHAR(150) NOT NULL DEFAULT 'Hardware / 3D model',
+    is_primary BOOLEAN NOT NULL DEFAULT FALSE,
+    match_method VARCHAR(60) NOT NULL DEFAULT 'exact_match',
+    match_confidence DOUBLE PRECISION NOT NULL DEFAULT 1.0,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT uq_hardware_component_mission UNIQUE (component_id, mission_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_hw_component_missions_component ON hardware_component_missions(component_id);
+CREATE INDEX IF NOT EXISTS idx_hw_component_missions_mission ON hardware_component_missions(mission_id);
+
+-- -------------------------------------------------------------------------
+-- 13. People (section 10)
 -- -------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS people (
     id SERIAL PRIMARY KEY,
@@ -350,7 +448,7 @@ CREATE INDEX IF NOT EXISTS idx_spacecraft_people_sc ON spacecraft_people(spacecr
 CREATE INDEX IF NOT EXISTS idx_spacecraft_people_person ON spacecraft_people(person_id);
 
 -- -------------------------------------------------------------------------
--- 13. Data sources and ingestion telemetry
+-- 14. Data sources and ingestion telemetry
 -- -------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS data_sources (
     id SERIAL PRIMARY KEY,
@@ -377,7 +475,7 @@ CREATE TABLE IF NOT EXISTS ingestion_runs (
 CREATE INDEX IF NOT EXISTS idx_ingestion_runs_started ON ingestion_runs(started_at);
 
 -- -------------------------------------------------------------------------
--- 14. Completeness view (used by verify_db and /api/novabase/health).
+-- 15. Completeness view (used by verify_db and /api/novabase/health).
 -- SQLite also supports this view syntax.
 -- -------------------------------------------------------------------------
 CREATE VIEW IF NOT EXISTS v_spacecraft_completeness AS
@@ -396,3 +494,47 @@ SELECT
     (SELECT COUNT(*) FROM spacecraft_models   m WHERE m.spacecraft_id = sc.id AND m.status IN ('ok', 'no_model')) AS models,
     (SELECT COUNT(*) FROM spacecraft_people   p WHERE p.spacecraft_id = sc.id) AS people
 FROM spacecraft sc;
+
+-- -------------------------------------------------------------------------
+-- 16. Hardware component coverage view
+-- Reports one row per hardware component and whether every required
+-- catalogue field is populated.  This is used by the ingestion script's
+-- zero-missing-values validation pass and can be queried directly.
+-- -------------------------------------------------------------------------
+CREATE VIEW IF NOT EXISTS v_hardware_component_coverage AS
+SELECT
+    hc.id AS component_id,
+    hc.component_key,
+    hc.model_name,
+    hc.spacecraft_id,
+    hc.mission_id,
+    CASE
+        WHEN LENGTH(TRIM(COALESCE(hc.component_key, ''))) > 0
+         AND LENGTH(TRIM(COALESCE(hc.model_name, ''))) > 0
+         AND LENGTH(TRIM(COALESCE(hc.folder_name, ''))) > 0
+         AND LENGTH(TRIM(COALESCE(hc.display_name, ''))) > 0
+         AND LENGTH(TRIM(COALESCE(hc.full_name, ''))) > 0
+         AND LENGTH(TRIM(COALESCE(hc.component_type, ''))) > 0
+         AND LENGTH(TRIM(COALESCE(hc.description, ''))) > 0
+         AND LENGTH(TRIM(COALESCE(hc.description_html, ''))) > 0
+         AND hc.spacecraft_id IS NOT NULL
+         AND hc.mission_id IS NOT NULL
+         AND LENGTH(TRIM(COALESCE(hc.eotss_url, ''))) > 0
+         AND LENGTH(TRIM(COALESCE(hc.viewer_url, ''))) > 0
+         AND LENGTH(TRIM(COALESCE(hc.official_url, ''))) > 0
+         AND LENGTH(TRIM(COALESCE(hc.gltf_filename, ''))) > 0
+         AND LENGTH(TRIM(COALESCE(hc.glb_filename, ''))) > 0
+         AND LENGTH(TRIM(COALESCE(hc.bin_filename, ''))) > 0
+         AND LENGTH(TRIM(COALESCE(hc.gltf_path, ''))) > 0
+         AND LENGTH(TRIM(COALESCE(hc.glb_path, ''))) > 0
+         AND LENGTH(TRIM(COALESCE(hc.bin_path, ''))) > 0
+         AND LENGTH(TRIM(COALESCE(hc.download_gltf_url, ''))) > 0
+         AND LENGTH(TRIM(COALESCE(hc.download_glb_url, ''))) > 0
+         AND hc.file_size_bytes > 0
+         AND hc.glb_size_bytes > 0
+         AND hc.gltf_size_bytes > 0
+         AND LENGTH(TRIM(COALESCE(hc.source_url, ''))) > 0
+         AND LENGTH(TRIM(COALESCE(hc.raw_json, ''))) > 0
+        THEN 1 ELSE 0
+    END AS is_complete
+FROM hardware_components hc;
