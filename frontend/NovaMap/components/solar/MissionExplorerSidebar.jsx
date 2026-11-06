@@ -48,7 +48,7 @@ export default function MissionExplorerSidebar({
   isOpen,
   onToggleOpen
 }) {
-  const [activeTab, setActiveTab] = useState('planets'); // 'system' | 'planets' | 'moons' | 'spacecraft'
+  const [activeTab, setActiveTab] = useState('planets'); // 'system' | 'planets' | 'moons' | 'smallbodies' | 'spacecraft'
   const [searchQuery, setSearchQuery] = useState('');
   
   // Spacecraft catalogue state
@@ -113,6 +113,18 @@ export default function MissionExplorerSidebar({
     return getCatalogueMappingStats(items);
   }, [items]);
 
+  // Major celestial bodies (Sun + 8 major planets)
+  const majorPlanets = useMemo(() => {
+    return CELESTIAL_BODIES.filter(b => b.type === 'star' || b.type === 'planet');
+  }, []);
+
+  // Minor celestial bodies (Dwarf planets, Asteroids, Comets)
+  const smallBodies = useMemo(() => {
+    return CELESTIAL_BODIES.filter(b => 
+      b.type === 'dwarf-planet' || b.type === 'dwarf' || b.type === 'asteroid' || b.type === 'comet'
+    );
+  }, []);
+
   // Extract all moons with parent planet info
   const allMoons = useMemo(() => {
     const moonsList = [];
@@ -130,13 +142,17 @@ export default function MissionExplorerSidebar({
     return moonsList;
   }, []);
 
-  // Universal Search across Planets, Moons, and Spacecraft
+  // Universal Search across Planets, Small Bodies, Moons, and Spacecraft
   const searchResults = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
     if (!q) return null;
 
-    const matchedPlanets = CELESTIAL_BODIES.filter(b => 
-      b.name.toLowerCase().includes(q) || b.type.toLowerCase().includes(q) || b.overview.toLowerCase().includes(q)
+    const matchedPlanets = majorPlanets.filter(b => 
+      b.name.toLowerCase().includes(q) || b.type.toLowerCase().includes(q) || (b.overview && b.overview.toLowerCase().includes(q))
+    );
+
+    const matchedSmallBodies = smallBodies.filter(b => 
+      b.name.toLowerCase().includes(q) || b.type.toLowerCase().includes(q) || (b.overview && b.overview.toLowerCase().includes(q))
     );
 
     const matchedMoons = allMoons.filter(m => 
@@ -152,11 +168,12 @@ export default function MissionExplorerSidebar({
 
     return {
       planets: matchedPlanets,
+      smallBodies: matchedSmallBodies,
       moons: matchedMoons,
       spacecraft: matchedCraft,
-      total: matchedPlanets.length + matchedMoons.length + matchedCraft.length
+      total: matchedPlanets.length + matchedSmallBodies.length + matchedMoons.length + matchedCraft.length
     };
-  }, [searchQuery, allMoons, items]);
+  }, [searchQuery, majorPlanets, smallBodies, allMoons, items]);
 
   // Filtered spacecraft list
   const filteredItems = useMemo(() => {
@@ -279,9 +296,9 @@ export default function MissionExplorerSidebar({
           </div>
         </div>
 
-        {/* Navigation Tabs (Solar System, Planets, Moons, Spacecraft) */}
+        {/* Navigation Tabs (Solar System, Planets, Moons, Small Bodies, Spacecraft) */}
         {!searchQuery && (
-          <div className="p-2 border-b border-cyan-500/15 grid grid-cols-4 gap-1 bg-[#09061c]/80 text-[11px] font-medium">
+          <div className="p-2 border-b border-cyan-500/15 grid grid-cols-5 gap-1 bg-[#09061c]/80 text-[10px] font-medium">
             {/* Tab 1: Solar System */}
             <button
               type="button"
@@ -327,7 +344,22 @@ export default function MissionExplorerSidebar({
               <span>Moons</span>
             </button>
 
-            {/* Tab 4: Spacecraft */}
+            {/* Tab 4: Small Bodies (Asteroids & Comets) */}
+            <button
+              type="button"
+              id="sidebar-tab-smallbodies"
+              onClick={() => setActiveTab('smallbodies')}
+              className={`flex flex-col items-center gap-1 py-1.5 rounded-lg transition-all cursor-pointer ${
+                activeTab === 'smallbodies'
+                  ? 'bg-cyan-600 text-white font-bold shadow-md shadow-cyan-600/30'
+                  : 'text-slate-400 hover:text-white hover:bg-purple-950/40'
+              }`}
+            >
+              <CircleDot className="w-3.5 h-3.5" />
+              <span>Asteroids</span>
+            </button>
+
+            {/* Tab 5: Spacecraft */}
             <button
               type="button"
               id="sidebar-tab-spacecraft"
@@ -386,6 +418,35 @@ export default function MissionExplorerSidebar({
                       </div>
                       <span className="px-2 py-0.5 rounded-full bg-cyan-950 border border-cyan-400/30 text-[9px] font-mono text-cyan-300">
                         {planet.type}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Matched Small Bodies (Asteroids & Comets) */}
+              {searchResults.smallBodies && searchResults.smallBodies.length > 0 && (
+                <div className="space-y-1.5">
+                  <span className="text-[10px] uppercase font-mono tracking-wider text-amber-400 block px-1">
+                    Asteroids & Comets ({searchResults.smallBodies.length})
+                  </span>
+                  {searchResults.smallBodies.map(body => (
+                    <div
+                      key={body.id}
+                      onClick={() => onSelectPlanet && onSelectPlanet(body.id)}
+                      className="p-2.5 rounded-xl bg-[#0c0824] border border-amber-500/20 hover:border-amber-400 hover:bg-amber-950/40 transition-all cursor-pointer flex items-center justify-between gap-2"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: body.color || '#f59e0b' }} />
+                        <div>
+                          <span className="text-xs font-bold text-white block">{body.name}</span>
+                          <span className="text-[10px] text-slate-400 font-mono">
+                            {body.realStats?.diameter || body.realStats?.distanceFromSun || 'Minor Celestial Body'}
+                          </span>
+                        </div>
+                      </div>
+                      <span className="px-2 py-0.5 rounded-full bg-amber-950 border border-amber-400/30 text-[9px] font-mono text-amber-300 capitalize">
+                        {body.type.replace('-', ' ')}
                       </span>
                     </div>
                   ))}
@@ -557,11 +618,11 @@ export default function MissionExplorerSidebar({
           {!searchQuery && activeTab === 'planets' && (
             <div className="space-y-1.5 font-sans">
               <div className="flex items-center justify-between px-1 pb-1 text-[10px] font-mono text-cyan-400 uppercase tracking-wider">
-                <span>Celestial Worlds ({CELESTIAL_BODIES.length})</span>
+                <span>Major Worlds ({majorPlanets.length})</span>
                 <span>Distance from Sun</span>
               </div>
 
-              {CELESTIAL_BODIES.map(planet => {
+              {majorPlanets.map(planet => {
                 const isSelected = selectedCelestialId === planet.id;
                 const hasMoons = planet.moons && planet.moons.length > 0;
 
@@ -681,7 +742,71 @@ export default function MissionExplorerSidebar({
           )}
 
           {/* =========================================================================
-              TAB 4: SPACECRAFT CATALOGUE
+              TAB 4: SMALL BODIES (Asteroids, Comets & Dwarf Planets)
+              ========================================================================= */}
+          {!searchQuery && activeTab === 'smallbodies' && (
+            <div className="space-y-1.5 font-sans">
+              <div className="flex items-center justify-between px-1 pb-1 text-[10px] font-mono text-amber-400 uppercase tracking-wider">
+                <span>Asteroids & Comets ({smallBodies.length})</span>
+                <span>Orbit Type / Distance</span>
+              </div>
+
+              {smallBodies.map(body => {
+                const isSelected = selectedCelestialId === body.id;
+                const isComet = body.type === 'comet';
+                const isDwarf = body.type === 'dwarf-planet' || body.type === 'dwarf';
+
+                return (
+                  <div
+                    key={body.id}
+                    id={`smallbody-sidebar-item-${body.id}`}
+                    onClick={() => onSelectPlanet && onSelectPlanet(body.id)}
+                    className={`p-2.5 rounded-xl border transition-all cursor-pointer flex items-center justify-between gap-2.5 ${
+                      isSelected
+                        ? 'bg-gradient-to-r from-amber-950 to-purple-950 border-amber-400 shadow-md shadow-amber-950/50 ring-1 ring-amber-400/40 border-l-4 border-l-amber-400'
+                        : 'bg-[#0a071f]/80 hover:bg-[#120d2e] border-amber-500/20 hover:border-amber-400/40'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <span 
+                        className="w-3.5 h-3.5 rounded-full shrink-0 shadow-sm"
+                        style={{ backgroundColor: body.color, boxShadow: `0 0 8px ${body.color}88` }} 
+                      />
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-xs font-bold text-white truncate">{body.name}</span>
+                          <span className={`text-[9px] font-mono px-1 py-0.2 rounded border ${
+                            isComet 
+                              ? 'text-emerald-300 bg-emerald-950/80 border-emerald-400/30' 
+                              : isDwarf 
+                                ? 'text-cyan-300 bg-cyan-950/80 border-cyan-400/30'
+                                : 'text-amber-300 bg-amber-950/80 border-amber-400/30'
+                          }`}>
+                            {isComet ? 'Comet' : isDwarf ? 'Dwarf' : 'Asteroid'}
+                          </span>
+                        </div>
+                        <span className="text-[10px] text-slate-400 font-mono block truncate">
+                          {body.realStats?.diameter || 'Minor Body'}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="text-right shrink-0">
+                      <span className="text-[10px] font-mono text-amber-300 font-semibold block">
+                        {body.realStats?.distanceFromSun ? body.realStats.distanceFromSun.split('(')[1]?.replace(')', '') || body.realStats.distanceFromSun : 'Heliocentric'}
+                      </span>
+                      <span className="text-[9px] font-mono text-slate-400">
+                        {body.realStats?.orbitalPeriod || `${body.orbitalPeriod} d`}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* =========================================================================
+              TAB 5: SPACECRAFT CATALOGUE
               ========================================================================= */}
           {!searchQuery && activeTab === 'spacecraft' && (
             <div className="space-y-2">

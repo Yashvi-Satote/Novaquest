@@ -14,6 +14,7 @@ export default function SolarSystemPage() {
   // Simulation & Selection States
   const [isPlaying, setIsPlaying] = useState(true);
   const [speed, setSpeed] = useState(1.0);
+  const [timeDirection, setTimeDirection] = useState(1); // 1 = forward, -1 = reverse
   const [simulationDate, setSimulationDate] = useState(() => new Date());
   const [activeScale, setActiveScale] = useState('SOLAR_SYSTEM');
   const [selectedMissionSlug, setSelectedMissionSlug] = useState(null);
@@ -32,12 +33,28 @@ export default function SolarSystemPage() {
     labels: true,
     trajectories: true,
     markers: true,
-    stars: true,
-    asteroids: true
+    spacecraft: true,
+    asteroids: true,
+    comets: true,
+    stars: true
   });
 
   const handleTogglePlay = () => {
     setIsPlaying(prev => !prev);
+  };
+
+  const handleToggleTimeDirection = (dir) => {
+    const nextDir = dir !== undefined ? dir : (timeDirection > 0 ? -1 : 1);
+    setTimeDirection(nextDir);
+    if (canvasRef.current) {
+      canvasRef.current.setTimeDirection(nextDir);
+    }
+  };
+
+  const handleStepDays = (days) => {
+    if (canvasRef.current) {
+      canvasRef.current.stepDays(days);
+    }
   };
 
   // Freeze simulation time while the user drags the time slider (NASA Eyes behavior)
@@ -58,15 +75,6 @@ export default function SolarSystemPage() {
       canvasRef.current.setSimulationDate(newDate);
     }
   };
-
-  // Advance simulation date display smoothly while playing
-  React.useEffect(() => {
-    if (!isPlaying) return;
-    const timer = setInterval(() => {
-      setSimulationDate(prev => new Date(prev.getTime() + speed * 5 * 86400000));
-    }, 1000);
-    return () => clearInterval(timer);
-  }, [isPlaying, speed]);
 
   const handleToggleLightingMode = () => {
     setLightingMode(prev => (prev === 'natural' ? 'flood' : 'natural'));
@@ -162,7 +170,12 @@ export default function SolarSystemPage() {
   const handleSelectSpacecraftFrom3D = (slug) => {
     setSelectedMissionSlug(slug);
     setSelectedCelestialId(null);
-    navigate(`/spacecraft/${slug}`);
+    if (isVoyagerLocalMode && slug !== 'voyager-1') {
+      setIsVoyagerLocalMode(false);
+    }
+    if (isSurfaceMode) {
+      setIsSurfaceMode(false);
+    }
   };
 
   const handleSelectPlanetFrom3D = (planetId) => {
@@ -234,6 +247,7 @@ export default function SolarSystemPage() {
           ref={canvasRef}
           isPlaying={isPlaying}
           speed={speed}
+          timeDirection={timeDirection}
           simulationDate={simulationDate}
           lightingMode={lightingMode}
           cameraMode={cameraMode}
@@ -246,6 +260,7 @@ export default function SolarSystemPage() {
           }}
           onHoverItem={(info) => setHoveredItemInfo(info)}
           onModeChange={handleModeChange}
+          onDateChange={(date) => setSimulationDate(date)}
         />
 
         {/* Floating NASA Eyes-Style Navigation & Simulation HUD */}
@@ -254,6 +269,9 @@ export default function SolarSystemPage() {
           onTogglePlay={handleTogglePlay}
           speed={speed}
           onChangeSpeed={handleChangeSpeed}
+          timeDirection={timeDirection}
+          onToggleTimeDirection={handleToggleTimeDirection}
+          onStepDays={handleStepDays}
           activeScale={activeScale}
           onSelectScale={handleSelectScale}
           onResetView={handleResetView}

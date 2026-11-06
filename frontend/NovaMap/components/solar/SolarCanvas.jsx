@@ -9,10 +9,11 @@ import { SolarEngine } from './SolarEngine';
 const SolarCanvas = forwardRef(function SolarCanvas({
   isPlaying = true,
   speed = 1.0,
+  timeDirection = 1,
   simulationDate,
   lightingMode = 'natural',
   cameraMode = 'orbit',
-  layerVisibility = { orbits: true, trajectories: true, markers: true, asteroids: true },
+  layerVisibility = { orbits: true, trajectories: true, markers: true, asteroids: true, comets: true, spacecraft: true },
   onSelectPlanet,
   onSelectSpacecraft,
   onDeselect,
@@ -25,6 +26,16 @@ const SolarCanvas = forwardRef(function SolarCanvas({
 
   // Expose imperative engine methods to parent
   useImperativeHandle(ref, () => ({
+    setTimeDirection: (dir) => {
+      if (engineRef.current) {
+        engineRef.current.setTimeDirection(dir);
+      }
+    },
+    stepDays: (days) => {
+      if (engineRef.current) {
+        engineRef.current.stepDays(days);
+      }
+    },
     zoomIn: (factor) => {
       if (engineRef.current) {
         engineRef.current.zoomIn(factor);
@@ -153,6 +164,12 @@ const SolarCanvas = forwardRef(function SolarCanvas({
   }, [speed]);
 
   useEffect(() => {
+    if (engineRef.current) {
+      engineRef.current.setTimeDirection(timeDirection);
+    }
+  }, [timeDirection]);
+
+  useEffect(() => {
     if (engineRef.current && simulationDate) {
       const currentEngTime = engineRef.current.simulationDate?.getTime() || 0;
       const targetTime = simulationDate.getTime();
@@ -189,11 +206,17 @@ const SolarCanvas = forwardRef(function SolarCanvas({
     if (layerVisibility.markers !== prevLayerRef.current?.markers) {
       engineRef.current.setLayerVisibility('markers', layerVisibility.markers);
     }
+    if (layerVisibility.spacecraft !== prevLayerRef.current?.spacecraft) {
+      engineRef.current.setLayerVisibility('spacecraft', layerVisibility.spacecraft);
+    }
     if (layerVisibility.stars !== prevLayerRef.current?.stars) {
       engineRef.current.setLayerVisibility('stars', layerVisibility.stars);
     }
     if (layerVisibility.asteroids !== prevLayerRef.current?.asteroids) {
       engineRef.current.setLayerVisibility('asteroids', layerVisibility.asteroids);
+    }
+    if (layerVisibility.comets !== prevLayerRef.current?.comets) {
+      engineRef.current.setLayerVisibility('comets', layerVisibility.comets);
     }
     prevLayerRef.current = layerVisibility;
   }, [layerVisibility]);

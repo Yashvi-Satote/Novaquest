@@ -45,6 +45,8 @@ export default function CelestialDetailDrawer({
   if (body.type === 'star') typeLabel = 'Yellow Dwarf Star';
   else if (body.type === 'planet') typeLabel = body.atmosphere ? (body.radius > 3.0 ? 'Gas / Ice Giant' : 'Terrestrial Planet') : 'Cratered Terrestrial Planet';
   else if (body.type === 'dwarf-planet') typeLabel = body.id === 'ceres' ? 'Main Asteroid Belt Dwarf Planet' : 'Kuiper Belt Dwarf Planet';
+  else if (body.type === 'asteroid') typeLabel = 'Minor Planet / Asteroid';
+  else if (body.type === 'comet') typeLabel = body.id === 'oumuamua' ? 'Hyperbolic Interstellar Object' : 'Cometary Nucleus';
   else if (isMoon) typeLabel = `Natural Satellite (${body.parentPlanetName})`;
 
   // Format rotation period

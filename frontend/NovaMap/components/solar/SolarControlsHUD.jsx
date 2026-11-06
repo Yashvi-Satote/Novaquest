@@ -16,6 +16,9 @@ import {
   ZoomOut,
   Calendar,
   FastForward,
+  Rewind,
+  SkipBack,
+  SkipForward,
   Clock,
   Sparkles
 } from 'lucide-react';
@@ -26,13 +29,16 @@ import { VOYAGER_LOCAL_METRICS } from './interstellarData';
 const MIN_TIME = new Date('1960-01-01T00:00:00Z').getTime();
 const MAX_TIME = new Date('2050-01-01T00:00:00Z').getTime();
 
-const SPEED_OPTIONS = [0.5, 1, 5, 20, 50];
+const SPEED_OPTIONS = [0.5, 1, 5, 20, 50, 100];
 
 export default function SolarControlsHUD({
   isPlaying = true,
   onTogglePlay,
   speed = 1.0,
   onChangeSpeed,
+  timeDirection = 1,
+  onToggleTimeDirection,
+  onStepDays,
   simulationDate = new Date(),
   onSelectDate,
   onScrubStart,
@@ -50,7 +56,7 @@ export default function SolarControlsHUD({
   onToggleLightingMode,
   cameraMode = 'orbit',
   onChangeCameraMode,
-  layerVisibility = { orbits: true, trajectories: true, markers: true, labels: true, stars: true, asteroids: true },
+  layerVisibility = { orbits: true, trajectories: true, markers: true, labels: true, stars: true, asteroids: true, comets: true, spacecraft: true },
   onToggleLayer
 }) {
   const [showLayersMenu, setShowLayersMenu] = useState(false);
@@ -202,7 +208,7 @@ export default function SolarControlsHUD({
           {/* Row 1: Timeline Slider & Simulation Date Header */}
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
             {/* Left: Live Simulation Date & Time Badge */}
-            <div className="flex items-center gap-2.5 shrink-0">
+            <div className="flex items-center gap-2 shrink-0">
               <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#0c0825] border border-cyan-500/30 text-cyan-300">
                 <Calendar className="w-3.5 h-3.5 text-cyan-400" />
                 <span className="font-mono font-bold text-xs tracking-wider text-white">
@@ -248,8 +254,34 @@ export default function SolarControlsHUD({
               <span className="text-[10px] font-mono text-slate-400 shrink-0">2050</span>
             </div>
 
-            {/* Right: Play/Pause & Speed Multiplier Controls */}
-            <div className="flex items-center gap-1.5 shrink-0">
+            {/* Right: Time Direction, Step, Play/Pause & Speed Multipliers */}
+            <div className="flex items-center gap-1 shrink-0">
+              {/* Step Back 1 Day */}
+              <button
+                type="button"
+                onClick={() => onStepDays && onStepDays(-1)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-cyan-950/60 border border-transparent hover:border-cyan-500/20 transition-all cursor-pointer"
+                title="Step Backward 1 Day"
+                aria-label="Step Backward 1 Day"
+              >
+                <SkipBack className="w-3.5 h-3.5 text-cyan-400" />
+              </button>
+
+              {/* Reverse Time Toggle */}
+              <button
+                type="button"
+                onClick={() => onToggleTimeDirection && onToggleTimeDirection(-1)}
+                className={`p-1.5 rounded-lg border transition-all cursor-pointer ${
+                  timeDirection < 0 
+                    ? 'bg-cyan-600 border-cyan-400 text-white shadow-sm shadow-cyan-500/40' 
+                    : 'bg-[#09061c] border-cyan-500/20 text-slate-400 hover:text-white'
+                }`}
+                title="Simulate in Reverse / Backward Time"
+                aria-label="Simulate Backward"
+              >
+                <Rewind className="w-3.5 h-3.5" />
+              </button>
+
               {/* Play / Pause Toggle Button */}
               <button
                 id="solar-play-pause-btn"
@@ -270,8 +302,34 @@ export default function SolarControlsHUD({
                 )}
               </button>
 
+              {/* Forward Time Toggle */}
+              <button
+                type="button"
+                onClick={() => onToggleTimeDirection && onToggleTimeDirection(1)}
+                className={`p-1.5 rounded-lg border transition-all cursor-pointer ${
+                  timeDirection > 0 
+                    ? 'bg-cyan-600 border-cyan-400 text-white shadow-sm shadow-cyan-500/40' 
+                    : 'bg-[#09061c] border-cyan-500/20 text-slate-400 hover:text-white'
+                }`}
+                title="Simulate Forward in Time"
+                aria-label="Simulate Forward"
+              >
+                <FastForward className="w-3.5 h-3.5" />
+              </button>
+
+              {/* Step Forward 1 Day */}
+              <button
+                type="button"
+                onClick={() => onStepDays && onStepDays(1)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-cyan-950/60 border border-transparent hover:border-cyan-500/20 transition-all cursor-pointer"
+                title="Step Forward 1 Day"
+                aria-label="Step Forward 1 Day"
+              >
+                <SkipForward className="w-3.5 h-3.5 text-cyan-400" />
+              </button>
+
               {/* Speed Multiplier Pills */}
-              <div className="flex items-center bg-[#060413] border border-cyan-500/25 rounded-xl p-0.5">
+              <div className="flex items-center bg-[#060413] border border-cyan-500/25 rounded-xl p-0.5 ml-1">
                 {SPEED_OPTIONS.map(opt => {
                   const isActive = speed === opt;
                   return (
@@ -279,7 +337,7 @@ export default function SolarControlsHUD({
                       key={opt}
                       type="button"
                       onClick={() => onChangeSpeed && onChangeSpeed(opt)}
-                      className={`px-2 py-1 rounded-lg text-[10px] font-mono transition-all cursor-pointer ${
+                      className={`px-1.5 py-1 rounded-lg text-[10px] font-mono transition-all cursor-pointer ${
                         isActive
                           ? 'bg-cyan-600 text-white font-bold shadow-sm shadow-cyan-500/30'
                           : 'text-slate-400 hover:text-white'
@@ -393,7 +451,7 @@ export default function SolarControlsHUD({
                 </button>
 
                 {showLayersMenu && (
-                  <div className="absolute right-0 bottom-12 w-60 bg-[#080518]/98 backdrop-blur-2xl border border-cyan-500/30 rounded-xl shadow-2xl p-2.5 flex flex-col gap-1 text-xs z-30">
+                  <div className="absolute right-0 bottom-12 w-64 bg-[#080518]/98 backdrop-blur-2xl border border-cyan-500/30 rounded-xl shadow-2xl p-2.5 flex flex-col gap-1 text-xs z-30">
                     <span className="text-[10px] text-cyan-400 font-mono uppercase tracking-wider px-2 py-0.5">
                       NASA Eyes Visual Layers
                     </span>
@@ -418,8 +476,24 @@ export default function SolarControlsHUD({
                       onClick={() => onToggleLayer('asteroids')}
                       className="flex items-center justify-between px-2.5 py-1.5 rounded-lg hover:bg-cyan-950/50 text-slate-200 hover:text-white cursor-pointer"
                     >
-                      <span>Asteroid Belt Swarm</span>
+                      <span>Asteroids & Belt Swarm</span>
                       {layerVisibility.asteroids && <Check className="w-3.5 h-3.5 text-cyan-400" />}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onToggleLayer('comets')}
+                      className="flex items-center justify-between px-2.5 py-1.5 rounded-lg hover:bg-cyan-950/50 text-slate-200 hover:text-white cursor-pointer"
+                    >
+                      <span>Comets & Tails</span>
+                      {layerVisibility.comets && <Check className="w-3.5 h-3.5 text-cyan-400" />}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onToggleLayer('spacecraft')}
+                      className="flex items-center justify-between px-2.5 py-1.5 rounded-lg hover:bg-cyan-950/50 text-slate-200 hover:text-white cursor-pointer"
+                    >
+                      <span>Spacecraft Fleet</span>
+                      {layerVisibility.spacecraft && <Check className="w-3.5 h-3.5 text-cyan-400" />}
                     </button>
                     <button
                       type="button"
@@ -428,14 +502,6 @@ export default function SolarControlsHUD({
                     >
                       <span>Spacecraft Trajectories</span>
                       {layerVisibility.trajectories && <Check className="w-3.5 h-3.5 text-cyan-400" />}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => onToggleLayer('markers')}
-                      className="flex items-center justify-between px-2.5 py-1.5 rounded-lg hover:bg-cyan-950/50 text-slate-200 hover:text-white cursor-pointer"
-                    >
-                      <span>Spacecraft Markers</span>
-                      {layerVisibility.markers && <Check className="w-3.5 h-3.5 text-cyan-400" />}
                     </button>
                     <button
                       type="button"

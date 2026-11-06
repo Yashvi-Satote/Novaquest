@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { JPL_PLANETARY_ELEMENTS } from './ephemeris.js';
 
 /**
  * Procedural Texture & Bump Map Generator for Planetary & Lunar Globes
@@ -586,10 +587,12 @@ export class PlanetBody {
     this.data = data;
     this.scene = scene;
     this.orbitAngle = Math.random() * Math.PI * 2;
+    this.usesEphemeris = !!JPL_PLANETARY_ELEMENTS[this.data.id.toLowerCase()];
     this.disposables = [];
     this.moons = [];
     this.clickableMeshes = [];
     this.labelSprite = null;
+    this.cometTail = null;
 
     this.orbitPivot = new THREE.Group();
     this.scene.add(this.orbitPivot);
@@ -599,6 +602,9 @@ export class PlanetBody {
 
     this.createBody();
     this.createLabel();
+    if (this.data.type === 'comet') {
+      this.createCometTail();
+    }
     if (this.data.hasRings) {
       this.createRings();
     }
@@ -965,24 +971,103 @@ export class PlanetBody {
     });
   }
 
+  createCometTail() {
+    const tailCanvas = document.createElement('canvas');
+    tailCanvas.width = 128;
+    tailCanvas.height = 256;
+    const tctx = tailCanvas.getContext('2d');
+    const grad = tctx.createLinearGradient(64, 0, 64, 256);
+    grad.addColorStop(0, 'rgba(6, 182, 212, 0.75)');
+    grad.addColorStop(0.3, 'rgba(56, 189, 248, 0.45)');
+    grad.addColorStop(0.7, 'rgba(168, 85, 247, 0.15)');
+    grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+    tctx.fillStyle = grad;
+    tctx.beginPath();
+    tctx.moveTo(64, 0);
+    tctx.lineTo(128, 256);
+    tctx.lineTo(0, 256);
+    tctx.closePath();
+    tctx.fill();
+
+    const tailTex = new THREE.CanvasTexture(tailCanvas);
+    this.disposables.push(tailTex);
+
+    const tailGeo = new THREE.PlaneGeometry(2.5, 9.0);
+    const tailMat = new THREE.MeshBasicMaterial({
+      map: tailTex,
+      transparent: true,
+      opacity: 0.75,
+      blending: THREE.AdditiveBlending,
+      side: THREE.DoubleSide,
+      depthWrite: false
+    });
+    this.disposables.push(tailGeo, tailMat);
+    this.cometTail = new THREE.Mesh(tailGeo, tailMat);
+    this.cometTail.position.set(0, 0, -4.5);
+    this.container.add(this.cometTail);
+  }
+
   createOrbitPath() {
+    const p = JPL_PLANETARY_ELEMENTS[this.data.id.toLowerCase()];
     const points = [];
-    const segments = 160;
-    for (let i = 0; i <= segments; i++) {
-      const theta = (i / segments) * Math.PI * 2;
-      points.push(new THREE.Vector3(
-        Math.cos(theta) * this.data.distance,
-        0,
-        Math.sin(theta) * this.data.distance
-      ));
+    const segments = 180;
+
+    if (p) {
+      // Scientifically accurate Keplerian elliptical orbit
+      const baseDist = p.baseSceneDistance || this.data.distance;
+      const scaleFactor = baseDist / p.a;
+      const a = p.a;
+      const e = p.e;
+      const I = (p.I || 0) * (Math.PI / 180.0);
+      const node = (p.node || 0) * (Math.PI / 180.0);
+      const omega = ((p.w_bar || 0) - (p.node || 0)) * (Math.PI / 180.0);
+
+      for (let i = 0; i <= segments; i++) {
+        const E = (i / segments) * Math.PI * 2;
+        const x_prime = a * (Math.cos(E) - e);
+        const y_prime = a * Math.sqrt(Math.max(0, 1.0 - e * e)) * Math.sin(E);
+        const rAU = Math.sqrt(x_prime * x_prime + y_prime * y_prime);
+        const nu = Math.atan2(y_prime, x_prime);
+        const u = omega + nu;
+
+        const x = rAU * (Math.cos(node) * Math.cos(u) - Math.sin(node) * Math.sin(u) * Math.cos(I));
+        const y = rAU * (Math.sin(node) * Math.cos(u) + Math.cos(node) * Math.sin(u) * Math.cos(I));
+        const z = rAU * (Math.sin(u) * Math.sin(I));
+
+        // Three.js Y is up:
+        points.push(new THREE.Vector3(x * scaleFactor, z * scaleFactor, y * scaleFactor));
+      }
+    } else {
+      for (let i = 0; i <= segments; i++) {
+        const theta = (i / segments) * Math.PI * 2;
+        points.push(new THREE.Vector3(
+          Math.cos(theta) * this.data.distance,
+          0,
+          Math.sin(theta) * this.data.distance
+        ));
+      }
     }
 
     const orbitGeo = new THREE.BufferGeometry().setFromPoints(points);
     this.disposables.push(orbitGeo);
 
-    const isInnerPlanet = this.data.distance < 45;
-    const baseColor = isInnerPlanet ? 0x0ea5e9 : 0x64748b;
-    const baseOpacity = isInnerPlanet ? 0.12 : 0.08;
+    // Distinguishable orbital colors per object category
+    let baseColor = 0x64748b;
+    let baseOpacity = 0.12;
+
+    if (this.data.type === 'comet') {
+      baseColor = 0x06b6d4; // Cyan for comets
+      baseOpacity = 0.28;
+    } else if (this.data.type === 'asteroid' || this.data.type === 'dwarf-planet') {
+      baseColor = 0xf59e0b; // Amber for asteroids / dwarf planets
+      baseOpacity = 0.22;
+    } else if (this.data.distance < 45) {
+      baseColor = 0x38bdf8; // Neon sky blue for inner planets
+      baseOpacity = 0.18;
+    } else {
+      baseColor = 0x818cf8; // Indigo/purple for outer giants
+      baseOpacity = 0.14;
+    }
 
     this.orbitMat = new THREE.LineBasicMaterial({
       color: baseColor,
@@ -1005,8 +1090,8 @@ export class PlanetBody {
   setHighlight(highlighted) {
     if (this.orbitMat) {
       const isInnerPlanet = this.data.distance < 45;
-      this.orbitMat.opacity = highlighted ? 0.65 : (isInnerPlanet ? 0.12 : 0.08);
-      this.orbitMat.color.setHex(highlighted ? 0x22d3ee : (isInnerPlanet ? 0x0ea5e9 : 0x64748b));
+      this.orbitMat.opacity = highlighted ? 0.65 : (isInnerPlanet ? 0.18 : 0.14);
+      this.orbitMat.color.setHex(highlighted ? 0x22d3ee : (isInnerPlanet ? 0x38bdf8 : 0x818cf8));
     }
   }
 
@@ -1015,7 +1100,7 @@ export class PlanetBody {
   }
 
   updatePosition(delta, speedMultiplier = 1, isPlaying = true, camera = null) {
-    if (isPlaying && this.data.orbitalPeriod > 0) {
+    if (!this.usesEphemeris && isPlaying && this.data.orbitalPeriod > 0) {
       const baseOrbitSpeed = 0.45;
       const orbitalSpeed = (baseOrbitSpeed / Math.sqrt(this.data.distance)) * speedMultiplier;
       this.orbitAngle += orbitalSpeed * delta;
@@ -1027,6 +1112,16 @@ export class PlanetBody {
     if (isPlaying && this.mesh) {
       const rotSpeed = (2.0 / Math.abs(this.data.rotationPeriod || 24)) * speedMultiplier;
       this.mesh.rotation.y += rotSpeed * delta * (this.data.rotationPeriod < 0 ? -1 : 1);
+    }
+
+    // Orient comet tail radially away from central Sun
+    if (this.cometTail) {
+      const worldPos = this.getWorldPosition();
+      const length = worldPos.length();
+      if (length > 0.01) {
+        const sunDir = worldPos.clone().normalize();
+        this.cometTail.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, -1), sunDir);
+      }
     }
 
     // Earth Cloud subtle differential rotation
@@ -1069,6 +1164,10 @@ export class PlanetBody {
   }
 
   dispose() {
+    if (this.cometTail) {
+      this.container.remove(this.cometTail);
+      this.cometTail = null;
+    }
     if (this.labelSprite) {
       this.container.remove(this.labelSprite);
     }
