@@ -310,11 +310,39 @@ export class InterstellarSystem {
     });
   }
 
+  setProbeMarkerVisibility(slug, visible) {
+    if (this.probeMeshes.has(slug)) {
+      const probeGroup = this.probeMeshes.get(slug);
+      probeGroup.userData.hiddenFromInspection = !visible;
+      const dot = this.dotSprites.get(slug);
+      const halo = this.haloSprites.get(slug);
+      const label = this.labelSprites.get(slug);
+      if (dot) dot.visible = visible;
+      if (halo) halo.visible = visible;
+      if (label) label.visible = visible;
+    }
+  }
+
+  setVoyagerLocalSphereVisible(visible) {
+    // Deprecated: No glowing sphere placeholders in NASA Eyes mode. Spacecraft model is rendered directly.
+  }
+
   update(camera, time) {
     if (!camera) return;
     camera.getWorldPosition(this.scratchCamPos);
 
     this.probeMeshes.forEach((probeGroup, slug) => {
+      // Hide all 2D beacon sprites & halos when spacecraft is being inspected in 3D
+      if (probeGroup.userData.hiddenFromInspection) {
+        const dot = this.dotSprites.get(slug);
+        const halo = this.haloSprites.get(slug);
+        const label = this.labelSprites.get(slug);
+        if (dot) dot.visible = false;
+        if (halo) halo.visible = false;
+        if (label) label.visible = false;
+        return;
+      }
+
       probeGroup.getWorldPosition(this.scratchWorldPos);
       const distance = this.scratchCamPos.distanceTo(this.scratchWorldPos);
 

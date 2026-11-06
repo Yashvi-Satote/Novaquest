@@ -20,19 +20,23 @@ import {
   ChevronDown,
   ChevronUp,
   Camera,
-  Eye
+  Eye,
+  RotateCcw
 } from 'lucide-react';
 import { fetchHardwareDetail } from '../../../Shared/services/api';
 import { getMappedSpacecraft, classifyCatalogueRecord } from './spacecraftRegistry';
 import { getSpacecraftCategoryIcon, getCategoryBadgeStyle } from './spacecraftIcons';
 import { getSpacecraftModelSpec } from './spacecraftModelRegistry';
-import SpacecraftPreview3D from './SpacecraftPreview3D';
+import { getEligibleSpacecraftRecord } from './spacecraftModelService';
 
 export default function MissionDetailDrawer({
   selectedSlug,
   onClose,
   onEnterVoyagerLocal,
   isVoyagerLocalMode,
+  isInspectingSpacecraft,
+  onExitInspection,
+  onToggleAutoRotate,
   onFocusSpacecraft,
   onExploreSurface
 }) {
@@ -41,7 +45,6 @@ export default function MissionDetailDrawer({
   const [error, setError] = useState(null);
   const [imageError, setImageError] = useState(false);
   const [isOverviewExpanded, setIsOverviewExpanded] = useState(false);
-  const [mediaMode, setMediaMode] = useState('3d'); // '3d' | 'photo'
 
   useEffect(() => {
     if (!selectedSlug) {
@@ -53,7 +56,6 @@ export default function MissionDetailDrawer({
     setDetail(null);
     setImageError(false);
     setIsOverviewExpanded(false);
-    setMediaMode('3d');
 
     async function loadDetail() {
       setIsLoading(true);
@@ -81,17 +83,18 @@ export default function MissionDetailDrawer({
 
   if (!selectedSlug) return null;
 
-  // Retrieve verified telemetry mapping if available
+  // Retrieve verified telemetry mapping and eligible 3D record
+  const eligibleRecord = getEligibleSpacecraftRecord(selectedSlug);
   const verified = getMappedSpacecraft(selectedSlug);
-  const isMapped = Boolean(verified);
+  const isMapped = Boolean(verified || eligibleRecord);
   const classification = classifyCatalogueRecord(detail || { slug: selectedSlug });
 
-  const objectType = detail?.object_type || verified?.type || 'Spacecraft';
+  const objectType = detail?.object_type || eligibleRecord?.objectType || verified?.type || 'Spacecraft';
   const badgeStyle = getCategoryBadgeStyle(objectType);
 
   // Determine official image URL and attribution
   const imageUrl = (!imageError && (detail?.preview_image || verified?.image)) || null;
-  const imageCaption = detail?.preview_image_caption || verified?.imageCaption || `${detail?.name || verified?.name} Spacecraft`;
+  const imageCaption = detail?.preview_image_caption || verified?.imageCaption || `${detail?.name || eligibleRecord?.name || verified?.name} Spacecraft`;
   const imageAttribution = verified?.imageAttribution || (detail?.sources && detail.sources[0]?.source_name) || 'Official Space Agency Archive';
   const modelSpec = getSpacecraftModelSpec(selectedSlug);
 
@@ -107,8 +110,8 @@ export default function MissionDetailDrawer({
         <div className="space-y-1.5 min-w-0">
           <div className="flex items-center gap-2">
             <span 
-              className={`w-2 h-2 rounded-full ${detail?.operational_status?.includes('Active') ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`} 
-              title={detail?.operational_status || 'Operational Status'}
+              className={`w-2 h-2 rounded-full ${(detail?.operational_status || eligibleRecord?.operationalStatus)?.includes('Active') ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`} 
+              title={detail?.operational_status || eligibleRecord?.operationalStatus || 'Operational Status'}
             />
             {/* Category Icon & Badge (Objective 1) */}
             <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md border text-[10px] font-mono font-semibold uppercase tracking-wider ${badgeStyle.badgeClass}`}>
@@ -118,11 +121,11 @@ export default function MissionDetailDrawer({
           </div>
 
           <h2 className="text-base sm:text-lg font-bold tracking-tight text-white leading-tight truncate">
-            {detail?.name || verified?.name || selectedSlug}
+            {detail?.name || eligibleRecord?.name || verified?.name || selectedSlug}
           </h2>
 
           <p className="text-xs text-slate-300 truncate">
-            Mission: <span className="text-purple-200 font-semibold">{detail?.mission_name || verified?.mission || 'Autonomous'}</span>
+            Mission: <span className="text-purple-200 font-semibold">{detail?.mission_name || eligibleRecord?.missionName || verified?.mission || 'Autonomous'}</span>
           </p>
         </div>
 
@@ -152,102 +155,70 @@ export default function MissionDetailDrawer({
 
       {detail && (
         <>
-          {/* Media View Selector (Interactive 3D Inspector vs Official Archival Photo) */}
-          <div className="flex items-center justify-between gap-1 p-0.5 rounded-lg bg-black/40 border border-purple-500/20 text-[10px] font-mono">
-            <button
-              type="button"
-              id="drawer-media-toggle-3d"
-              onClick={() => setMediaMode('3d')}
-              className={`flex-1 py-1 px-2 rounded-md flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
-                mediaMode === '3d'
-                  ? 'bg-gradient-to-r from-cyan-600 to-blue-600 text-white font-bold shadow-sm'
-                  : 'text-slate-400 hover:text-white hover:bg-purple-950/40'
-              }`}
-            >
-              <Sparkles className="w-3 h-3 text-cyan-200" />
-              <span>Interactive 3D View</span>
-            </button>
-            {imageUrl && (
+          {/* Main 3D Viewport Telemetry Banner & Action */}
+          <div id="drawer-spacecraft-preview" className="relative rounded-2xl overflow-hidden border border-cyan-500/35 bg-gradient-to-br from-[#0c0a24] via-[#09071c] to-[#040310] p-4 text-center space-y-3 shadow-inner group">
+            <div className="flex items-center justify-between text-xs">
+              <span className="flex items-center gap-1.5 font-semibold text-cyan-300">
+                <Sparkles className="w-4 h-4 text-cyan-400 animate-pulse" />
+                <span>Main 3D Scene Exploration</span>
+              </span>
+              <span className="px-2 py-0.5 rounded-full text-[9px] font-mono bg-cyan-950/90 border border-cyan-400/50 text-cyan-300 font-bold uppercase tracking-wider">
+                ACTIVE IN VIEWPORT
+              </span>
+            </div>
+
+            <div className="py-2 px-3 rounded-xl bg-black/40 border border-cyan-500/20 text-left space-y-1.5">
+              <p className="text-xs text-white font-medium">
+                {detail?.name || eligibleRecord?.name || verified?.name}
+              </p>
+              <p className="text-[11px] text-slate-300 leading-relaxed font-sans">
+                Rendered directly in the main Solar System canvas. Drag with left mouse button to rotate 360°, scroll to zoom, and right-click to pan.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2 pt-0.5">
               <button
                 type="button"
-                id="drawer-media-toggle-photo"
-                onClick={() => setMediaMode('photo')}
-                className={`flex-1 py-1 px-2 rounded-md flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
-                  mediaMode === 'photo'
-                    ? 'bg-purple-600 text-white font-bold shadow-sm'
-                    : 'text-slate-400 hover:text-white hover:bg-purple-950/40'
-                }`}
+                id="drawer-return-to-solar-system-btn"
+                onClick={onExitInspection || onClose}
+                className="flex-1 py-2 px-3 rounded-xl bg-gradient-to-r from-blue-600 via-cyan-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs uppercase tracking-wider shadow-md shadow-cyan-950/60 border border-cyan-400/40 flex items-center justify-center gap-1.5 cursor-pointer transition-all hover:scale-102 active:scale-98"
               >
-                <Camera className="w-3 h-3 text-purple-200" />
-                <span>Archival Photo</span>
+                <Orbit className="w-3.5 h-3.5 text-cyan-200" />
+                <span>Return to Solar System</span>
               </button>
-            )}
-          </div>
-
-          {/* Spacecraft Visual Display (3D Canvas or Archival Image) */}
-          {mediaMode === '3d' ? (
-            <SpacecraftPreview3D
-              slug={selectedSlug}
-              name={detail.name || verified?.name}
-            />
-          ) : (
-            <div className="relative rounded-xl overflow-hidden border border-purple-500/25 bg-slate-950 shadow-inner group">
-              {imageUrl ? (
-                <div className="relative h-44 w-full bg-slate-950">
-                  <img
-                    src={imageUrl}
-                    alt={imageCaption}
-                    onError={() => setImageError(true)}
-                    className="w-full h-full object-cover object-center transition-transform duration-500 group-hover:scale-105"
-                    loading="lazy"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#0a071c] via-transparent to-transparent opacity-90" />
-                  
-                  {/* Image Attribution Tag */}
-                  <div className="absolute bottom-2 left-2.5 right-2.5 flex items-center justify-between text-[9px] font-mono text-slate-300">
-                    <span className="truncate max-w-[200px] text-white font-medium drop-shadow-md">
-                      {imageCaption}
-                    </span>
-                    <span className="px-1.5 py-0.5 rounded bg-black/60 backdrop-blur-md border border-white/10 text-cyan-300 shrink-0">
-                      {imageAttribution}
-                    </span>
-                  </div>
-                </div>
-              ) : (
-                /* Designed Scientific Fallback Badge (Objective 3) */
-                <div className="h-36 w-full bg-gradient-to-br from-purple-950/50 via-[#0d0922] to-slate-950 flex flex-col items-center justify-center p-4 text-center border border-dashed border-purple-500/20">
-                  <div className="w-12 h-12 rounded-2xl bg-purple-900/40 border border-purple-500/30 flex items-center justify-center text-cyan-300 mb-2 shadow-lg shadow-purple-950/40">
-                    {getSpacecraftCategoryIcon(objectType, 'w-6 h-6')}
-                  </div>
-                  <span className="text-xs font-bold text-white tracking-wide">
-                    {detail.name || verified?.name}
-                  </span>
-                  <span className="text-[10px] text-purple-300 font-mono mt-0.5">
-                    Target: {detail.destination} • Official Telemetry Monitored
-                  </span>
-                  <div className="mt-2 flex items-center gap-1 text-[9px] text-slate-400 font-mono">
-                    <Camera className="w-3 h-3 text-slate-500" />
-                    <span>Archival Visual Insignia</span>
-                  </div>
-                </div>
+              {onToggleAutoRotate && (
+                <button
+                  type="button"
+                  onClick={onToggleAutoRotate}
+                  className="py-2 px-3 rounded-xl bg-slate-900/80 hover:bg-slate-800 text-cyan-300 hover:text-white border border-cyan-500/30 text-xs flex items-center justify-center gap-1 cursor-pointer transition-colors"
+                  title="Toggle Orbit Auto-Rotation"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                </button>
               )}
             </div>
-          )}
+          </div>
 
           {/* Spacecraft 3D Model Provenance Badge */}
           {modelSpec && (
             <div className={`p-3 rounded-xl border text-xs font-mono space-y-1 shadow-sm ${
               modelSpec.isAuthenticModel 
                 ? 'bg-emerald-950/40 border-emerald-500/30 text-emerald-300' 
-                : 'bg-amber-950/40 border-amber-500/30 text-amber-300'
+                : (modelSpec.isReconstruction 
+                    ? 'bg-sky-950/40 border-sky-500/30 text-sky-300' 
+                    : 'bg-amber-950/40 border-amber-500/30 text-amber-300')
             }`}>
               <div className="flex items-center justify-between font-bold">
                 <span className="flex items-center gap-1.5">
                   <Sparkles className="w-3.5 h-3.5" />
-                  {modelSpec.isAuthenticModel ? 'Authentic 3D Model' : 'Illustrative 3D Model'}
+                  {modelSpec.isAuthenticModel 
+                    ? 'Authentic 3D Model' 
+                    : (modelSpec.isReconstruction ? 'Technical 3D Reconstruction' : 'Illustrative 3D Model')}
                 </span>
                 <span className="text-[10px] uppercase px-1.5 py-0.5 rounded bg-black/40 border border-current font-bold">
-                  {modelSpec.isAuthenticModel ? 'NASA Verified' : 'Procedural Fallback'}
+                  {modelSpec.isAuthenticModel 
+                    ? 'NASA Verified' 
+                    : (modelSpec.isReconstruction ? 'Engineering Blueprint' : 'Procedural Fallback')}
                 </span>
               </div>
               <p className="text-[11px] text-slate-300 font-sans leading-tight">
@@ -303,32 +274,6 @@ export default function MissionDetailDrawer({
                 <MapPin className="w-3.5 h-3.5 text-amber-200" />
                 <span>Explore Surface Landing Site</span>
               </button>
-            )}
-
-            {/* Dedicated Voyager 1 Local Proximity Sphere Action Card */}
-            {selectedSlug === 'voyager-1' && (
-              <div className="p-3.5 rounded-xl bg-gradient-to-br from-purple-950/90 to-indigo-950/90 border border-cyan-400/40 space-y-2 shadow-lg shadow-purple-950/40">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-white flex items-center gap-1.5">
-                    <Orbit className="w-4 h-4 text-cyan-400" />
-                    Voyager 1 Proximity Sphere
-                  </span>
-                  <span className="px-2 py-0.5 rounded-full bg-cyan-950 border border-cyan-400/30 text-[10px] text-cyan-200 font-mono font-bold">
-                    1,000 km Radius
-                  </span>
-                </div>
-                <p className="text-[11px] text-purple-200/90 leading-relaxed font-sans">
-                  Transparent 1,000 km sphere centered on Voyager 1 in the local interstellar medium (ISM) with coordinate reference axes, range rings, and detailed spacecraft structure.
-                </p>
-                <button
-                  type="button"
-                  onClick={onEnterVoyagerLocal}
-                  className="w-full flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-semibold text-xs transition-all shadow-md shadow-cyan-600/30 cursor-pointer"
-                >
-                  <Compass className="w-3.5 h-3.5" />
-                  <span>{isVoyagerLocalMode ? 'Recenter 1,000 km Sphere' : 'Enter 1,000 km Proximity Sphere'}</span>
-                </button>
-              </div>
             )}
           </div>
 

@@ -116,36 +116,8 @@ export default function SolarControlsHUD({
 
   return (
     <>
-      {/* Top Banner: Proximity Sphere or Ephemeris Disclaimer */}
-      {isVoyagerLocalMode ? (
-        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 w-[95%] max-w-2xl animate-fadeIn">
-          <div className="bg-[#0b0820]/95 backdrop-blur-2xl border border-cyan-400/50 px-4 py-2.5 rounded-2xl shadow-2xl shadow-purple-950/60 flex flex-wrap sm:flex-nowrap items-center justify-between gap-3 text-xs">
-            <div className="flex items-center gap-2.5">
-              <div className="w-3 h-3 rounded-full bg-cyan-400 animate-pulse shadow-md shadow-cyan-400/60 shrink-0" />
-              <div>
-                <span className="font-bold text-white tracking-wide flex items-center gap-2">
-                  Voyager 1 Local Proximity Sphere
-                  <span className="px-2 py-0.5 rounded-full bg-cyan-950/80 border border-cyan-400/40 text-[10px] text-cyan-300 font-mono font-semibold">
-                    Radius: {VOYAGER_LOCAL_METRICS.sphereRadiusLabel}
-                  </span>
-                </span>
-                <span className="text-[10px] text-purple-200/80 font-sans block mt-0.5">
-                  Regime: <strong className="text-cyan-300">{VOYAGER_LOCAL_METRICS.regime}</strong> • Speed: <span className="font-mono text-cyan-200">{VOYAGER_LOCAL_METRICS.asymptoticSpeedKmS} km/s</span> • Interstellar Medium
-                </span>
-              </div>
-            </div>
-            <button
-              type="button"
-              id="exit-voyager-local-btn"
-              onClick={onExitVoyagerLocal}
-              className="px-3.5 py-1.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-semibold text-xs transition-all shadow-md shadow-cyan-600/40 flex items-center gap-1.5 cursor-pointer shrink-0"
-            >
-              <ArrowLeft className="w-3.5 h-3.5" />
-              <span>Exit Local View</span>
-            </button>
-          </div>
-        </div>
-      ) : isSurfaceMode && activeSurfaceCraft ? (
+      {/* Top Banner: Surface Landing Mode */}
+      {isSurfaceMode && activeSurfaceCraft ? (
         <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 w-[95%] max-w-2xl animate-fadeIn">
           <div className="bg-[#0b0820]/95 backdrop-blur-2xl border border-amber-500/50 px-4 py-2.5 rounded-2xl shadow-2xl shadow-amber-950/60 flex flex-wrap sm:flex-nowrap items-center justify-between gap-3 text-xs">
             <div className="flex items-center gap-2.5">

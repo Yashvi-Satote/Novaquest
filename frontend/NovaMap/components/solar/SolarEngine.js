@@ -11,6 +11,8 @@ import { AsteroidBelt } from './AsteroidBelt.js';
 import { SCALE_PRESETS } from './interstellarData.js';
 import { getPlanetScenePosition, dateToJulianDate } from './ephemeris.js';
 import { VERIFIED_SPACECRAFT } from './spacecraftRegistry.js';
+import { getEligibleSpacecraftRecord } from './spacecraftModelService.js';
+import { loadSpacecraft3DModel } from './spacecraftModelRegistry.js';
 
 /**
  * SolarEngine
@@ -34,6 +36,7 @@ export class SolarEngine {
     this.onHoverItem = options.onHoverItem || null;
     this.onModeChange = options.onModeChange || null;
     this.onDateChange = options.onDateChange || null;
+    this.onSpacecraftInspectionChange = options.onSpacecraftInspectionChange || null;
 
     // Simulation states
     this.isPlaying = false;
@@ -49,6 +52,13 @@ export class SolarEngine {
     this.isVoyagerLocalMode = false;
     this.isSurfaceMode = false;
     this.activeSurfaceCraft = null;
+
+    // In-Scene 3D Spacecraft Exploration State (NASA Eyes Experience)
+    this.isInspectingSpacecraft = false;
+    this.inspectedCraft = null;
+    this.inspectedSpacecraftSlug = null;
+    this.inspectedModelGroup = null;
+    this.previousSolarCameraState = null;
 
     // Camera modes: 'orbit' | 'ride_along' | 'free_fly'
     this.cameraMode = 'orbit';
@@ -168,10 +178,37 @@ export class SolarEngine {
     // 11. Main Asteroid Belt GPU InstancedMesh
     this.asteroidBelt = new AsteroidBelt(this.scene);
 
+    // 12. In-Scene 3D Spacecraft Exploration Container & Dedicated Studio Illumination
+    this.inspectedSpacecraftContainer = new THREE.Group();
+    this.inspectedSpacecraftContainer.name = 'InspectedSpacecraftContainer';
+    this.inspectedSpacecraftContainer.visible = false;
+    this.scene.add(this.inspectedSpacecraftContainer);
+
+    this.inspectionKeyLight = new THREE.DirectionalLight(0xffffff, 2.5);
+    this.inspectionKeyLight.position.set(6, 6, 6);
+    this.inspectedSpacecraftContainer.add(this.inspectionKeyLight);
+    this.inspectedSpacecraftContainer.add(this.inspectionKeyLight.target);
+    this.inspectionKeyLight.target.position.set(0, 0, 0);
+
+    this.inspectionFillLight = new THREE.DirectionalLight(0x93c5fd, 1.8);
+    this.inspectionFillLight.position.set(-6, -2, -4);
+    this.inspectedSpacecraftContainer.add(this.inspectionFillLight);
+    this.inspectedSpacecraftContainer.add(this.inspectionFillLight.target);
+    this.inspectionFillLight.target.position.set(0, 0, 0);
+
+    this.inspectionRimLight = new THREE.DirectionalLight(0xa855f7, 1.2);
+    this.inspectionRimLight.position.set(0, -6, -6);
+    this.inspectedSpacecraftContainer.add(this.inspectionRimLight);
+    this.inspectedSpacecraftContainer.add(this.inspectionRimLight.target);
+    this.inspectionRimLight.target.position.set(0, 0, 0);
+
+    this.inspectionAmbientLight = new THREE.AmbientLight(0xffffff, 1.4);
+    this.inspectedSpacecraftContainer.add(this.inspectionAmbientLight);
+
     // Apply initial ephemeris positions for planets
     this.applyEphemeris();
 
-    // 12. Event Listeners
+    // 13. Event Listeners
     this.bindEvents();
 
     // 13. Animation Loop
@@ -256,6 +293,10 @@ export class SolarEngine {
   }
 
   handleClick() {
+    if (this.isInspectingSpacecraft) {
+      // While inspecting a spacecraft in main 3D scene, allow full rotation/pan interaction without deselecting
+      return;
+    }
     this.raycaster.setFromCamera(this.pointer, this.camera);
     const intersects = this.raycaster.intersectObjects(this.clickableMeshes, false);
 
@@ -323,6 +364,9 @@ export class SolarEngine {
   }
 
   focusPlanet(planetId) {
+    if (this.isInspectingSpacecraft) {
+      this.exitSpacecraftInspection(false);
+    }
     if (this.selectedBodyId === planetId && !this.isSurfaceMode && !this.isVoyagerLocalMode) return;
     if (this.isVoyagerLocalMode) {
       this.exitVoyagerLocalMode(false);
@@ -363,6 +407,9 @@ export class SolarEngine {
   }
 
   focusMoon(moonId) {
+    if (this.isInspectingSpacecraft) {
+      this.exitSpacecraftInspection(false);
+    }
     if (this.isVoyagerLocalMode) this.exitVoyagerLocalMode(false);
     if (this.isSurfaceMode) this.exitSurfaceMode(false);
     this.trackedCraftSlug = null;
@@ -399,6 +446,13 @@ export class SolarEngine {
     }
   }
 
+  /**
+   * Focuses and initiates Full In-Scene 3D Exploration for any spacecraft mission.
+   * Directly satisfies NASA Eyes-style in-scene inspection:
+   * 1. Smoothly glides camera to the spacecraft's location in the Solar System.
+   * 2. Renders the full 3D spacecraft model in the main SolarEngine scene graph.
+   * 3. Configures OrbitControls for full 360-degree rotation, pitch, and zoom around the craft.
+   */
   focusSpacecraft(slug) {
     if (this.isVoyagerLocalMode && slug !== 'voyager-1') {
       this.exitVoyagerLocalMode(false);
@@ -419,42 +473,188 @@ export class SolarEngine {
       this.onSelectSpacecraft(slug);
     }
 
-    // Check if spacecraft is a surface landing site with verified coordinates
-    const verified = VERIFIED_SPACECRAFT[slug];
-    if (verified && verified.positionType === 'surface' && verified.coordinates) {
-      this.enterSurfaceMode(slug);
-      return;
+    // Enter in-scene 3D inspection mode
+    this.enterSpacecraftInspection(slug);
+  }
+
+  async enterSpacecraftInspection(slug) {
+    const craft = getEligibleSpacecraftRecord(slug) || VERIFIED_SPACECRAFT[slug];
+    if (!craft) return;
+
+    // 1. Save prior solar system camera state
+    if (!this.isInspectingSpacecraft) {
+      this.previousSolarCameraState = {
+        position: this.camera.position.clone(),
+        target: this.controls.target.clone(),
+        minDistance: this.controls.minDistance,
+        maxDistance: this.controls.maxDistance,
+        autoRotate: this.controls.autoRotate,
+        autoRotateSpeed: this.controls.autoRotateSpeed
+      };
     }
 
-    // 1. Interstellar probe focus (Voyager, Pioneer, New Horizons)
-    const probePos = this.interstellar.getProbePosition(slug);
-    if (probePos && Number.isFinite(probePos.x)) {
-      const targetCamPos = new THREE.Vector3(
-        probePos.x + 8.5,
-        probePos.y + 4.5,
-        probePos.z + 8.5
-      );
-      this.smoothCameraTransition(targetCamPos, probePos, 1600, slug);
-      return;
+    this.isInspectingSpacecraft = true;
+    this.inspectedCraft = craft;
+    this.inspectedSpacecraftSlug = craft.slug;
+    this.selectedSpacecraftSlug = craft.slug;
+
+    // Clear prior model
+    this.clearInspectedModel();
+
+    // 2. Find world position anchor
+    const targetWorldPos = new THREE.Vector3();
+    let foundPos = false;
+
+    if (craft.positionType === 'surface') {
+      let parentBody = null;
+      if (craft.referenceBody === 'mars') parentBody = this.planetBodies.get('mars');
+      else if (craft.referenceBody === 'venus') parentBody = this.planetBodies.get('venus');
+      else if (craft.referenceBody === 'mercury') parentBody = this.planetBodies.get('mercury');
+      else if (craft.referenceBody === 'moon') {
+        const earth = this.planetBodies.get('earth');
+        if (earth && earth.moonMesh) {
+          earth.moonMesh.getWorldPosition(targetWorldPos);
+          foundPos = true;
+        }
+      }
+      if (parentBody) {
+        targetWorldPos.copy(parentBody.getWorldPosition());
+        const rad = parentBody.data?.radius || 2.0;
+        targetWorldPos.y += rad * 1.15;
+        foundPos = true;
+      }
+    } else if (craft.positionType === 'interstellar') {
+      const probePos = this.interstellar?.getProbePosition(craft.slug);
+      if (probePos && Number.isFinite(probePos.x)) {
+        targetWorldPos.copy(probePos);
+        foundPos = true;
+      }
+    } else {
+      const markerWorldPos = this.markers?.getMarkerWorldPosition(craft.slug);
+      if (markerWorldPos && Number.isFinite(markerWorldPos.x)) {
+        targetWorldPos.copy(markerWorldPos);
+        foundPos = true;
+      }
     }
 
-    // 2. Mapped spacecraft focus (orbiters, heliocentric probes)
-    const markerWorldPos = this.markers.getMarkerWorldPosition(slug);
-    if (markerWorldPos && Number.isFinite(markerWorldPos.x)) {
-      const isOrbital = slug.includes('iss') || slug.includes('hubble') || slug.includes('chandra') || slug.includes('orbiter') || slug.includes('satellite');
-      const isHeliocentric = slug.includes('parker') || slug.includes('osiris') || slug.includes('hayabusa') || slug.includes('dawn') || slug.includes('rosetta') || slug.includes('webb');
-      const offsetDist = isHeliocentric ? 3.5 : (isOrbital ? 2.5 : 2.0);
-
-      const targetCamPos = markerWorldPos.clone().add(new THREE.Vector3(offsetDist, offsetDist * 0.75, offsetDist));
-      this.smoothCameraTransition(targetCamPos, markerWorldPos, 1500, slug);
-      return;
+    if (!foundPos) {
+      targetWorldPos.set(45, 10, 45);
     }
 
-    // 3. Unmapped record: preserve camera without flying to fabricated destinations
+    this.inspectedSpacecraftContainer.position.copy(targetWorldPos);
+    this.inspectedSpacecraftContainer.visible = true;
+
+    // Temporarily hide 2D markers and glowing halos across all subsystems
+    this.markers?.setMarkerVisibility(craft.slug, false);
+    this.interstellar?.setProbeMarkerVisibility(craft.slug, false);
+
+    // 3. Load full 3D model (authentic GLB or high-fidelity technical reconstruction)
+    try {
+      const modelGroup = await loadSpacecraft3DModel(craft.slug, craft.modelPath);
+      if (this.isInspectingSpacecraft && this.inspectedSpacecraftSlug === craft.slug) {
+        this.inspectedModelGroup = modelGroup;
+        this.inspectedSpacecraftContainer.add(modelGroup);
+
+        // Optimal inspection framing: distance ~ 5.5 units from center of model
+        const targetCamPos = targetWorldPos.clone().add(new THREE.Vector3(3.8, 2.0, 4.2));
+
+        this.controls.minDistance = 1.0;
+        this.controls.maxDistance = 45.0;
+        this.controls.autoRotate = true;
+        this.controls.autoRotateSpeed = 0.8;
+
+        this.smoothCameraTransition(targetCamPos, targetWorldPos, 1600, () => {
+          if (this.controls) {
+            this.controls.target.copy(targetWorldPos);
+          }
+        });
+
+        if (this.onSpacecraftInspectionChange) {
+          this.onSpacecraftInspectionChange({
+            isInspecting: true,
+            slug: craft.slug,
+            craft
+          });
+        }
+      }
+    } catch (err) {
+      console.error('Failed to load in-scene 3D model:', err);
+    }
+  }
+
+  exitSpacecraftInspection(returnToSaved = true) {
+    if (!this.isInspectingSpacecraft) return;
+    const previousSlug = this.inspectedSpacecraftSlug;
+    this.isInspectingSpacecraft = false;
+    this.inspectedCraft = null;
+    this.inspectedSpacecraftSlug = null;
+
+    // Restore marker visibility
+    if (previousSlug) {
+      this.markers?.setMarkerVisibility(previousSlug, true);
+      this.interstellar?.setProbeMarkerVisibility(previousSlug, true);
+    }
+
+    this.clearInspectedModel();
+
+    if (returnToSaved && this.previousSolarCameraState) {
+      const saved = this.previousSolarCameraState;
+      this.controls.minDistance = saved.minDistance || 0.5;
+      this.controls.maxDistance = saved.maxDistance || 18000;
+      this.controls.autoRotate = saved.autoRotate || false;
+      this.controls.autoRotateSpeed = saved.autoRotateSpeed || 1.0;
+
+      this.smoothCameraTransition(saved.position, saved.target, 1500, () => {
+        this.previousSolarCameraState = null;
+      });
+    } else {
+      this.controls.minDistance = 0.5;
+      this.controls.maxDistance = 18000;
+      this.controls.autoRotate = false;
+      this.smoothCameraTransition(this.defaultCameraPos, new THREE.Vector3(0, 0, 0), 1500);
+    }
+
+    if (this.onSpacecraftInspectionChange) {
+      this.onSpacecraftInspectionChange({
+        isInspecting: false,
+        slug: null,
+        craft: null
+      });
+    }
+  }
+
+  toggleInspectionAutoRotate() {
+    if (this.controls) {
+      this.controls.autoRotate = !this.controls.autoRotate;
+      return this.controls.autoRotate;
+    }
+    return false;
+  }
+
+  clearInspectedModel() {
+    if (this.inspectedModelGroup && this.inspectedSpacecraftContainer) {
+      this.inspectedSpacecraftContainer.remove(this.inspectedModelGroup);
+      this.inspectedModelGroup.traverse((child) => {
+        if (child.isMesh) {
+          if (child.geometry) child.geometry.dispose();
+          if (child.material) {
+            if (Array.isArray(child.material)) {
+              child.material.forEach((m) => m.dispose());
+            } else {
+              child.material.dispose();
+            }
+          }
+        }
+      });
+      this.inspectedModelGroup = null;
+    }
+    if (this.inspectedSpacecraftContainer) {
+      this.inspectedSpacecraftContainer.visible = false;
+    }
   }
 
   enterSurfaceMode(slug) {
-    const verified = VERIFIED_SPACECRAFT[slug];
+    const verified = getEligibleSpacecraftRecord(slug) || VERIFIED_SPACECRAFT[slug];
     if (!verified || !verified.coordinates) return;
 
     this.isSurfaceMode = true;
@@ -553,33 +753,8 @@ export class SolarEngine {
 
   enterVoyagerLocalMode() {
     if (this.isSurfaceMode) this.exitSurfaceMode(false);
-
     this.isVoyagerLocalMode = true;
-    this.selectedSpacecraftSlug = 'voyager-1';
-    this.selectedBodyId = null;
-    this.trackedCraftSlug = null;
-
-    this.interstellar.setVoyagerLocalSphereVisible(true);
-    this.interstellar.highlightProbe('voyager-1');
-    this.markers.highlightMarker(null);
-
-    if (this.onSelectSpacecraft) {
-      this.onSelectSpacecraft('voyager-1');
-    }
-
-    const probePos = this.interstellar.getProbePosition('voyager-1');
-    if (probePos && Number.isFinite(probePos.x)) {
-      const targetCamPos = new THREE.Vector3(
-        probePos.x + 12,
-        probePos.y + 5,
-        probePos.z + 12
-      );
-
-      this.controls.minDistance = 2.0;
-      this.controls.maxDistance = 50.0;
-      this.smoothCameraTransition(targetCamPos, probePos, 1600);
-    }
-
+    this.enterSpacecraftInspection('voyager-1');
     if (this.onModeChange) {
       this.onModeChange({ isVoyagerLocal: true, scale: 'VOYAGER_LOCAL' });
     }
@@ -587,34 +762,16 @@ export class SolarEngine {
 
   exitVoyagerLocalMode(returnToHeliosphere = true) {
     this.isVoyagerLocalMode = false;
-    this.interstellar.setVoyagerLocalSphereVisible(false);
-
-    this.controls.minDistance = 0.5;
-    this.controls.maxDistance = 18000;
-
-    this.selectedSpacecraftSlug = 'voyager-1';
-    this.trackedCraftSlug = null;
-
-    if (returnToHeliosphere) {
-      const probePos = this.interstellar.getProbePosition('voyager-1');
-      if (probePos && Number.isFinite(probePos.x)) {
-        const targetCamPos = new THREE.Vector3(
-          probePos.x + 85,
-          probePos.y + 45,
-          probePos.z + 85
-        );
-        this.smoothCameraTransition(targetCamPos, probePos, 1500);
-      } else {
-        this.smoothCameraTransition(new THREE.Vector3(0, 520, 850), new THREE.Vector3(0, 0, 0), 1500);
-      }
-
-      if (this.onModeChange) {
-        this.onModeChange({ isVoyagerLocal: false, scale: 'HELIOSPHERE' });
-      }
+    this.exitSpacecraftInspection(returnToHeliosphere);
+    if (this.onModeChange) {
+      this.onModeChange({ isVoyagerLocal: false, scale: 'HELIOSPHERE' });
     }
   }
 
   resetView() {
+    if (this.isInspectingSpacecraft) {
+      this.exitSpacecraftInspection(false);
+    }
     if (this.isVoyagerLocalMode) {
       this.exitVoyagerLocalMode(false);
     }
@@ -631,7 +788,10 @@ export class SolarEngine {
     this.smoothCameraTransition(this.defaultCameraPos, new THREE.Vector3(0, 0, 0), 1500);
   }
 
-  smoothCameraTransition(targetCamPos, targetFocus, duration = 1400, trackingTargetId = null) {
+  smoothCameraTransition(targetCamPos, targetFocus, duration = 1400, trackingTargetOrCb = null, optionalCb = null) {
+    const trackingTargetId = typeof trackingTargetOrCb === 'string' ? trackingTargetOrCb : null;
+    const onCompleteCb = typeof trackingTargetOrCb === 'function' ? trackingTargetOrCb : optionalCb;
+
     if (this.currentCameraTween) {
       this.currentCameraTween.stop();
       this.currentCameraTween = null;
@@ -649,7 +809,7 @@ export class SolarEngine {
       this.controls.target.set(0, 0, 0);
     }
 
-    if (!this.isVoyagerLocalMode && !this.isSurfaceMode) {
+    if (!this.isVoyagerLocalMode && !this.isSurfaceMode && !this.isInspectingSpacecraft) {
       this.controls.minDistance = 0.5;
       this.controls.maxDistance = 18000;
     }
@@ -664,6 +824,7 @@ export class SolarEngine {
       this.controls.update();
       this.isTransitioning = false;
       this.controls.enabled = true;
+      if (onCompleteCb) onCompleteCb();
       return;
     }
 
@@ -702,12 +863,14 @@ export class SolarEngine {
         this.isTransitioning = false;
         this.controls.enabled = true;
         this.controls.update();
+        if (onCompleteCb) onCompleteCb();
       })
       .onStop(() => {
         this.currentCameraTween = null;
         this.isTransitioning = false;
         this.controls.enabled = true;
         this.controls.update();
+        if (onCompleteCb) onCompleteCb();
       })
       .start();
   }
@@ -909,8 +1072,27 @@ export class SolarEngine {
       this.starfield.update(this.camera);
     }
 
-    // 7. Planetary & Spacecraft Orbital Tracking (Ride-Along Mode)
-    if (this.trackedCraftSlug && !this.isTransitioning && this.isPlaying) {
+    // 7. Planetary & Spacecraft Orbital Tracking (Ride-Along Mode & In-Scene Inspection)
+    if (this.isInspectingSpacecraft && this.inspectedCraft && !this.isTransitioning && this.isPlaying) {
+      let currentPos = null;
+      if (this.inspectedCraft.positionType === 'surface') {
+        const body = this.planetBodies.get(this.inspectedCraft.referenceBody === 'moon' ? 'earth' : this.inspectedCraft.referenceBody);
+        if (body) {
+          currentPos = body.getWorldPosition();
+          currentPos.y += 2.0;
+        }
+      } else if (this.inspectedCraft.positionType === 'interstellar') {
+        currentPos = this.interstellar?.getProbePosition(this.inspectedCraft.slug);
+      } else {
+        currentPos = this.markers?.getMarkerWorldPosition(this.inspectedCraft.slug);
+      }
+      if (currentPos && Number.isFinite(currentPos.x)) {
+        this.scratchVecA.copy(currentPos).sub(this.inspectedSpacecraftContainer.position);
+        this.inspectedSpacecraftContainer.position.copy(currentPos);
+        this.controls.target.copy(currentPos);
+        this.camera.position.add(this.scratchVecA);
+      }
+    } else if (this.trackedCraftSlug && !this.isTransitioning && this.isPlaying) {
       const markerWorldPos = this.markers.getMarkerWorldPosition(this.trackedCraftSlug);
       if (markerWorldPos && Number.isFinite(markerWorldPos.x)) {
         this.scratchVecA.copy(markerWorldPos).sub(this.controls.target);
@@ -975,6 +1157,8 @@ export class SolarEngine {
     }
     window.removeEventListener('keydown', this.onKeyDown);
     window.removeEventListener('keyup', this.onKeyUp);
+
+    this.clearInspectedModel();
 
     if (this.starfield) this.starfield.dispose();
     if (this.asteroidBelt) this.asteroidBelt.dispose();
