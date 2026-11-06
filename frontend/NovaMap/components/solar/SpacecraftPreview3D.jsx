@@ -43,8 +43,8 @@ export default function SpacecraftPreview3D({ slug, name, customModelPath }) {
     setLoadError(null);
 
     const container = containerRef.current;
-    const width = container.clientWidth || 360;
-    const height = container.clientHeight || 220;
+    const width = container.clientWidth || 340;
+    const height = container.clientHeight || 230;
 
     // 1. Scene setup
     const scene = new THREE.Scene();
@@ -208,7 +208,7 @@ export default function SpacecraftPreview3D({ slug, name, customModelPath }) {
   };
 
   return (
-    <div className="relative w-full h-52 sm:h-56 rounded-xl overflow-hidden border border-cyan-500/25 bg-[#060414]/90 shadow-inner group">
+    <div id="drawer-spacecraft-preview" className="relative w-full h-[230px] min-h-[230px] shrink-0 rounded-xl overflow-hidden border border-cyan-500/25 bg-[#060414]/90 shadow-inner group">
       {/* 3D Canvas Mount Point */}
       <div 
         ref={containerRef} 
