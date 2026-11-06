@@ -1,6 +1,8 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
+import { getEligibleSpacecraftRecord } from './spacecraftModelService';
+import { createReconstructedSpacecraftModel } from './spacecraftReconstructions';
 
 /**
  * Spacecraft 3D Model Registry for Novaquest
@@ -13,7 +15,7 @@ import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
  */
 
 const dracoLoader = new DRACOLoader()
-  .setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
+  .setDecoderPath('/draco/');
 
 const loader = new GLTFLoader();
 loader.setDRACOLoader(dracoLoader);
@@ -670,10 +672,15 @@ export const SPACECRAFT_MODEL_REGISTRY = {
 };
 
 /**
- * Resolve spec by slug or alias
+ * Resolve spec by slug or alias (prioritizing the single source of truth)
  */
 export function getSpacecraftModelSpec(slug) {
   if (!slug) return null;
+  // First check single source of truth in spacecraftModelService
+  const eligibleRecord = getEligibleSpacecraftRecord(slug);
+  if (eligibleRecord) {
+    return eligibleRecord;
+  }
   if (SPACECRAFT_MODEL_REGISTRY[slug]) {
     return SPACECRAFT_MODEL_REGISTRY[slug];
   }
@@ -696,12 +703,15 @@ export function getSpacecraftModelSpec(slug) {
 /**
  * Load or instantiate a 3D Spacecraft Model
  * Returns a Promise resolving to a Three.js Group.
+ * SOURCING PRIORITY:
+ * 1. Authentic verified GLB models (NASA / ESA archives)
+ * 2. High-fidelity technical reconstructions (built from engineering blueprints)
  */
 export async function loadSpacecraft3DModel(slug, customModelPath = null) {
   const spec = getSpacecraftModelSpec(slug);
   const pathToLoad = customModelPath || spec?.modelPath;
 
-  // 1. If we have a verified model path (from database or registry), load authentic model
+  // 1. If we have a verified model path, load authentic model from GLB
   if (pathToLoad) {
     try {
       let gltfScene = modelCache.get(pathToLoad);
@@ -729,7 +739,7 @@ export async function loadSpacecraft3DModel(slug, customModelPath = null) {
       bbox.getSize(size);
 
       const maxDim = Math.max(size.x, size.y, size.z) || 1;
-      const targetScale = ((spec && spec.scale) || 1.0) * (2.2 / maxDim);
+      const targetScale = 3.6 / maxDim;
 
       clone.position.sub(center); // Center geometry
 
@@ -745,32 +755,52 @@ export async function loadSpacecraft3DModel(slug, customModelPath = null) {
         slug,
         name: spec?.name || slug,
         isAuthenticModel: true,
-        provenance: spec?.provenance || 'NASA Eyes on the Solar System (Official Public Domain - matthewgiarra/spacecraft-models)',
+        isReconstruction: false,
+        modelStatus: 'VERIFIED_3D',
+        provenance: spec?.provenance || 'Official Space Agency Archive (GLB)',
         isFallback: false
       };
 
       return rootGroup;
     } catch (err) {
-      console.warn(`Failed to load authentic 3D model for ${slug} (${pathToLoad}):`, err);
-      // Fall through to procedural fallback
+      console.warn(`Authentic GLB load failed for ${slug} (${pathToLoad}), attempting reconstruction fallback:`, err);
     }
   }
 
-  // 2. Procedural generator placeholder
-  const genKey = spec?.proceduralKey || 'newHorizons';
-  const generator = PROCEDURAL_GENERATORS[genKey] || PROCEDURAL_GENERATORS.newHorizons;
-  const procGroup = generator();
-  const rootGroup = new THREE.Group();
-  rootGroup.add(procGroup);
-  rootGroup.scale.setScalar(spec?.scale || 1.0);
+  // 2. High-Fidelity Technical Reconstruction for missions lacking official GLB
+  const reconstructed = createReconstructedSpacecraftModel(slug);
+  if (reconstructed) {
+    const bbox = new THREE.Box3().setFromObject(reconstructed);
+    const center = new THREE.Vector3();
+    const size = new THREE.Vector3();
+    bbox.getCenter(center);
+    bbox.getSize(size);
 
-  rootGroup.userData = {
-    slug,
-    name: spec?.name || slug,
-    isAuthenticModel: false,
-    provenance: spec?.provenance || 'Mission-appropriate geometric placeholder (Official 3D model unavailable)',
-    isFallback: true
-  };
+    const maxDim = Math.max(size.x, size.y, size.z) || 1;
+    const targetScale = 3.6 / maxDim;
 
-  return rootGroup;
+    reconstructed.position.sub(center);
+
+    const rootGroup = new THREE.Group();
+    rootGroup.add(reconstructed);
+    rootGroup.scale.setScalar(targetScale);
+
+    if (spec && spec.rotation) {
+      rootGroup.rotation.set(...spec.rotation);
+    }
+
+    rootGroup.userData = {
+      slug,
+      name: spec?.name || slug,
+      isAuthenticModel: false,
+      isReconstruction: true,
+      modelStatus: 'RECONSTRUCTED_3D',
+      provenance: spec?.provenance || 'Detailed Technical Reconstruction (NovaQuest Engineering)',
+      isFallback: false
+    };
+
+    return rootGroup;
+  }
+
+  throw new Error(`No 3D model or reconstruction available for spacecraft: ${slug}`);
 }

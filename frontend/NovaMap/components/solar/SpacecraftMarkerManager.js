@@ -1,5 +1,9 @@
 import * as THREE from 'three';
-import { VERIFIED_SPACECRAFT } from './spacecraftRegistry.js';
+import { 
+  getAllEligibleSpacecraft, 
+  isSpacecraft3DLoaded, 
+  getEligibleSpacecraftRecord 
+} from './spacecraftModelService.js';
 
 /**
  * NASA Eyes-Inspired Spacecraft Marker & Trajectory Manager
@@ -139,11 +143,16 @@ export class SpacecraftMarkerManager {
   initAllMappedSpacecraft() {
     const earthBody = this.planetBodies.get('earth');
     const marsBody = this.planetBodies.get('mars');
+    const venusBody = this.planetBodies.get('venus');
     const mercuryBody = this.planetBodies.get('mercury');
     const jupiterBody = this.planetBodies.get('jupiter');
+    const saturnBody = this.planetBodies.get('saturn');
 
-    Object.values(VERIFIED_SPACECRAFT).forEach((craft, idx) => {
-      // 1. Surface Landing Sites (Mars rovers/landers, Moon Apollo/Chandrayaan, Mercury Messenger)
+    // Initialize markers for all eligible spacecraft (authentic models + technical reconstructions)
+    const eligibleCrafts = getAllEligibleSpacecraft();
+
+    eligibleCrafts.forEach((craft, idx) => {
+      // 1. Surface Landing Sites (Moon, Mars, Venus, Mercury)
       if (craft.positionType === 'surface') {
         let parentMesh = null;
         let bodyRadius = 1;
@@ -157,6 +166,10 @@ export class SpacecraftMarkerManager {
           parentMesh = marsBody.mesh;
           bodyRadius = marsBody.data.radius;
           planetLabel = 'Mars';
+        } else if (craft.referenceBody === 'venus' && venusBody && venusBody.mesh) {
+          parentMesh = venusBody.mesh;
+          bodyRadius = venusBody.data.radius;
+          planetLabel = 'Venus';
         } else if (craft.referenceBody === 'mercury' && mercuryBody && mercuryBody.mesh) {
           parentMesh = mercuryBody.mesh;
           bodyRadius = mercuryBody.data.radius;
@@ -168,7 +181,7 @@ export class SpacecraftMarkerManager {
         }
       }
 
-      // 2. Geocentric / Planetocentric Orbital Spacecraft (JWST, Hubble, ISS, MRO, Juno)
+      // 2. Geocentric / Planetocentric Orbital Spacecraft (ISS, Hubble, Juno, Galileo, Cassini, Messenger)
       else if (craft.positionType === 'geocentric_orbit' || craft.positionType === 'geocentric_halo' || craft.positionType === 'planetary_orbit') {
         let parentContainer = null;
         let bodyRadius = 1;
@@ -185,6 +198,12 @@ export class SpacecraftMarkerManager {
         } else if (craft.referenceBody === 'jupiter' && jupiterBody) {
           parentContainer = jupiterBody.container;
           bodyRadius = jupiterBody.data.radius;
+        } else if (craft.referenceBody === 'saturn' && saturnBody) {
+          parentContainer = saturnBody.container;
+          bodyRadius = saturnBody.data.radius;
+        } else if (craft.referenceBody === 'mercury' && mercuryBody) {
+          parentContainer = mercuryBody.container;
+          bodyRadius = mercuryBody.data.radius;
         }
 
         if (parentContainer) {
@@ -192,8 +211,8 @@ export class SpacecraftMarkerManager {
         }
       }
 
-      // 3. Heliocentric Trajectory Probes (Parker Solar Probe, OSIRIS-REx, Hayabusa2, Dawn, Rosetta, Kepler, Spitzer)
-      else if (craft.positionType === 'heliocentric' && craft.coordinates) {
+      // 3. Heliocentric Trajectory Probes (Parker Solar Probe, DART, Rosetta, Philae, OSIRIS-REx)
+      else if ((craft.positionType === 'heliocentric' || craft.positionType === 'interstellar') && craft.coordinates) {
         this.createHeliocentricProbe(craft, idx);
       }
     });
@@ -599,6 +618,35 @@ export class SpacecraftMarkerManager {
     this.setLayerVisibility('markers', visible);
   }
 
+  setMarkerVisibility(slug, visible) {
+    const record = getEligibleSpacecraftRecord(slug);
+    const targetSlug = record ? record.slug : slug;
+    if (this.markers.has(targetSlug)) {
+      const m = this.markers.get(targetSlug);
+      m.hiddenFromInspection = !visible;
+      m.group.visible = visible;
+    }
+    if (this.orbiters.has(targetSlug)) {
+      const o = this.orbiters.get(targetSlug);
+      o.hiddenFromInspection = !visible;
+      o.dotSprite.visible = visible;
+      o.haloSprite.visible = visible;
+      if (!visible) {
+        o.haloSprite.material.opacity = 0.0;
+        o.labelSprite.visible = false;
+      }
+    }
+    if (this.heliocentricProbes.has(targetSlug)) {
+      const p = this.heliocentricProbes.get(targetSlug);
+      p.hiddenFromInspection = !visible;
+      p.group.visible = visible;
+      if (!visible) {
+        p.haloSprite.material.opacity = 0.0;
+        p.labelSprite.visible = false;
+      }
+    }
+  }
+
   setLayerVisibility(type, visible) {
     if (type === 'markers') {
       this.visibleMarkers = visible;
@@ -613,11 +661,13 @@ export class SpacecraftMarkerManager {
   }
 
   highlightMarker(slug) {
-    this.selectedSlug = slug;
+    const record = getEligibleSpacecraftRecord(slug);
+    const targetSlug = record ? record.slug : slug;
+    this.selectedSlug = targetSlug;
 
     // Surface markers
     this.markers.forEach((marker, mSlug) => {
-      const isSelected = mSlug === slug;
+      const isSelected = mSlug === targetSlug;
       if (isSelected) {
         marker.haloSprite.material.opacity = 0.95;
         marker.stemLine.material.opacity = 0.95;
@@ -631,7 +681,7 @@ export class SpacecraftMarkerManager {
 
     // Orbiters
     this.orbiters.forEach((orbiter, oSlug) => {
-      const isSelected = oSlug === slug;
+      const isSelected = oSlug === targetSlug;
       if (isSelected) {
         orbiter.haloSprite.material.opacity = 0.95;
         orbiter.orbitLine.material.opacity = 0.75;
@@ -645,7 +695,7 @@ export class SpacecraftMarkerManager {
 
     // Heliocentric probes
     this.heliocentricProbes.forEach((probe, pSlug) => {
-      const isSelected = pSlug === slug;
+      const isSelected = pSlug === targetSlug;
       if (isSelected) {
         probe.haloSprite.material.opacity = 0.95;
         probe.trajLine.material.opacity = 0.85;
@@ -663,18 +713,21 @@ export class SpacecraftMarkerManager {
   }
 
   getMarkerWorldPosition(slug) {
-    if (this.markers.has(slug)) {
+    const record = getEligibleSpacecraftRecord(slug);
+    const lookupSlug = record ? record.slug : slug;
+
+    if (this.markers.has(lookupSlug)) {
       const target = new THREE.Vector3();
-      this.markers.get(slug).dotSprite.getWorldPosition(target);
+      this.markers.get(lookupSlug).dotSprite.getWorldPosition(target);
       return target;
     }
-    if (this.orbiters.has(slug)) {
+    if (this.orbiters.has(lookupSlug)) {
       const target = new THREE.Vector3();
-      this.orbiters.get(slug).craftGroup.getWorldPosition(target);
+      this.orbiters.get(lookupSlug).craftGroup.getWorldPosition(target);
       return target;
     }
-    if (this.heliocentricProbes.has(slug)) {
-      return this.heliocentricProbes.get(slug).group.position.clone();
+    if (this.heliocentricProbes.has(lookupSlug)) {
+      return this.heliocentricProbes.get(lookupSlug).group.position.clone();
     }
     return null;
   }
@@ -685,7 +738,10 @@ export class SpacecraftMarkerManager {
 
     // 1. Surface Landing Sites
     this.markers.forEach((marker, slug) => {
-      if (!this.visibleMarkers) return;
+      if (!this.visibleMarkers || marker.hiddenFromInspection) {
+        marker.group.visible = false;
+        return;
+      }
       marker.dotSprite.getWorldPosition(this.scratchWorldPos);
       const distance = this.scratchCamPos.distanceTo(this.scratchWorldPos);
 
@@ -731,6 +787,14 @@ export class SpacecraftMarkerManager {
 
     // 2. Orbital Spacecraft Motion & LOD
     this.orbiters.forEach((orbiter, slug) => {
+      if (!this.visibleMarkers || orbiter.hiddenFromInspection) {
+        orbiter.dotSprite.visible = false;
+        orbiter.haloSprite.visible = false;
+        orbiter.haloSprite.material.opacity = 0.0;
+        orbiter.labelSprite.visible = false;
+        return;
+      }
+
       // Dynamic orbital revolution
       orbiter.nodePivot.rotation.y = time * 0.35 * (orbiter.speed || 1.0);
 
@@ -766,6 +830,14 @@ export class SpacecraftMarkerManager {
 
     // 3. Heliocentric Trajectory Probes Motion & LOD
     this.heliocentricProbes.forEach((probe, slug) => {
+      if (!this.visibleMarkers || probe.hiddenFromInspection) {
+        probe.dotSprite.visible = false;
+        probe.haloSprite.visible = false;
+        probe.haloSprite.material.opacity = 0.0;
+        probe.labelSprite.visible = false;
+        return;
+      }
+
       const distance = this.scratchCamPos.distanceTo(probe.group.position);
       const baseScale = Math.max(0.14, Math.min(distance * 0.015, 1.6));
       probe.dotSprite.scale.set(baseScale, baseScale, 1);

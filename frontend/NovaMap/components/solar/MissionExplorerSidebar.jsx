@@ -25,6 +25,12 @@ import {
   isSpacecraftMapped, 
   getCatalogueMappingStats 
 } from './spacecraftRegistry';
+import { 
+  filterEligibleCatalogue, 
+  isSpacecraft3DLoaded, 
+  getEligibleSpacecraftRecord,
+  getAllEligibleSpacecraft
+} from './spacecraftModelService';
 import { getSpacecraftCategoryIcon, getCategoryBadgeStyle } from './spacecraftIcons';
 import { CELESTIAL_BODIES } from './celestialData';
 
@@ -70,10 +76,7 @@ export default function MissionExplorerSidebar({
       setError(null);
       try {
         const firstRes = await fetchHardware({ limit: 50, page: 1 });
-        if (isMounted && firstRes.items) {
-          setItems(firstRes.items);
-          setIsLoading(false);
-        }
+        const allItems = [...(firstRes.items || [])];
 
         const totalPages = firstRes.total_pages || 1;
         if (totalPages > 1) {
@@ -82,18 +85,24 @@ export default function MissionExplorerSidebar({
             pagePromises.push(fetchHardware({ limit: 50, page: p }));
           }
           const restResults = await Promise.all(pagePromises);
-          if (isMounted) {
-            const allItems = [...(firstRes.items || [])];
-            restResults.forEach(r => {
-              if (r.items) allItems.push(...r.items);
-            });
-            setItems(allItems);
+          restResults.forEach(r => {
+            if (r.items) allItems.push(...r.items);
+          });
+        }
+
+        // STRICT 3D INTEGRITY: Filter out any mission without an actual 3D model
+        const eligibleItems = filterEligibleCatalogue(allItems);
+        if (isMounted) {
+          if (eligibleItems.length > 0) {
+            setItems(eligibleItems);
+          } else {
+            setItems(getAllEligibleSpacecraft());
           }
         }
       } catch (err) {
-        console.error('Failed to load mission catalogue from API:', err);
+        console.warn('Mission catalogue API unavailable, using verified local 3D models:', err);
         if (isMounted) {
-          setError('Cannot connect to mission database API.');
+          setItems(getAllEligibleSpacecraft());
         }
       } finally {
         if (isMounted) {
@@ -160,10 +169,12 @@ export default function MissionExplorerSidebar({
     );
 
     const matchedCraft = items.filter(item => 
-      item.name?.toLowerCase().includes(q) ||
-      item.mission_name?.toLowerCase().includes(q) ||
-      item.destination?.toLowerCase().includes(q) ||
-      item.primary_organization?.toLowerCase().includes(q)
+      isSpacecraft3DLoaded(item.slug) && (
+        item.name?.toLowerCase().includes(q) ||
+        item.mission_name?.toLowerCase().includes(q) ||
+        item.destination?.toLowerCase().includes(q) ||
+        item.primary_organization?.toLowerCase().includes(q)
+      )
     );
 
     return {
@@ -175,12 +186,10 @@ export default function MissionExplorerSidebar({
     };
   }, [searchQuery, majorPlanets, smallBodies, allMoons, items]);
 
-  // Filtered spacecraft list
+  // Filtered spacecraft list (strictly verified 3D models)
   const filteredItems = useMemo(() => {
     return items.filter(item => {
-      const mapped = isSpacecraftMapped(item.slug);
-      if (mappingFilter === 'mapped' && !mapped) return false;
-      if (mappingFilter === 'unmapped' && mapped) return false;
+      if (!isSpacecraft3DLoaded(item.slug)) return false;
 
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
@@ -197,9 +206,9 @@ export default function MissionExplorerSidebar({
         const cat = activeCategory.toLowerCase();
         const itemDest = (item.destination_category || item.destination || '').toLowerCase();
         if (cat === 'inner planets') {
-          if (!['mercury', 'venus'].includes(itemDest)) return false;
+          if (!itemDest.includes('mercury') && !itemDest.includes('venus') && !itemDest.includes('sun')) return false;
         } else if (cat === 'asteroids') {
-          if (!itemDest.includes('asteroid') && !itemDest.includes('ceres') && !itemDest.includes('vesta') && !itemDest.includes('comet') && !itemDest.includes('bennu') && !itemDest.includes('ryugu')) return false;
+          if (!itemDest.includes('asteroid') && !itemDest.includes('ceres') && !itemDest.includes('vesta') && !itemDest.includes('comet') && !itemDest.includes('bennu') && !itemDest.includes('ryugu') && !itemDest.includes('dimorphos')) return false;
         } else if (!itemDest.includes(cat)) {
           return false;
         }
@@ -216,9 +225,9 @@ export default function MissionExplorerSidebar({
       }
       return true;
     });
-  }, [items, searchQuery, mappingFilter, activeCategory, selectedStatus, selectedAgency, selectedType]);
+  }, [items, searchQuery, activeCategory, selectedStatus, selectedAgency, selectedType]);
 
-  const categories = ['All', 'Deep Space', 'Mars', 'Moon', 'Earth Orbit', 'Jupiter', 'Saturn', 'Inner Planets', 'Asteroids'];
+  const categories = ['All', 'Mars', 'Jupiter', 'Saturn', 'Deep Space', 'Moon', 'Inner Planets', 'Asteroids'];
 
   return (
     <>
@@ -371,7 +380,7 @@ export default function MissionExplorerSidebar({
               }`}
             >
               <Rocket className="w-3.5 h-3.5" />
-              <span>Missions</span>
+              <span>Missions ({items.length})</span>
             </button>
           </div>
         )}
@@ -810,44 +819,15 @@ export default function MissionExplorerSidebar({
               ========================================================================= */}
           {!searchQuery && activeTab === 'spacecraft' && (
             <div className="space-y-2">
-              {/* Mapping Filter Strip: All vs 3D Mapped vs Archive */}
-              <div className="grid grid-cols-3 gap-1 p-0.5 bg-[#0d0922]/90 rounded-lg border border-cyan-500/20 text-[10px] font-mono">
-                <button
-                  type="button"
-                  id="filter-all-btn"
-                  onClick={() => setMappingFilter('all')}
-                  className={`py-1 rounded text-center transition-all cursor-pointer ${
-                    mappingFilter === 'all'
-                      ? 'bg-purple-700 text-white font-bold shadow-sm'
-                      : 'text-purple-300 hover:text-white'
-                  }`}
-                >
-                  All ({items.length})
-                </button>
-                <button
-                  type="button"
-                  id="filter-mapped-btn"
-                  onClick={() => setMappingFilter('mapped')}
-                  className={`py-1 rounded text-center transition-all cursor-pointer ${
-                    mappingFilter === 'mapped'
-                      ? 'bg-emerald-600 text-white font-bold shadow-sm'
-                      : 'text-emerald-400 hover:text-white'
-                  }`}
-                >
-                  Mapped ({mappingStats.mapped})
-                </button>
-                <button
-                  type="button"
-                  id="filter-unmapped-btn"
-                  onClick={() => setMappingFilter('unmapped')}
-                  className={`py-1 rounded text-center transition-all cursor-pointer ${
-                    mappingFilter === 'unmapped'
-                      ? 'bg-slate-700 text-white font-bold shadow-sm'
-                      : 'text-slate-400 hover:text-white'
-                  }`}
-                >
-                  Archive ({mappingStats.unmapped})
-                </button>
+              {/* Verified 3D Hardware Banner */}
+              <div className="flex items-center justify-between px-2.5 py-1.5 bg-gradient-to-r from-cyan-950/70 to-purple-950/60 rounded-xl border border-cyan-500/30 text-[10px] font-mono">
+                <div className="flex items-center gap-1.5 text-cyan-300 font-semibold">
+                  <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
+                  <span>Verified 3D Models Only</span>
+                </div>
+                <span className="px-2 py-0.5 rounded-full bg-cyan-900/60 border border-cyan-400/40 text-cyan-200 font-bold">
+                  {filteredItems.length} Available
+                </span>
               </div>
 
               {/* Destination Category Filter Pills */}

@@ -168,3 +168,4 @@ validateSolarSystem().catch(err => {
   console.error('Fatal validation error:', err);
   process.exit(1);
 });
+

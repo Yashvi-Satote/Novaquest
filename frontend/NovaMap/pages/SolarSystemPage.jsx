@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Orbit, RotateCcw, ArrowLeft, Sparkles } from 'lucide-react';
 import AppNavbar from '../../Shared/components/layout/AppNavbar';
 import SolarCanvas from '../components/solar/SolarCanvas';
 import SolarControlsHUD from '../components/solar/SolarControlsHUD';
@@ -22,6 +23,8 @@ export default function SolarSystemPage() {
   const [isVoyagerLocalMode, setIsVoyagerLocalMode] = useState(false);
   const [isSurfaceMode, setIsSurfaceMode] = useState(false);
   const [activeSurfaceCraft, setActiveSurfaceCraft] = useState(null);
+  const [isInspectingSpacecraft, setIsInspectingSpacecraft] = useState(false);
+  const [inspectedCraft, setInspectedCraft] = useState(null);
   const [hoveredItemInfo, setHoveredItemInfo] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
@@ -209,6 +212,30 @@ export default function SolarSystemPage() {
     }
   };
 
+  const handleSpacecraftInspectionChange = ({ isInspecting, slug, craft }) => {
+    setIsInspectingSpacecraft(isInspecting);
+    setInspectedCraft(craft || null);
+    if (isInspecting && slug) {
+      setSelectedMissionSlug(slug);
+      setSelectedCelestialId(null);
+    }
+  };
+
+  const handleExitSpacecraftInspection = () => {
+    setIsInspectingSpacecraft(false);
+    setInspectedCraft(null);
+    setSelectedMissionSlug(null);
+    if (canvasRef.current) {
+      canvasRef.current.exitSpacecraftInspection();
+    }
+  };
+
+  const handleToggleInspectionAutoRotate = () => {
+    if (canvasRef.current) {
+      canvasRef.current.toggleInspectionAutoRotate();
+    }
+  };
+
   return (
     <div className="h-screen bg-[#060412] text-slate-100 flex flex-col font-sans overflow-hidden select-none">
       {/* Shared application navigation */}
@@ -261,7 +288,34 @@ export default function SolarSystemPage() {
           onHoverItem={(info) => setHoveredItemInfo(info)}
           onModeChange={handleModeChange}
           onDateChange={(date) => setSimulationDate(date)}
+          onSpacecraftInspectionChange={handleSpacecraftInspectionChange}
         />
+
+        {/* In-Scene Spacecraft Inspection Floating HUD Bar (NASA Eyes Experience) */}
+        {isInspectingSpacecraft && (
+          <div className="absolute top-4 left-1/2 -translate-x-1/2 z-40 animate-fadeIn flex items-center gap-2.5 bg-[#0a071c]/90 backdrop-blur-xl border border-cyan-500/40 p-1.5 px-3 rounded-2xl shadow-2xl shadow-cyan-950/80">
+            <button
+              type="button"
+              id="return-to-solar-system-btn"
+              onClick={handleExitSpacecraftInspection}
+              className="px-4 py-2 rounded-xl bg-gradient-to-r from-blue-600 via-cyan-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs uppercase tracking-wider shadow-md shadow-cyan-950/60 border border-cyan-300/40 flex items-center gap-2 cursor-pointer transition-all hover:scale-105 active:scale-95"
+            >
+              <Orbit className="w-4 h-4 text-cyan-200" />
+              <span>Return to Solar System</span>
+            </button>
+            <div className="h-4 w-px bg-slate-700/60" />
+            <button
+              type="button"
+              id="toggle-inspection-autorotate-btn"
+              onClick={handleToggleInspectionAutoRotate}
+              className="p-2 rounded-lg bg-slate-900/80 hover:bg-slate-800 text-cyan-300 hover:text-white border border-cyan-500/20 text-xs flex items-center gap-1.5 cursor-pointer transition-colors"
+              title="Toggle Orbit Auto-Rotation"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline text-[11px] font-mono">Auto-Rotate</span>
+            </button>
+          </div>
+        )}
 
         {/* Floating NASA Eyes-Style Navigation & Simulation HUD */}
         <SolarControlsHUD
@@ -300,9 +354,17 @@ export default function SolarSystemPage() {
         {/* Right Drawer: Selected Mission Verified Telemetry & Detail */}
         <MissionDetailDrawer
           selectedSlug={selectedMissionSlug}
-          onClose={() => setSelectedMissionSlug(null)}
+          onClose={() => {
+            setSelectedMissionSlug(null);
+            if (isInspectingSpacecraft) {
+              handleExitSpacecraftInspection();
+            }
+          }}
           onEnterVoyagerLocal={handleEnterVoyagerLocal}
           isVoyagerLocalMode={isVoyagerLocalMode}
+          isInspectingSpacecraft={isInspectingSpacecraft}
+          onExitInspection={handleExitSpacecraftInspection}
+          onToggleAutoRotate={handleToggleInspectionAutoRotate}
           onFocusSpacecraft={(slug) => {
             if (canvasRef.current) {
               canvasRef.current.focusSpacecraft(slug);

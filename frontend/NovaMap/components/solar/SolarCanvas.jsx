@@ -19,7 +19,8 @@ const SolarCanvas = forwardRef(function SolarCanvas({
   onDeselect,
   onHoverItem,
   onModeChange,
-  onDateChange
+  onDateChange,
+  onSpacecraftInspectionChange
 }, ref) {
   const containerRef = useRef(null);
   const engineRef = useRef(null);
@@ -73,6 +74,22 @@ const SolarCanvas = forwardRef(function SolarCanvas({
       if (engineRef.current) {
         engineRef.current.focusSpacecraft(slug);
       }
+    },
+    enterSpacecraftInspection: (slug) => {
+      if (engineRef.current) {
+        engineRef.current.enterSpacecraftInspection(slug);
+      }
+    },
+    exitSpacecraftInspection: (returnToSaved = true) => {
+      if (engineRef.current) {
+        engineRef.current.exitSpacecraftInspection(returnToSaved);
+      }
+    },
+    toggleInspectionAutoRotate: () => {
+      if (engineRef.current) {
+        return engineRef.current.toggleInspectionAutoRotate();
+      }
+      return false;
     },
     focusScale: (scaleKey) => {
       if (engineRef.current) {
@@ -142,6 +159,7 @@ const SolarCanvas = forwardRef(function SolarCanvas({
   const onHoverRef = useRef(onHoverItem);
   const onModeChangeRef = useRef(onModeChange);
   const onDateChangeRef = useRef(onDateChange);
+  const onSpacecraftInspectionChangeRef = useRef(onSpacecraftInspectionChange);
 
   useEffect(() => { onModeChangeRef.current = onModeChange; }, [onModeChange]);
   useEffect(() => { onSelectPlanetRef.current = onSelectPlanet; }, [onSelectPlanet]);
@@ -149,6 +167,7 @@ const SolarCanvas = forwardRef(function SolarCanvas({
   useEffect(() => { onDeselectRef.current = onDeselect; }, [onDeselect]);
   useEffect(() => { onHoverRef.current = onHoverItem; }, [onHoverItem]);
   useEffect(() => { onDateChangeRef.current = onDateChange; }, [onDateChange]);
+  useEffect(() => { onSpacecraftInspectionChangeRef.current = onSpacecraftInspectionChange; }, [onSpacecraftInspectionChange]);
 
   // Prop synchronizations
   useEffect(() => {
@@ -237,7 +256,8 @@ const SolarCanvas = forwardRef(function SolarCanvas({
       onDeselect: () => onDeselectRef.current && onDeselectRef.current(),
       onHoverItem: (info) => onHoverRef.current && onHoverRef.current(info),
       onModeChange: (data) => onModeChangeRef.current && onModeChangeRef.current(data),
-      onDateChange: (date) => onDateChangeRef.current && onDateChangeRef.current(date)
+      onDateChange: (date) => onDateChangeRef.current && onDateChangeRef.current(date),
+      onSpacecraftInspectionChange: (data) => onSpacecraftInspectionChangeRef.current && onSpacecraftInspectionChangeRef.current(data)
     });
     engineRef.current = engine;
 
