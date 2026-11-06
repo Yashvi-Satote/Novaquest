@@ -7,6 +7,7 @@ import { PlanetBody } from './PlanetBody.js';
 import { InterstellarSystem } from './InterstellarSystem.js';
 import { SpacecraftMarkerManager } from './SpacecraftMarkerManager.js';
 import { SurfaceTerrainViewer } from './SurfaceTerrainViewer.js';
+import { AsteroidBelt } from './AsteroidBelt.js';
 import { SCALE_PRESETS } from './interstellarData.js';
 import { getPlanetScenePosition, dateToJulianDate } from './ephemeris.js';
 import { VERIFIED_SPACECRAFT } from './spacecraftRegistry.js';
@@ -29,6 +30,7 @@ export class SolarEngine {
     this.container = container;
     this.onSelectPlanet = options.onSelectPlanet || null;
     this.onSelectSpacecraft = options.onSelectSpacecraft || null;
+    this.onDeselect = options.onDeselect || null;
     this.onHoverItem = options.onHoverItem || null;
     this.onModeChange = options.onModeChange || null;
     this.onDateChange = options.onDateChange || null;
@@ -56,6 +58,7 @@ export class SolarEngine {
       trajectories: true,
       markers: true,
       labels: true,
+      asteroids: true,
       stars: true
     };
 
@@ -160,13 +163,16 @@ export class SolarEngine {
     this.surfaceViewer = new SurfaceTerrainViewer(this.scene);
     this.clickableMeshes.push(...this.surfaceViewer.clickableMeshes);
 
+    // 11. Main Asteroid Belt GPU InstancedMesh
+    this.asteroidBelt = new AsteroidBelt(this.scene);
+
     // Apply initial ephemeris positions for planets
     this.applyEphemeris();
 
-    // 11. Event Listeners
+    // 12. Event Listeners
     this.bindEvents();
 
-    // 12. Animation Loop
+    // 13. Animation Loop
     this.isDisposed = false;
     this.animate = this.animate.bind(this);
     this.animationFrameId = requestAnimationFrame(this.animate);
@@ -261,7 +267,39 @@ export class SolarEngine {
       } else {
         this.focusPlanet(id);
       }
+    } else {
+      // Empty space click deselects object
+      this.deselectAll();
     }
+  }
+
+  deselectAll() {
+    this.selectedBodyId = null;
+    this.selectedSpacecraftSlug = null;
+    this.trackedCraftSlug = null;
+    if (this.markers) this.markers.highlightMarker(null);
+    if (this.interstellar) this.interstellar.highlightProbe(null);
+    if (this.onDeselect) {
+      this.onDeselect();
+    }
+  }
+
+  zoomIn(factor = 0.72) {
+    if (!this.controls || !this.camera) return;
+    const offset = this.camera.position.clone().sub(this.controls.target);
+    const newDist = Math.max(this.controls.minDistance || 0.5, offset.length() * factor);
+    offset.setLength(newDist);
+    this.camera.position.copy(this.controls.target).add(offset);
+    this.controls.update();
+  }
+
+  zoomOut(factor = 1.38) {
+    if (!this.controls || !this.camera) return;
+    const offset = this.camera.position.clone().sub(this.controls.target);
+    const newDist = Math.min(this.controls.maxDistance || 18000, offset.length() * factor);
+    offset.setLength(newDist);
+    this.camera.position.copy(this.controls.target).add(offset);
+    this.controls.update();
   }
 
   getCelestialBodyPosition(id) {
@@ -768,6 +806,10 @@ export class SolarEngine {
       this.markers.setMarkersVisible(visible);
     } else if (layer === 'labels') {
       this.planetBodies.forEach(body => body.setLabelVisibility(visible));
+    } else if (layer === 'asteroids') {
+      if (this.asteroidBelt) {
+        this.asteroidBelt.setVisible(visible);
+      }
     } else if (layer === 'stars') {
       if (this.starfield && this.starfield.group) {
         this.starfield.group.visible = visible;
@@ -819,6 +861,11 @@ export class SolarEngine {
     // 5. Update Interstellar Probes
     if (this.interstellar) {
       this.interstellar.update(this.camera, elapsedTime);
+    }
+
+    // 5b. Update Main Asteroid Belt Swarm
+    if (this.asteroidBelt) {
+      this.asteroidBelt.update(delta, this.speedMultiplier);
     }
 
     // 6. Keep starfield centered on camera
@@ -894,6 +941,7 @@ export class SolarEngine {
     window.removeEventListener('keyup', this.onKeyUp);
 
     if (this.starfield) this.starfield.dispose();
+    if (this.asteroidBelt) this.asteroidBelt.dispose();
     if (this.interstellar) this.interstellar.dispose();
     if (this.markers) this.markers.dispose();
     if (this.surfaceViewer) this.surfaceViewer.dispose();
