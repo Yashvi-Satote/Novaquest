@@ -909,3 +909,4 @@ export function createHumanAstronaut({ scale = 1.0 } = {}) {
 
   return root;
 }
+
