@@ -200,63 +200,79 @@ export function createLostComponentsManager() {
     const model = def.createMesh();
     compNode.add(model);
 
-    // 2. Skyward Vertical Volumetric Light Beam
-    const beamGeo = new THREE.CylinderGeometry(0.2, 0.8, 38, 16, 1, true);
-    const beamMat = new THREE.MeshBasicMaterial({
+    // 2. Small Localized Signal Beacon LED on Mini Mast (No huge sky-filling planes!)
+    const beaconMast = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.015, 0.015, 0.65, 8),
+      new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.8, roughness: 0.2 })
+    );
+    beaconMast.position.y = 0.45;
+    compNode.add(beaconMast);
+
+    const beaconOrbGeo = new THREE.SphereGeometry(0.12, 16, 16);
+    const beaconOrbMat = new THREE.MeshBasicMaterial({
+      color: def.beaconColor,
+      transparent: true,
+      opacity: 0.95
+    });
+    const beaconOrb = new THREE.Mesh(beaconOrbGeo, beaconOrbMat);
+    beaconOrb.position.y = 0.78;
+    compNode.add(beaconOrb);
+
+    // Subtle localized pulse halo (Only 0.45m radius!)
+    const haloGeo = new THREE.SphereGeometry(0.32, 16, 16);
+    const haloMat = new THREE.MeshBasicMaterial({
       color: def.beaconColor,
       transparent: true,
       opacity: 0.35,
-      blending: THREE.AdditiveBlending,
-      side: THREE.DoubleSide,
-      depthWrite: false
+      blending: THREE.AdditiveBlending
     });
-    const beam = new THREE.Mesh(beamGeo, beamMat);
-    beam.position.y = 19;
-    compNode.add(beam);
+    const beaconHalo = new THREE.Mesh(haloGeo, haloMat);
+    beaconHalo.position.y = 0.78;
+    compNode.add(beaconHalo);
 
-    // 3. Ground Target Decal Ring
-    const ringGeo = new THREE.RingGeometry(0.8, 1.1, 32);
+    // 3. Ground Target Decal Ring (Localized on lunar soil)
+    const ringGeo = new THREE.RingGeometry(0.55, 0.80, 24);
     const ringMat = new THREE.MeshBasicMaterial({
       color: def.beaconColor,
       transparent: true,
-      opacity: 0.6,
+      opacity: 0.65,
       side: THREE.DoubleSide,
       blending: THREE.AdditiveBlending
     });
     const groundRing = new THREE.Mesh(ringGeo, ringMat);
     groundRing.rotation.x = -Math.PI / 2;
-    groundRing.position.y = -def.position.y + 0.05;
+    groundRing.position.y = -def.position.y + 0.04;
     compNode.add(groundRing);
 
-    // 4. Floating Sparkle Particles
-    const pCount = 20;
+    // 4. Localized Micro-Sparkle Particles (Max 1.4m height)
+    const pCount = 14;
     const pGeo = new THREE.BufferGeometry();
     const pPos = new Float32Array(pCount * 3);
     const pData = [];
     for (let i = 0; i < pCount; i++) {
-      pPos[i * 3] = (Math.random() - 0.5) * 1.5;
-      pPos[i * 3 + 1] = Math.random() * 4.0;
-      pPos[i * 3 + 2] = (Math.random() - 0.5) * 1.5;
+      pPos[i * 3] = (Math.random() - 0.5) * 0.9;
+      pPos[i * 3 + 1] = Math.random() * 1.4;
+      pPos[i * 3 + 2] = (Math.random() - 0.5) * 0.9;
       pData.push({
         baseX: pPos[i * 3],
         baseZ: pPos[i * 3 + 2],
-        speed: 0.6 + Math.random() * 1.2,
-        height: 4.0
+        speed: 0.4 + Math.random() * 0.6,
+        height: 1.4
       });
     }
     pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
     const pMat = new THREE.PointsMaterial({
       color: def.beaconColor,
-      size: 0.18,
+      size: 0.12,
       transparent: true,
-      opacity: 0.8,
+      opacity: 0.85,
       blending: THREE.AdditiveBlending
     });
     const particles = new THREE.Points(pGeo, pMat);
     compNode.add(particles);
 
-    // Point Light for immediate glow
-    const pointLight = new THREE.PointLight(def.beaconColor, 2.5, 8);
+    // Localized Point Light for immediate ground illumination (Radius 4.5m)
+    const pointLight = new THREE.PointLight(def.beaconColor, 2.0, 4.5);
     pointLight.position.y = 0.8;
     compNode.add(pointLight);
 
@@ -266,7 +282,8 @@ export function createLostComponentsManager() {
       def,
       node: compNode,
       model,
-      beam,
+      beaconOrb,
+      beaconHalo,
       groundRing,
       particles,
       pGeo,
@@ -297,10 +314,14 @@ export function createLostComponentsManager() {
       item.model.position.y = bob;
       item.model.rotation.y += delta * 0.7;
 
-      // Pulse beacon beam & ground ring
-      const pulse = 0.3 + Math.sin(elapsed * 4.0) * 0.12;
-      item.beam.material.opacity = pulse;
-      item.groundRing.scale.setScalar(1.0 + Math.sin(elapsed * 3.0) * 0.1);
+      // Pulse beacon halo & ground ring
+      const pulse = 0.5 + Math.sin(elapsed * 4.0) * 0.2;
+      if (item.beaconHalo && item.beaconHalo.material) {
+        item.beaconHalo.material.opacity = pulse;
+      }
+      if (item.groundRing) {
+        item.groundRing.scale.setScalar(1.0 + Math.sin(elapsed * 3.0) * 0.1);
+      }
 
       // Animate floating sparkles
       const pPos = item.pPos;
