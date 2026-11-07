@@ -15,15 +15,14 @@ import {
   ArrowRight,
   Eye,
   Wrench,
-  Zap,
-  Package,
-  Layers
+  Zap
 } from 'lucide-react';
 import { createAstronautCharacter } from '../components/gameplay/three/AstronautCharacterModel';
 import { createLunarOpenWorldEnvironment } from '../components/gameplay/three/LunarOpenWorldEnvironment';
 import { createSpacecraftCockpit } from '../components/gameplay/three/SpacecraftCockpitModel';
-import { createLaunchpadComplex, createLaunchSmokeSystem } from '../components/gameplay/three/RocketLaunchpadModel';
 import { createAtlasCentaurVehicle } from '../components/gameplay/three/AtlasCentaurLaunchVehicle';
+import { createCapeCanaveralEnvironment } from '../components/gameplay/three/CapeCanaveralEnvironment';
+import { createLaunchSmokeSystem } from '../components/gameplay/three/RocketLaunchpadModel';
 import { createThirdPersonController } from '../components/gameplay/three/ThirdPersonPlayerController';
 import { gameAudio } from '../config/gameAudio';
 import { saveGame } from '../game/saveManager';
@@ -33,8 +32,11 @@ import { saveGame } from '../game/saveManager';
  * 
  * "TIME TRAVELERS OF SPACE" — LEVEL 1: SURVEYOR 5 (THE LOST COMPONENTS)
  * 
- * Genuine AAA 3D Open-World Space Adventure:
- * - Phase 1: 1967 Cape Canaveral Launch & Atlas-Centaur Staging (Atlas Booster Sep, Centaur RL10 Burn, Fairing Jettison, Surveyor Leg Unfolding)
+ * AAA 3D Cinematic & Open-World Space Adventure:
+ * - Phase 1: Radiant Cape Canaveral Sunrise Launch & Atlas-Centaur Staging
+ *   (Golden Florida sunrise, azure blue sky dome, Atlantic ocean, open red steel lattice gantry,
+ *    retracting swing arms, engine ignition, cloud punch, Atlas booster staging, Centaur RL10 burn,
+ *    clamshell fairing jettison, and Surveyor 5 leg unfolding in space!)
  * - Phase 2: Post-Landing Malfunction Briefing from Dr. Leonard Jaffe
  * - Phase 3: Human Spacecraft Cockpit Flight & Mare Tranquillitatis Touchdown
  * - Phase 4: GTA-Style Third-Person Open-World Lunar Exploration & Component Hunt
@@ -98,34 +100,76 @@ export default function Level1Surveyor5Page() {
 
     // Master Scene & Renderer
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x020617);
+    scene.background = new THREE.Color(0x38bdf8); // Florida morning sky blue initially!
 
-    const camera = new THREE.PerspectiveCamera(54, width / height, 0.1, 1200);
-    camera.position.set(0, 4, 18);
+    const camera = new THREE.PerspectiveCamera(54, width / height, 0.1, 1600);
+    camera.position.set(-20, 18, 34);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
     renderer.setSize(width, height);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.35; // Radiant, cinematic film exposure
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     container.appendChild(renderer.domElement);
 
     // ===========================================================
-    // 1. PHASE 1 ASSETS: Atlas-Centaur Launch Vehicle & Launchpad
+    // 1. PHASE 1 ASSETS: Cape Canaveral Environment & Atlas-Centaur
     // ===========================================================
     const launchpadGroup = new THREE.Group();
     scene.add(launchpadGroup);
 
-    const { root: launchpadComplex } = createLaunchpadComplex();
-    launchpadGroup.add(launchpadComplex);
+    // High-Detail Cape Canaveral LC-36 Environment
+    const capeEnvironment = createCapeCanaveralEnvironment();
+    launchpadGroup.add(capeEnvironment.root);
 
-    // Authentic Atlas-Centaur with physical staging
+    // Authentic Atlas-Centaur Launch Vehicle
     const atlasCentaur = createAtlasCentaurVehicle();
+    atlasCentaur.root.position.set(0, 3.2, 0); // Mounted on launchpad
     launchpadGroup.add(atlasCentaur.root);
 
-    const { particles: smokeParticles, update: updateSmoke } = createLaunchSmokeSystem(350);
+    // Launchpad Blast Trench Smoke System
+    const { particles: smokeParticles, update: updateSmoke } = createLaunchSmokeSystem(450);
+    smokeParticles.position.set(0, 2.5, 0);
     launchpadGroup.add(smokeParticles);
+
+    // 3D Blue Marble Earth (visible in high atmosphere and space)
+    const texLoader = new THREE.TextureLoader();
+    const earthTex = texLoader.load('/textures/planets/earth_day.jpg');
+    const spaceEarthGeo = new THREE.SphereGeometry(180, 48, 48);
+    const spaceEarthMat = new THREE.MeshStandardMaterial({
+      map: earthTex,
+      roughness: 0.7,
+      metalness: 0.1
+    });
+    const spaceEarth = new THREE.Mesh(spaceEarthGeo, spaceEarthMat);
+    spaceEarth.position.set(0, -220, -180);
+    spaceEarth.visible = false;
+    launchpadGroup.add(spaceEarth);
+
+    // Atmospheric Blue Limb Glow around Earth in space
+    const atmosGlowGeo = new THREE.SphereGeometry(184, 48, 48);
+    const atmosGlowMat = new THREE.MeshBasicMaterial({
+      color: 0x38bdf8,
+      side: THREE.BackSide,
+      transparent: true,
+      opacity: 0.45,
+      blending: THREE.AdditiveBlending
+    });
+    const atmosGlow = new THREE.Mesh(atmosGlowGeo, atmosGlowMat);
+    atmosGlow.position.copy(spaceEarth.position);
+    atmosGlow.visible = false;
+    launchpadGroup.add(atmosGlow);
+
+    // Moon in distant space
+    const moonTex = texLoader.load('/textures/planets/moon.jpg');
+    const spaceMoonGeo = new THREE.SphereGeometry(22, 32, 32);
+    const spaceMoonMat = new THREE.MeshStandardMaterial({ map: moonTex, roughness: 0.95 });
+    const spaceMoon = new THREE.Mesh(spaceMoonGeo, spaceMoonMat);
+    spaceMoon.position.set(220, 280, -450);
+    spaceMoon.visible = false;
+    launchpadGroup.add(spaceMoon);
 
     // ===========================================================
     // 2. PHASE 3 ASSETS: Human Spacecraft Cockpit
@@ -137,9 +181,6 @@ export default function Level1Surveyor5Page() {
     const { root: cockpitMesh, update: updateCockpit } = createSpacecraftCockpit();
     cockpitGroup.add(cockpitMesh);
 
-    // Moon sphere visible through cockpit windshield
-    const texLoader = new THREE.TextureLoader();
-    const moonTex = texLoader.load('/textures/planets/moon.jpg');
     const cockpitMoon = new THREE.Mesh(
       new THREE.SphereGeometry(4.5, 32, 32),
       new THREE.MeshStandardMaterial({ map: moonTex, roughness: 0.9 })
@@ -195,14 +236,19 @@ export default function Level1Surveyor5Page() {
       playRadioMessage(
         'jaffe',
         'Dr. Leonard Jaffe • NASA Project Scientist',
-        'Cape Canaveral, September 8, 1967. The Atlas-Centaur rocket is primed. Surveyor 5 must reach the Sea of Tranquility to test the lunar soil!'
+        'Cape Canaveral, September 8, 1967. The Atlas-Centaur rocket is primed on Launch Complex 36. Surveyor 5 must reach the Moon to test the lunar soil for Apollo!'
       );
     }, 1200);
 
-    // Launch Ignition at 5.5s
+    // Retract Service Swing Arms at 4.5s
+    setTimeout(() => {
+      capeEnvironment.setSwingArmsRetracted(true);
+    }, 4500);
+
+    // Launch Engine Ignition at 5.5s
     setTimeout(() => {
       atlasCentaur.staging.state = 'liftoff';
-      gameAudio.playThruster(5.0);
+      gameAudio.playThruster(6.0);
     }, 5500);
 
     let animFrameId;
@@ -218,51 +264,120 @@ export default function Level1Surveyor5Page() {
       const curPhase = phaseRef.current;
 
       // =========================================================
-      // PHASE 1: ATLAS-CENTAUR ROCKET LAUNCH & PHYSICAL STAGING
+      // PHASE 1: CAPE CANAVERAL LAUNCH & MECHANICAL STAGING
       // =========================================================
       if (curPhase === 'phase1_launch') {
         launchpadGroup.visible = true;
         cockpitGroup.visible = false;
         openWorldGroup.visible = false;
 
+        // Update environment & rocket staging
+        capeEnvironment.update(delta, elapsed, rocketY);
         atlasCentaur.staging.update(delta, elapsed);
 
-        if (phaseTimer > 5.5) {
-          updateSmoke(delta, phaseTimer < 11.0);
-
-          if (phaseTimer > 6.5) {
-            rocketVel += 9.2 * delta;
-            rocketY += rocketVel * delta;
-            atlasCentaur.root.position.y = rocketY;
-
-            camera.position.set(-6, 16 + rocketY * 0.72, 18 + rocketY * 0.25);
-            camera.lookAt(0, 14 + rocketY, 0);
+        // -------------------------------------------------------
+        // CINEMATIC CAMERA CHOREOGRAPHY
+        // -------------------------------------------------------
+        // Cut 1: 0.0s - 4.5s (Wide Majestic Establishing Crane Shot)
+        if (phaseTimer < 4.5) {
+          const camX = -20 + phaseTimer * 0.7;
+          camera.position.set(camX, 18, 34);
+          camera.lookAt(0, 15, 0);
+        }
+        // Cut 2: 4.5s - 6.5s (Low-Angle Dramatic Engine Ignition & Smoke)
+        else if (phaseTimer < 6.5) {
+          camera.position.set(16, 5.5, 20);
+          camera.lookAt(0, 4.5, 0);
+          if (phaseTimer > 5.5) {
+            updateSmoke(delta, true);
           }
-        } else {
-          camera.position.set(-4, 18, 14);
-          camera.lookAt(0, 14, 0);
         }
+        // Cut 3: 6.5s - 10.5s (Liftoff Ascent & Tower Clearance)
+        else if (phaseTimer < 10.5) {
+          updateSmoke(delta, phaseTimer < 11.5);
+          rocketVel += 10.5 * delta;
+          rocketY += rocketVel * delta;
+          atlasCentaur.root.position.y = 3.2 + rocketY;
 
-        // 10s: Stage 1 Atlas Booster Separation
-        if (phaseTimer >= 10.0 && phaseTimer < 10.1) {
-          atlasCentaur.staging.state = 'atlas_sep';
-          gameAudio.playThruster(2.0);
+          // Wide ascending follow camera
+          camera.position.set(-18, 14 + rocketY * 0.65, 30 + rocketY * 0.2);
+          camera.lookAt(0, 14 + rocketY, 0);
         }
+        // Cut 4: 10.5s - 13.5s (Cloud Punch & Atlas Booster Separation)
+        else if (phaseTimer < 13.5) {
+          rocketVel += 13.0 * delta;
+          rocketY += rocketVel * delta;
+          atlasCentaur.root.position.y = 3.2 + rocketY;
 
-        // 13s: Payload Fairing Clamshell Jettison
-        if (phaseTimer >= 13.0 && phaseTimer < 13.1) {
-          atlasCentaur.staging.state = 'fairing_sep';
-          gameAudio.playAttachSnap();
+          // Trigger Stage 1 Atlas Booster Separation at 10.5s
+          if (atlasCentaur.staging.state !== 'atlas_sep') {
+            atlasCentaur.staging.state = 'atlas_sep';
+            gameAudio.playThruster(2.5);
+            playRadioMessage(
+              'jaffe',
+              'Dr. Leonard Jaffe • Launch Control',
+              'Staging confirmed! Atlas booster separation complete! Centaur RL10 liquid hydrogen engines running hot!'
+            );
+          }
+
+          // Camera behind Centaur looking back down at falling Atlas booster & Earth
+          camera.position.set(8, 22 + rocketY * 0.75, -20 + rocketY * 0.15);
+          camera.lookAt(0, 16 + rocketY, 0);
         }
+        // Cut 5: 13.5s - 16.5s (Fairing Jettison & Space Transition)
+        else if (phaseTimer < 16.5) {
+          rocketVel += 15.0 * delta;
+          rocketY += rocketVel * delta;
+          atlasCentaur.root.position.y = 3.2 + rocketY;
 
-        // 15s: Surveyor 5 Spacecraft Separation & Leg Unfold
-        if (phaseTimer >= 15.0 && phaseTimer < 15.1) {
-          atlasCentaur.staging.state = 'surveyor_sep';
-          gameAudio.playPowerUp();
+          // Make space Earth and Moon visible in upper atmosphere
+          spaceEarth.visible = true;
+          atmosGlow.visible = true;
+          spaceMoon.visible = true;
+          scene.background.setHex(0x020617); // Velvet deep space background
+
+          // Trigger Fairing Jettison at 13.5s
+          if (atlasCentaur.staging.state !== 'fairing_sep') {
+            atlasCentaur.staging.state = 'fairing_sep';
+            gameAudio.playAttachSnap();
+            playRadioMessage(
+              'jaffe',
+              'Dr. Leonard Jaffe • Launch Control',
+              'Payload fairing jettisoned! Surveyor 5 is exposed to space, on track for the Moon!'
+            );
+          }
+
+          camera.position.set(12, 18 + rocketY * 0.82, 16 + rocketY * 0.2);
+          camera.lookAt(0, 18 + rocketY, 0);
         }
+        // Cut 6: 16.5s - 20.0s (Surveyor 5 Separation & Leg Deployment in Space)
+        else if (phaseTimer < 20.0) {
+          rocketVel += 8.0 * delta;
+          rocketY += rocketVel * delta;
+          atlasCentaur.root.position.y = 3.2 + rocketY;
 
-        // Transition to Phase 2 Emergency at 19s
-        if (phaseTimer >= 19.0) {
+          // Trigger Surveyor 5 Separation & Leg Unfold at 16.5s
+          if (atlasCentaur.staging.state !== 'surveyor_sep') {
+            atlasCentaur.staging.state = 'surveyor_sep';
+            gameAudio.playPowerUp();
+            playRadioMessage(
+              'jaffe',
+              'Dr. Leonard Jaffe • Launch Control',
+              'Surveyor 5 spacecraft separation confirmed! Landing gear locked! Translunar injection successful!'
+            );
+          }
+
+          // Orbital cinematic sweep around Surveyor 5
+          const sweepAngle = (phaseTimer - 16.5) * 0.6;
+          camera.position.set(
+            Math.sin(sweepAngle) * 16,
+            24 + rocketY * 0.85,
+            Math.cos(sweepAngle) * 16
+          );
+          camera.lookAt(0, 22 + rocketY, 0);
+        }
+        // 20.0s+: Transition to Phase 2 Emergency Alert
+        else {
           setGamePhase('phase2_emergency');
           phaseTimer = 0;
           gameAudio.playAlarm();
@@ -281,6 +396,7 @@ export default function Level1Surveyor5Page() {
         launchpadGroup.visible = false;
         cockpitGroup.visible = true;
         openWorldGroup.visible = false;
+        scene.background.setHex(0x020617);
 
         updateCockpit(delta, elapsed, false);
         camera.position.set(0, 1.4, 0);
@@ -318,7 +434,7 @@ export default function Level1Surveyor5Page() {
           gameAudio.playThruster(1.5);
           setGamePhase('phase4_open_world');
           phaseTimer = 0;
-          controller.setPosition(0, 0, 23);
+          controller.setPosition(0, initialH, 23);
           playRadioMessage(
             'jaffe',
             'Dr. Leonard Jaffe • Mission Control',
@@ -426,7 +542,6 @@ export default function Level1Surveyor5Page() {
         }
         // Check if near Surveyor 5 (within 4.0m)
         else if (dSurv <= 4.0) {
-          // Identify which component in inventory can be installed next
           const uninstalledInHand = curInventory.filter(id => !curInstalled.includes(id));
 
           if (uninstalledInHand.length > 0) {
@@ -491,10 +606,8 @@ export default function Level1Surveyor5Page() {
               }
             });
           } else if (curInstalled.length === 4) {
-            // Already repaired
             setInteractionPrompt(null);
           } else {
-            // Leo is at Surveyor 5 but hasn't collected components yet
             setInteractionPrompt({
               text: 'Press [E] to Run Diagnostic Scan',
               action: () => {
@@ -590,18 +703,18 @@ export default function Level1Surveyor5Page() {
       {/* ----------------------------------------------------------- */}
       <div className="absolute top-4 left-4 right-4 flex items-center justify-between pointer-events-none z-20">
         {/* Left: Mission Title Badge */}
-        <div className="flex items-center gap-3 bg-slate-900/85 backdrop-blur-xl px-4 py-2.5 rounded-2xl border border-sky-400/40 shadow-xl pointer-events-auto">
-          <Rocket className="w-5 h-5 text-sky-400 animate-pulse" />
+        <div className="flex items-center gap-3 bg-slate-900/85 backdrop-blur-xl px-4 py-2 rounded-2xl border border-sky-400/40 shadow-xl pointer-events-auto">
+          <Rocket className="w-4 h-4 text-sky-400 animate-pulse" />
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-[10px] font-black uppercase tracking-wider text-sky-400">
+              <span className="text-[9px] font-black uppercase tracking-wider text-sky-400">
                 Level 1 • Mare Tranquillitatis
               </span>
-              <span className="text-[10px] px-1.5 py-0.2 rounded bg-sky-950 text-sky-300 font-bold border border-sky-500/30">
+              <span className="text-[9px] px-1.5 py-0.2 rounded bg-sky-950 text-sky-300 font-bold border border-sky-500/30">
                 1967
               </span>
             </div>
-            <h1 className="text-sm sm:text-base font-extrabold text-white">
+            <h1 className="text-xs sm:text-sm font-extrabold text-white">
               Surveyor 5 — The Lost Components
             </h1>
           </div>
@@ -637,17 +750,18 @@ export default function Level1Surveyor5Page() {
         <div className="flex items-center gap-2 pointer-events-auto">
           {gamePhase !== 'phase4_open_world' && gamePhase !== 'phase5_victory' && (
             <button
+              id="skip-to-moon-btn"
               onClick={handleSkipToOpenWorld}
-              className="flex items-center gap-2 px-3.5 py-2 bg-slate-900/85 hover:bg-slate-800 backdrop-blur-md text-slate-300 hover:text-white rounded-2xl border border-slate-700 hover:border-sky-400 transition-all text-xs font-bold shadow-md active:scale-95"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-900/85 hover:bg-slate-800 backdrop-blur-md text-slate-300 hover:text-white rounded-2xl border border-slate-700 hover:border-sky-400 transition-all text-xs font-bold shadow-md active:scale-95"
             >
               <span>Skip to Moon</span>
-              <FastForward className="w-4 h-4 text-sky-400" />
+              <FastForward className="w-3.5 h-3.5 text-sky-400" />
             </button>
           )}
 
           <button
             onClick={() => navigate('/missions')}
-            className="px-3.5 py-2 bg-slate-900/85 hover:bg-slate-800 backdrop-blur-md text-slate-400 hover:text-white rounded-2xl border border-slate-700 text-xs font-bold transition-all shadow-md active:scale-95"
+            className="px-3 py-1.5 bg-slate-900/85 hover:bg-slate-800 backdrop-blur-md text-slate-400 hover:text-white rounded-2xl border border-slate-700 text-xs font-bold transition-all shadow-md active:scale-95"
           >
             Hub
           </button>
@@ -660,8 +774,19 @@ export default function Level1Surveyor5Page() {
       {gamePhase === 'phase2_emergency' && (
         <div className="absolute inset-0 flex items-center justify-center p-6 bg-slate-950/70 backdrop-blur-sm z-30 animate-fade-in pointer-events-auto">
           <div className="max-w-xl w-full p-8 rounded-3xl bg-slate-900/95 border-2 border-red-500/60 shadow-[0_0_60px_rgba(239,68,68,0.4)] text-center">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-red-950 border border-red-500/60 flex items-center justify-center text-red-400 animate-pulse">
-              <ShieldAlert className="w-9 h-9" />
+            {/* Mission Hero & Emergency Dispatch Badge */}
+            <div className="flex items-center justify-center gap-4 mb-4">
+              <div className="relative w-16 h-16 rounded-2xl bg-gradient-to-tr from-sky-400 via-cyan-500 to-indigo-600 p-0.5 shadow-xl">
+                <div className="w-full h-full bg-slate-950 rounded-2xl flex items-center justify-center overflow-hidden">
+                  <img src="/images/nova_alien_companion.png" alt="Astronaut Leo" className="w-14 h-14 object-contain drop-shadow" />
+                </div>
+              </div>
+              <div className="text-left">
+                <span className="text-[10px] font-black uppercase tracking-widest text-sky-400">
+                  Mission Specialist: Leo
+                </span>
+                <p className="text-sm font-bold text-white">Direct Dispatch from Dr. Jaffe</p>
+              </div>
             </div>
 
             <span className="text-xs font-black uppercase tracking-widest text-red-400">
@@ -818,31 +943,28 @@ export default function Level1Surveyor5Page() {
       )}
 
       {/* ----------------------------------------------------------- */}
-      {/* LOWER THIRD RADIO VOICE TRANSMISSION SUBTITLES              */}
+      {/* SLEEK FLOATING VOICE DIALOGUE PILL (Requirement 7)          */}
       {/* ----------------------------------------------------------- */}
       {radioTransmission && (
-        <div className="absolute bottom-24 sm:bottom-28 left-4 right-4 max-w-2xl mx-auto z-20 pointer-events-none animate-fade-in">
-          <div className="flex items-center gap-3.5 p-3.5 rounded-2xl bg-slate-950/90 backdrop-blur-xl border border-sky-400/50 shadow-2xl">
-            <div className="w-10 h-10 rounded-xl bg-slate-900 border border-sky-400/60 p-1 flex items-center justify-center shrink-0">
-              {radioTransmission.speaker === 'jaffe' ? (
-                <span className="text-xl">👨‍🔬</span>
-              ) : (
-                <Radio className="w-5 h-5 text-sky-400 animate-pulse" />
-              )}
+        <div className="absolute bottom-6 sm:bottom-8 left-1/2 -translate-x-1/2 z-20 pointer-events-none animate-fade-in max-w-xl w-[92%] sm:w-auto">
+          <div className="flex items-center gap-3 px-4 py-2.5 rounded-full bg-slate-950/80 backdrop-blur-xl border border-sky-400/40 shadow-xl shadow-sky-950/40">
+            <div className="w-7 h-7 rounded-full bg-sky-950/80 border border-sky-400/60 flex items-center justify-center shrink-0 text-sm">
+              {radioTransmission.speaker === 'jaffe' ? '👨‍🔬' : '🤖'}
             </div>
 
-            <div className="flex-1 min-w-0">
+            <div className="flex-1 min-w-0 pr-2">
               <div className="flex items-center gap-2">
-                <span className="text-[11px] font-extrabold text-sky-300 uppercase">
-                  {radioTransmission.title}
+                <span className="text-[10px] font-black text-sky-400 uppercase tracking-wider">
+                  {radioTransmission.title.split('•')[0]}
                 </span>
                 {isAudioSpeaking && (
-                  <span className="flex items-center gap-1 text-[10px] text-amber-300 font-bold animate-pulse">
-                    <Volume2 className="w-3 h-3" /> Voice
+                  <span className="flex items-center gap-1 text-[9px] text-amber-300 font-bold">
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping" />
+                    Voice
                   </span>
                 )}
               </div>
-              <p className="text-xs sm:text-sm text-slate-100 font-medium leading-relaxed">
+              <p className="text-xs text-slate-100 font-medium truncate sm:whitespace-normal leading-snug">
                 {radioTransmission.text}
               </p>
             </div>
