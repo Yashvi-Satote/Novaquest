@@ -1,6 +1,8 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import { createSurveyor5InteractiveLander } from './Surveyor5InteractiveLander';
+import { createLostComponentsManager } from './LostComponentsManager';
 
 /**
  * LunarOpenWorldEnvironment.js
@@ -10,7 +12,8 @@ import { createSurveyor5InteractiveLander } from './Surveyor5InteractiveLander';
  * - 240m x 240m cratered terrain with procedural displacement
  * - Authentic Apollo Lunar Module (`apollo_lm.glb`) loaded via GLTFLoader
  * - Interactive Surveyor 5 lander with dynamic repair mechanics
- * - Cargo supply crate with glowing solar coupler item
+ * - 4 physical lost components scattered across the crater with light beacons
+ * - Equipment cargo crate on the human lander
  * - Realistic boulders, scientific comms antenna, and NASA marker flag
  * - Blue glowing Earth in the deep-space starfield
  */
@@ -90,14 +93,13 @@ export function createLunarOpenWorldEnvironment(onLanderLoaded = null) {
   const earthshine = new THREE.AmbientLight(0x38bdf8, 0.45); // cool blue earthshine fill
   root.add(earthshine);
 
-  // 4. Scattered Lunar Boulders (Realistic Rocks of varying sizes)
+  // 4. Scattered Lunar Boulders
   const rockGeo = new THREE.DodecahedronGeometry(0.8, 1);
   const rockMat = new THREE.MeshStandardMaterial({ color: 0x64748b, roughness: 0.95 });
   for (let i = 0; i < 50; i++) {
     const rock = new THREE.Mesh(rockGeo, rockMat);
     const rx = (Math.random() - 0.5) * 160;
     const rz = (Math.random() - 0.5) * 160;
-    // Keep area around lander and surveyor clear
     if (Math.hypot(rx, rz - 18) > 6 && Math.hypot(rx - 12, rz + 22) > 6) {
       const s = 0.4 + Math.random() * 1.4;
       rock.scale.set(s, s * 0.7, s);
@@ -112,8 +114,12 @@ export function createLunarOpenWorldEnvironment(onLanderLoaded = null) {
   humanLanderGroup.position.set(0, 0, 18);
   root.add(humanLanderGroup);
 
-  // Load genuine Apollo LM GLB model
+  const dracoLoader = new DRACOLoader();
+  dracoLoader.setDecoderPath('/draco/');
+
   const gltfLoader = new GLTFLoader();
+  gltfLoader.setDRACOLoader(dracoLoader);
+
   gltfLoader.load(
     '/models/spacecraft/apollo_lm.glb',
     (gltf) => {
@@ -132,7 +138,6 @@ export function createLunarOpenWorldEnvironment(onLanderLoaded = null) {
     undefined,
     (err) => {
       console.warn('Fallback: Building procedural human spacecraft frame', err);
-      // Fallback procedural lander if GLB fails
       const fGeo = new THREE.CylinderGeometry(1.4, 2.0, 2.6, 16);
       const fMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, metalness: 0.6 });
       const fMesh = new THREE.Mesh(fGeo, fMat);
@@ -141,8 +146,7 @@ export function createLunarOpenWorldEnvironment(onLanderLoaded = null) {
     }
   );
 
-  // Equipment Supply Cargo Crate (On the Human Lander)
-  // This is where Leo retrieves the replacement Solar Coupler!
+  // Equipment Supply Cargo Crate
   const cargoGroup = new THREE.Group();
   cargoGroup.position.set(-2.8, 0.5, 18.2);
   root.add(cargoGroup);
@@ -154,7 +158,6 @@ export function createLunarOpenWorldEnvironment(onLanderLoaded = null) {
   crateMesh.position.y = 0.45;
   cargoGroup.add(crateMesh);
 
-  // Glowing Tool Marker on Cargo Crate
   const crateLed = new THREE.Mesh(
     new THREE.SphereGeometry(0.08, 8, 8),
     new THREE.MeshBasicMaterial({ color: 0x06b6d4 })
@@ -171,7 +174,11 @@ export function createLunarOpenWorldEnvironment(onLanderLoaded = null) {
   surveyorLander.root.position.set(12, 0.1, -22); // In the crater ~42 meters away
   root.add(surveyorLander.root);
 
-  // 7. NASA Communication Relay Antenna (Nearby prop)
+  // 7. Lost Components Manager (The 4 physical components scattered across crater!)
+  const lostComponents = createLostComponentsManager();
+  root.add(lostComponents.root);
+
+  // 8. NASA Communication Relay Antenna (Nearby prop)
   const commsGroup = new THREE.Group();
   commsGroup.position.set(-8, 0, 10);
   root.add(commsGroup);
@@ -195,15 +202,25 @@ export function createLunarOpenWorldEnvironment(onLanderLoaded = null) {
   commsBeacon.position.set(0, 3.5, 0);
   commsGroup.add(commsBeacon);
 
-  // 8. Update loop
+  // Exact Mathematical Terrain Height Function (For character ground snapping)
+  const getTerrainHeight = (x, z) => {
+    const vx = x;
+    const vy = z;
+    const dSurveyor = Math.hypot(vx - 12, vy - (-22));
+    let crater1 = 0;
+    if (dSurveyor < 18) {
+      crater1 = -Math.cos((dSurveyor / 18) * Math.PI) * 0.9 - 0.4;
+    }
+    const wave = Math.sin(vx * 0.08) * Math.cos(vy * 0.08) * 0.75;
+    const wave2 = Math.sin(vx * 0.03 + 1.2) * Math.cos(vy * 0.03 - 0.5) * 1.2;
+    return crater1 + wave + wave2;
+  };
+
+  // 9. Master Environment Update Loop
   const update = (delta, timeSeconds) => {
-    // Earth slow spin
     earthMesh.rotation.y += 0.02 * delta;
-
-    // Update Surveyor 5 interactive animations & sparks
     surveyorLander.update(delta, timeSeconds);
-
-    // Pulse crate beacon
+    lostComponents.update(delta, timeSeconds);
     crateLight.intensity = 1.8 + Math.sin(timeSeconds * 4) * 0.8;
   };
 
@@ -211,6 +228,8 @@ export function createLunarOpenWorldEnvironment(onLanderLoaded = null) {
     root,
     update,
     surveyorLander,
+    lostComponents,
+    getTerrainHeight,
     humanLanderGroup,
     cargoGroup,
     positions: {
