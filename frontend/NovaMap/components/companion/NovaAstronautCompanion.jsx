@@ -42,18 +42,20 @@ import { getNovaProfile } from './novaSpaceKnowledge';
 export default function NovaAstronautCompanion({
   selectedCelestialId,
   selectedMissionSlug,
-  isMinimizedDefault = false
+  isOpen = false,
+  onClose,
+  isMuted: propIsMuted,
+  onToggleMute: propOnToggleMute
 }) {
-  // Companion Visibility & UI States
-  const [isCompanionHidden, setIsCompanionHidden] = useState(isMinimizedDefault);
-  const [isConversationOpen, setIsConversationOpen] = useState(true);
-  const [isMuted, setIsMuted] = useState(() => {
+  const [internalMuted, setInternalMuted] = useState(() => {
     try {
       return localStorage.getItem('nova_voice_muted') === 'true';
     } catch {
       return false;
     }
   });
+
+  const isMuted = propIsMuted !== undefined ? propIsMuted : internalMuted;
   const [isAutoNarrateEnabled, setIsAutoNarrateEnabled] = useState(() => {
     try {
       return localStorage.getItem('nova_autonarrate_enabled') !== 'false';
@@ -268,10 +270,10 @@ export default function NovaAstronautCompanion({
 
   // Auto-scroll conversation to bottom
   useEffect(() => {
-    if (isConversationOpen && chatScrollRef.current) {
+    if (isOpen && chatScrollRef.current) {
       chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight;
     }
-  }, [messages, isConversationOpen, isListening]);
+  }, [messages, isOpen, isListening]);
 
   // Clean up speech on unmount
   useEffect(() => {
@@ -340,16 +342,19 @@ export default function NovaAstronautCompanion({
   // Toggle Mute / Unmute
   const handleToggleMute = (e) => {
     if (e) e.stopPropagation();
-    const nextMuted = !isMuted;
-    setIsMuted(nextMuted);
-    try {
-      localStorage.setItem('nova_voice_muted', String(nextMuted));
-    } catch (e) {}
-
-    if (nextMuted) {
-      stopSpeaking();
+    if (propOnToggleMute) {
+      propOnToggleMute();
     } else {
-      handleReplayNarration();
+      const nextMuted = !isMuted;
+      setInternalMuted(nextMuted);
+      try {
+        localStorage.setItem('nova_voice_muted', String(nextMuted));
+      } catch (err) {}
+      if (nextMuted) {
+        stopSpeaking();
+      } else {
+        handleReplayNarration();
+      }
     }
   };
 
@@ -399,33 +404,20 @@ export default function NovaAstronautCompanion({
     stopSpeaking();
   };
 
-  // Toggle Conversation Card Overlay
-  const handleToggleConversation = (e) => {
-    if (e) e.stopPropagation();
-    setIsConversationOpen(prev => !prev);
-  };
-
-  // Toggle Minimize / Hide Entire Mascot
-  const handleToggleHideMascot = (e) => {
-    if (e) e.stopPropagation();
-    setIsCompanionHidden(prev => !prev);
-  };
+  if (!isOpen) return null;
 
   return (
     <aside
       id="nova-companion-container"
-      className="fixed bottom-12 right-4 sm:bottom-16 sm:right-6 z-30 pointer-events-auto select-none font-sans flex items-end gap-3.5"
+      className="fixed bottom-12 right-4 sm:bottom-16 sm:right-6 z-40 pointer-events-auto select-none font-sans flex items-end gap-3.5"
       role="complementary"
       aria-label="NOVA Interactive AI Astronaut Companion"
     >
-      {/* ================================================================= */}
-      {/* 1. COMPACT WRITTEN CONVERSATION OVERLAY (BESIDE ASTRONAUT)        */}
-      {/* ================================================================= */}
-      {!isCompanionHidden && isConversationOpen && (
-        <div 
-          id="nova-conversation-overlay"
-          className="w-76 sm:w-84 md:w-92 max-h-[380px] flex flex-col bg-[#09071c]/94 backdrop-blur-2xl border border-cyan-500/35 rounded-2xl shadow-2xl shadow-cyan-950/80 text-white animate-fadeIn overflow-hidden"
-        >
+      {/* 1. COMPACT WRITTEN CONVERSATION OVERLAY */}
+      <div 
+        id="nova-conversation-overlay"
+        className="w-76 sm:w-84 md:w-92 max-h-[380px] flex flex-col bg-[#09071c]/94 backdrop-blur-2xl border border-cyan-500/35 rounded-2xl shadow-2xl shadow-cyan-950/80 text-white animate-fadeIn overflow-hidden"
+      >
           {/* Header Bar */}
           <div className="flex items-center justify-between p-2.5 px-3 bg-gradient-to-r from-cyan-950/50 via-purple-950/40 to-slate-950/60 border-b border-cyan-500/25 shrink-0">
             <div className="flex items-center gap-2 min-w-0">
@@ -502,16 +494,16 @@ export default function NovaAstronautCompanion({
                 <RotateCcw className="w-3.5 h-3.5" />
               </button>
 
-              {/* Minimize Written Overlay */}
+              {/* Close Written Overlay */}
               <button
                 type="button"
-                id="nova-card-minimize-btn"
-                onClick={handleToggleConversation}
-                className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
-                title="Minimize written conversation"
-                aria-label="Minimize written overlay"
+                id="nova-card-close-btn"
+                onClick={onClose}
+                className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+                title="Close written conversation"
+                aria-label="Close written conversation"
               >
-                <ChevronDown className="w-3.5 h-3.5" />
+                <X className="w-3.5 h-3.5" />
               </button>
             </div>
           </div>
@@ -625,117 +617,6 @@ export default function NovaAstronautCompanion({
             </button>
           </form>
         </div>
-      )}
-
-      {/* ================================================================= */}
-      {/* 2. FLOATING ASTRONAUT MASCOT & COMPACT CONTROLS PILL               */}
-      {/* ================================================================= */}
-      {!isCompanionHidden && (
-        <div className="flex flex-col items-center">
-          {/* Main 3D Cartoon Astronaut Character */}
-          <div 
-            id="nova-mascot-character"
-            onClick={handleReplayNarration}
-            className="cursor-pointer hover:scale-105 active:scale-95 transition-transform duration-200"
-            title={isSpeaking ? "NOVA is speaking! Click to replay" : `NOVA • Click to hear about ${currentObjectLabel}`}
-          >
-            <NovaAstronautAvatar
-              size={120}
-              expression={expression}
-              isSpeaking={isSpeaking}
-              isGesturing={isGesturing}
-              isListening={isListening}
-            />
-          </div>
-
-          {/* Minimal Floating Pill beneath mascot */}
-          <div 
-            id="nova-companion-controls"
-            className="flex items-center gap-1.5 mt-1.5 px-2.5 py-1 bg-[#09071c]/85 backdrop-blur-md border border-cyan-500/30 rounded-full shadow-xl shadow-cyan-950/70 text-slate-300"
-          >
-            {/* Quick Microphone Button on Pill */}
-            <button
-              type="button"
-              id="nova-mic-pill-btn"
-              onClick={handleToggleListening}
-              className={`p-1 rounded-full transition-colors cursor-pointer ${
-                isListening 
-                  ? 'text-rose-400 bg-rose-950/60 animate-pulse' 
-                  : 'text-cyan-300 hover:text-cyan-200 hover:bg-cyan-900/50'
-              }`}
-              title={isListening ? "Stop listening" : "Talk to NOVA via microphone"}
-              aria-label="Microphone"
-            >
-              <Mic className="w-3.5 h-3.5" />
-            </button>
-
-            {/* Quick Replay Button */}
-            <button
-              type="button"
-              id="nova-replay-btn"
-              onClick={handleReplayNarration}
-              className="p-1 rounded-full text-slate-400 hover:text-cyan-300 hover:bg-white/5 transition-colors cursor-pointer"
-              title="Replay voice narration"
-              aria-label="Replay voice narration"
-            >
-              <RotateCcw className="w-3.5 h-3.5" />
-            </button>
-
-            {/* Toggle Written Conversation Card */}
-            <button
-              type="button"
-              id="nova-toggle-card-btn"
-              onClick={handleToggleConversation}
-              className={`p-1 rounded-full transition-colors cursor-pointer ${
-                isConversationOpen 
-                  ? 'text-cyan-300 bg-cyan-950/50' 
-                  : 'text-slate-400 hover:text-white hover:bg-white/5'
-              }`}
-              title={isConversationOpen ? "Hide written conversation" : "Show written conversation"}
-              aria-label="Toggle written conversation"
-            >
-              <MessageSquare className="w-3.5 h-3.5" />
-            </button>
-
-            {/* Minimize / Hide Mascot */}
-            <button
-              type="button"
-              id="nova-hide-btn"
-              onClick={handleToggleHideMascot}
-              className="p-1 rounded-full text-slate-400 hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
-              title="Minimize NOVA companion"
-              aria-label="Minimize companion"
-            >
-              <ChevronDown className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* ================================================================= */}
-      {/* 3. MINIMIZED FLOATING BADGE (WHEN FULLY MINIMIZED)                 */}
-      {/* ================================================================= */}
-      {isCompanionHidden && (
-        <button
-          type="button"
-          id="nova-expand-btn"
-          onClick={handleToggleHideMascot}
-          className="relative p-2 rounded-full bg-gradient-to-br from-[#0c1a36] via-[#101036] to-[#08061a] border-2 border-cyan-400/60 hover:border-cyan-300 shadow-2xl shadow-cyan-500/40 hover:shadow-cyan-400/60 cursor-pointer transition-all hover:scale-110 active:scale-95 group focus:outline-none"
-          title="Meet NOVA • Your AI Astronaut Companion"
-          aria-label="Expand NOVA companion"
-        >
-          <NovaAstronautAvatar
-            size={48}
-            expression="happy"
-            isSpeaking={false}
-            isGesturing={false}
-            isListening={false}
-          />
-          <span className="absolute -bottom-1 -right-1 p-1 rounded-full bg-cyan-600 text-white border border-[#09071c] shadow">
-            <Maximize2 className="w-2.5 h-2.5" />
-          </span>
-        </button>
-      )}
     </aside>
   );
 }
