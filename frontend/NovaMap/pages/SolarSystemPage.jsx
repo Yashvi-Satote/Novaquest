@@ -1,8 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Orbit, RotateCcw, ArrowLeft, Sparkles } from 'lucide-react';
+import { Orbit, RotateCcw, ArrowLeft, Sparkles, PanelBottomOpen, PanelBottomClose } from 'lucide-react';
 import AppNavbar from '../../Shared/components/layout/AppNavbar';
 import SolarCanvas from '../components/solar/SolarCanvas';
+import SolarControlsHUD from '../components/solar/SolarControlsHUD';
 import CompactSimulationControls from '../components/solar/CompactSimulationControls';
 import FlyingAstronautOverlay from '../components/companion/FlyingAstronautOverlay';
 import RocketCursor from '../components/cursor/RocketCursor';
@@ -75,6 +76,30 @@ export default function SolarSystemPage() {
     stars: true
   });
 
+  // Single Option A Astronaut Companion & Chat Contextual Menu States
+  const [isAstronautVisible, setIsAstronautVisible] = useState(true);
+  const [isChatOpen, setIsChatOpen] = useState(false); // Closed by default
+  const [isMuted, setIsMuted] = useState(() => {
+    try {
+      return localStorage.getItem('nova_voice_muted') === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  const handleToggleMute = () => {
+    setIsMuted(prev => {
+      const next = !prev;
+      try {
+        localStorage.setItem('nova_voice_muted', String(next));
+      } catch (e) {}
+      return next;
+    });
+  };
+
+  // Requirement 5: Bottom HUD Restore / Hide (Default: hidden to maintain cinematic view)
+  const [isBottomHudVisible, setIsBottomHudVisible] = useState(false);
+
   // Save layout preferences to localStorage
   const saveLayoutPrefs = (updates) => {
     setLayoutPrefs(prev => {
@@ -99,11 +124,13 @@ export default function SolarSystemPage() {
   };
 
   const handleToggleTimeline = () => {
-    saveLayoutPrefs({ isTimelineOpen: !layoutPrefs.isTimelineOpen });
+    setIsBottomHudVisible(prev => !prev);
+    saveLayoutPrefs({ isTimelineOpen: !isBottomHudVisible });
   };
 
   const handleToggleCompanion = () => {
-    saveLayoutPrefs({ isCompanionOpen: !layoutPrefs.isCompanionOpen });
+    setIsAstronautVisible(prev => !prev);
+    saveLayoutPrefs({ isCompanionOpen: !isAstronautVisible });
   };
 
   const handleToggleDrawer = () => {
@@ -123,6 +150,9 @@ export default function SolarSystemPage() {
       isZenMode: false
     };
     setLayoutPrefs(defaults);
+    setIsBottomHudVisible(false);
+    setIsAstronautVisible(true);
+    setIsChatOpen(false);
     try {
       localStorage.setItem(LAYOUT_STORAGE_KEY, JSON.stringify(defaults));
     } catch (e) {
@@ -357,9 +387,15 @@ export default function SolarSystemPage() {
           }
         `}</style>
 
-        {/* Full-Screen Animated 3D Cartoon Astronaut Companion (Requirement 2) */}
-        {!layoutPrefs.isZenMode && (
-          <FlyingAstronautOverlay />
+        {/* Full-Screen Animated 3D Cartoon Astronaut Companion (Option A — Sole Instance) */}
+        {!layoutPrefs.isZenMode && isAstronautVisible && (
+          <FlyingAstronautOverlay
+            isVisible={isAstronautVisible}
+            onClose={() => setIsAstronautVisible(false)}
+            onOpenChat={() => setIsChatOpen(true)}
+            isMuted={isMuted}
+            onToggleMute={handleToggleMute}
+          />
         )}
 
         {/* Aerodynamic Rocket Mouse Cursor (Requirement 3) */}
@@ -369,9 +405,9 @@ export default function SolarSystemPage() {
         <CinematicFloatingControls
           isSidebarOpen={layoutPrefs.isSidebarOpen}
           onToggleSidebar={handleToggleSidebar}
-          isTimelineOpen={layoutPrefs.isTimelineOpen}
+          isTimelineOpen={isBottomHudVisible || layoutPrefs.isTimelineOpen}
           onToggleTimeline={handleToggleTimeline}
-          isCompanionOpen={layoutPrefs.isCompanionOpen}
+          isCompanionOpen={isAstronautVisible}
           onToggleCompanion={handleToggleCompanion}
           isDrawerOpen={layoutPrefs.isDrawerOpen}
           onToggleDrawer={handleToggleDrawer}
@@ -463,8 +499,66 @@ export default function SolarSystemPage() {
           </div>
         )}
 
-        {/* Compact Floating Simulation Settings Modal (Requirement 1 - Replaces Bottom HUD) */}
+        {/* Right Edge Floating Button to Restore/Hide Bottom HUD (Requirement 5) */}
         {!layoutPrefs.isZenMode && (
+          <button
+            type="button"
+            id="toggle-bottom-hud-btn"
+            onClick={() => setIsBottomHudVisible(prev => !prev)}
+            className={`fixed right-4 bottom-20 z-40 p-2.5 rounded-2xl backdrop-blur-xl border transition-all cursor-pointer shadow-2xl flex items-center justify-center group ${
+              isBottomHudVisible
+                ? 'bg-cyan-950/90 border-cyan-400 text-cyan-300 shadow-cyan-900/70'
+                : 'bg-[#09071c]/90 border-cyan-500/30 text-slate-300 hover:text-white hover:border-cyan-400/60 shadow-black/80'
+            }`}
+            title={isBottomHudVisible ? "Hide Bottom Timeline & Navigation HUD" : "Restore Bottom Timeline & Navigation HUD"}
+            aria-label={isBottomHudVisible ? "Hide Bottom HUD" : "Restore Bottom HUD"}
+          >
+            {isBottomHudVisible ? (
+              <PanelBottomClose className="w-5 h-5 text-cyan-300" />
+            ) : (
+              <PanelBottomOpen className="w-5 h-5 text-cyan-400 group-hover:scale-110 transition-transform" />
+            )}
+          </button>
+        )}
+
+        {/* Restored NASA Eyes-Style Simulation & Timeline HUD (Requirement 5) */}
+        {!layoutPrefs.isZenMode && isBottomHudVisible && (
+          <SolarControlsHUD
+            isPlaying={isPlaying}
+            onTogglePlay={handleTogglePlay}
+            speed={speed}
+            onChangeSpeed={handleChangeSpeed}
+            timeDirection={timeDirection}
+            onToggleTimeDirection={handleToggleTimeDirection}
+            onStepDays={handleStepDays}
+            activeScale={activeScale}
+            onSelectScale={handleSelectScale}
+            onResetView={handleResetView}
+            onZoomIn={handleZoomIn}
+            onZoomOut={handleZoomOut}
+            hoveredItemInfo={hoveredItemInfo}
+            isVoyagerLocalMode={isVoyagerLocalMode}
+            onExitVoyagerLocal={handleExitVoyagerLocal}
+            isSurfaceMode={isSurfaceMode}
+            activeSurfaceCraft={activeSurfaceCraft}
+            onExitSurfaceMode={handleExitSurfaceMode}
+            selectedMissionSlug={selectedMissionSlug}
+            onEnterVoyagerLocal={handleEnterVoyagerLocal}
+            simulationDate={simulationDate}
+            onSelectDate={handleSelectDate}
+            lightingMode={lightingMode}
+            onToggleLightingMode={handleToggleLightingMode}
+            cameraMode={cameraMode}
+            onChangeCameraMode={handleChangeCameraMode}
+            layerVisibility={layerVisibility}
+            onToggleLayer={handleToggleLayer}
+            onScrubStart={handleScrubStart}
+            onScrubEnd={handleScrubEnd}
+          />
+        )}
+
+        {/* Optional Compact Simulation Settings Modal */}
+        {!layoutPrefs.isZenMode && layoutPrefs.isTimelineOpen && !isBottomHudVisible && (
           <CompactSimulationControls
             isOpen={layoutPrefs.isTimelineOpen}
             onClose={() => saveLayoutPrefs({ isTimelineOpen: false })}
@@ -491,20 +585,15 @@ export default function SolarSystemPage() {
           />
         )}
 
-        {/* NOVA: Animated Cartoon Astronaut AI Companion & Solar System Guide (Phase 3-6) */}
-        {!layoutPrefs.isZenMode && layoutPrefs.isCompanionOpen && (
+        {/* NOVA: Two-Way Voice and Written Conversation Interface (Requirement 4 — Opened via Astronaut Context Menu) */}
+        {!layoutPrefs.isZenMode && isChatOpen && (
           <NovaAstronautCompanion
+            isOpen={isChatOpen}
+            onClose={() => setIsChatOpen(false)}
             selectedCelestialId={selectedCelestialId}
             selectedMissionSlug={selectedMissionSlug}
-            onExploreScale={handleSelectScale}
-            onFocusCelestial={(id) => {
-              setSelectedCelestialId(id);
-              setSelectedMissionSlug(null);
-              if (canvasRef.current) {
-                canvasRef.current.focusCelestialBody(id);
-              }
-            }}
-            onOpenTelemetryDrawer={() => saveLayoutPrefs({ isDrawerOpen: true })}
+            isMuted={isMuted}
+            onToggleMute={handleToggleMute}
           />
         )}
 
