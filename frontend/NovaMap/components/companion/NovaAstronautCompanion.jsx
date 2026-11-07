@@ -1,18 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   Send, 
-  Minimize2, 
-  Maximize2, 
   Volume2, 
   VolumeX, 
   Sparkles, 
   RotateCcw, 
-  X, 
   ChevronDown, 
-  ChevronUp,
-  MessageCircle,
-  HelpCircle,
-  Compass,
+  Mic,
+  MicOff,
   FileText
 } from 'lucide-react';
 import NovaAstronautAvatar from './NovaAstronautAvatar';
@@ -23,8 +18,8 @@ import { novaCompanion } from './novaCompanionService';
  * 
  * Interactive AI Astronaut Companion: NOVA — Your Personal Space Guide.
  * 
- * Replaces large, bulky right detail drawers with a conversational,
- * context-aware space exploration assistant.
+ * Sits in the corner without obstructing the 3D Solar System.
+ * Replaces bulky right-side detail drawers as the primary information interface.
  */
 export default function NovaAstronautCompanion({
   selectedCelestialId,
@@ -39,21 +34,60 @@ export default function NovaAstronautCompanion({
   const [inputText, setInputText] = useState('');
   const [isVoiceEnabled, setIsVoiceEnabled] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const [speechRecognitionSupported, setSpeechRecognitionSupported] = useState(false);
   const [currentExpression, setCurrentExpression] = useState('happy');
   const [activeContextTitle, setActiveContextTitle] = useState('Solar System Exploration');
   const [hasUnread, setHasUnread] = useState(false);
-  const [latestTeaser, setLatestTeaser] = useState('Click any planet or spacecraft to explore with me!');
+  const [latestTeaser, setLatestTeaser] = useState('Click any planet, moon, or spacecraft to explore with me!');
 
   const chatEndRef = useRef(null);
   const inputRef = useRef(null);
+  const recognitionRef = useRef(null);
 
-  // Initialize with introductory greeting if empty
+  // Initialize Speech Recognition if supported by the browser
+  useEffect(() => {
+    const SpeechRecognition = typeof window !== 'undefined' ? (window.SpeechRecognition || window.webkitSpeechRecognition) : null;
+    if (SpeechRecognition) {
+      setSpeechRecognitionSupported(true);
+      try {
+        const recognition = new SpeechRecognition();
+        recognition.continuous = false;
+        recognition.interimResults = false;
+        recognition.lang = 'en-US';
+
+        recognition.onresult = (event) => {
+          const transcript = event.results?.[0]?.[0]?.transcript;
+          if (transcript) {
+            setInputText(transcript);
+          }
+          setIsListening(false);
+        };
+
+        recognition.onerror = (e) => {
+          console.warn('Speech recognition warning:', e);
+          setIsListening(false);
+        };
+
+        recognition.onend = () => {
+          setIsListening(false);
+        };
+
+        recognitionRef.current = recognition;
+      } catch (err) {
+        console.warn('Could not initialize SpeechRecognition:', err);
+      }
+    }
+  }, []);
+
+  // Initialize with welcoming greeting if empty
   useEffect(() => {
     if (messages.length === 0) {
       const welcomeMsg = {
         id: 'welcome-init',
         sender: 'nova',
-        text: "Hi! 👨‍🚀 I'm NOVA, your personal astronaut guide! Click on any planet, moon, or spacecraft in the 3D Solar System, and I'll fly over with you to share cosmic secrets and mind-blowing facts!",
+        text: "Hi! 👨‍🚀 I'm NOVA, your personal astronaut space guide! Click any planet, moon, or spacecraft in our 3D Solar System, and I'll fly over with you to share cosmic secrets and mind-blowing science!",
         timestamp: new Date(),
         expression: 'happy',
         suggestedQuestions: [
@@ -64,7 +98,7 @@ export default function NovaAstronautCompanion({
         ]
       };
       setMessages([welcomeMsg]);
-      setLatestTeaser("Click any planet or spacecraft to explore with me!");
+      setLatestTeaser("Click any planet, moon, or spacecraft to explore with me!");
     }
   }, []);
 
@@ -97,41 +131,67 @@ export default function NovaAstronautCompanion({
     if (isExpanded && chatEndRef.current) {
       chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
-  }, [messages, isExpanded]);
+  }, [messages, isExpanded, isTyping]);
+
+  const processQuestion = (query) => {
+    if (!query || !query.trim()) return;
+
+    // 1. Immediately show user message
+    const userMsg = {
+      id: `user-${Date.now()}`,
+      sender: 'user',
+      text: query.trim(),
+      timestamp: new Date()
+    };
+    setMessages(prev => [...prev, userMsg]);
+    setIsTyping(true);
+    setCurrentExpression('thinking');
+
+    // 2. Short natural thinking delay, then deliver grounded answer
+    setTimeout(() => {
+      const reply = novaCompanion.ask(query);
+      setIsTyping(false);
+      if (reply) {
+        setMessages([...novaCompanion.conversationHistory]);
+        setCurrentExpression(reply.expression || 'happy');
+        setIsSpeaking(true);
+        setTimeout(() => setIsSpeaking(false), 2400);
+        setLatestTeaser(reply.text.slice(0, 75) + '...');
+      }
+    }, 450);
+  };
 
   const handleSendMessage = (e) => {
     if (e) e.preventDefault();
     if (!inputText.trim()) return;
-
     const query = inputText.trim();
     setInputText('');
-
-    // Ask NOVA companion service
-    const reply = novaCompanion.ask(query);
-    if (reply) {
-      setMessages([...novaCompanion.conversationHistory]);
-      setCurrentExpression(reply.expression || 'happy');
-      setIsSpeaking(true);
-      setTimeout(() => setIsSpeaking(false), 2400);
-      setLatestTeaser(reply.text.slice(0, 75) + '...');
-    }
+    processQuestion(query);
   };
 
   const handleAskSuggested = (questionText) => {
-    const reply = novaCompanion.ask(questionText);
-    if (reply) {
-      setMessages([...novaCompanion.conversationHistory]);
-      setCurrentExpression(reply.expression || 'explaining');
-      setIsSpeaking(true);
-      setTimeout(() => setIsSpeaking(false), 2400);
-      setLatestTeaser(reply.text.slice(0, 75) + '...');
-    }
+    processQuestion(questionText);
   };
 
   const handleToggleVoice = () => {
     const nextState = !isVoiceEnabled;
     setIsVoiceEnabled(nextState);
     novaCompanion.setVoiceEnabled(nextState);
+  };
+
+  const handleToggleVoiceInput = () => {
+    if (!recognitionRef.current) return;
+    if (isListening) {
+      recognitionRef.current.stop();
+      setIsListening(false);
+    } else {
+      try {
+        recognitionRef.current.start();
+        setIsListening(true);
+      } catch (e) {
+        console.warn('Failed to start voice recognition:', e);
+      }
+    }
   };
 
   const handleClearHistory = () => {
@@ -162,6 +222,7 @@ export default function NovaAstronautCompanion({
 
   return (
     <aside 
+      id="nova-companion-container"
       className="fixed bottom-20 right-4 sm:bottom-22 sm:right-6 z-30 font-sans pointer-events-auto"
       role="complementary"
       aria-label="NOVA AI Space Guide"
@@ -197,7 +258,7 @@ export default function NovaAstronautCompanion({
             title="Open NOVA Space Guide"
           >
             <NovaAstronautAvatar
-              size={52}
+              size={54}
               expression={currentExpression}
               isSpeaking={isSpeaking}
             />
@@ -222,7 +283,7 @@ export default function NovaAstronautCompanion({
           className="w-80 sm:w-92 md:w-96 max-h-[calc(100vh-170px)] flex flex-col bg-[#09071c]/94 backdrop-blur-2xl border border-cyan-500/35 rounded-3xl shadow-2xl shadow-cyan-950/80 text-white animate-fadeIn overflow-hidden"
         >
           {/* Companion Header */}
-          <div className="flex items-center justify-between p-3.5 px-4 bg-gradient-to-r from-cyan-950/40 via-purple-950/30 to-slate-950/60 border-b border-cyan-500/20 shrink-0">
+          <div className="flex items-center justify-between p-3 px-4 bg-gradient-to-r from-cyan-950/40 via-purple-950/30 to-slate-950/60 border-b border-cyan-500/20 shrink-0">
             <div className="flex items-center gap-3 min-w-0">
               <NovaAstronautAvatar
                 size={44}
@@ -333,6 +394,17 @@ export default function NovaAstronautCompanion({
                 )}
               </div>
             ))}
+
+            {/* Animated Typing Indicator (Phase 5) */}
+            {isTyping && (
+              <div className="flex items-center gap-1.5 p-2 px-3 rounded-2xl bg-[#12112e]/90 border border-cyan-500/25 text-cyan-300 w-fit animate-pulse">
+                <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-bounce" style={{ animationDelay: '0ms' }} />
+                <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-bounce" style={{ animationDelay: '150ms' }} />
+                <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-bounce" style={{ animationDelay: '300ms' }} />
+                <span className="text-[10.5px] text-cyan-300/80 font-mono ml-1">NOVA is thinking...</span>
+              </div>
+            )}
+
             <div ref={chatEndRef} />
           </div>
 
@@ -341,6 +413,23 @@ export default function NovaAstronautCompanion({
             onSubmit={handleSendMessage}
             className="p-2.5 px-3 bg-black/40 border-t border-cyan-500/20 flex items-center gap-2"
           >
+            {/* Optional Speech Recognition Mic Button */}
+            {speechRecognitionSupported && (
+              <button
+                type="button"
+                id="nova-voice-input-btn"
+                onClick={handleToggleVoiceInput}
+                className={`p-2 rounded-xl border transition-all cursor-pointer ${
+                  isListening 
+                    ? 'bg-rose-600 text-white border-rose-400 animate-pulse shadow-md shadow-rose-900/60' 
+                    : 'bg-slate-900/80 text-slate-400 hover:text-cyan-300 border-slate-700/60 hover:border-cyan-500/30'
+                }`}
+                title={isListening ? 'Listening... click to stop' : 'Voice input (Speak to NOVA)'}
+              >
+                {isListening ? <Mic className="w-3.5 h-3.5" /> : <MicOff className="w-3.5 h-3.5" />}
+              </button>
+            )}
+
             <input
               ref={inputRef}
               type="text"

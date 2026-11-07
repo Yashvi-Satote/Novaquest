@@ -3,14 +3,16 @@ import React from 'react';
 /**
  * NovaAstronautAvatar.jsx
  * 
- * An expressive cartoon astronaut character: NOVA — Your Personal Space Guide.
+ * An expressive, cute 3D-styled cartoon astronaut character: NOVA — Your Personal Space Guide.
  * 
  * Features:
- * - Micro-gravity floating animation
- * - Blinking eyes & expressive visor
- * - Dynamic expressions: 'happy', 'explaining', 'wondering', 'thinking'
- * - Talking mouth animation when speaking
- * - Glowing antenna sensor star & chest control lights
+ * - 3D styled lighting with soft radial/linear gradients and specular highlights
+ * - Micro-gravity floating animation (smooth sine wave bobbing)
+ * - Eye blinking animation with sparkle pupils and blush cheeks
+ * - Expressive mouth with talking animation synchronized to speech
+ * - Dynamic facial expressions: 'happy', 'explaining', 'wondering', 'thinking'
+ * - Glowing antenna sensor star & chest computer status LEDs
+ * - Child-friendly, approachable, and scientifically curious
  */
 export default function NovaAstronautAvatar({
   expression = 'happy', // 'happy' | 'explaining' | 'wondering' | 'thinking'
@@ -22,7 +24,7 @@ export default function NovaAstronautAvatar({
     <div 
       className={`relative inline-flex items-center justify-center select-none ${className}`}
       style={{ width: size, height: size }}
-      aria-label="NOVA Astronaut Companion"
+      aria-label="NOVA Astronaut Character"
     >
       <style>{`
         @keyframes novaFloat {
@@ -30,48 +32,56 @@ export default function NovaAstronautAvatar({
             transform: translateY(0px) rotate(0deg);
           }
           50% {
-            transform: translateY(-4px) rotate(1.5deg);
+            transform: translateY(-5px) rotate(1.8deg);
           }
         }
         @keyframes novaBlink {
-          0%, 92%, 100% {
+          0%, 93%, 100% {
             transform: scaleY(1);
           }
           96% {
-            transform: scaleY(0.12);
+            transform: scaleY(0.1);
           }
         }
         @keyframes novaTalk {
           0%, 100% {
-            transform: scaleY(0.8) scaleX(1);
+            transform: scaleY(0.7) scaleX(0.95);
           }
           50% {
-            transform: scaleY(1.4) scaleX(1.1);
+            transform: scaleY(1.4) scaleX(1.15);
           }
         }
         @keyframes novaPulseStar {
           0%, 100% {
-            filter: drop-shadow(0 0 2px #38bdf8);
+            filter: drop-shadow(0 0 3px #38bdf8);
             transform: scale(1);
           }
           50% {
-            filter: drop-shadow(0 0 6px #38bdf8);
-            transform: scale(1.15);
+            filter: drop-shadow(0 0 8px #67e8f9);
+            transform: scale(1.2);
           }
         }
-        .nova-floating {
-          animation: novaFloat 3.8s ease-in-out infinite;
+        @keyframes novaWaveGlow {
+          0%, 100% {
+            opacity: 0.6;
+          }
+          50% {
+            opacity: 1;
+          }
         }
-        .nova-eyes-blink {
-          transform-origin: center;
-          animation: novaBlink 3.6s infinite;
+        .nova-float-anim {
+          animation: novaFloat 3.6s ease-in-out infinite;
         }
-        .nova-talking-mouth {
-          transform-origin: center;
-          animation: novaTalk 0.28s ease-in-out infinite;
+        .nova-eye-blink {
+          transform-origin: 32px 30px;
+          animation: novaBlink 3.8s infinite;
         }
-        .nova-antenna-star {
-          transform-origin: 32px 6px;
+        .nova-mouth-talk {
+          transform-origin: 32px 36px;
+          animation: novaTalk 0.26s ease-in-out infinite;
+        }
+        .nova-star-pulse {
+          transform-origin: 32px 4px;
           animation: novaPulseStar 2s ease-in-out infinite;
         }
       `}</style>
@@ -80,159 +90,169 @@ export default function NovaAstronautAvatar({
         viewBox="0 0 64 64"
         width={size}
         height={size}
-        className="nova-floating drop-shadow-[0_4px_12px_rgba(34,211,238,0.35)]"
+        className="nova-float-anim drop-shadow-[0_4px_14px_rgba(56,189,248,0.4)]"
       >
-        {/* Antenna Mast & Pulsing Star */}
-        <line x1="32" y1="12" x2="32" y2="6" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round" />
-        <g className="nova-antenna-star">
-          <circle cx="32" cy="5" r="3.2" fill="#38bdf8" />
-          <path d="M32 2 L33 4.5 L35.5 5 L33 5.5 L32 8 L31 5.5 L28.5 5 L31 4.5 Z" fill="#ffffff" />
-        </g>
-
-        {/* Life-Support Backpack */}
-        <rect x="14" y="26" width="36" height="26" rx="6" fill="#cbd5e1" stroke="#475569" strokeWidth="1.5" />
-        <rect x="17" y="29" width="30" height="20" rx="4" fill="#94a3b8" opacity="0.4" />
-
-        {/* Spacesuit Torso */}
-        <path
-          d="M20 34 C20 30, 44 30, 44 34 L46 54 C46 56, 18 56, 18 54 Z"
-          fill="#f8fafc"
-          stroke="#475569"
-          strokeWidth="1.5"
-        />
-
-        {/* Chestpack control panel */}
-        <rect x="25" y="37" width="14" height="10" rx="2" fill="#0f172a" stroke="#06b6d4" strokeWidth="1" />
-        <circle cx="28" cy="42" r="1.5" fill="#38bdf8" />
-        <circle cx="32" cy="42" r="1.5" fill="#a855f7" />
-        <circle cx="36" cy="42" r="1.5" fill="#10b981" />
-
-        {/* Arm cuffs */}
-        <ellipse cx="16" cy="40" rx="3.5" ry="7" fill="#f1f5f9" stroke="#475569" strokeWidth="1.5" transform="rotate(15 16 40)" />
-        <ellipse cx="48" cy="40" rx="3.5" ry="7" fill="#f1f5f9" stroke="#475569" strokeWidth="1.5" transform="rotate(-15 48 40)" />
-        {/* Cute mittens */}
-        <circle cx="14" cy="46" r="3" fill="#0284c7" />
-        <circle cx="50" cy="46" r="3" fill="#0284c7" />
-
-        {/* Big Rounded Astronaut Helmet */}
-        <rect
-          x="13"
-          y="10"
-          width="38"
-          height="32"
-          rx="16"
-          fill="#ffffff"
-          stroke="#334155"
-          strokeWidth="2"
-        />
-
-        {/* Helmet Visor Outer Ring */}
-        <rect
-          x="16"
-          y="13"
-          width="32"
-          height="24"
-          rx="12"
-          fill="#090d16"
-          stroke="#06b6d4"
-          strokeWidth="1.8"
-        />
-
-        {/* Visor Deep Galaxy Gradient & Star Sheen */}
-        <path
-          d="M18 16 C22 14, 42 14, 46 16 C47 22, 47 26, 45 32 C41 35, 23 35, 19 32 C17 26, 17 22, 18 16 Z"
-          fill="url(#visorGradient)"
-          opacity="0.9"
-        />
-
-        {/* Cute Cartoon Eyes on Visor */}
-        <g className="nova-eyes-blink">
-          {expression === 'happy' && (
-            <>
-              {/* Joyful upward curved eyes */}
-              <path d="M22 25 Q25 21 28 25" stroke="#38bdf8" strokeWidth="2.5" strokeLinecap="round" fill="none" />
-              <path d="M36 25 Q39 21 42 25" stroke="#38bdf8" strokeWidth="2.5" strokeLinecap="round" fill="none" />
-              {/* Rosy cheeks */}
-              <circle cx="21" cy="27" r="1.8" fill="#f43f5e" opacity="0.6" />
-              <circle cx="43" cy="27" r="1.8" fill="#f43f5e" opacity="0.6" />
-            </>
-          )}
-
-          {expression === 'explaining' && (
-            <>
-              {/* Big alert anime-style cartoon eyes with sparkle */}
-              <ellipse cx="25" cy="23" rx="3.5" ry="4.5" fill="#38bdf8" />
-              <circle cx="24" cy="21.5" r="1.5" fill="#ffffff" />
-              <circle cx="26.5" cy="24.5" r="0.8" fill="#ffffff" />
-
-              <ellipse cx="39" cy="23" rx="3.5" ry="4.5" fill="#38bdf8" />
-              <circle cx="38" cy="21.5" r="1.5" fill="#ffffff" />
-              <circle cx="40.5" cy="24.5" r="0.8" fill="#ffffff" />
-
-              {/* Rosy cheeks */}
-              <circle cx="21" cy="27" r="1.8" fill="#f43f5e" opacity="0.5" />
-              <circle cx="43" cy="27" r="1.8" fill="#f43f5e" opacity="0.5" />
-            </>
-          )}
-
-          {expression === 'wondering' && (
-            <>
-              {/* Big curious starry eyes */}
-              <ellipse cx="25" cy="23" rx="4" ry="4.8" fill="#67e8f9" />
-              <polygon points="25,20 25.8,22.2 28,23 25.8,23.8 25,26 24.2,23.8 22,23 24.2,22.2" fill="#ffffff" />
-
-              <ellipse cx="39" cy="23" rx="4" ry="4.8" fill="#67e8f9" />
-              <polygon points="39,20 39.8,22.2 42,23 39.8,23.8 39,26 38.2,23.8 36,23 38.2,22.2" fill="#ffffff" />
-            </>
-          )}
-
-          {expression === 'thinking' && (
-            <>
-              {/* Looking up-right thinking eyes */}
-              <ellipse cx="26" cy="21" rx="3.2" ry="3.8" fill="#818cf8" />
-              <circle cx="27" cy="20" r="1.2" fill="#ffffff" />
-
-              <ellipse cx="40" cy="21" rx="3.2" ry="3.8" fill="#818cf8" />
-              <circle cx="41" cy="20" r="1.2" fill="#ffffff" />
-            </>
-          )}
-        </g>
-
-        {/* Animated Mouth on Visor */}
-        {isSpeaking ? (
-          <ellipse
-            cx="32"
-            cy="28"
-            rx="2.8"
-            ry="2"
-            fill="#38bdf8"
-            className="nova-talking-mouth"
-          />
-        ) : (
-          <path
-            d="M30 27 Q32 29.5 34 27"
-            stroke="#38bdf8"
-            strokeWidth="1.8"
-            strokeLinecap="round"
-            fill="none"
-          />
-        )}
-
-        {/* Visor Diagonal Glass Reflection Glare */}
-        <path
-          d="M20 16 Q24 14 30 14 L24 24 Q20 22 18 20 Z"
-          fill="#ffffff"
-          opacity="0.25"
-        />
-
-        {/* Gradients */}
         <defs>
-          <linearGradient id="visorGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#0c192c" />
-            <stop offset="60%" stopColor="#1e1b4b" />
-            <stop offset="100%" stopColor="#0f172a" />
+          {/* Helmet Glass Gradient */}
+          <radialGradient id="helmetGlass" cx="45%" cy="40%" r="55%">
+            <stop offset="0%" stopColor="#1e293b" />
+            <stop offset="65%" stopColor="#0f172a" />
+            <stop offset="100%" stopColor="#090d16" />
+          </radialGradient>
+
+          {/* Visor Specular Sheen */}
+          <linearGradient id="visorSheen" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.8" />
+            <stop offset="35%" stopColor="#818cf8" stopOpacity="0.25" />
+            <stop offset="100%" stopColor="#06b6d4" stopOpacity="0" />
+          </linearGradient>
+
+          {/* Spacesuit 3D White Shading */}
+          <linearGradient id="suitWhite" x1="20%" y1="0%" x2="80%" y2="100%">
+            <stop offset="0%" stopColor="#ffffff" />
+            <stop offset="60%" stopColor="#f1f5f9" />
+            <stop offset="100%" stopColor="#cbd5e1" />
+          </linearGradient>
+
+          {/* Backpack Gradient */}
+          <linearGradient id="backpackGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#94a3b8" />
+            <stop offset="100%" stopColor="#64748b" />
           </linearGradient>
         </defs>
+
+        {/* ================================================================= */}
+        {/* LIFE SUPPORT BACKPACK                                             */}
+        {/* ================================================================= */}
+        <rect x="15" y="27" width="34" height="25" rx="6" fill="url(#backpackGrad)" stroke="#475569" strokeWidth="1.2" />
+        <rect x="18" y="30" width="28" height="19" rx="4" fill="#334155" opacity="0.4" />
+
+        {/* Small Oxygen Cylinders */}
+        <rect x="12" y="31" width="4.5" height="17" rx="2" fill="#94a3b8" stroke="#475569" strokeWidth="1" />
+        <rect x="47.5" y="31" width="4.5" height="17" rx="2" fill="#94a3b8" stroke="#475569" strokeWidth="1" />
+
+        {/* ================================================================= */}
+        {/* SPACESUIT TORSO & LIMBS                                           */}
+        {/* ================================================================= */}
+        {/* Left & Right Arms */}
+        <path d="M19 36 C13 40, 12 48, 16 52 C18 50, 19 46, 21 42 Z" fill="url(#suitWhite)" stroke="#94a3b8" strokeWidth="1" />
+        <path d="M45 36 C51 40, 52 48, 48 52 C46 50, 45 46, 43 42 Z" fill="url(#suitWhite)" stroke="#94a3b8" strokeWidth="1" />
+        {/* Blue Arm Cuffs */}
+        <ellipse cx="15.5" cy="51" rx="2.5" ry="1.5" fill="#38bdf8" />
+        <ellipse cx="48.5" cy="51" rx="2.5" ry="1.5" fill="#38bdf8" />
+
+        {/* Body Torso */}
+        <path
+          d="M21 34 C21 30, 43 30, 43 34 L45 54 C45 56.5, 19 56.5, 19 54 Z"
+          fill="url(#suitWhite)"
+          stroke="#94a3b8"
+          strokeWidth="1.2"
+        />
+
+        {/* Chestpack Computer Unit */}
+        <rect x="25" y="36" width="14" height="12" rx="3" fill="#1e293b" stroke="#38bdf8" strokeWidth="1" />
+        {/* LED Status Indicators */}
+        <circle cx="28" cy="40" r="1.3" fill="#22c55e" />
+        <circle cx="32" cy="40" r="1.3" fill="#38bdf8" />
+        <circle cx="36" cy="40" r="1.3" fill="#f59e0b" />
+        {/* Chestpack Grid lines */}
+        <line x1="27" y1="44" x2="37" y2="44" stroke="#475569" strokeWidth="1" strokeLinecap="round" />
+
+        {/* Neck Seal Collar Ring */}
+        <ellipse cx="32" cy="33.5" rx="12" ry="3.5" fill="#64748b" stroke="#334155" strokeWidth="1.2" />
+
+        {/* ================================================================= */}
+        {/* ASTRONAUT HELMET                                                  */}
+        {/* ================================================================= */}
+        {/* Outer White Helmet Shell */}
+        <circle cx="32" cy="22" r="16.5" fill="url(#suitWhite)" stroke="#94a3b8" strokeWidth="1.3" />
+
+        {/* Antenna Mast & Pulsing Guide Star */}
+        <line x1="32" y1="6" x2="32" y2="1.5" stroke="#64748b" strokeWidth="1.8" strokeLinecap="round" />
+        <g className="nova-star-pulse">
+          <circle cx="32" cy="1.5" r="3.2" fill="#38bdf8" />
+          <path d="M32 -1.5 L33 0.8 L35.2 1.5 L33 2.2 L32 4.5 L31 2.2 L28.8 1.5 L31 0.8 Z" fill="#ffffff" />
+        </g>
+
+        {/* Inner Helmet Visor Rim */}
+        <rect x="19.5" y="11.5" width="25" height="20" rx="9" fill="#0f172a" stroke="#38bdf8" strokeWidth="1.4" />
+
+        {/* Visor Dark Glass Faceplate */}
+        <rect x="20.5" y="12.5" width="23" height="18" rx="8" fill="url(#helmetGlass)" />
+
+        {/* Curved Visor Specular Glass Reflection (Cyan Sheen) */}
+        <path
+          d="M22 14 C27 12.5, 37 13.5, 41 17 C36 17, 28 17.5, 23 20 Z"
+          fill="url(#visorSheen)"
+          opacity="0.85"
+        />
+
+        {/* ================================================================= */}
+        {/* EXPRESSIVE CARTOON FACE                                           */}
+        {/* ================================================================= */}
+        <g>
+          {/* Eyebrows based on Expression */}
+          {expression === 'thinking' && (
+            <g stroke="#94a3b8" strokeWidth="1.1" strokeLinecap="round">
+              <line x1="25" y1="18" x2="29" y2="19.5" />
+              <line x1="35" y1="18.5" x2="39" y2="17" />
+            </g>
+          )}
+          {expression === 'wondering' && (
+            <g stroke="#94a3b8" strokeWidth="1.1" strokeLinecap="round">
+              <path d="M25 18 Q27 16 29 18" fill="none" />
+              <path d="M35 17 Q37 15 39 17" fill="none" />
+            </g>
+          )}
+          {(expression === 'happy' || expression === 'explaining') && (
+            <g stroke="#38bdf8" strokeWidth="1.1" strokeLinecap="round" opacity="0.8">
+              <path d="M25 18.5 Q27 17.5 29 18.5" fill="none" />
+              <path d="M35 18.5 Q37 17.5 39 18.5" fill="none" />
+            </g>
+          )}
+
+          {/* Expressive Blinking Eyes with Sparkle Pupils */}
+          <g className="nova-eye-blink">
+            {/* Left Eye */}
+            <ellipse cx="27" cy="22" rx="2.4" ry="3.2" fill="#38bdf8" />
+            <circle cx="26.3" cy="21" r="1.1" fill="#ffffff" />
+            <circle cx="27.8" cy="23.2" r="0.5" fill="#ffffff" />
+
+            {/* Right Eye */}
+            <ellipse cx="37" cy="22" rx="2.4" ry="3.2" fill="#38bdf8" />
+            <circle cx="36.3" cy="21" r="1.1" fill="#ffffff" />
+            <circle cx="37.8" cy="23.2" r="0.5" fill="#ffffff" />
+          </g>
+
+          {/* Cute Rosy Blush Cheeks */}
+          <ellipse cx="24" cy="24.5" rx="1.8" ry="1.1" fill="#f43f5e" opacity="0.6" />
+          <ellipse cx="40" cy="24.5" rx="1.8" ry="1.1" fill="#f43f5e" opacity="0.6" />
+
+          {/* Dynamic Mouth / Talking Animation */}
+          {isSpeaking ? (
+            <path
+              d="M29.5 26.5 Q32 30 34.5 26.5 Z"
+              fill="#f8fafc"
+              stroke="#06b6d4"
+              strokeWidth="1"
+              className="nova-mouth-talk"
+            />
+          ) : expression === 'happy' ? (
+            <path
+              d="M29.5 26 Q32 28.8 34.5 26"
+              fill="none"
+              stroke="#ffffff"
+              strokeWidth="1.3"
+              strokeLinecap="round"
+            />
+          ) : expression === 'explaining' ? (
+            <ellipse cx="32" cy="26.5" rx="1.8" ry="1.2" fill="#ffffff" />
+          ) : expression === 'thinking' ? (
+            <line x1="30" y1="26.5" x2="34" y2="26.5" stroke="#ffffff" strokeWidth="1.2" strokeLinecap="round" />
+          ) : (
+            <circle cx="32" cy="26.5" r="1.3" fill="#ffffff" />
+          )}
+        </g>
       </svg>
     </div>
   );
