@@ -392,6 +392,93 @@ class GameAudioEngine {
   }
 
   /**
+   * Rewarding Component Pickup Chime (Ascending triad sparkle)
+   */
+  playPickup() {
+    if (this.isMuted) return;
+    this.ensureUnlocked();
+    const ctx = this.ctx;
+    if (!ctx) return;
+
+    const notes = [1046.5, 1318.5, 1567.98, 2093.0]; // C6, E6, G6, C7
+    notes.forEach((freq, i) => {
+      const now = ctx.currentTime + i * 0.06;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, now);
+
+      gain.gain.setValueAtTime(this.volume * 0.22, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.28);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(now);
+      osc.stop(now + 0.3);
+    });
+  }
+
+  /**
+   * Component Mechanical Attach & Snap Clank
+   */
+  playAttachSnap() {
+    if (this.isMuted) return;
+    this.ensureUnlocked();
+    const ctx = this.ctx;
+    if (!ctx) return;
+
+    const now = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(320, now);
+    osc.frequency.exponentialRampToValueAtTime(45, now + 0.18);
+
+    gain.gain.setValueAtTime(this.volume * 0.35, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.start(now);
+    osc.stop(now + 0.22);
+  }
+
+  /**
+   * Dynamic Proximity Locator Radar Ping
+   */
+  playLocatorPing(dist = 30) {
+    if (this.isMuted) return;
+    this.ensureUnlocked();
+    const ctx = this.ctx;
+    if (!ctx) return;
+
+    const now = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    // Closer distance = higher pitch and louder chirp
+    const pitch = Math.min(2200, Math.max(900, 2200 - dist * 35));
+    const vol = Math.min(0.25, Math.max(0.05, 0.28 - (dist / 60) * 0.2));
+
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(pitch, now);
+    osc.frequency.exponentialRampToValueAtTime(pitch * 1.25, now + 0.08);
+
+    gain.gain.setValueAtTime(vol * this.volume, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.start(now);
+    osc.stop(now + 0.12);
+  }
+
+  /**
    * Lunar surface footstep crunch
    */
   playFootstep() {

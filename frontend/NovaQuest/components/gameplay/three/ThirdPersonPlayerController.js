@@ -16,10 +16,12 @@ export function createThirdPersonController({
   camera,
   domElement,
   groundY = 0,
+  getGroundHeight = null,
   onFootstep = null
 }) {
   // Player state
-  const pos = new THREE.Vector3(0, groundY + 0.55, 18);
+  const initialY = getGroundHeight ? getGroundHeight(0, 23) : groundY;
+  const pos = new THREE.Vector3(0, initialY, 23);
   const velocity = new THREE.Vector3();
   let playerYaw = 0;
   let isGrounded = true;
@@ -29,8 +31,8 @@ export function createThirdPersonController({
 
   // Camera spherical coordinates
   let camYaw = 0;
-  let camPitch = 0.25; // slightly looking down from above
-  let camDistance = 5.2;
+  let camPitch = 0.22; // slightly looking down from above
+  let camDistance = 4.2;
   const minPitch = -0.15; // slightly looking up
   const maxPitch = 1.15;  // bird's-eye limit
 
@@ -198,16 +200,21 @@ export function createThirdPersonController({
       }
     }
 
-    // 3. Gravity & Jumping Physics
+    // 3. Gravity, Ground Snapping & Jumping Physics
+    const curGroundY = getGroundHeight ? getGroundHeight(pos.x, pos.z) : groundY;
+
     if (!isGrounded) {
       verticalVelocity += gravity * clampedDelta;
       pos.y += verticalVelocity * clampedDelta;
 
-      if (pos.y <= groundY + 0.55) {
-        pos.y = groundY + 0.55;
+      if (pos.y <= curGroundY) {
+        pos.y = curGroundY;
         verticalVelocity = 0;
         isGrounded = true;
       }
+    } else {
+      // Snap to terrain surface elevation
+      pos.y = curGroundY;
     }
 
     // 4. Update Character Mesh
@@ -219,15 +226,14 @@ export function createThirdPersonController({
         anim.state = 'jump';
       } else if (isMoving) {
         anim.state = isRunning ? 'run' : 'walk';
-      } else if (anim.state !== 'repair' && anim.state !== 'celebrate') {
+      } else if (anim.state !== 'repair' && anim.state !== 'celebrate' && anim.state !== 'pickup') {
         anim.state = 'idle';
       }
       anim.update(clampedDelta, timeSeconds);
     }
 
     // 5. Calculate Third-Person Chase Camera Position
-    // Camera is positioned at spherical offset (camDistance, camPitch, camYaw) relative to player
-    const camTarget = new THREE.Vector3(pos.x, pos.y + 1.6, pos.z);
+    const camTarget = new THREE.Vector3(pos.x, pos.y + 0.95, pos.z);
 
     const horizontalDist = camDistance * Math.cos(camPitch);
     const verticalDist = camDistance * Math.sin(camPitch);
@@ -267,3 +273,4 @@ export function createThirdPersonController({
     dispose
   };
 }
+
