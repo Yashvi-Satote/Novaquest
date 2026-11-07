@@ -1,259 +1,178 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { Sparkles } from 'lucide-react';
 
 /**
  * NovaAstronautAvatar.jsx
  * 
- * An expressive, cute 3D-styled cartoon astronaut character: NOVA — Your Personal Space Guide.
+ * NOVA — The 3D Cosmic Space Companion of NovaQuest.
  * 
- * Features:
- * - 3D styled lighting with soft radial/linear gradients and specular highlights
- * - Micro-gravity floating animation (smooth sine wave bobbing)
- * - Eye blinking animation with sparkle pupils and blush cheeks
- * - Expressive mouth with talking animation synchronized to speech
- * - Dynamic facial expressions: 'happy', 'explaining', 'wondering', 'thinking'
- * - Glowing antenna sensor star & chest computer status LEDs
- * - Child-friendly, approachable, and scientifically curious
+ * Visual Character Design (Matching user's exact uploaded reference):
+ * - Adorable cyan-teal alien explorer with smooth features.
+ * - Large black glossy almond eyes with prominent specular reflections.
+ * - Huge crystal-clear spherical glass space helmet showcasing a starry deep-space nebula dome inside.
+ * - High-tech dark obsidian charcoal-textured spacesuit with metallic collar and detailing.
+ * - Cute turquoise alien hands and boots.
+ * - Smooth micro-gravity zero-g idle floating bobbing motion.
+ * - Responsive communicative animation when speaking voice facts.
+ * - Ambient cosmic starlight glow around the helmet.
  */
 export default function NovaAstronautAvatar({
-  expression = 'happy', // 'happy' | 'explaining' | 'wondering' | 'thinking'
+  expression = 'happy',
   isSpeaking = false,
-  size = 64, // pixel diameter
+  isGesturing = false,
+  size = 135,
   className = ''
 }) {
+  const [imageError, setImageError] = useState(false);
+  const isCommunicating = isSpeaking || isGesturing;
+
   return (
     <div 
-      className={`relative inline-flex items-center justify-center select-none ${className}`}
+      className={`relative inline-flex items-center justify-center select-none pointer-events-none ${className}`}
       style={{ width: size, height: size }}
-      aria-label="NOVA Astronaut Character"
+      aria-label="NOVA Cosmic Alien Space Companion"
     >
       <style>{`
-        @keyframes novaFloat {
+        @keyframes novaMascotFloat {
           0%, 100% {
             transform: translateY(0px) rotate(0deg);
           }
           50% {
-            transform: translateY(-5px) rotate(1.8deg);
+            transform: translateY(-8px) rotate(2deg);
           }
         }
-        @keyframes novaBlink {
-          0%, 93%, 100% {
-            transform: scaleY(1);
-          }
-          96% {
-            transform: scaleY(0.1);
-          }
-        }
-        @keyframes novaTalk {
+        @keyframes novaAlienTalk {
           0%, 100% {
-            transform: scaleY(0.7) scaleX(0.95);
+            transform: translateY(0px) rotate(0deg) scale(1);
+          }
+          25% {
+            transform: translateY(-5px) rotate(-2.5deg) scale(1.025);
           }
           50% {
-            transform: scaleY(1.4) scaleX(1.15);
+            transform: translateY(-2px) rotate(1.8deg) scale(1.015);
+          }
+          75% {
+            transform: translateY(-6px) rotate(-1.2deg) scale(1.03);
           }
         }
-        @keyframes novaPulseStar {
+        @keyframes novaCosmicHalo {
           0%, 100% {
-            filter: drop-shadow(0 0 3px #38bdf8);
-            transform: scale(1);
+            filter: drop-shadow(0 6px 18px rgba(56, 189, 248, 0.45)) drop-shadow(0 0 25px rgba(99, 102, 241, 0.25));
           }
           50% {
-            filter: drop-shadow(0 0 8px #67e8f9);
-            transform: scale(1.2);
+            filter: drop-shadow(0 8px 30px rgba(56, 189, 248, 0.8)) drop-shadow(0 0 45px rgba(168, 85, 247, 0.45));
           }
         }
-        @keyframes novaWaveGlow {
+        @keyframes novaStarlightPulse {
           0%, 100% {
-            opacity: 0.6;
+            opacity: 0.35;
+            transform: scale(0.85);
           }
           50% {
             opacity: 1;
+            transform: scale(1.25);
           }
         }
-        .nova-float-anim {
-          animation: novaFloat 3.6s ease-in-out infinite;
+        @keyframes novaSpeechRippleRing {
+          0% {
+            transform: scale(0.9);
+            opacity: 0.8;
+          }
+          100% {
+            transform: scale(1.28);
+            opacity: 0;
+          }
         }
-        .nova-eye-blink {
-          transform-origin: 32px 30px;
-          animation: novaBlink 3.8s infinite;
+        .nova-mascot-float {
+          animation: novaMascotFloat 3.8s ease-in-out infinite;
         }
-        .nova-mouth-talk {
-          transform-origin: 32px 36px;
-          animation: novaTalk 0.26s ease-in-out infinite;
+        .nova-alien-talk {
+          animation: novaAlienTalk 0.75s ease-in-out infinite;
         }
-        .nova-star-pulse {
-          transform-origin: 32px 4px;
-          animation: novaPulseStar 2s ease-in-out infinite;
+        .nova-cosmic-halo {
+          animation: novaCosmicHalo 3.2s ease-in-out infinite;
+        }
+        .nova-star-sparkle-1 {
+          animation: novaStarlightPulse 2.4s ease-in-out infinite;
+        }
+        .nova-star-sparkle-2 {
+          animation: novaStarlightPulse 3.1s ease-in-out infinite 0.8s;
+        }
+        .nova-speech-ripple {
+          animation: novaSpeechRippleRing 1.3s ease-out infinite;
         }
       `}</style>
 
-      <svg
-        viewBox="0 0 64 64"
-        width={size}
-        height={size}
-        className="nova-float-anim drop-shadow-[0_4px_14px_rgba(56,189,248,0.4)]"
+      {/* Holographic Communication Wave Ring when speaking */}
+      {isCommunicating && (
+        <span 
+          className="absolute -inset-2.5 rounded-full border border-cyan-400/50 pointer-events-none nova-speech-ripple"
+          style={{ borderRadius: '50%' }}
+        />
+      )}
+
+      {/* Main Mascot Character Container */}
+      <div 
+        id="nova-mascot-character"
+        className={`relative w-full h-full flex items-center justify-center ${
+          isCommunicating ? 'nova-alien-talk' : 'nova-mascot-float'
+        }`}
       >
-        <defs>
-          {/* Helmet Glass Gradient */}
-          <radialGradient id="helmetGlass" cx="45%" cy="40%" r="55%">
-            <stop offset="0%" stopColor="#1e293b" />
-            <stop offset="65%" stopColor="#0f172a" />
-            <stop offset="100%" stopColor="#090d16" />
-          </radialGradient>
+        {!imageError ? (
+          <img
+            src="/images/nova_alien_companion.png"
+            alt="NOVA Cosmic Alien Space Companion"
+            width={size}
+            height={size}
+            onError={() => setImageError(true)}
+            className="w-full h-full object-contain pointer-events-none select-none nova-cosmic-halo drop-shadow-[0_10px_25px_rgba(14,165,233,0.55)] transition-all"
+            draggable={false}
+          />
+        ) : (
+          /* Vector Fallback if Image is unavailable */
+          <svg
+            viewBox="0 0 128 148"
+            width={size}
+            height={size}
+            className="nova-cosmic-halo drop-shadow-[0_10px_25px_rgba(14,165,233,0.45)]"
+          >
+            <defs>
+              <radialGradient id="alienHeadGrad" cx="45%" cy="40%" r="60%">
+                <stop offset="0%" stopColor="#67e8f9" />
+                <stop offset="60%" stopColor="#06b6d4" />
+                <stop offset="100%" stopColor="#0891b2" />
+              </radialGradient>
+              <radialGradient id="helmetDomeGrad" cx="50%" cy="30%" r="70%">
+                <stop offset="0%" stopColor="#1e1b4b" stopOpacity="0.4" />
+                <stop offset="60%" stopColor="#0f172a" stopOpacity="0.75" />
+                <stop offset="100%" stopColor="#0284c7" stopOpacity="0.9" />
+              </radialGradient>
+            </defs>
+            {/* Spacesuit Body */}
+            <rect x="42" y="75" width="44" height="42" rx="14" fill="#1e293b" stroke="#475569" strokeWidth="2" />
+            <circle cx="64" cy="92" r="5" fill="#0284c7" />
+            {/* Collar */}
+            <ellipse cx="64" cy="74" rx="20" ry="6" fill="#334155" stroke="#64748b" strokeWidth="1.5" />
+            {/* Transparent Helmet */}
+            <circle cx="64" cy="46" r="34" fill="url(#helmetDomeGrad)" stroke="#38bdf8" strokeWidth="2" />
+            {/* Alien Head */}
+            <ellipse cx="64" cy="48" rx="22" ry="20" fill="url(#alienHeadGrad)" />
+            {/* Black Almond Alien Eyes */}
+            <ellipse cx="53" cy="46" rx="6.5" ry="9" fill="#020617" transform="rotate(-12 53 46)" />
+            <ellipse cx="75" cy="46" rx="6.5" ry="9" fill="#020617" transform="rotate(12 75 46)" />
+            <circle cx="51.5" cy="43" r="2.2" fill="#ffffff" />
+            <circle cx="73.5" cy="43" r="2.2" fill="#ffffff" />
+          </svg>
+        )}
 
-          {/* Visor Specular Sheen */}
-          <linearGradient id="visorSheen" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.8" />
-            <stop offset="35%" stopColor="#818cf8" stopOpacity="0.25" />
-            <stop offset="100%" stopColor="#06b6d4" stopOpacity="0" />
-          </linearGradient>
-
-          {/* Spacesuit 3D White Shading */}
-          <linearGradient id="suitWhite" x1="20%" y1="0%" x2="80%" y2="100%">
-            <stop offset="0%" stopColor="#ffffff" />
-            <stop offset="60%" stopColor="#f1f5f9" />
-            <stop offset="100%" stopColor="#cbd5e1" />
-          </linearGradient>
-
-          {/* Backpack Gradient */}
-          <linearGradient id="backpackGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#94a3b8" />
-            <stop offset="100%" stopColor="#64748b" />
-          </linearGradient>
-        </defs>
-
-        {/* ================================================================= */}
-        {/* LIFE SUPPORT BACKPACK                                             */}
-        {/* ================================================================= */}
-        <rect x="15" y="27" width="34" height="25" rx="6" fill="url(#backpackGrad)" stroke="#475569" strokeWidth="1.2" />
-        <rect x="18" y="30" width="28" height="19" rx="4" fill="#334155" opacity="0.4" />
-
-        {/* Small Oxygen Cylinders */}
-        <rect x="12" y="31" width="4.5" height="17" rx="2" fill="#94a3b8" stroke="#475569" strokeWidth="1" />
-        <rect x="47.5" y="31" width="4.5" height="17" rx="2" fill="#94a3b8" stroke="#475569" strokeWidth="1" />
-
-        {/* ================================================================= */}
-        {/* SPACESUIT TORSO & LIMBS                                           */}
-        {/* ================================================================= */}
-        {/* Left & Right Arms */}
-        <path d="M19 36 C13 40, 12 48, 16 52 C18 50, 19 46, 21 42 Z" fill="url(#suitWhite)" stroke="#94a3b8" strokeWidth="1" />
-        <path d="M45 36 C51 40, 52 48, 48 52 C46 50, 45 46, 43 42 Z" fill="url(#suitWhite)" stroke="#94a3b8" strokeWidth="1" />
-        {/* Blue Arm Cuffs */}
-        <ellipse cx="15.5" cy="51" rx="2.5" ry="1.5" fill="#38bdf8" />
-        <ellipse cx="48.5" cy="51" rx="2.5" ry="1.5" fill="#38bdf8" />
-
-        {/* Body Torso */}
-        <path
-          d="M21 34 C21 30, 43 30, 43 34 L45 54 C45 56.5, 19 56.5, 19 54 Z"
-          fill="url(#suitWhite)"
-          stroke="#94a3b8"
-          strokeWidth="1.2"
-        />
-
-        {/* Chestpack Computer Unit */}
-        <rect x="25" y="36" width="14" height="12" rx="3" fill="#1e293b" stroke="#38bdf8" strokeWidth="1" />
-        {/* LED Status Indicators */}
-        <circle cx="28" cy="40" r="1.3" fill="#22c55e" />
-        <circle cx="32" cy="40" r="1.3" fill="#38bdf8" />
-        <circle cx="36" cy="40" r="1.3" fill="#f59e0b" />
-        {/* Chestpack Grid lines */}
-        <line x1="27" y1="44" x2="37" y2="44" stroke="#475569" strokeWidth="1" strokeLinecap="round" />
-
-        {/* Neck Seal Collar Ring */}
-        <ellipse cx="32" cy="33.5" rx="12" ry="3.5" fill="#64748b" stroke="#334155" strokeWidth="1.2" />
-
-        {/* ================================================================= */}
-        {/* ASTRONAUT HELMET                                                  */}
-        {/* ================================================================= */}
-        {/* Outer White Helmet Shell */}
-        <circle cx="32" cy="22" r="16.5" fill="url(#suitWhite)" stroke="#94a3b8" strokeWidth="1.3" />
-
-        {/* Antenna Mast & Pulsing Guide Star */}
-        <line x1="32" y1="6" x2="32" y2="1.5" stroke="#64748b" strokeWidth="1.8" strokeLinecap="round" />
-        <g className="nova-star-pulse">
-          <circle cx="32" cy="1.5" r="3.2" fill="#38bdf8" />
-          <path d="M32 -1.5 L33 0.8 L35.2 1.5 L33 2.2 L32 4.5 L31 2.2 L28.8 1.5 L31 0.8 Z" fill="#ffffff" />
-        </g>
-
-        {/* Inner Helmet Visor Rim */}
-        <rect x="19.5" y="11.5" width="25" height="20" rx="9" fill="#0f172a" stroke="#38bdf8" strokeWidth="1.4" />
-
-        {/* Visor Dark Glass Faceplate */}
-        <rect x="20.5" y="12.5" width="23" height="18" rx="8" fill="url(#helmetGlass)" />
-
-        {/* Curved Visor Specular Glass Reflection (Cyan Sheen) */}
-        <path
-          d="M22 14 C27 12.5, 37 13.5, 41 17 C36 17, 28 17.5, 23 20 Z"
-          fill="url(#visorSheen)"
-          opacity="0.85"
-        />
-
-        {/* ================================================================= */}
-        {/* EXPRESSIVE CARTOON FACE                                           */}
-        {/* ================================================================= */}
-        <g>
-          {/* Eyebrows based on Expression */}
-          {expression === 'thinking' && (
-            <g stroke="#94a3b8" strokeWidth="1.1" strokeLinecap="round">
-              <line x1="25" y1="18" x2="29" y2="19.5" />
-              <line x1="35" y1="18.5" x2="39" y2="17" />
-            </g>
-          )}
-          {expression === 'wondering' && (
-            <g stroke="#94a3b8" strokeWidth="1.1" strokeLinecap="round">
-              <path d="M25 18 Q27 16 29 18" fill="none" />
-              <path d="M35 17 Q37 15 39 17" fill="none" />
-            </g>
-          )}
-          {(expression === 'happy' || expression === 'explaining') && (
-            <g stroke="#38bdf8" strokeWidth="1.1" strokeLinecap="round" opacity="0.8">
-              <path d="M25 18.5 Q27 17.5 29 18.5" fill="none" />
-              <path d="M35 18.5 Q37 17.5 39 18.5" fill="none" />
-            </g>
-          )}
-
-          {/* Expressive Blinking Eyes with Sparkle Pupils */}
-          <g className="nova-eye-blink">
-            {/* Left Eye */}
-            <ellipse cx="27" cy="22" rx="2.4" ry="3.2" fill="#38bdf8" />
-            <circle cx="26.3" cy="21" r="1.1" fill="#ffffff" />
-            <circle cx="27.8" cy="23.2" r="0.5" fill="#ffffff" />
-
-            {/* Right Eye */}
-            <ellipse cx="37" cy="22" rx="2.4" ry="3.2" fill="#38bdf8" />
-            <circle cx="36.3" cy="21" r="1.1" fill="#ffffff" />
-            <circle cx="37.8" cy="23.2" r="0.5" fill="#ffffff" />
-          </g>
-
-          {/* Cute Rosy Blush Cheeks */}
-          <ellipse cx="24" cy="24.5" rx="1.8" ry="1.1" fill="#f43f5e" opacity="0.6" />
-          <ellipse cx="40" cy="24.5" rx="1.8" ry="1.1" fill="#f43f5e" opacity="0.6" />
-
-          {/* Dynamic Mouth / Talking Animation */}
-          {isSpeaking ? (
-            <path
-              d="M29.5 26.5 Q32 30 34.5 26.5 Z"
-              fill="#f8fafc"
-              stroke="#06b6d4"
-              strokeWidth="1"
-              className="nova-mouth-talk"
-            />
-          ) : expression === 'happy' ? (
-            <path
-              d="M29.5 26 Q32 28.8 34.5 26"
-              fill="none"
-              stroke="#ffffff"
-              strokeWidth="1.3"
-              strokeLinecap="round"
-            />
-          ) : expression === 'explaining' ? (
-            <ellipse cx="32" cy="26.5" rx="1.8" ry="1.2" fill="#ffffff" />
-          ) : expression === 'thinking' ? (
-            <line x1="30" y1="26.5" x2="34" y2="26.5" stroke="#ffffff" strokeWidth="1.2" strokeLinecap="round" />
-          ) : (
-            <circle cx="32" cy="26.5" r="1.3" fill="#ffffff" />
-          )}
-        </g>
-      </svg>
+        {/* Ambient Cosmic Starlight Sparkles around the helmet */}
+        <div className="absolute top-1 left-2 pointer-events-none nova-star-sparkle-1">
+          <Sparkles className="w-3.5 h-3.5 text-cyan-300 drop-shadow-[0_0_6px_#38bdf8]" />
+        </div>
+        <div className="absolute top-3 right-2 pointer-events-none nova-star-sparkle-2">
+          <Sparkles className="w-2.5 h-2.5 text-purple-300 drop-shadow-[0_0_6px_#c084fc]" />
+        </div>
+      </div>
     </div>
   );
 }

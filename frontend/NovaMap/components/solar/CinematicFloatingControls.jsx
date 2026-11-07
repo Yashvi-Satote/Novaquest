@@ -110,10 +110,10 @@ export default function CinematicFloatingControls({
             ? 'bg-cyan-950/60 text-cyan-300 border border-cyan-400/40 shadow-sm'
             : 'text-slate-400 hover:text-white hover:bg-white/5 border border-transparent'
         }`}
-        title={isCompanionOpen ? 'Hide NOVA Space Guide' : 'Show NOVA Space Guide'}
-        aria-label="Toggle NOVA Space Guide"
+        title={isCompanionOpen ? 'Hide NOVA Astronaut Companion' : 'Show NOVA Astronaut Companion'}
+        aria-label="Toggle NOVA Astronaut Companion"
       >
-        <Bot className="w-4 h-4" />
+        <Sparkles className="w-4 h-4" />
       </button>
 
       {/* 4. Optional Technical Telemetry Drawer Toggle */}
