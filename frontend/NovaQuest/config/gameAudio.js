@@ -296,6 +296,282 @@ class GameAudioEngine {
       offset += note.d * 0.85;
     });
   }
+
+  /**
+   * Authentic Apollo Quindar Beep (Intro/outro radio cue)
+   */
+  playQuindarBeep() {
+    if (this.isMuted) return;
+    this.ensureUnlocked();
+    const ctx = this.ctx;
+    if (!ctx) return;
+
+    const now = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(2525, now); // Standard Apollo intro quindar beep frequency
+
+    gain.gain.setValueAtTime(this.volume * 0.15, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.start(now);
+    osc.stop(now + 0.25);
+  }
+
+  /**
+   * Hydraulic hatch close sound
+   */
+  playHatchClose() {
+    if (this.isMuted) return;
+    this.ensureUnlocked();
+    const ctx = this.ctx;
+    if (!ctx) return;
+
+    const now = ctx.currentTime;
+    // Servo motor slide
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(180, now);
+    osc.frequency.linearRampToValueAtTime(90, now + 0.6);
+
+    gain.gain.setValueAtTime(this.volume * 0.2, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.65);
+
+    // Mechanical latch clank at 0.5s
+    setTimeout(() => {
+      if (!this.ctx || this.isMuted) return;
+      const t = this.ctx.currentTime;
+      const osc2 = this.ctx.createOscillator();
+      const gain2 = this.ctx.createGain();
+      osc2.type = 'square';
+      osc2.frequency.setValueAtTime(75, t);
+      gain2.gain.setValueAtTime(this.volume * 0.35, t);
+      gain2.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
+      osc2.connect(gain2);
+      gain2.connect(this.ctx.destination);
+      osc2.start(t);
+      osc2.stop(t + 0.2);
+    }, 500);
+  }
+
+  /**
+   * Countdown telemetry beep
+   */
+  playCountdownBeep(isFinal = false) {
+    if (this.isMuted) return;
+    this.ensureUnlocked();
+    const ctx = this.ctx;
+    if (!ctx) return;
+
+    const now = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(isFinal ? 1200 : 800, now);
+
+    gain.gain.setValueAtTime(this.volume * 0.25, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + (isFinal ? 0.4 : 0.15));
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.start(now);
+    osc.stop(now + (isFinal ? 0.45 : 0.2));
+  }
+
+  /**
+   * Lunar surface footstep crunch
+   */
+  playFootstep() {
+    if (this.isMuted) return;
+    this.ensureUnlocked();
+    const ctx = this.ctx;
+    if (!ctx) return;
+
+    const now = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(60 + Math.random() * 30, now);
+    osc.frequency.exponentialRampToValueAtTime(30, now + 0.08);
+
+    gain.gain.setValueAtTime(this.volume * 0.12, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.start(now);
+    osc.stop(now + 0.1);
+  }
+
+  /**
+   * High-tech handheld scanner pulse
+   */
+  playScanner() {
+    if (this.isMuted) return;
+    this.ensureUnlocked();
+    const ctx = this.ctx;
+    if (!ctx) return;
+
+    const now = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(800, now);
+    osc.frequency.linearRampToValueAtTime(1400, now + 0.25);
+
+    gain.gain.setValueAtTime(this.volume * 0.2, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.start(now);
+    osc.stop(now + 0.32);
+  }
+
+  /**
+   * Electrical repair sparks / welding sound
+   */
+  playRepairSparks() {
+    if (this.isMuted) return;
+    this.ensureUnlocked();
+    const ctx = this.ctx;
+    if (!ctx) return;
+
+    for (let i = 0; i < 4; i++) {
+      const now = ctx.currentTime + i * 0.08;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(200 + Math.random() * 400, now);
+
+      gain.gain.setValueAtTime(this.volume * 0.25, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(now);
+      osc.stop(now + 0.07);
+    }
+  }
+
+  /**
+   * Electrical power-up surge & system online hum
+   */
+  playPowerUp() {
+    if (this.isMuted) return;
+    this.ensureUnlocked();
+    const ctx = this.ctx;
+    if (!ctx) return;
+
+    const now = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(120, now);
+    osc.frequency.exponentialRampToValueAtTime(880, now + 1.2);
+
+    gain.gain.setValueAtTime(this.volume * 0.35, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 1.4);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.start(now);
+    osc.stop(now + 1.5);
+  }
+
+  /**
+   * Character Voice Speech with Browser Synthesis
+   */
+  speakDialogue(text, speaker = 'jaffe', onBoundary = null, onEnd = null) {
+    this.playQuindarBeep();
+
+    if (typeof window === 'undefined' || !window.speechSynthesis) {
+      if (onEnd) setTimeout(onEnd, 3500);
+      return;
+    }
+
+    try {
+      window.speechSynthesis.cancel();
+
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'en-US';
+
+      // Find best available English voice
+      const voices = window.speechSynthesis.getVoices();
+      if (voices && voices.length > 0) {
+        if (speaker === 'jaffe') {
+          // Look for male, warm, or natural voice
+          const maleVoice = voices.find(v => 
+            v.lang.startsWith('en') && (v.name.includes('David') || v.name.includes('Mark') || v.name.includes('Guy') || v.name.includes('Male'))
+          ) || voices.find(v => v.lang.startsWith('en'));
+          if (maleVoice) utterance.voice = maleVoice;
+          utterance.rate = 0.94;
+          utterance.pitch = 0.92;
+        } else {
+          // Leo / Explorer: youthful, energetic
+          const childVoice = voices.find(v => 
+            v.lang.startsWith('en') && (v.name.includes('Zira') || v.name.includes('Samantha') || v.name.includes('Natural'))
+          ) || voices.find(v => v.lang.startsWith('en'));
+          if (childVoice) utterance.voice = childVoice;
+          utterance.rate = 1.05;
+          utterance.pitch = 1.15;
+        }
+      }
+
+      if (onBoundary) {
+        utterance.onboundary = onBoundary;
+      }
+
+      let finished = false;
+      const finish = () => {
+        if (!finished) {
+          finished = true;
+          if (onEnd) onEnd();
+        }
+      };
+
+      utterance.onend = finish;
+      utterance.onerror = finish;
+
+      // Safe fallback timer in case headless browser suppresses audio events
+      const expectedDurationMs = Math.max(3200, (text.length / 14) * 1000 + 1200);
+      setTimeout(finish, expectedDurationMs);
+
+      window.speechSynthesis.speak(utterance);
+    } catch (e) {
+      if (onEnd) setTimeout(onEnd, 3200);
+    }
+  }
+
+  stopSpeech() {
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
+      try {
+        window.speechSynthesis.cancel();
+      } catch (e) {}
+    }
+  }
 }
 
 export const gameAudio = new GameAudioEngine();
+

@@ -92,6 +92,7 @@ export default function App() {
       <Route path="/missions" element={<MissionSelectPage />} />
       <Route path="/play" element={<Level1Surveyor5Page />} />
       <Route path="/play/surveyor-5" element={<Level1Surveyor5Page />} />
+      <Route path="/level/surveyor-5" element={<Navigate to="/play/surveyor-5" replace />} />
       <Route path="/prologue" element={<Navigate to="/play" replace />} />
       <Route path="/mission-echo" element={<Navigate to="/play" replace />} />
       <Route path="/stage-5" element={<Navigate to="/play" replace />} />
