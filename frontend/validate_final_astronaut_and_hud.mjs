@@ -84,41 +84,40 @@ async function runFinalValidation() {
     await page.goto('http://127.0.0.1:5173/novamap', { waitUntil: 'domcontentloaded', timeout: 45000 });
     await sleep(4000);
 
-    // 1. CHECKLIST ITEM 1 & 2: EXACTLY ONE ASTRONAUT & OPTION A DESIGN
-    console.log('\n[Phase 2] Verifying EXACTLY ONE astronaut instance & Option A Friendly Explorer design...');
+    // 1. CHECKLIST ITEM 1 & 2: EXACTLY ONE ASTRONAUT & CUTE TEAL ALIEN DESIGN
+    console.log('\n[Phase 2] Verifying EXACTLY ONE astronaut instance & Cute Teal Alien Astronaut design...');
     const astronautCount = await page.evaluate(() => {
-      const svgs = document.querySelectorAll('#nova-astronaut-svg');
+      const alienContainers = document.querySelectorAll('#nova-alien-astronaut, #nova-astronaut-svg');
       const characters = document.querySelectorAll('#flying-astronaut-character, #nova-mascot-character');
       return {
-        svgCount: svgs.length,
+        alienCount: alienContainers.length,
         characterCount: characters.length
       };
     });
 
-    console.log(`- Astronaut SVGs in DOM: ${astronautCount.svgCount}`);
+    console.log(`- Companion avatar containers in DOM: ${astronautCount.alienCount}`);
     console.log(`- Character containers in DOM: ${astronautCount.characterCount}`);
 
-    const hasOptionADesign = await page.evaluate(() => {
-      const svg = document.querySelector('#nova-astronaut-svg');
-      if (!svg) return false;
-      const hasHelmet = Boolean(svg.querySelector('circle[fill*="suitWhite"], circle[stroke*="#94a3b8"]'));
-      const hasEyes = Boolean(svg.querySelector('.nova-eye-blink'));
-      const hasMouth = Boolean(svg.querySelector('path[fill*="#be123c"], .nova-mouth-speech') || svg.querySelector('ellipse, path'));
-      const hasThrusters = Boolean(svg.querySelector('.nova-thruster-puff'));
-      const hasAntenna = Boolean(svg.querySelector('.nova-antenna-star'));
-      return hasHelmet && hasEyes && hasThrusters && hasAntenna;
+    const hasAlienDesign = await page.evaluate(() => {
+      const container = document.querySelector('#nova-alien-astronaut');
+      if (!container) return false;
+      const img = container.querySelector('#nova-alien-character-img');
+      const hasImage = Boolean(img && img.src.includes('nova_alien_companion.png'));
+      const hasEyelids = Boolean(container.querySelector('.nova-alien-eyelid-blink'));
+      const hasAura = Boolean(container.querySelector('.nova-alien-aura'));
+      return hasImage && hasEyelids && hasAura;
     });
 
-    console.log(`- Option A Friendly Explorer elements verified: ${hasOptionADesign}`);
+    console.log(`- Cute Teal Alien Astronaut elements verified: ${hasAlienDesign}`);
 
     testResults.push({
-      test: 'Checklist 1 & 2: Exactly ONE Astronaut of Option A Friendly Explorer Design',
-      passed: astronautCount.svgCount === 1 && astronautCount.characterCount === 1 && hasOptionADesign,
-      details: `Count: ${astronautCount.svgCount} (Must be exactly 1). Option A features (white/blue spacesuit, bubble helmet, blinking eyes, jetpack, antenna): ${hasOptionADesign}`
+      test: 'Checklist 1 & 2: Exactly ONE Astronaut of Cute Teal Alien Companion Design',
+      passed: astronautCount.alienCount === 1 && astronautCount.characterCount === 1 && hasAlienDesign,
+      details: `Count: ${astronautCount.alienCount} (Must be exactly 1). Alien features (3D image, transparent bubble helmet, blinking eyelids, space aura): ${hasAlienDesign}`
     });
 
-    await page.screenshot({ path: path.join(SCREENSHOT_DIR, '01_single_option_a_astronaut_initial.png') });
-    console.log('✓ Captured 01_single_option_a_astronaut_initial.png');
+    await page.screenshot({ path: path.join(SCREENSHOT_DIR, '01_single_alien_astronaut_initial.png') });
+    console.log('✓ Captured 01_single_alien_astronaut_initial.png');
 
     // 2. CHECKLIST ITEM 3 & 4: CONTINUOUS SMOOTH FLIGHT & INTERACTION PASS-THROUGH
     console.log('\n[Phase 3] Verifying continuous smooth flight & click pass-through...');
