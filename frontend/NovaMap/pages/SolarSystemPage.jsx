@@ -3,7 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { Orbit, RotateCcw, ArrowLeft, Sparkles } from 'lucide-react';
 import AppNavbar from '../../Shared/components/layout/AppNavbar';
 import SolarCanvas from '../components/solar/SolarCanvas';
-import SolarControlsHUD from '../components/solar/SolarControlsHUD';
+import CompactSimulationControls from '../components/solar/CompactSimulationControls';
+import FlyingAstronautOverlay from '../components/companion/FlyingAstronautOverlay';
+import RocketCursor from '../components/cursor/RocketCursor';
 import MissionExplorerSidebar from '../components/solar/MissionExplorerSidebar';
 import MissionDetailDrawer from '../components/solar/MissionDetailDrawer';
 import CelestialDetailDrawer from '../components/solar/CelestialDetailDrawer';
@@ -19,7 +21,7 @@ const getInitialLayoutPreferences = () => {
       const parsed = JSON.parse(saved);
       return {
         isSidebarOpen: parsed.isSidebarOpen ?? false, // Minimal cinematic default: focus on 3D space
-        isTimelineOpen: parsed.isTimelineOpen ?? true,
+        isTimelineOpen: parsed.isTimelineOpen ?? false, // Hidden by default, accessible via floating settings
         isCompanionOpen: parsed.isCompanionOpen ?? true,
         isDrawerOpen: parsed.isDrawerOpen ?? false,
         isZenMode: false
@@ -30,7 +32,7 @@ const getInitialLayoutPreferences = () => {
   }
   return {
     isSidebarOpen: false, // Minimal cinematic default: focus on 3D space
-    isTimelineOpen: true,
+    isTimelineOpen: false, // Hidden by default, accessible via floating settings
     isCompanionOpen: true,
     isDrawerOpen: false,
     isZenMode: false
@@ -115,7 +117,7 @@ export default function SolarSystemPage() {
   const handleRestoreDefaultLayout = () => {
     const defaults = {
       isSidebarOpen: false,
-      isTimelineOpen: true,
+      isTimelineOpen: false,
       isCompanionOpen: true,
       isDrawerOpen: false,
       isZenMode: false
@@ -340,7 +342,28 @@ export default function SolarSystemPage() {
       {!layoutPrefs.isZenMode && <AppNavbar />}
 
       {/* 3D Deep Space Viewport & HUD Overlay Container */}
-      <main className="relative flex-1 min-h-0 w-full overflow-hidden">
+      <main className="relative flex-1 min-h-0 w-full overflow-hidden novamap-viewport-canvas-area">
+        <style>{`
+          .novamap-viewport-canvas-area canvas {
+            cursor: none !important;
+          }
+          .novamap-viewport-canvas-area button,
+          .novamap-viewport-canvas-area input,
+          .novamap-viewport-canvas-area a,
+          .novamap-viewport-canvas-area select,
+          .novamap-viewport-canvas-area textarea,
+          .novamap-viewport-canvas-area [role="button"] {
+            cursor: auto !important;
+          }
+        `}</style>
+
+        {/* Full-Screen Animated 3D Cartoon Astronaut Companion (Requirement 2) */}
+        {!layoutPrefs.isZenMode && (
+          <FlyingAstronautOverlay />
+        )}
+
+        {/* Aerodynamic Rocket Mouse Cursor (Requirement 3) */}
+        <RocketCursor />
         
         {/* Floating Minimal Viewport Control Dock (Phase 2) */}
         <CinematicFloatingControls
@@ -440,9 +463,11 @@ export default function SolarSystemPage() {
           </div>
         )}
 
-        {/* Floating NASA Eyes-Style Navigation & Simulation HUD (Collapsible) */}
-        {!layoutPrefs.isZenMode && layoutPrefs.isTimelineOpen && (
-          <SolarControlsHUD
+        {/* Compact Floating Simulation Settings Modal (Requirement 1 - Replaces Bottom HUD) */}
+        {!layoutPrefs.isZenMode && (
+          <CompactSimulationControls
+            isOpen={layoutPrefs.isTimelineOpen}
+            onClose={() => saveLayoutPrefs({ isTimelineOpen: false })}
             isPlaying={isPlaying}
             onTogglePlay={handleTogglePlay}
             speed={speed}
@@ -450,29 +475,19 @@ export default function SolarSystemPage() {
             timeDirection={timeDirection}
             onToggleTimeDirection={handleToggleTimeDirection}
             onStepDays={handleStepDays}
-            activeScale={activeScale}
-            onSelectScale={handleSelectScale}
+            simulationDate={simulationDate}
+            onSelectDate={handleSelectDate}
             onResetView={handleResetView}
             onZoomIn={handleZoomIn}
             onZoomOut={handleZoomOut}
-            hoveredItemInfo={hoveredItemInfo}
-            isVoyagerLocalMode={isVoyagerLocalMode}
-            onExitVoyagerLocal={handleExitVoyagerLocal}
-            isSurfaceMode={isSurfaceMode}
-            activeSurfaceCraft={activeSurfaceCraft}
-            onExitSurfaceMode={handleExitSurfaceMode}
-            selectedMissionSlug={selectedMissionSlug}
-            onEnterVoyagerLocal={handleEnterVoyagerLocal}
-            simulationDate={simulationDate}
-            onSelectDate={handleSelectDate}
             lightingMode={lightingMode}
             onToggleLightingMode={handleToggleLightingMode}
             cameraMode={cameraMode}
             onChangeCameraMode={handleChangeCameraMode}
             layerVisibility={layerVisibility}
             onToggleLayer={handleToggleLayer}
-            onScrubStart={handleScrubStart}
-            onScrubEnd={handleScrubEnd}
+            activeScale={activeScale}
+            onSelectScale={handleSelectScale}
           />
         )}
 
