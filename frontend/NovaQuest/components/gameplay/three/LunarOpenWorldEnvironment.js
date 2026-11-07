@@ -205,7 +205,7 @@ export function createLunarOpenWorldEnvironment(onLanderLoaded = null) {
   // Exact Mathematical Terrain Height Function (For character ground snapping)
   const getTerrainHeight = (x, z) => {
     const vx = x;
-    const vy = z;
+    const vy = -z; // Correct world-to-local plane mapping (plane rotated -PI/2 around X)
     const dSurveyor = Math.hypot(vx - 12, vy - (-22));
     let crater1 = 0;
     if (dSurveyor < 18) {

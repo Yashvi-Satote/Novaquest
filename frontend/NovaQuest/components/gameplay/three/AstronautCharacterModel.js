@@ -15,7 +15,7 @@ import * as THREE from 'three';
  * - Center chest telemetry capsule plate with recessed slot
  * - White telemetry indicator dot on the right thigh
  * - Cyan alien hands with 4 defined fingers (thumb + 3 fingers)
- * - Segmented knee pads and rounded chunky space boots
+ * - Segmented knee pads and rounded chunky space boots (ground-aligned at Y = 0)
  * - Life-support backpack with dual thrusters and antenna
  * - Dedicated character lighting rig (key light, cyan fill, helmet point light) ensuring
  *   the hero never turns into a pitch-black silhouette in space or shadow
@@ -34,37 +34,28 @@ function createProceduralTextures() {
   galaxyCanvas.height = 512;
   const gCtx = galaxyCanvas.getContext('2d');
 
-  // Deep space cosmic gradient
   const grad = gCtx.createRadialGradient(256, 180, 30, 256, 256, 260);
-  grad.addColorStop(0, '#3b186b'); // vibrant cosmic purple
-  grad.addColorStop(0.35, '#1e114a'); // deep indigo
-  grad.addColorStop(0.7, '#0c0828'); // dark indigo
-  grad.addColorStop(1, '#020110'); // obsidian space
+  grad.addColorStop(0, '#4c1d95'); // vibrant cosmic purple
+  grad.addColorStop(0.35, '#1e1b4b'); // deep indigo
+  grad.addColorStop(0.7, '#0f172a'); // dark slate space
+  grad.addColorStop(1, '#020617'); // obsidian space
   gCtx.fillStyle = grad;
   gCtx.fillRect(0, 0, 512, 512);
 
   // Soft glowing cyan nebula clouds
-  gCtx.fillStyle = 'rgba(56, 189, 248, 0.32)';
-  for (let i = 0; i < 10; i++) {
+  gCtx.fillStyle = 'rgba(56, 189, 248, 0.35)';
+  for (let i = 0; i < 12; i++) {
     gCtx.beginPath();
     gCtx.arc(100 + Math.random() * 312, 80 + Math.random() * 320, 50 + Math.random() * 90, 0, Math.PI * 2);
     gCtx.fill();
   }
 
-  // Soft purple/magenta nebula wisps
-  gCtx.fillStyle = 'rgba(192, 132, 252, 0.28)';
-  for (let i = 0; i < 10; i++) {
-    gCtx.beginPath();
-    gCtx.arc(100 + Math.random() * 312, 80 + Math.random() * 320, 45 + Math.random() * 80, 0, Math.PI * 2);
-    gCtx.fill();
-  }
-
-  // Sparkling stardust
+  // Brilliant star sparkles
   gCtx.fillStyle = '#ffffff';
-  for (let i = 0; i < 140; i++) {
+  for (let i = 0; i < 180; i++) {
     const sx = Math.random() * 512;
     const sy = Math.random() * 512;
-    const sr = Math.random() < 0.2 ? 1.8 : 0.8;
+    const sr = Math.random() < 0.15 ? 1.8 : 0.8;
     gCtx.beginPath();
     gCtx.arc(sx, sy, sr, 0, Math.PI * 2);
     gCtx.fill();
@@ -74,27 +65,26 @@ function createProceduralTextures() {
   galaxyTexture.wrapS = THREE.ClampToEdgeWrapping;
   galaxyTexture.wrapT = THREE.ClampToEdgeWrapping;
 
-  // 2. Spacesuit Texture with fine fabric grain and subtle cosmic speckles
+  // 2. Charcoal Slate Spacesuit Texture with fine fabric weave
   const suitCanvas = document.createElement('canvas');
   suitCanvas.width = 512;
   suitCanvas.height = 512;
   const sCtx = suitCanvas.getContext('2d');
-  sCtx.fillStyle = '#222834'; // rich charcoal slate
+  sCtx.fillStyle = '#1e2430'; // rich charcoal slate
   sCtx.fillRect(0, 0, 512, 512);
 
-  // Subtle fabric noise
   const imgData = sCtx.getImageData(0, 0, 512, 512);
   const d = imgData.data;
   for (let i = 0; i < d.length; i += 4) {
     const noise = (Math.random() - 0.5) * 16;
     d[i] = Math.max(0, Math.min(255, d[i] + noise));
     d[i + 1] = Math.max(0, Math.min(255, d[i + 1] + noise + 2));
-    d[i + 2] = Math.max(0, Math.min(255, d[i + 2] + noise + 5));
+    d[i + 2] = Math.max(0, Math.min(255, d[i + 2] + noise + 4));
   }
   sCtx.putImageData(imgData, 0, 0);
 
   // Fine starlight specks
-  sCtx.fillStyle = 'rgba(255, 255, 255, 0.45)';
+  sCtx.fillStyle = 'rgba(255, 255, 255, 0.40)';
   for (let i = 0; i < 90; i++) {
     sCtx.fillRect(Math.random() * 512, Math.random() * 512, 1.2, 1.2);
   }
@@ -113,17 +103,17 @@ function createProceduralTextures() {
   const skinGrad = skCtx.createLinearGradient(0, 0, 0, 512);
   skinGrad.addColorStop(0, '#38bdf8'); // sky/cyan crown
   skinGrad.addColorStop(0.28, '#22d3ee'); // bright cyan forehead
-  skinGrad.addColorStop(0.7, '#06b6d4'); // aqua cheeks
+  skinGrad.addColorStop(0.68, '#06b6d4'); // aqua cheeks
   skinGrad.addColorStop(1, '#0891b2'); // shaded teal chin/neck
   skCtx.fillStyle = skinGrad;
   skCtx.fillRect(0, 0, 512, 512);
 
   // Subtle stardust on forehead
-  skCtx.fillStyle = 'rgba(255, 255, 255, 0.65)';
-  for (let i = 0; i < 50; i++) {
+  skCtx.fillStyle = 'rgba(255, 255, 255, 0.70)';
+  for (let i = 0; i < 55; i++) {
     const fx = 150 + Math.random() * 212;
     const fy = 50 + Math.random() * 120;
-    const fr = Math.random() < 0.2 ? 1.5 : 0.7;
+    const fr = Math.random() < 0.2 ? 1.6 : 0.8;
     skCtx.beginPath();
     skCtx.arc(fx, fy, fr, 0, Math.PI * 2);
     skCtx.fill();
@@ -133,16 +123,62 @@ function createProceduralTextures() {
   skinTexture.wrapS = THREE.ClampToEdgeWrapping;
   skinTexture.wrapT = THREE.ClampToEdgeWrapping;
 
-  return { galaxyTexture, suitTexture, skinTexture };
+  // 4. Glossy Alien Almond Eye Texture with Baked Specular Crescent
+  const eyeCanvas = document.createElement('canvas');
+  eyeCanvas.width = 512;
+  eyeCanvas.height = 512;
+  const eCtx = eyeCanvas.getContext('2d');
+
+  // Deep obsidian gloss base with subtle midnight blue edge
+  const eyeGrad = eCtx.createRadialGradient(240, 240, 50, 256, 256, 250);
+  eyeGrad.addColorStop(0, '#020408');
+  eyeGrad.addColorStop(0.75, '#050a14');
+  eyeGrad.addColorStop(1, '#082f49');
+  eCtx.fillStyle = eyeGrad;
+  eCtx.fillRect(0, 0, 512, 512);
+
+  // Brilliant curved white specular crescent across upper arch (matching reference)
+  eCtx.save();
+  eCtx.strokeStyle = 'rgba(255, 255, 255, 0.95)';
+  eCtx.lineWidth = 42;
+  eCtx.lineCap = 'round';
+  eCtx.beginPath();
+  eCtx.arc(256, 270, 165, Math.PI * 1.15, Math.PI * 1.82);
+  eCtx.stroke();
+
+  // Cyan soft glow along the crescent
+  eCtx.strokeStyle = 'rgba(56, 189, 248, 0.50)';
+  eCtx.lineWidth = 64;
+  eCtx.beginPath();
+  eCtx.arc(256, 270, 165, Math.PI * 1.15, Math.PI * 1.82);
+  eCtx.stroke();
+
+  // Secondary soft specular gleam in lower-right
+  const gleamGrad = eCtx.createRadialGradient(340, 350, 5, 340, 350, 65);
+  gleamGrad.addColorStop(0, 'rgba(186, 230, 253, 0.70)');
+  gleamGrad.addColorStop(0.5, 'rgba(56, 189, 248, 0.35)');
+  gleamGrad.addColorStop(1, 'rgba(56, 189, 248, 0)');
+  eCtx.fillStyle = gleamGrad;
+  eCtx.beginPath();
+  eCtx.arc(340, 350, 65, 0, Math.PI * 2);
+  eCtx.fill();
+  eCtx.restore();
+
+  const eyeTexture = new THREE.CanvasTexture(eyeCanvas);
+  eyeTexture.wrapS = THREE.ClampToEdgeWrapping;
+  eyeTexture.wrapT = THREE.ClampToEdgeWrapping;
+
+  return { galaxyTexture, suitTexture, skinTexture, eyeTexture };
 }
 
 let cachedTextures = null;
 
 /**
  * Creates the organic, continuous Alien Cranium geometry.
+ * Broad high domed cranium, smooth curved temples, gentle inward cheek taper to a cute chin.
  */
 function createAlienCraniumGeometry(scale = 1.0) {
-  const baseRadius = 0.35 * scale;
+  const baseRadius = 0.32 * scale;
   const geo = new THREE.SphereGeometry(baseRadius, 48, 48);
   const pos = geo.attributes.position;
 
@@ -156,26 +192,55 @@ function createAlienCraniumGeometry(scale = 1.0) {
     if (normY >= 0) {
       // Cranium upper dome & temples:
       const topFactor = Math.sin(normY * Math.PI * 0.5);
-      x *= (1.0 + topFactor * 0.18); // Broad temples
-
+      x *= (1.0 + topFactor * 0.22); // Broad temples
       if (z < 0) {
-        z *= (1.0 + topFactor * 0.22); // Elongated posterior skull
+        z *= (1.0 + topFactor * 0.25); // Elongated posterior skull
       } else {
-        z *= (1.0 + topFactor * 0.05);
+        z *= (1.0 + topFactor * 0.08);
       }
-      y *= 1.06;
+      y *= 1.08;
     } else {
       // Lower face, cheeks & chin:
       const lowerFactor = -normY;
-      const cheekTaper = 1.0 - lowerFactor * 0.46; // Smooth inward taper
-      x *= Math.max(0.46, cheekTaper);
+      const cheekTaper = 1.0 - lowerFactor * 0.44; // Smooth inward taper
+      x *= Math.max(0.48, cheekTaper);
 
       if (z > 0) {
-        z *= Math.max(0.68, 1.0 - lowerFactor * 0.38);
+        z *= Math.max(0.70, 1.0 - lowerFactor * 0.35);
         z += Math.sin(lowerFactor * Math.PI) * 0.035 * scale; // Gentle chin prominence
       } else {
-        z *= Math.max(0.52, 1.0 - lowerFactor * 0.44);
+        z *= Math.max(0.55, 1.0 - lowerFactor * 0.40);
       }
+    }
+
+    pos.setXYZ(i, x, y, z);
+  }
+
+  geo.computeVertexNormals();
+  return geo;
+}
+
+/**
+ * Creates sculpted almond eye geometry
+ */
+function createAlmondEyeGeometry(width, height, depth) {
+  const geo = new THREE.SphereGeometry(width, 32, 32);
+  const pos = geo.attributes.position;
+
+  for (let i = 0; i < pos.count; i++) {
+    let x = pos.getX(i);
+    let y = pos.getY(i);
+    let z = pos.getZ(i);
+
+    // Scale Y and Z
+    y *= (height / width);
+    z *= (depth / width);
+
+    // Almond taper towards horizontal extremities
+    const normX = Math.abs(x) / width;
+    if (normX > 0.4) {
+      const taper = 1.0 - (normX - 0.4) * 0.35;
+      y *= taper;
     }
 
     pos.setXYZ(i, x, y, z);
@@ -204,14 +269,14 @@ export function createAstronautCharacter({ scale = 1.0 } = {}) {
   const skinMat = new THREE.MeshStandardMaterial({
     color: 0x22d3ee,
     map: cachedTextures ? cachedTextures.skinTexture : null,
-    roughness: 0.25,
+    roughness: 0.28,
     metalness: 0.04
   });
 
   // Spacesuit: Dark charcoal/slate with fine cosmic specks
   const suitMat = new THREE.MeshStandardMaterial({
-    color: 0x222834, // rich charcoal slate
-    roughness: 0.48,
+    color: 0x1e2430, // rich charcoal slate
+    roughness: 0.45,
     metalness: 0.35,
     map: cachedTextures ? cachedTextures.suitTexture : null
   });
@@ -219,33 +284,34 @@ export function createAstronautCharacter({ scale = 1.0 } = {}) {
   // Spacesuit Trim & Piping: Metallic silver-slate
   const suitTrimMat = new THREE.MeshStandardMaterial({
     color: 0x475569, // slate-600
-    roughness: 0.32,
+    roughness: 0.30,
     metalness: 0.72
   });
 
   // Titanium Collar: Bright gleaming silver titanium
   const titaniumMat = new THREE.MeshStandardMaterial({
     color: 0xe2e8f0, // gleaming silver chrome
-    metalness: 0.65,
-    roughness: 0.18,
-    emissive: 0x475569,
-    emissiveIntensity: 0.35
+    metalness: 0.78,
+    roughness: 0.16,
+    emissive: 0x334155,
+    emissiveIntensity: 0.3
   });
 
   // Purple/Magenta Gemstone Cabochons (matching user reference image)
   const purpleRivetMat = new THREE.MeshStandardMaterial({
-    color: 0xc084fc, // vibrant violet/purple
-    metalness: 0.8,
-    roughness: 0.1,
-    emissive: 0xa855f7,
-    emissiveIntensity: 1.2
+    color: 0xd8b4fe, // bright violet/purple
+    metalness: 0.85,
+    roughness: 0.08,
+    emissive: 0xc084fc,
+    emissiveIntensity: 2.4
   });
 
-  // Eyes: Ultra-glossy obsidian black
+  // Eyes: Ultra-glossy obsidian black with baked specular map
   const eyeMat = new THREE.MeshStandardMaterial({
-    color: 0x020408,
-    roughness: 0.01,
-    metalness: 0.96
+    color: 0xffffff,
+    map: cachedTextures ? cachedTextures.eyeTexture : null,
+    roughness: 0.04,
+    metalness: 0.88
   });
 
   // Curved Crescent Specular Reflection Highlight
@@ -255,32 +321,25 @@ export function createAstronautCharacter({ scale = 1.0 } = {}) {
     opacity: 0.95
   });
 
-  // Secondary soft gleam
-  const eyeSoftGleamMat = new THREE.MeshBasicMaterial({
-    color: 0xbae6fd,
-    transparent: true,
-    opacity: 0.55
-  });
-
   // Glass Bubble Helmet: Crystal-clear physical glass
   const helmetGlassMat = new THREE.MeshPhysicalMaterial({
-    color: 0xdbeafe, // soft ice-blue tint
-    transmission: 0.88,
-    opacity: 0.32,
+    color: 0xe0f2fe, // crystal ice tint
+    transmission: 0.92,
+    opacity: 0.28,
     transparent: true,
-    roughness: 0.04,
-    metalness: 0.12,
+    roughness: 0.03,
+    metalness: 0.08,
     ior: 1.48,
     reflectivity: 0.92,
     clearcoat: 1.0,
-    clearcoatRoughness: 0.05
+    clearcoatRoughness: 0.03
   });
 
-  // Luminous Cyan Helmet Rim Halo (vibrant cosmic edge aura)
+  // Luminous Cyan Helmet Rim Halo (vibrant cosmic edge aura matching reference)
   const helmetAuraMat = new THREE.MeshBasicMaterial({
-    color: 0x38bdf8,
+    color: 0x00f0ff,
     transparent: true,
-    opacity: 0.65,
+    opacity: 0.72,
     blending: THREE.AdditiveBlending,
     side: THREE.BackSide
   });
@@ -301,68 +360,69 @@ export function createAstronautCharacter({ scale = 1.0 } = {}) {
 
   // =========================================================================
   // DEDICATED HERO CHARACTER LIGHTING RIG
-  // Ensures the cute hero is always beautifully lit with soft key and fill light,
+  // Ensures the hero is always beautifully lit and recognizable,
   // matching AAA character presentation and preventing dark silhouettes.
   // =========================================================================
   const characterLightRig = new THREE.Group();
   root.add(characterLightRig);
 
   // Front-Right Warm Key Light
-  const keyLight = new THREE.DirectionalLight(0xfffbeb, 1.8);
+  const keyLight = new THREE.DirectionalLight(0xfffbeb, 2.0);
   keyLight.position.set(1.8 * scale, 2.8 * scale, 3.2 * scale);
   characterLightRig.add(keyLight);
 
   // Front-Left Cool Cyan Fill Light
-  const fillLight = new THREE.DirectionalLight(0x38bdf8, 1.2);
+  const fillLight = new THREE.DirectionalLight(0x38bdf8, 1.4);
   fillLight.position.set(-2.2 * scale, 1.8 * scale, 2.8 * scale);
   characterLightRig.add(fillLight);
 
   // Rear Indigo Rim Light
-  const rimLight = new THREE.DirectionalLight(0x818cf8, 1.1);
+  const rimLight = new THREE.DirectionalLight(0x818cf8, 1.2);
   rimLight.position.set(0, 3.0 * scale, -2.8 * scale);
   characterLightRig.add(rimLight);
 
   // =========================================================================
   // 1. PELVIS & ROOT GROUP (Chibi Torso Structure)
+  // Calibrated so bottom of boot soles rests exactly at Y = 0.0
   // =========================================================================
   const hipGroup = new THREE.Group();
-  hipGroup.position.y = 0.55 * scale;
+  hipGroup.position.y = 0.52 * scale;
   root.add(hipGroup);
 
   const torsoGroup = new THREE.Group();
   hipGroup.add(torsoGroup);
 
   // Lower Abdomen / Pelvis
-  const pelvisGeo = new THREE.CylinderGeometry(0.28 * scale, 0.25 * scale, 0.22 * scale, 24);
+  const pelvisGeo = new THREE.CylinderGeometry(0.26 * scale, 0.23 * scale, 0.20 * scale, 24);
   const pelvis = new THREE.Mesh(pelvisGeo, suitMat);
-  pelvis.position.y = 0.11 * scale;
+  pelvis.position.y = 0.10 * scale;
   torsoGroup.add(pelvis);
 
   // Upper Chest / Spacesuit Jacket
-  const chestGeo = new THREE.CylinderGeometry(0.32 * scale, 0.28 * scale, 0.34 * scale, 24);
+  const chestGeo = new THREE.CylinderGeometry(0.30 * scale, 0.26 * scale, 0.32 * scale, 24);
   const chest = new THREE.Mesh(chestGeo, suitMat);
-  chest.position.y = 0.35 * scale;
+  chest.position.y = 0.32 * scale;
   torsoGroup.add(chest);
 
   // Soft Rounded Chest Arch
-  const chestBulgeGeo = new THREE.SphereGeometry(0.29 * scale, 24, 16);
+  const chestBulgeGeo = new THREE.SphereGeometry(0.28 * scale, 24, 16);
   chestBulgeGeo.scale(1.05, 0.85, 0.75);
   const chestBulge = new THREE.Mesh(chestBulgeGeo, suitMat);
-  chestBulge.position.set(0, 0.34 * scale, 0.08 * scale);
+  chestBulge.position.set(0, 0.32 * scale, 0.08 * scale);
   torsoGroup.add(chestBulge);
 
   // Center Chest Telemetry Capsule Badge (matching reference image)
   const chestPlateGroup = new THREE.Group();
-  chestPlateGroup.position.set(0, 0.35 * scale, 0.315 * scale);
+  chestPlateGroup.position.set(0, 0.33 * scale, 0.30 * scale);
   torsoGroup.add(chestPlateGroup);
 
   // Outer Silver Capsule
-  const badgeBaseGeo = new THREE.CapsuleGeometry(0.042 * scale, 0.13 * scale, 8, 16);
+  const badgeBaseGeo = new THREE.CapsuleGeometry(0.040 * scale, 0.13 * scale, 8, 16);
   const badgeBase = new THREE.Mesh(badgeBaseGeo, titaniumMat);
   chestPlateGroup.add(badgeBase);
 
   // Inner Dark Recessed Groove
-  const badgeInnerGeo = new THREE.CapsuleGeometry(0.018 * scale, 0.085 * scale, 8, 16);
+  const badgeInnerGeo = new THREE.CapsuleGeometry(0.016 * scale, 0.085 * scale, 8, 16);
   const badgeInner = new THREE.Mesh(
     badgeInnerGeo,
     new THREE.MeshBasicMaterial({ color: 0x0f172a })
@@ -378,24 +438,22 @@ export function createAstronautCharacter({ scale = 1.0 } = {}) {
   badgeDot.position.set(0, 0.05 * scale, 0.024 * scale);
   chestPlateGroup.add(badgeDot);
 
-  // Curved Spacesuit Seamlines / Piping (Stylized V-cut across chest down to hips)
+  // Ergonomic Spacesuit Seamline Piping (Matching reference)
   const seamCurveL = new THREE.CatmullRomCurve3([
-    new THREE.Vector3(-0.25 * scale, 0.46 * scale, 0.16 * scale),
-    new THREE.Vector3(-0.16 * scale, 0.32 * scale, 0.28 * scale),
-    new THREE.Vector3(-0.14 * scale, 0.16 * scale, 0.25 * scale),
-    new THREE.Vector3(-0.18 * scale, 0.04 * scale, 0.18 * scale)
+    new THREE.Vector3(-0.19 * scale, 0.44 * scale, 0.16 * scale),
+    new THREE.Vector3(-0.11 * scale, 0.28 * scale, 0.27 * scale),
+    new THREE.Vector3(-0.06 * scale, 0.12 * scale, 0.26 * scale)
   ]);
-  const seamGeoL = new THREE.TubeGeometry(seamCurveL, 20, 0.012 * scale, 8, false);
+  const seamGeoL = new THREE.TubeGeometry(seamCurveL, 16, 0.009 * scale, 6, false);
   const seamL = new THREE.Mesh(seamGeoL, suitTrimMat);
   torsoGroup.add(seamL);
 
   const seamCurveR = new THREE.CatmullRomCurve3([
-    new THREE.Vector3(0.25 * scale, 0.46 * scale, 0.16 * scale),
-    new THREE.Vector3(0.15 * scale, 0.32 * scale, 0.28 * scale),
-    new THREE.Vector3(0.14 * scale, 0.16 * scale, 0.25 * scale),
-    new THREE.Vector3(0.18 * scale, 0.04 * scale, 0.18 * scale)
+    new THREE.Vector3(0.19 * scale, 0.44 * scale, 0.16 * scale),
+    new THREE.Vector3(0.11 * scale, 0.28 * scale, 0.27 * scale),
+    new THREE.Vector3(0.06 * scale, 0.12 * scale, 0.26 * scale)
   ]);
-  const seamGeoR = new THREE.TubeGeometry(seamCurveR, 20, 0.012 * scale, 8, false);
+  const seamGeoR = new THREE.TubeGeometry(seamCurveR, 16, 0.009 * scale, 6, false);
   const seamR = new THREE.Mesh(seamGeoR, suitTrimMat);
   torsoGroup.add(seamR);
 
@@ -403,38 +461,39 @@ export function createAstronautCharacter({ scale = 1.0 } = {}) {
   const thighDotGeo = new THREE.CylinderGeometry(0.019 * scale, 0.019 * scale, 0.01 * scale, 12);
   const thighDot = new THREE.Mesh(thighDotGeo, telemetryDotMat);
   thighDot.rotation.x = Math.PI / 2;
-  thighDot.position.set(-0.16 * scale, 0.02 * scale, 0.24 * scale);
+  thighDot.position.set(-0.15 * scale, 0.02 * scale, 0.23 * scale);
   torsoGroup.add(thighDot);
 
   // Life-Support Backpack (PLSS)
-  const backpackGeo = new THREE.BoxGeometry(0.36 * scale, 0.44 * scale, 0.18 * scale);
+  const backpackGeo = new THREE.BoxGeometry(0.34 * scale, 0.40 * scale, 0.16 * scale);
   const backpack = new THREE.Mesh(backpackGeo, suitTrimMat);
-  backpack.position.set(0, 0.33 * scale, -0.21 * scale);
+  backpack.position.set(0, 0.32 * scale, -0.20 * scale);
   torsoGroup.add(backpack);
 
   // Backpack telemetry antenna
-  const antennaGeo = new THREE.CylinderGeometry(0.01 * scale, 0.01 * scale, 0.32 * scale, 8);
+  const antennaGeo = new THREE.CylinderGeometry(0.009 * scale, 0.009 * scale, 0.30 * scale, 8);
   const antenna = new THREE.Mesh(antennaGeo, titaniumMat);
-  antenna.position.set(0.13 * scale, 0.58 * scale, -0.21 * scale);
+  antenna.position.set(0.12 * scale, 0.55 * scale, -0.20 * scale);
   torsoGroup.add(antenna);
 
   // Dual Thruster Mini-Nozzles on Backpack
-  const nozzleGeo = new THREE.CylinderGeometry(0.035 * scale, 0.055 * scale, 0.08 * scale, 12);
-  for (let bx of [-0.11, 0.11]) {
+  const nozzleGeo = new THREE.CylinderGeometry(0.032 * scale, 0.052 * scale, 0.07 * scale, 12);
+  for (let bx of [-0.10, 0.10]) {
     const noz = new THREE.Mesh(nozzleGeo, titaniumMat);
-    noz.position.set(bx * scale, 0.15 * scale, -0.29 * scale);
+    noz.position.set(bx * scale, 0.15 * scale, -0.27 * scale);
     noz.rotation.x = 0.25;
     torsoGroup.add(noz);
   }
 
   // =========================================================================
   // 2. TITANIUM COLLAR & PURPLE GEMSTONE CABOCHONS
+  // Sits squarely on the shoulders
   // =========================================================================
   const collarGroup = new THREE.Group();
-  collarGroup.position.y = 0.53 * scale;
+  collarGroup.position.y = 0.50 * scale;
   hipGroup.add(collarGroup);
 
-  const collarGeo = new THREE.TorusGeometry(0.33 * scale, 0.052 * scale, 16, 32);
+  const collarGeo = new THREE.TorusGeometry(0.31 * scale, 0.075 * scale, 20, 36);
   const collar = new THREE.Mesh(collarGeo, titaniumMat);
   collar.rotation.x = Math.PI / 2;
   collarGroup.add(collar);
@@ -444,14 +503,14 @@ export function createAstronautCharacter({ scale = 1.0 } = {}) {
     const angle = (i * Math.PI * 2) / 12;
     const isPurpleGem = (i === 1 || i === 5 || i === 7 || i === 11);
     const beadMat = isPurpleGem ? purpleRivetMat : titaniumMat;
-    const beadSize = isPurpleGem ? 0.024 * scale : 0.018 * scale;
+    const beadSize = isPurpleGem ? 0.034 * scale : 0.020 * scale;
 
     const beadGeo = new THREE.SphereGeometry(beadSize, 10, 10);
     const bead = new THREE.Mesh(beadGeo, beadMat);
     bead.position.set(
-      Math.cos(angle) * 0.33 * scale,
+      Math.cos(angle) * 0.31 * scale,
       0.025 * scale,
-      Math.sin(angle) * 0.33 * scale
+      Math.sin(angle) * 0.31 * scale
     );
     collarGroup.add(bead);
   }
@@ -460,18 +519,19 @@ export function createAstronautCharacter({ scale = 1.0 } = {}) {
   // 3. HEAD & HELMET (Neck Pivot)
   // =========================================================================
   const headGroup = new THREE.Group();
-  headGroup.position.y = 0.63 * scale;
+  headGroup.position.y = 0.58 * scale;
   hipGroup.add(headGroup);
 
   // Neck
-  const neckGeo = new THREE.CylinderGeometry(0.15 * scale, 0.17 * scale, 0.14 * scale, 16);
+  const neckGeo = new THREE.CylinderGeometry(0.14 * scale, 0.16 * scale, 0.12 * scale, 16);
   const neck = new THREE.Mesh(neckGeo, skinMat);
   neck.position.y = 0.04 * scale;
   headGroup.add(neck);
 
   // Giant Crystal Bubble Helmet (Spacious Glass Sphere matching reference)
-  const helmetCenterY = 0.30 * scale;
-  const helmetRadius = 0.60 * scale;
+  // Radius 0.55m centered so base rests right on top of collar
+  const helmetCenterY = 0.34 * scale;
+  const helmetRadius = 0.54 * scale;
 
   const helmetGeo = new THREE.SphereGeometry(helmetRadius, 48, 48);
   const helmet = new THREE.Mesh(helmetGeo, helmetGlassMat);
@@ -492,46 +552,45 @@ export function createAstronautCharacter({ scale = 1.0 } = {}) {
     0,
     Math.PI * 2,
     0,
-    Math.PI * 0.48 // Covers the top dome of the helmet
+    Math.PI * 0.46 // Covers the top dome of the helmet
   );
   const cosmicDome = new THREE.Mesh(cosmicDomeGeo, cosmicNebulaMat);
   cosmicDome.position.set(0, helmetCenterY, 0);
   headGroup.add(cosmicDome);
 
   // Internal Soft Cyan Point Light (illuminates head from within the bubble)
-  const interiorLight = new THREE.PointLight(0x38bdf8, 1.4, 2.5 * scale);
+  const interiorLight = new THREE.PointLight(0x38bdf8, 1.3, 2.5 * scale);
   interiorLight.position.set(0, helmetCenterY + 0.12 * scale, 0.38 * scale);
   headGroup.add(interiorLight);
 
   // Sculpted Alien Cranium (Continuous organic alien head: wide forehead, tapered chin)
   const skullGeo = createAlienCraniumGeometry(scale);
   const skull = new THREE.Mesh(skullGeo, skinMat);
-  skull.position.set(0, helmetCenterY + 0.02 * scale, 0);
+  skull.position.set(0, helmetCenterY + 0.03 * scale, 0);
   headGroup.add(skull);
 
   // Cute Tiny Button Nose
-  const noseGeo = new THREE.SphereGeometry(0.020 * scale, 12, 12);
+  const noseGeo = new THREE.SphereGeometry(0.018 * scale, 12, 12);
   noseGeo.scale(1.0, 0.7, 1.2);
   const nose = new THREE.Mesh(noseGeo, skinMat);
-  nose.position.set(0, helmetCenterY - 0.045 * scale, 0.32 * scale);
+  nose.position.set(0, helmetCenterY - 0.045 * scale, 0.28 * scale);
   headGroup.add(nose);
 
   // Nostril dimples
   const nostrilMat = new THREE.MeshBasicMaterial({ color: 0x0891b2 });
-  for (let nx of [-0.011, 0.011]) {
-    const nostrilGeo = new THREE.SphereGeometry(0.005 * scale, 6, 6);
-    const nostril = new THREE.Mesh(nostrilGeo, nostrilMat);
-    nostril.position.set(nx * scale, helmetCenterY - 0.052 * scale, 0.325 * scale);
+  for (let nx of [-0.012, 0.012]) {
+    const nostril = new THREE.Mesh(new THREE.SphereGeometry(0.0035 * scale, 6, 6), nostrilMat);
+    nostril.position.set(nx * scale, helmetCenterY - 0.052 * scale, 0.286 * scale);
     headGroup.add(nostril);
   }
 
   // Gentle Cute Mouth Line (Subtle closed smile)
   const mouthCurve = new THREE.CatmullRomCurve3([
-    new THREE.Vector3(-0.038 * scale, helmetCenterY - 0.115 * scale, 0.285 * scale),
-    new THREE.Vector3(0, helmetCenterY - 0.122 * scale, 0.30 * scale),
-    new THREE.Vector3(0.038 * scale, helmetCenterY - 0.115 * scale, 0.285 * scale)
+    new THREE.Vector3(-0.035 * scale, helmetCenterY - 0.110 * scale, 0.250 * scale),
+    new THREE.Vector3(0, helmetCenterY - 0.116 * scale, 0.262 * scale),
+    new THREE.Vector3(0.035 * scale, helmetCenterY - 0.110 * scale, 0.250 * scale)
   ]);
-  const mouthGeo = new THREE.TubeGeometry(mouthCurve, 12, 0.0055 * scale, 6, false);
+  const mouthGeo = new THREE.TubeGeometry(mouthCurve, 12, 0.0045 * scale, 6, false);
   const mouthMat = new THREE.MeshBasicMaterial({ color: 0x083344 });
   const mouth = new THREE.Mesh(mouthGeo, mouthMat);
   headGroup.add(mouth);
@@ -540,68 +599,50 @@ export function createAstronautCharacter({ scale = 1.0 } = {}) {
   // 4. HUGE GLOSSY ALMOND OBSIDIAN EYES & SPECULAR CRESCENT HIGHLIGHTS
   // Matching the prominent, expressive alien eyes from the reference image.
   // =========================================================================
-  // Large almond eye dimensions
-  const eyeWidth = 0.19 * scale;
-  const eyeHeight = 0.15 * scale;
-  const eyeDepth = 0.08 * scale;
+  const eyeWidth = 0.22 * scale;
+  const eyeHeight = 0.17 * scale;
+  const eyeDepth = 0.10 * scale;
 
-  const eyeGeo = new THREE.SphereGeometry(eyeWidth, 28, 28);
-  eyeGeo.scale(1.0, eyeHeight / eyeWidth, eyeDepth / eyeWidth);
-
-  // Curved Crescent Specular Reflection Arc (Proud of surface)
-  const crescentCurve = new THREE.CatmullRomCurve3([
-    new THREE.Vector3(-0.09 * scale, 0.045 * scale, 0.096 * scale),
-    new THREE.Vector3(-0.02 * scale, 0.082 * scale, 0.102 * scale),
-    new THREE.Vector3(0.065 * scale, 0.055 * scale, 0.096 * scale)
-  ]);
-  const crescentGeo = new THREE.TubeGeometry(crescentCurve, 16, 0.022 * scale, 8, false);
-
-  // Secondary soft ambient reflection
-  const softGleamGeo = new THREE.SphereGeometry(0.028 * scale, 10, 10);
-  softGleamGeo.scale(1.2, 0.7, 0.5);
+  const eyeGeo = createAlmondEyeGeometry(eyeWidth, eyeHeight, eyeDepth);
 
   // Left Eye (Viewer Left)
   const eyeLGroup = new THREE.Group();
-  eyeLGroup.position.set(-0.165 * scale, helmetCenterY + 0.038 * scale, 0.285 * scale);
-  eyeLGroup.rotation.set(0.12, -0.28, 0.40); // slanted outwards and curved around skull
+  eyeLGroup.position.set(-0.145 * scale, helmetCenterY + 0.040 * scale, 0.220 * scale);
+  eyeLGroup.rotation.set(0.12, -0.22, 0.46); // slanted outwards and curved around skull
   headGroup.add(eyeLGroup);
 
   const eyeL = new THREE.Mesh(eyeGeo, eyeMat);
   eyeLGroup.add(eyeL);
 
-  const crescentL = new THREE.Mesh(crescentGeo, eyeSpecularMat);
+  // Curved 3D Specular Highlight Arc proud of eye surface
+  const crescentCurveL = new THREE.CatmullRomCurve3([
+    new THREE.Vector3(-0.08 * scale, 0.040 * scale, eyeDepth * 0.95),
+    new THREE.Vector3(-0.02 * scale, 0.075 * scale, eyeDepth * 1.02),
+    new THREE.Vector3(0.06 * scale, 0.050 * scale, eyeDepth * 0.95)
+  ]);
+  const crescentGeoL = new THREE.TubeGeometry(crescentCurveL, 16, 0.016 * scale, 8, false);
+  const crescentL = new THREE.Mesh(crescentGeoL, eyeSpecularMat);
   crescentL.renderOrder = 2;
   eyeLGroup.add(crescentL);
 
-  const softGleamL = new THREE.Mesh(softGleamGeo, eyeSoftGleamMat);
-  softGleamL.position.set(0.05 * scale, -0.04 * scale, 0.092 * scale);
-  softGleamL.renderOrder = 2;
-  eyeLGroup.add(softGleamL);
-
   // Right Eye (Viewer Right)
   const eyeRGroup = new THREE.Group();
-  eyeRGroup.position.set(0.165 * scale, helmetCenterY + 0.038 * scale, 0.285 * scale);
-  eyeRGroup.rotation.set(0.12, 0.28, -0.40); // slanted outwards and curved around skull
+  eyeRGroup.position.set(0.145 * scale, helmetCenterY + 0.040 * scale, 0.220 * scale);
+  eyeRGroup.rotation.set(0.12, 0.22, -0.46); // slanted outwards and curved around skull
   headGroup.add(eyeRGroup);
 
   const eyeR = new THREE.Mesh(eyeGeo, eyeMat);
   eyeRGroup.add(eyeR);
 
-  // Mirrored crescent for right eye
   const crescentCurveR = new THREE.CatmullRomCurve3([
-    new THREE.Vector3(-0.065 * scale, 0.055 * scale, 0.096 * scale),
-    new THREE.Vector3(0.02 * scale, 0.082 * scale, 0.102 * scale),
-    new THREE.Vector3(0.09 * scale, 0.045 * scale, 0.096 * scale)
+    new THREE.Vector3(-0.06 * scale, 0.050 * scale, eyeDepth * 0.95),
+    new THREE.Vector3(0.02 * scale, 0.075 * scale, eyeDepth * 1.02),
+    new THREE.Vector3(0.08 * scale, 0.040 * scale, eyeDepth * 0.95)
   ]);
-  const crescentGeoR = new THREE.TubeGeometry(crescentCurveR, 16, 0.022 * scale, 8, false);
+  const crescentGeoR = new THREE.TubeGeometry(crescentCurveR, 16, 0.016 * scale, 8, false);
   const crescentR = new THREE.Mesh(crescentGeoR, eyeSpecularMat);
   crescentR.renderOrder = 2;
   eyeRGroup.add(crescentR);
-
-  const softGleamR = new THREE.Mesh(softGleamGeo, eyeSoftGleamMat);
-  softGleamR.position.set(-0.05 * scale, -0.04 * scale, 0.092 * scale);
-  softGleamR.renderOrder = 2;
-  eyeRGroup.add(softGleamR);
 
   // =========================================================================
   // 5. ARMS & 4-FINGERED CYAN HANDS
@@ -609,121 +650,142 @@ export function createAstronautCharacter({ scale = 1.0 } = {}) {
   function createAlienArm(isLeft) {
     const armPivot = new THREE.Group();
     const sign = isLeft ? -1 : 1;
-    armPivot.position.set(sign * 0.34 * scale, 0.48 * scale, 0);
+    armPivot.position.set(sign * 0.32 * scale, 0.44 * scale, 0);
 
-    // Shoulder Pad Cap
-    const shoulderGeo = new THREE.SphereGeometry(0.105 * scale, 16, 16);
-    shoulderGeo.scale(1.0, 1.15, 1.0);
-    const shoulder = new THREE.Mesh(shoulderGeo, suitTrimMat);
-    shoulder.position.y = -0.02 * scale;
+    // Shoulder Pad Guard (Rounded ball joint)
+    const shoulderGeo = new THREE.SphereGeometry(0.10 * scale, 16, 16);
+    const shoulder = new THREE.Mesh(shoulderGeo, suitMat);
     armPivot.add(shoulder);
 
-    // Bicep / Upper Arm
-    const bicepGeo = new THREE.CapsuleGeometry(0.08 * scale, 0.15 * scale, 8, 16);
-    const bicep = new THREE.Mesh(bicepGeo, suitMat);
-    bicep.position.y = -0.13 * scale;
-    armPivot.add(bicep);
+    // Shoulder Trim Ring
+    const shoulderRingGeo = new THREE.TorusGeometry(0.09 * scale, 0.018 * scale, 12, 20);
+    const shoulderRing = new THREE.Mesh(shoulderRingGeo, suitTrimMat);
+    shoulderRing.rotation.x = Math.PI / 2;
+    shoulderRing.position.y = -0.05 * scale;
+    armPivot.add(shoulderRing);
 
-    // Forearm with Ribbed Bellows Cuff
-    const forearmGroup = new THREE.Group();
-    forearmGroup.position.y = -0.24 * scale;
-    armPivot.add(forearmGroup);
+    // Upper Arm
+    const upperArmGeo = new THREE.CapsuleGeometry(0.075 * scale, 0.16 * scale, 8, 16);
+    const upperArm = new THREE.Mesh(upperArmGeo, suitMat);
+    upperArm.position.y = -0.13 * scale;
+    armPivot.add(upperArm);
 
-    const cuffGeo = new THREE.CylinderGeometry(0.085 * scale, 0.08 * scale, 0.11 * scale, 16);
+    // Elbow Ribbed Ring
+    const elbowGeo = new THREE.TorusGeometry(0.078 * scale, 0.016 * scale, 12, 20);
+    const elbow = new THREE.Mesh(elbowGeo, suitTrimMat);
+    elbow.rotation.x = Math.PI / 2;
+    elbow.position.y = -0.23 * scale;
+    armPivot.add(elbow);
+
+    // Forearm
+    const forearmGeo = new THREE.CapsuleGeometry(0.072 * scale, 0.15 * scale, 8, 16);
+    const forearm = new THREE.Mesh(forearmGeo, suitMat);
+    forearm.position.y = -0.32 * scale;
+    armPivot.add(forearm);
+
+    // Wrist Ring / Glove Cuff
+    const cuffGeo = new THREE.TorusGeometry(0.074 * scale, 0.018 * scale, 12, 20);
     const cuff = new THREE.Mesh(cuffGeo, suitTrimMat);
-    cuff.position.y = -0.05 * scale;
-    forearmGroup.add(cuff);
+    cuff.rotation.x = Math.PI / 2;
+    cuff.position.y = -0.42 * scale;
+    armPivot.add(cuff);
 
-    // Cyan Alien Palm
-    const palmGeo = new THREE.SphereGeometry(0.07 * scale, 12, 12);
-    palmGeo.scale(1.1, 0.75, 0.95);
+    // Cyan Alien Palm (Soft rounded hand)
+    const palmGeo = new THREE.SphereGeometry(0.065 * scale, 14, 14);
+    palmGeo.scale(1.0, 1.25, 0.65);
     const palm = new THREE.Mesh(palmGeo, skinMat);
-    palm.position.y = -0.13 * scale;
-    forearmGroup.add(palm);
+    palm.position.y = -0.48 * scale;
+    armPivot.add(palm);
 
-    // 4 Defined Fingers: Thumb + 3 Fingers
-    const fingers = [];
-    const fingerOffsets = [
-      { x: sign * 0.042 * scale, y: -0.14 * scale, z: 0.028 * scale, length: 0.055 * scale, angleZ: sign * 0.45 }, // Thumb
-      { x: sign * 0.022 * scale, y: -0.19 * scale, z: 0.01 * scale, length: 0.075 * scale, angleZ: sign * 0.08 },  // Index
-      { x: 0, y: -0.20 * scale, z: 0, length: 0.08 * scale, angleZ: 0 },                                           // Middle
-      { x: -sign * 0.022 * scale, y: -0.18 * scale, z: -0.01 * scale, length: 0.065 * scale, angleZ: -sign * 0.12 } // Pinky
-    ];
+    // 4 Cyan Alien Fingers (Thumb + 3 fingers, matching reference image)
+    const fingerGeo = new THREE.CapsuleGeometry(0.016 * scale, 0.048 * scale, 6, 10);
 
-    fingerOffsets.forEach(cfg => {
-      const fGeo = new THREE.CapsuleGeometry(0.015 * scale, cfg.length, 6, 8);
-      const finger = new THREE.Mesh(fGeo, skinMat);
-      finger.position.set(cfg.x, cfg.y, cfg.z);
-      finger.rotation.z = cfg.angleZ;
-      forearmGroup.add(finger);
-      fingers.push(finger);
-    });
+    // Thumb (Opposable, angled inwards)
+    const thumb = new THREE.Mesh(fingerGeo, skinMat);
+    thumb.position.set(-sign * 0.042 * scale, -0.48 * scale, 0.025 * scale);
+    thumb.rotation.z = sign * 0.65;
+    thumb.rotation.x = 0.35;
+    armPivot.add(thumb);
 
-    return { armPivot, forearmGroup, fingers };
+    // Index, Middle, Ring fingers
+    const fingerAngles = [-0.15, 0.0, 0.15];
+    const fingerOffsets = [-0.030, 0.0, 0.030];
+    for (let f = 0; f < 3; f++) {
+      const finger = new THREE.Mesh(fingerGeo, skinMat);
+      finger.position.set(
+        fingerOffsets[f] * scale,
+        -0.54 * scale,
+        0
+      );
+      finger.rotation.z = fingerAngles[f];
+      armPivot.add(finger);
+    }
+
+    return { armPivot, palm };
   }
 
   const armL = createAlienArm(true);
-  hipGroup.add(armL.armPivot);
-
   const armR = createAlienArm(false);
+  hipGroup.add(armL.armPivot);
   hipGroup.add(armR.armPivot);
 
-  // Natural resting arm flare (~12 degrees)
+  // Default arm idle posture: arms resting gently at sides, hands angled inward
   armL.armPivot.rotation.z = -0.20;
   armR.armPivot.rotation.z = 0.20;
 
   // =========================================================================
   // 6. LEGS, KNEE PADS & ROUNDED BOOTS (Chunky Chibi Explorer Stance)
+  // Calibrated so bottom of sole is exactly at Y = 0.0
   // =========================================================================
   function createAlienLeg(isLeft) {
     const legPivot = new THREE.Group();
     const sign = isLeft ? -1 : 1;
     // Naturally spaced stance (hip-width apart)
-    legPivot.position.set(sign * 0.15 * scale, 0.06 * scale, 0);
+    legPivot.position.set(sign * 0.14 * scale, 0.04 * scale, 0);
 
     // Thigh with slight outward flare
-    const thighGeo = new THREE.CapsuleGeometry(0.10 * scale, 0.20 * scale, 8, 16);
+    const thighGeo = new THREE.CapsuleGeometry(0.095 * scale, 0.18 * scale, 8, 16);
     const thigh = new THREE.Mesh(thighGeo, suitMat);
-    thigh.position.y = -0.13 * scale;
+    thigh.position.y = -0.12 * scale;
     legPivot.add(thigh);
 
     // Knee Pad Guard (matching reference image)
-    const kneeGeo = new THREE.BoxGeometry(0.12 * scale, 0.10 * scale, 0.07 * scale);
+    const kneeGeo = new THREE.BoxGeometry(0.12 * scale, 0.09 * scale, 0.07 * scale);
     const knee = new THREE.Mesh(kneeGeo, suitTrimMat);
-    knee.position.set(0, -0.21 * scale, 0.09 * scale);
+    knee.position.set(0, -0.20 * scale, 0.08 * scale);
     legPivot.add(knee);
 
     // Knee Pad Rivet
     const kneeRivetGeo = new THREE.SphereGeometry(0.012 * scale, 6, 6);
     const kneeRivet = new THREE.Mesh(kneeRivetGeo, titaniumMat);
-    kneeRivet.position.set(0, -0.21 * scale, 0.13 * scale);
+    kneeRivet.position.set(0, -0.20 * scale, 0.12 * scale);
     legPivot.add(kneeRivet);
 
     // Shin / Lower Leg
-    const shinGeo = new THREE.CapsuleGeometry(0.09 * scale, 0.19 * scale, 8, 16);
+    const shinGeo = new THREE.CapsuleGeometry(0.085 * scale, 0.18 * scale, 8, 16);
     const shin = new THREE.Mesh(shinGeo, suitMat);
-    shin.position.y = -0.31 * scale;
+    shin.position.y = -0.30 * scale;
     legPivot.add(shin);
 
-    // Rounded Space Boot
+    // Rounded Space Boot (Sole rests at bottom)
     const bootGroup = new THREE.Group();
-    bootGroup.position.set(0, -0.46 * scale, 0.03 * scale);
+    bootGroup.position.set(0, -0.44 * scale, 0.03 * scale);
     legPivot.add(bootGroup);
 
     // Boot Body
-    const bootGeo = new THREE.BoxGeometry(0.17 * scale, 0.11 * scale, 0.25 * scale);
+    const bootGeo = new THREE.BoxGeometry(0.16 * scale, 0.10 * scale, 0.24 * scale);
     const boot = new THREE.Mesh(bootGeo, suitMat);
     bootGroup.add(boot);
 
     // Curved Boot Toe Cap (smooth rounded space boot)
-    const toeGeo = new THREE.SphereGeometry(0.085 * scale, 14, 14);
+    const toeGeo = new THREE.SphereGeometry(0.080 * scale, 14, 14);
     toeGeo.scale(1.0, 0.58, 1.15);
     const toe = new THREE.Mesh(toeGeo, suitTrimMat);
-    toe.position.set(0, -0.01 * scale, 0.095 * scale);
+    toe.position.set(0, -0.01 * scale, 0.090 * scale);
     bootGroup.add(toe);
 
     // Ribbed Lunar Sole
-    const soleGeo = new THREE.BoxGeometry(0.18 * scale, 0.028 * scale, 0.27 * scale);
+    const soleGeo = new THREE.BoxGeometry(0.17 * scale, 0.026 * scale, 0.26 * scale);
     const sole = new THREE.Mesh(soleGeo, suitTrimMat);
     sole.position.y = -0.06 * scale;
     bootGroup.add(sole);
@@ -735,16 +797,17 @@ export function createAstronautCharacter({ scale = 1.0 } = {}) {
   }
 
   const legL = createAlienLeg(true);
-  hipGroup.add(legL.legPivot);
-
   const legR = createAlienLeg(false);
+  hipGroup.add(legL.legPivot);
   hipGroup.add(legR.legPivot);
 
   // =========================================================================
-  // 7. EQUIPPABLE COMPONENT / TOOL MOUNT
+  // 7. CARRIED SCIENTIFIC COMPONENT SLOT (Right Hand / Torso Holster)
+  // When Leo collects a component, it visibly snaps to his carrying harness!
   // =========================================================================
   const carriedItemSlot = new THREE.Group();
-  carriedItemSlot.position.set(0.35 * scale, 0.22 * scale, 0.18 * scale);
+  carriedItemSlot.name = 'CarriedItemSlot';
+  carriedItemSlot.position.set(0.18 * scale, 0.35 * scale, 0.24 * scale);
   carriedItemSlot.visible = false;
   hipGroup.add(carriedItemSlot);
 
@@ -803,7 +866,7 @@ export function createAstronautCharacter({ scale = 1.0 } = {}) {
 
         hipGroup.rotation.x = 0.24; // Athletic forward lean
         hipGroup.rotation.z = Math.sin(timeSeconds * freq * 0.5) * 0.06;
-        hipGroup.position.y = (0.55 + Math.abs(Math.sin(timeSeconds * freq)) * 0.08) * scale;
+        hipGroup.position.y = (0.52 + Math.abs(Math.sin(timeSeconds * freq)) * 0.08) * scale;
         headGroup.rotation.y = Math.sin(timeSeconds * freq * 0.5) * 0.08;
       } else if (anim.state === 'walk') {
         const freq = 6.2 * anim.speed;
@@ -820,7 +883,7 @@ export function createAstronautCharacter({ scale = 1.0 } = {}) {
 
         hipGroup.rotation.x = 0.08;
         hipGroup.rotation.z = 0;
-        hipGroup.position.y = (0.55 + Math.abs(Math.sin(timeSeconds * freq)) * 0.04) * scale;
+        hipGroup.position.y = (0.52 + Math.abs(Math.sin(timeSeconds * freq)) * 0.04) * scale;
         headGroup.rotation.y = Math.sin(timeSeconds * freq * 0.5) * 0.06;
         headGroup.rotation.z = Math.sin(timeSeconds * freq) * 0.03;
       } else if (anim.state === 'jump') {
@@ -834,9 +897,8 @@ export function createAstronautCharacter({ scale = 1.0 } = {}) {
         armR.armPivot.rotation.z = 0.65;
         headGroup.rotation.y = 0;
       } else if (anim.state === 'pickup') {
-        // Reaching down to pick up a component
         hipGroup.rotation.x = 0.45;
-        hipGroup.position.y = 0.42 * scale;
+        hipGroup.position.y = 0.40 * scale;
         legL.legPivot.rotation.x = -0.3;
         legR.legPivot.rotation.x = 0.2;
         armR.armPivot.rotation.x = -1.1;
@@ -845,7 +907,7 @@ export function createAstronautCharacter({ scale = 1.0 } = {}) {
         headGroup.rotation.x = 0.4;
       } else if (anim.state === 'repair') {
         hipGroup.rotation.x = 0.16;
-        hipGroup.position.y = 0.52 * scale;
+        hipGroup.position.y = 0.48 * scale;
         legL.legPivot.rotation.x = 0.2;
         legR.legPivot.rotation.x = -0.2;
 
@@ -855,7 +917,7 @@ export function createAstronautCharacter({ scale = 1.0 } = {}) {
         armL.armPivot.rotation.z = -0.32;
         headGroup.rotation.x = 0.28;
       } else if (anim.state === 'celebrate' || anim.state === 'victory') {
-        hipGroup.position.y = (0.55 + Math.abs(Math.sin(timeSeconds * 5)) * 0.12) * scale;
+        hipGroup.position.y = (0.52 + Math.abs(Math.sin(timeSeconds * 5)) * 0.12) * scale;
         hipGroup.rotation.x = 0;
         armL.armPivot.rotation.x = 0;
         armR.armPivot.rotation.x = 0;
@@ -865,7 +927,7 @@ export function createAstronautCharacter({ scale = 1.0 } = {}) {
         headGroup.rotation.y = Math.sin(timeSeconds * 3) * 0.2;
       } else if (anim.state === 'float') {
         const floatY = Math.sin(timeSeconds * 1.8) * 0.12 * scale;
-        hipGroup.position.y = 0.7 * scale + floatY;
+        hipGroup.position.y = 0.65 * scale + floatY;
         hipGroup.rotation.z = Math.sin(timeSeconds * 1.2) * 0.08;
         hipGroup.rotation.x = Math.cos(timeSeconds * 1.4) * 0.06;
         armL.armPivot.rotation.z = -0.38 + Math.sin(timeSeconds * 1.5) * 0.1;
@@ -875,7 +937,7 @@ export function createAstronautCharacter({ scale = 1.0 } = {}) {
       } else {
         // Idle breathing and gentle floating bob
         const breath = Math.sin(timeSeconds * 2.2) * 0.018 * scale;
-        hipGroup.position.y = 0.55 * scale + breath;
+        hipGroup.position.y = 0.52 * scale + breath;
         hipGroup.rotation.x = 0;
         hipGroup.rotation.z = 0;
         legL.legPivot.rotation.x = 0;

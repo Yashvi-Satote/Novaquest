@@ -18,6 +18,7 @@ import {
   Zap
 } from 'lucide-react';
 import { createAstronautCharacter } from '../components/gameplay/three/AstronautCharacterModel';
+import { createHumanAstronaut } from '../components/gameplay/three/HumanAstronautModel';
 import { createLunarOpenWorldEnvironment } from '../components/gameplay/three/LunarOpenWorldEnvironment';
 import { createSpacecraftCockpit } from '../components/gameplay/three/SpacecraftCockpitModel';
 import { createAtlasCentaurVehicle } from '../components/gameplay/three/AtlasCentaurLaunchVehicle';
@@ -58,6 +59,10 @@ export default function Level1Surveyor5Page() {
   const [closestCompInfo, setClosestCompInfo] = useState(null); // { name, distance, color }
   const [compassBearing, setCompassBearing] = useState(0); // degrees to objective
   const [interactionPrompt, setInteractionPrompt] = useState(null); // { text, action }
+  const [selectedSuit, setSelectedSuit] = useState('alien'); // 'alien' | 'human'
+  const suitRef = useRef(selectedSuit);
+  suitRef.current = selectedSuit;
+  const activeInteractionRef = useRef(null);
 
   // Radio / Character Dialogue Overlay State
   const [radioTransmission, setRadioTransmission] = useState(null);
@@ -205,15 +210,22 @@ export default function Level1Surveyor5Page() {
     } = createLunarOpenWorldEnvironment();
     openWorldGroup.add(lunarTerrainRoot);
 
-    // Astronaut Hero Leo (Our approved cute cyan alien astronaut)
-    const astronautHero = createAstronautCharacter({ scale: 0.85 });
+    // Astronaut Hero Characters: Cute Cyan Alien Explorer (Default) & Human Apollo Suit
+    const alienHero = createAstronautCharacter({ scale: 0.85 });
+    const humanHero = createHumanAstronaut({ scale: 0.85 });
+    humanHero.visible = false;
+
     const initialH = getTerrainHeight ? getTerrainHeight(0, 23) : 0;
-    astronautHero.position.set(0, initialH, 23);
-    openWorldGroup.add(astronautHero);
+    alienHero.position.set(0, initialH, 23);
+    humanHero.position.set(0, initialH, 23);
+    openWorldGroup.add(alienHero);
+    openWorldGroup.add(humanHero);
+
+    let astronautHero = alienHero;
 
     // Third-person controller (WASD, mouse-look orbit, sprint, jump)
     const controller = createThirdPersonController({
-      characterMesh: astronautHero,
+      characterMesh: alienHero,
       camera,
       domElement: container,
       groundY: 0,
@@ -450,9 +462,26 @@ export default function Level1Surveyor5Page() {
         launchpadGroup.visible = false;
         cockpitGroup.visible = false;
         openWorldGroup.visible = true;
+        scene.background.setHex(0x020617); // Velvet deep space sky on the Moon!
+
+        // Suit selection syncing
+        const isAlien = suitRef.current === 'alien';
+        alienHero.visible = isAlien;
+        humanHero.visible = !isAlien;
+        astronautHero = isAlien ? alienHero : humanHero;
+        controller.characterMesh = astronautHero;
 
         // Update player controller (WASD + mouse look)
         controller.update(delta, elapsed);
+
+        // Keep inactive mesh aligned with player position
+        if (isAlien) {
+          humanHero.position.copy(alienHero.position);
+          humanHero.rotation.y = alienHero.rotation.y;
+        } else {
+          alienHero.position.copy(humanHero.position);
+          alienHero.rotation.y = humanHero.rotation.y;
+        }
 
         // Update lunar world (sparks, earth spin, surveyor animations, lost component beacons)
         updateLunarTerrain(delta, elapsed);
@@ -506,15 +535,16 @@ export default function Level1Surveyor5Page() {
 
         if (nearbyLost) {
           const compDef = nearbyLost.item;
-          setInteractionPrompt({
+          const promptObj = {
             text: `Press [E] to Collect ${compDef.name}`,
             action: () => {
               gameAudio.playPickup();
               astronautHero.userData.anim.state = 'pickup';
               lostComponents.collectComponent(compDef.id);
 
-              const updatedInv = [...curInventory, compDef.id];
+              const updatedInv = [...inventoryRef.current, compDef.id];
               setInventory(updatedInv);
+              inventoryRef.current = updatedInv;
 
               // Dr. Jaffe contextual scientific radio transmission
               let explanation = '';
@@ -538,7 +568,9 @@ export default function Level1Surveyor5Page() {
                 astronautHero.userData.anim.state = 'idle';
               }, 600);
             }
-          });
+          };
+          activeInteractionRef.current = promptObj;
+          setInteractionPrompt(promptObj);
         }
         // Check if near Surveyor 5 (within 4.0m)
         else if (dSurv <= 4.0) {
@@ -555,15 +587,16 @@ export default function Level1Surveyor5Page() {
                 ? 'Television Camera Turret'
                 : 'Alpha-Scattering Surface Analyzer';
 
-            setInteractionPrompt({
+            const promptObj = {
               text: `Press [E] to Install ${slotName}`,
               action: () => {
                 gameAudio.playAttachSnap();
                 astronautHero.userData.anim.state = 'repair';
                 surveyorLander.installSlot(nextSlotId);
 
-                const updatedInstalled = [...curInstalled, nextSlotId];
+                const updatedInstalled = [...installedSlotsRef.current, nextSlotId];
                 setInstalledSlots(updatedInstalled);
+                installedSlotsRef.current = updatedInstalled;
 
                 if (updatedInstalled.length === 4) {
                   // ALL 4 INSTALLED! TRIGGER FULL RESTORATION!
@@ -604,11 +637,14 @@ export default function Level1Surveyor5Page() {
                   }, 600);
                 }
               }
-            });
+            };
+            activeInteractionRef.current = promptObj;
+            setInteractionPrompt(promptObj);
           } else if (curInstalled.length === 4) {
+            activeInteractionRef.current = null;
             setInteractionPrompt(null);
           } else {
-            setInteractionPrompt({
+            const scanObj = {
               text: 'Press [E] to Run Diagnostic Scan',
               action: () => {
                 gameAudio.playScanner();
@@ -618,16 +654,19 @@ export default function Level1Surveyor5Page() {
                   'Diagnostic confirms 4 missing subsystems: Solar Panel, Antenna, TV Camera, and Alpha-Scattering Analyzer. Follow the colored light beacons across the crater!'
                 );
               }
-            });
+            };
+            activeInteractionRef.current = scanObj;
+            setInteractionPrompt(scanObj);
           }
         } else {
+          activeInteractionRef.current = null;
           setInteractionPrompt(null);
         }
 
-        // Handle physical [E] key trigger
-        if (controller.keys.e && interactionPrompt) {
+        // Handle physical [E] key trigger with reliable ref check
+        if (controller.keys.e && activeInteractionRef.current) {
           controller.keys.e = false;
-          interactionPrompt.action();
+          activeInteractionRef.current.action();
         }
       }
 
@@ -683,7 +722,13 @@ export default function Level1Surveyor5Page() {
 
   const handleSkipToOpenWorld = () => {
     gameAudio.playClick();
+    phaseRef.current = 'phase4_open_world';
     setGamePhase('phase4_open_world');
+    playRadioMessage(
+      'jaffe',
+      'Dr. Leonard Jaffe • Mission Control',
+      "Touchdown confirmed in Mare Tranquillitatis! Leo, scan the crater for the colored light beacons! Recover the four scattered components and bring them back to Surveyor 5!"
+    );
   };
 
   const handleReplayMission = () => {
@@ -746,8 +791,19 @@ export default function Level1Surveyor5Page() {
           </div>
         )}
 
-        {/* Right: Exit / Skip Controls */}
+        {/* Right: Suit Switcher & Exit Controls */}
         <div className="flex items-center gap-2 pointer-events-auto">
+          {gamePhase === 'phase4_open_world' && (
+            <button
+              id="suit-switch-btn"
+              onClick={() => setSelectedSuit(prev => prev === 'alien' ? 'human' : 'alien')}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-900/90 hover:bg-slate-800 backdrop-blur-md text-sky-300 hover:text-white rounded-2xl border border-sky-400/40 text-xs font-extrabold shadow-lg active:scale-95 transition-all cursor-pointer"
+              title="Click to toggle between Alien Explorer and Apollo Astronaut suit"
+            >
+              <span>{selectedSuit === 'alien' ? '👽 Alien Explorer' : '🧑‍🚀 Apollo Astronaut'}</span>
+            </button>
+          )}
+
           {gamePhase !== 'phase4_open_world' && gamePhase !== 'phase5_victory' && (
             <button
               id="skip-to-moon-btn"
