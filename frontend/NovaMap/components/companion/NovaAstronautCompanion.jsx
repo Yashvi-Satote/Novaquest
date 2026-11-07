@@ -223,6 +223,15 @@ export default function NovaAstronautCompanion({
     }
   }, [isMuted, stopSpeaking]);
 
+  // Synchronize companion speech & listening state with full-screen flying overlay
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('nova-companion-state', {
+        detail: { isSpeaking, isGesturing, isListening, expression }
+      }));
+    }
+  }, [isSpeaking, isGesturing, isListening, expression]);
+
   // Object-Aware Context Tracking: When user selects a Planet or Spacecraft
   useEffect(() => {
     const target = selectedMissionSlug || selectedCelestialId;
