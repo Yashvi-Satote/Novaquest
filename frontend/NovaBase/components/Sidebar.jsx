@@ -25,12 +25,7 @@ export default function Sidebar({
   onSelectHardware
 }) {
   // Expanded state for categories (Mars, Moon, Deep Space, etc.)
-  const [expandedCategories, setExpandedCategories] = useState({
-    Mars: true,
-    Moon: true,
-    'Deep Space': true,
-    'Earth Orbit': false
-  });
+  const [expandedCategories, setExpandedCategories] = useState({});
 
   // Expanded state for missions (allow multiple missions expanded independently)
   const [expandedMissions, setExpandedMissions] = useState({
@@ -121,7 +116,7 @@ export default function Sidebar({
       <div className="flex-1 overflow-y-auto pr-1 space-y-2 text-sm custom-scrollbar">
         {hierarchy.map(cat => {
           const isCatSelected = activeFilters.destination === cat.category;
-          const isCatOpen = expandedCategories[cat.category] ?? true;
+          const isCatOpen = expandedCategories[cat.category] ?? false;
 
           return (
             <div key={cat.category} className="rounded-xl border border-slate-200/80 dark:border-white/5 bg-white/80 dark:bg-slate-900/40 overflow-hidden shadow-xs">
