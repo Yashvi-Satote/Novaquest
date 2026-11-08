@@ -1,35 +1,39 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  Play, 
-  RotateCcw, 
-  Compass, 
-  Sliders, 
-  Sparkles, 
-  Rocket, 
-  Award, 
-  Star,
-  Clock,
-  ChevronRight
-} from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 import AppNavbar from '../../Shared/components/layout/AppNavbar';
-import EarthMoonHero3D from '../components/home/EarthMoonHero3D';
+import CinematicMoonHero3D from '../components/home/CinematicMoonHero3D';
 import SettingsModal from '../components/home/SettingsModal';
-import GameButton from '../components/shared/GameButton';
 import { gameAudio } from '../config/gameAudio';
 import { hasSaveGame, getSaveGame } from '../game/saveManager';
+import { ALL_MISSIONS } from '../config/missions';
 
 /**
  * TimeTravelersHomePage.jsx
- * 
- * Commercial-quality Landing Screen for "TIME TRAVELERS OF SPACE"
- * Brand: NOVAQUEST GAMES
- * 
- * Combines:
- * - 70% Colorful Cartoon 3D Adventure (friendly, bright gradients, soft bounce)
- * - 20% NASA-inspired Educational Explorer (authentic historical cues)
- * - 10% Cinematic Space Adventure (3D Earth & Moon hero, floating stardust)
+ *
+ * Cinematic, editorial landing screen for NovaQuest.
+ *
+ * The layout is new, but every existing control is preserved: the four game
+ * actions, the active-mission shortcut, saved-progress detection, the optional
+ * settings modal, the interactive mascot and the shared navbar.
  */
+
+function AnimatedWord({ text, delay = 0 }) {
+  return (
+    <span aria-hidden="true">
+      {text.split('').map((character, index) => (
+        <span
+          key={`${character}-${index}`}
+          className="cinematic-letter"
+          style={{ animationDelay: `${delay + index * 0.03}s` }}
+        >
+          {character === ' ' ? '\u00A0' : character}
+        </span>
+      ))}
+    </span>
+  );
+}
+
 export default function TimeTravelersHomePage() {
   const navigate = useNavigate();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -64,164 +68,240 @@ export default function TimeTravelersHomePage() {
     setIsSettingsOpen(true);
   };
 
+  const totalLevels = String(ALL_MISSIONS.length).padStart(2, '0');
+
   return (
-    <div className="relative min-h-screen w-full overflow-hidden bg-[#070b19] font-sans text-slate-100 select-none flex flex-col justify-between">
-      {/* Global Application Navbar */}
+    <div className="relative min-h-screen w-full select-none overflow-hidden bg-[#070A12] text-white">
       <AppNavbar />
 
-      {/* 1. INTERACTIVE 3D EARTH & MOON HERO BACKGROUND */}
-      <EarthMoonHero3D className="z-0" />
+      {/* Giant spinning Moon. Dimmed on phones so it becomes a backdrop. */}
+      <CinematicMoonHero3D className="z-0 opacity-[0.55] md:opacity-100" />
 
-      {/* Soft gradient vignettes for cinematic framing */}
-      <div className="absolute inset-0 bg-gradient-to-t from-[#070b19] via-transparent to-[#070b19]/60 pointer-events-none z-0" />
-      <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-[#070b19]/90 to-transparent pointer-events-none z-0" />
+      {/* Fixed shading: the Moon emerges from darkness on the left. */}
+      <div
+        className="pointer-events-none absolute inset-0 z-[1]"
+        style={{
+          background:
+            'linear-gradient(90deg, #070A12 0%, rgba(7,10,18,0.99) 19%, rgba(7,10,18,0.93) 34%, rgba(7,10,18,0.6) 49%, rgba(7,10,18,0.18) 62%, rgba(7,10,18,0) 72%)',
+        }}
+      />
+      <div
+        className="pointer-events-none absolute inset-0 z-[1]"
+        style={{
+          background:
+            'linear-gradient(180deg, rgba(7,10,18,0.55) 0%, rgba(7,10,18,0) 20%, rgba(7,10,18,0) 76%, rgba(7,10,18,0.88) 100%)',
+        }}
+      />
+      {/* Extra mobile scrim keeps the copy readable over the dimmed backdrop. */}
+      <div className="pointer-events-none absolute inset-0 z-[1] bg-[#070A12]/30 md:hidden" />
 
-      {/* 2. MAIN HERO CONTENT */}
-      <main className="relative z-10 flex-1 flex flex-col items-center justify-center px-4 py-8 max-w-6xl mx-auto w-full text-center">
-        {/* Brand Pill */}
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-sky-500/15 border border-sky-400/40 backdrop-blur-md text-sky-300 text-xs sm:text-sm font-bold uppercase tracking-widest shadow-lg shadow-sky-500/20 mb-4 animate-bounce">
-          <Rocket className="w-4 h-4 text-orange-400 -rotate-45" />
-          <span>NOVAQUEST GAMES</span>
-          <span className="w-1.5 h-1.5 rounded-full bg-yellow-400" />
-          <span className="text-yellow-300">EPISODE 1</span>
-        </div>
+      {/* Faint vertical hairlines behind the content. */}
+      <div className="pointer-events-none absolute inset-0 z-[2]" aria-hidden="true">
+        <span className="absolute left-[19%] top-0 h-full w-px bg-white/[0.06]" />
+        <span className="absolute left-[51%] top-0 h-full w-px bg-white/[0.06]" />
+        <span className="absolute left-[74%] top-0 h-full w-px bg-white/[0.06]" />
+      </div>
 
-        {/* Game Title: TIME TRAVELERS OF SPACE */}
-        <div className="space-y-2 mb-6">
-          <h1 className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-black tracking-tight drop-shadow-[0_8px_30px_rgba(2,132,199,0.6)]">
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-300 via-white to-sky-200">
-              TIME TRAVELERS
+      {/* Sparse horizontal haze bands in deep space, right of the limb. */}
+      <div className="pointer-events-none absolute inset-0 z-[2]" aria-hidden="true">
+        <span className="absolute right-0 top-[24%] h-px w-[34%] bg-gradient-to-r from-transparent via-white/[0.09] to-transparent blur-[1px]" />
+        <span className="absolute right-0 top-[45%] h-px w-[26%] bg-gradient-to-r from-transparent via-[#9db8ea]/[0.08] to-transparent blur-[2px]" />
+        <span className="absolute right-0 top-[68%] h-px w-[38%] bg-gradient-to-r from-transparent via-white/[0.06] to-transparent blur-[1px]" />
+      </div>
+
+      <main className="relative z-10 flex min-h-[calc(100dvh-7rem)] w-full flex-col px-[7%] pb-10 pt-6 sm:pb-16 sm:pt-8 lg:min-h-[calc(100dvh-5.75rem)]">
+        <div className="flex flex-1 flex-col justify-center">
+          {/* Tagline + decorative pager (real level count from mission data). */}
+          <div className="flex w-full items-start justify-between gap-6">
+            <p className="cinematic-ui cinematic-rise text-[9px] font-semibold uppercase tracking-[0.3em] text-[#AEB4C2] sm:text-[10px]">
+              NOVAQUEST GAMES <span className="text-[#4F79FF]">•</span> EPISODE 1
+            </p>
+            <div
+              className="cinematic-ui cinematic-rise hidden items-center gap-3 text-[10px] font-semibold tracking-[0.3em] text-white lg:flex"
+              style={{ animationDelay: '0.5s' }}
+              aria-hidden="true"
+            >
+              <span className="text-[#4F79FF]">01</span>
+              <span className="h-px w-8 bg-white/70" />
+              <span>{totalLevels}</span>
+            </div>
+          </div>
+
+          {/* Giant editorial headline. */}
+          <h1
+            className="cinematic-display mt-7 text-[46px] leading-[1.02] tracking-[0.2em] text-white sm:text-[52px] sm:tracking-[0.22em] md:text-[68px] md:tracking-[0.26em] lg:text-[96px] lg:tracking-[0.34em] xl:text-[104px] xl:tracking-[0.38em]"
+            aria-label="Level 1: The Moon"
+          >
+            <span className="block">
+              <AnimatedWord text="LEVEL 1:" delay={0.12} />
             </span>
-            <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-orange-400 to-yellow-300">
-              OF SPACE
+            <span className="relative block">
+              <AnimatedWord text="THE MOON" delay={0.32} />
+              <sup
+                className="cinematic-rise ml-2 inline-block align-super text-[9px] font-semibold tracking-[0.28em] text-[#4F79FF] sm:text-[10px]"
+                style={{ animationDelay: '0.9s' }}
+              >
+                NEW
+              </sup>
             </span>
           </h1>
-          <p className="max-w-xl mx-auto text-sm sm:text-base md:text-lg text-sky-100/90 font-medium drop-shadow-md">
-            Blast off to 1967, solve mission emergencies with NASA scientists, and uncover the secret history of lunar exploration!
+
+          <p className="cinematic-ui mt-6 max-w-[520px] text-[12px] leading-[1.8] text-[#AEB4C2] sm:text-[13px]">
+            Blast off to 1967, solve mission emergencies with NASA scientists, and uncover the
+            secret history of lunar exploration!
           </p>
-        </div>
 
-        {/* Current Active Mission Preview Pill */}
-        <div 
-          onClick={handleMissions}
-          className="cursor-pointer group flex items-center gap-3 px-5 py-2.5 rounded-2xl bg-slate-900/80 border border-sky-400/40 hover:border-orange-400/60 backdrop-blur-xl shadow-xl transition-all hover:scale-105 mb-8"
-        >
-          <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-orange-500 to-amber-500 flex items-center justify-center text-white font-bold shadow-md">
-            1
-          </div>
-          <div className="text-left">
-            <span className="block text-[11px] font-bold text-orange-400 uppercase tracking-wider">
-              Level 1 Active Mission
-            </span>
-            <span className="text-xs sm:text-sm font-bold text-white group-hover:text-sky-300 transition-colors">
-              Surveyor 5 — The Moon Mission (1967)
-            </span>
-          </div>
-          <ChevronRight className="w-4 h-4 text-sky-400 group-hover:translate-x-1 transition-transform" />
-        </div>
-
-        {/* Main Action Buttons Grid (Phase 2 Requirement) */}
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5 sm:gap-4 w-full max-w-xl">
-          {/* 1. PLAY GAME */}
-          <GameButton
-            id="play-game-btn"
-            size="lg"
-            variant="accent"
-            onClick={handlePlayGame}
-            icon={Play}
-            className="w-full sm:w-auto flex-1 text-lg font-black shadow-orange-500/30"
-          >
-            PLAY GAME
-          </GameButton>
-
-          {/* 2. CONTINUE (Enabled if save exists) */}
-          <GameButton
-            id="continue-game-btn"
-            size="lg"
-            variant={saveExists ? 'primary' : 'glass'}
-            disabled={!saveExists}
-            onClick={handleContinue}
-            icon={RotateCcw}
-            className="w-full sm:w-auto flex-1 font-bold"
-          >
-            {saveExists ? 'CONTINUE' : 'CONTINUE'}
-          </GameButton>
-
-          {/* 3. MISSIONS */}
-          <GameButton
-            id="missions-btn"
-            size="lg"
-            variant="purple"
+          {/* Level 1 active mission strip — same handler as the old card. */}
+          <button
+            type="button"
             onClick={handleMissions}
-            icon={Compass}
-            className="w-full sm:w-auto flex-1 font-bold"
+            className="group mt-8 flex max-w-full flex-wrap items-center gap-x-4 gap-y-2 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-[#3D6BFF] focus-visible:ring-offset-4 focus-visible:ring-offset-[#070A12]"
+            aria-label="Open Level 1 active mission: Surveyor 5, the Moon Mission, 1967"
           >
-            MISSIONS
-          </GameButton>
+            <span className="cinematic-line h-px w-10 shrink-0 bg-[#3D6BFF]" />
+            <span className="cinematic-ui text-[9px] font-semibold uppercase tracking-[0.28em] text-[#4F79FF]">
+              LEVEL 1 ACTIVE MISSION
+            </span>
+            <span className="cinematic-ui text-[9px] font-semibold uppercase tracking-[0.16em] text-white transition-colors group-hover:text-[#4F79FF] sm:text-[10px]">
+              SURVEYOR 5 — THE MOON MISSION (1967)
+            </span>
+            <ChevronRight
+              className="h-3.5 w-3.5 shrink-0 text-[#4F79FF] transition-transform group-hover:translate-x-1"
+              aria-hidden="true"
+            />
+          </button>
 
-          {/* 4. SETTINGS */}
-          <GameButton
-            id="settings-btn"
-            size="lg"
-            variant="glass"
-            onClick={handleOpenSettings}
-            icon={Sliders}
-            className="w-full sm:w-auto px-5"
-            aria-label="Settings"
+          {/* Primary controls + right-side secondary links. */}
+          <div
+            className="cinematic-rise mt-9 flex w-full flex-col gap-7 sm:flex-row sm:items-center sm:justify-between"
+            style={{ animationDelay: '0.55s', animationDuration: '0.6s' }}
           >
-            SETTINGS
-          </GameButton>
+            <div className="flex w-full flex-col items-stretch gap-5 sm:w-auto sm:flex-row sm:items-center">
+              <button
+                id="play-game-btn"
+                type="button"
+                onClick={handlePlayGame}
+                className="cinematic-ui h-[46px] w-full border border-[#3D6BFF] bg-transparent px-7 text-[10px] font-semibold uppercase tracking-[0.3em] text-white transition-all duration-300 hover:bg-[#3D6BFF]/10 hover:shadow-[0_0_30px_rgba(61,107,255,0.35)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#3D6BFF] focus-visible:ring-offset-2 focus-visible:ring-offset-[#070A12] sm:w-[230px]"
+              >
+                START GAME
+              </button>
+
+              <span
+                className="cinematic-display hidden text-xl leading-none text-[#4F79FF] sm:inline"
+                aria-hidden="true"
+              >
+                &amp;
+              </span>
+
+              <button
+                id="continue-game-btn"
+                type="button"
+                disabled={!saveExists}
+                onClick={handleContinue}
+                className={`cinematic-ui group relative w-full pb-2 text-left text-[10px] font-semibold uppercase tracking-[0.3em] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#3D6BFF] focus-visible:ring-offset-2 focus-visible:ring-offset-[#070A12] sm:w-auto ${
+                  saveExists
+                    ? 'cursor-pointer text-white hover:text-[#4F79FF]'
+                    : 'cursor-not-allowed text-white/35'
+                }`}
+              >
+                CONTINUE <span className={saveExists ? 'text-[#4F79FF]' : 'text-[#4F79FF]/45'}>GAME</span>
+                <span
+                  className={`absolute bottom-0 left-0 h-px bg-[#3D6BFF] transition-all duration-300 ${
+                    saveExists ? 'w-8 group-hover:w-full' : 'w-0'
+                  }`}
+                  aria-hidden="true"
+                />
+              </button>
+            </div>
+
+            <div className="flex items-center gap-7 sm:justify-end">
+              <button
+                id="missions-btn"
+                type="button"
+                onClick={handleMissions}
+                className="cinematic-ui text-[9px] font-semibold uppercase tracking-[0.28em] text-white underline decoration-white/30 underline-offset-[7px] transition-colors hover:text-[#4F79FF] hover:decoration-[#3D6BFF] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#3D6BFF] focus-visible:ring-offset-4 focus-visible:ring-offset-[#070A12]"
+              >
+                MISSIONS
+              </button>
+              <button
+                id="settings-btn"
+                type="button"
+                onClick={handleOpenSettings}
+                aria-label="Settings"
+                className="cinematic-ui text-[9px] font-semibold uppercase tracking-[0.28em] text-white underline decoration-white/30 underline-offset-[7px] transition-colors hover:text-[#4F79FF] hover:decoration-[#3D6BFF] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#3D6BFF] focus-visible:ring-offset-4 focus-visible:ring-offset-[#070A12]"
+              >
+                SETTINGS
+              </button>
+            </div>
+          </div>
         </div>
 
-        {/* Quick Highlights / Learning Badges */}
-        <div className="mt-8 flex flex-wrap items-center justify-center gap-4 text-xs font-bold text-slate-300">
-          <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-900/60 border border-slate-700/60">
-            <Clock className="w-3.5 h-3.5 text-sky-400" />
-            5-Minute Mission
-          </span>
-          <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-900/60 border border-slate-700/60">
-            <Award className="w-3.5 h-3.5 text-yellow-400" />
-            Earn Lunar Pioneer Badge
-          </span>
-          <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-900/60 border border-slate-700/60">
-            <Star className="w-3.5 h-3.5 text-amber-400" />
-            Authentic NASA 1967 History
-          </span>
+        {/* Bottom information bar — pinned on desktop, stacked on mobile. */}
+        <div className="relative mt-12 border-t border-white/[0.06] pt-5 lg:absolute lg:inset-x-[7%] lg:bottom-[6%] lg:mt-0">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-[30%_29%_1fr_auto] lg:items-center">
+            <div className="flex items-center gap-4">
+              <span className="cinematic-line h-px w-10 shrink-0 bg-[#3D6BFF]" aria-hidden="true" />
+              <span className="cinematic-ui text-[9px] font-semibold uppercase tracking-[0.28em] text-white">
+                5-MINUTE MISSION
+              </span>
+            </div>
+            <div className="flex items-center gap-4">
+              <span className="cinematic-line h-px w-10 shrink-0 bg-[#3D6BFF]" aria-hidden="true" />
+              <span className="cinematic-ui text-[9px] font-semibold uppercase tracking-[0.28em] text-white">
+                EARN LUNAR PIONEER BADGE
+              </span>
+            </div>
+            <div className="flex items-center gap-4">
+              <span className="cinematic-line h-px w-10 shrink-0 bg-[#3D6BFF]" aria-hidden="true" />
+              <span className="cinematic-ui text-[9px] font-semibold uppercase tracking-[0.28em] text-white">
+                AUTHENTIC NASA 1967 HISTORY
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={handleMissions}
+              className="cinematic-ui justify-self-start text-[9px] font-semibold uppercase tracking-[0.28em] text-white underline decoration-white/40 underline-offset-[7px] transition-colors hover:text-[#4F79FF] hover:decoration-[#3D6BFF] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#3D6BFF] focus-visible:ring-offset-4 focus-visible:ring-offset-[#070A12] lg:justify-self-end"
+            >
+              SEE ALL MISSIONS
+            </button>
+          </div>
         </div>
       </main>
 
-      {/* Floating Astronaut Companion Mascot on Home Screen */}
-      <div 
+      {/* Floating astronaut companion — same click interaction, new position. */}
+      <div
         onClick={() => {
           gameAudio.playSuccess();
         }}
-        className="fixed bottom-6 right-6 z-20 cursor-pointer group hidden md:block"
+        onKeyDown={(event) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            gameAudio.playSuccess();
+          }
+        }}
+        role="button"
+        tabIndex={0}
+        className="group fixed bottom-[9%] right-[4%] z-30 hidden cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#3D6BFF] focus-visible:ring-offset-4 focus-visible:ring-offset-[#070A12] md:block lg:bottom-[10%] lg:right-[6%]"
         title="Hi, Explorer! Ready to travel back to 1967?"
+        aria-label="NOVA Space Guide. Activate to hear a greeting."
       >
         <div className="relative">
-          <div className="w-20 h-24 hover:scale-110 transition-transform duration-300 drop-shadow-[0_10px_25px_rgba(6,182,212,0.5)]">
-            <img 
-              src="/images/nova_alien_companion.png" 
-              alt="NOVA Space Guide" 
-              className="w-full h-full object-contain animate-bounce"
+          <div className="h-20 w-16 drop-shadow-[0_0_22px_rgba(61,107,255,0.35)] transition-transform duration-300 group-hover:scale-110">
+            <img
+              src="/images/nova_alien_companion.png"
+              alt="NOVA Space Guide"
+              className="h-full w-full animate-bounce object-contain"
               style={{ animationDuration: '3.5s' }}
             />
           </div>
-          {/* Speech Bubble */}
-          <div className="absolute bottom-full right-0 mb-2 w-48 p-2 rounded-2xl bg-slate-900/95 border border-cyan-400/50 shadow-xl text-left text-xs text-white opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-            <span className="font-bold text-cyan-300">NOVA: </span>
-            Welcome to Time Travelers of Space! Click Play to start Level 1.
+          <div className="pointer-events-none absolute bottom-full right-0 mb-2 w-48 rounded-2xl border border-[#3D6BFF]/40 bg-[#070A12]/95 p-2 text-left text-xs text-white opacity-0 shadow-xl transition-opacity group-hover:opacity-100 group-focus:opacity-100">
+            <span className="font-bold text-[#4F79FF]">NOVA: </span>
+            Welcome to NovaQuest! Click Start Game to begin Level 1.
           </div>
         </div>
       </div>
 
-      {/* Settings Modal */}
-      <SettingsModal 
-        isOpen={isSettingsOpen} 
-        onClose={() => setIsSettingsOpen(false)} 
-      />
+      <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
     </div>
   );
 }
-
