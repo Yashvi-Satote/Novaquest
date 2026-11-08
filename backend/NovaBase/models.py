@@ -37,32 +37,53 @@ class Mission(Base):
     __tablename__ = "missions"
 
     id = Column(Integer, primary_key=True, index=True)
-    mission_name = Column(String(255), nullable=False, index=True)
-    name = Column(String(255), nullable=True, index=True)  # Backward compat alias for mission_name
+    name = Column(String(255), nullable=False, index=True)
+    mission_name = Column(String(255), nullable=True, index=True)  # Backward compat alias for name
     slug = Column(String(255), nullable=False, unique=True, index=True)
     agency = Column(String(255), nullable=True)
     mission_type = Column(String(100), nullable=True)
     launch_date = Column(String(50), nullable=True)
-    mission_end_date = Column(String(50), nullable=True)
     end_date = Column(String(50), nullable=True)
+    mission_end_date = Column(String(50), nullable=True)  # Backward compat alias for end_date
     destination = Column(String(100), nullable=True, default="Deep Space")
     destination_category = Column(String(100), nullable=True, default="Deep Space")
     mission_status = Column(String(100), nullable=False, default="Active", index=True)
     description = Column(Text, nullable=True)
     objectives = Column(Text, nullable=True)
-    official_url = Column(String(500), nullable=True)
     source_url = Column(String(500), nullable=True)
+    official_url = Column(String(500), nullable=True)  # Backward compat alias for source_url
     created_at = Column(DateTime, server_default=func.now())
+
+    def __init__(self, **kwargs):
+        # Synchronize name <-> mission_name aliases
+        if "name" in kwargs and "mission_name" not in kwargs:
+            kwargs["mission_name"] = kwargs["name"]
+        elif "mission_name" in kwargs and "name" not in kwargs:
+            kwargs["name"] = kwargs["mission_name"]
+
+        # Synchronize end_date <-> mission_end_date
+        if "end_date" in kwargs and "mission_end_date" not in kwargs:
+            kwargs["mission_end_date"] = kwargs["end_date"]
+        elif "mission_end_date" in kwargs and "end_date" not in kwargs:
+            kwargs["end_date"] = kwargs["mission_end_date"]
+
+        # Synchronize source_url <-> official_url
+        if "source_url" in kwargs and "official_url" not in kwargs:
+            kwargs["official_url"] = kwargs["source_url"]
+        elif "official_url" in kwargs and "source_url" not in kwargs:
+            kwargs["source_url"] = kwargs["official_url"]
+
+        super().__init__(**kwargs)
 
     # Relationships
     spacecraft_associations = relationship(
-        "SpacecraftMission",
+        "MissionSpacecraft",
         back_populates="mission",
         cascade="all, delete-orphan"
     )
     spacecraft_items = relationship(
         "Spacecraft",
-        secondary="spacecraft_missions",
+        secondary="mission_spacecraft",
         back_populates="missions",
         viewonly=True
     )
@@ -70,16 +91,6 @@ class Mission(Base):
         "MapObject",
         back_populates="mission",
         cascade="all, delete-orphan"
-    )
-    hardware_components = relationship(
-        "HardwareComponent",
-        foreign_keys="HardwareComponent.mission_id",
-        back_populates="mission",
-    )
-    hardware_component_links = relationship(
-        "HardwareComponentMission",
-        back_populates="mission",
-        cascade="all, delete-orphan",
     )
 
     @property
@@ -97,13 +108,15 @@ class Mission(Base):
             "agency": self.agency,
             "mission_type": self.mission_type,
             "launch_date": self.launch_date,
-            "end_date": self.end_date,
+            "end_date": self.end_date or self.mission_end_date,
+            "mission_end_date": self.mission_end_date or self.end_date,
             "destination": self.destination,
             "destination_category": self.destination_category or self.destination,
             "mission_status": self.mission_status,
             "description": self.description,
             "objectives": self.objectives,
-            "source_url": self.source_url,
+            "source_url": self.source_url or self.official_url,
+            "official_url": self.official_url or self.source_url,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "spacecraft_count": len(sc_list)
         }
@@ -147,23 +160,28 @@ class Spacecraft(Base):
     scientific_purpose = Column(Text, nullable=True)
     current_or_last_known_status = Column(Text, nullable=True)
     hardware_materials = Column(Text, nullable=True)
+    eotss_url = Column(String(500), nullable=True)
+    official_url = Column(String(500), nullable=True)
+    verification_status = Column(String(100), nullable=False, default="Verified NASA Record")
+    agency_id = Column(Integer, ForeignKey("organizations.id", ondelete="SET NULL"), nullable=True)
+    primary_mission_id = Column(Integer, ForeignKey("missions.id", ondelete="SET NULL"), nullable=True, index=True)
+
+    # Physical, location and operational extensions
     physical_status = Column(String(100), nullable=True)
     decommission_date = Column(String(50), nullable=True)
     landing_date = Column(String(50), nullable=True)
     location_description = Column(String(255), nullable=True)
     latitude = Column(Float, nullable=True)
     longitude = Column(Float, nullable=True)
+    last_verified_at = Column(String(50), nullable=True)
+
+    # Organizational affiliations
     manufacturer_id = Column(Integer, ForeignKey("organizations.id", ondelete="SET NULL"), nullable=True)
     operator_id = Column(Integer, ForeignKey("organizations.id", ondelete="SET NULL"), nullable=True)
     mission_agency_id = Column(Integer, ForeignKey("organizations.id", ondelete="SET NULL"), nullable=True)
     launch_provider_id = Column(Integer, ForeignKey("organizations.id", ondelete="SET NULL"), nullable=True)
-    eotss_url = Column(String(500), nullable=True)
-    official_url = Column(String(500), nullable=True)
-    verification_status = Column(String(100), nullable=False, default="Verified NASA Record")
-    agency_id = Column(Integer, ForeignKey("organizations.id", ondelete="SET NULL"), nullable=True)
-    last_verified_at = Column(String(50), nullable=True)
 
-    # NovaBase 10-section / catalogue enrichment fields (mirrors schema.sql)
+    # NovaBase 10-section extensions
     mission_type = Column(String(50), nullable=True)
     primary_agency = Column(String(255), nullable=True)
     summary = Column(Text, nullable=True)
@@ -174,19 +192,83 @@ class Spacecraft(Base):
     status_label = Column(String(50), nullable=True)
     status_text = Column(Text, nullable=True)
     status_as_of = Column(String(20), nullable=True)
-    is_active_flag = Column(Boolean, nullable=False, default=False)
+    is_active_flag = Column(Boolean, default=False)
     extra = Column(Text, nullable=True)
+
+    def __init__(self, **kwargs):
+        # Synchronize mission_id <-> primary_mission_id
+        if "mission_id" in kwargs and "primary_mission_id" not in kwargs:
+            kwargs["primary_mission_id"] = kwargs.pop("mission_id")
+        # Synchronize description <-> short_description
+        if "description" not in kwargs and "short_description" in kwargs:
+            kwargs["description"] = kwargs["short_description"]
+        elif "short_description" not in kwargs and "description" in kwargs:
+            kwargs["short_description"] = kwargs["description"]
+        # Synchronize source_url <-> official_url
+        if "source_url" not in kwargs and "official_url" in kwargs:
+            kwargs["source_url"] = kwargs["official_url"]
+        elif "official_url" not in kwargs and "source_url" in kwargs:
+            kwargs["official_url"] = kwargs["source_url"]
+        # Synchronize spacecraft_type <-> object_type
+        if "spacecraft_type" not in kwargs and "object_type" in kwargs:
+            kwargs["spacecraft_type"] = kwargs["object_type"]
+        elif "object_type" not in kwargs and "spacecraft_type" in kwargs:
+            kwargs["object_type"] = kwargs["spacecraft_type"]
+        # Synchronize decommission_date <-> end_date
+        if "end_date" in kwargs and "decommission_date" not in kwargs:
+            kwargs["decommission_date"] = kwargs["end_date"]
+        elif "decommission_date" in kwargs and "end_date" not in kwargs:
+            kwargs["end_date"] = kwargs["decommission_date"]
+        # Synchronize arrival_or_landing_date <-> landing_date
+        if "landing_date" in kwargs and "arrival_or_landing_date" not in kwargs:
+            kwargs["arrival_or_landing_date"] = kwargs["landing_date"]
+        elif "arrival_or_landing_date" in kwargs and "landing_date" not in kwargs:
+            kwargs["landing_date"] = kwargs["arrival_or_landing_date"]
+        # Fallbacks for display_name and full_name
+        if "display_name" not in kwargs and "name" in kwargs:
+            kwargs["display_name"] = kwargs["name"]
+        if "full_name" not in kwargs:
+            kwargs["full_name"] = kwargs.get("display_name") or kwargs.get("name")
+        # Fallbacks for required educational/status text fields
+        desc = kwargs.get("description") or kwargs.get("short_description") or "Spacecraft record"
+        if "description" not in kwargs:
+            kwargs["description"] = desc
+        if "short_description" not in kwargs:
+            kwargs["short_description"] = desc
+        if "educational_description" not in kwargs:
+            kwargs["educational_description"] = desc
+        if "how_it_works" not in kwargs:
+            kwargs["how_it_works"] = desc
+        if "why_it_is_important" not in kwargs:
+            kwargs["why_it_is_important"] = desc
+        if "scientific_purpose" not in kwargs:
+            kwargs["scientific_purpose"] = desc
+        if "current_or_last_known_status" not in kwargs:
+            kwargs["current_or_last_known_status"] = kwargs.get("operational_status") or "Active"
+        if "official_url" not in kwargs:
+            kwargs["official_url"] = kwargs.get("source_url") or "https://science.nasa.gov/"
+        super().__init__(**kwargs)
 
     # Relationships
     agency_org = relationship("Organization", foreign_keys=[agency_id], back_populates="spacecraft_list")
-    spacecraft_missions = relationship(
-        "SpacecraftMission",
+    manufacturer_org = relationship("Organization", foreign_keys=[manufacturer_id])
+    operator_org = relationship("Organization", foreign_keys=[operator_id])
+    mission_agency_org = relationship("Organization", foreign_keys=[mission_agency_id])
+    launch_provider_org = relationship("Organization", foreign_keys=[launch_provider_id])
+    primary_mission_ref = relationship("Mission", foreign_keys=[primary_mission_id])
+    mission_associations = relationship(
+        "MissionSpacecraft",
         back_populates="spacecraft",
         cascade="all, delete-orphan"
     )
+
+    @property
+    def spacecraft_missions(self):
+        """Backward-compatible alias for mission_associations."""
+        return self.mission_associations
     missions = relationship(
         "Mission",
-        secondary="spacecraft_missions",
+        secondary="mission_spacecraft",
         back_populates="spacecraft_items",
         viewonly=True
     )
@@ -227,27 +309,23 @@ class Spacecraft(Base):
         cascade="all, delete-orphan",
         order_by="SpacecraftPerson.rank_order",
     )
-    hardware_components = relationship(
-        "HardwareComponent",
-        back_populates="spacecraft",
-        cascade="all, delete-orphan",
-    )
 
     @property
     def primary_mission(self):
-        return self.missions[0] if self.missions else None
-
-    @property
-    def primary_mission_id(self):
-        return self.missions[0].id if self.missions else None
+        return self.primary_mission_ref or (self.missions[0] if self.missions else None)
 
     @property
     def mission_id(self):
-        return self.primary_mission_id
+        return self.primary_mission_id or (self.missions[0].id if self.missions else None)
+
+    @mission_id.setter
+    def mission_id(self, value):
+        self.primary_mission_id = value
 
     @property
     def mission_name(self):
-        return self.missions[0].mission_name if self.missions else None
+        pm = self.primary_mission
+        return (pm.mission_name or pm.name) if pm else None
 
     def to_dict(self, full=False):
         missions_list = [
@@ -309,6 +387,24 @@ class Spacecraft(Base):
                 "current_or_last_known_status": self.current_or_last_known_status,
                 "hardware_materials": self.hardware_materials,
                 "verification_status": self.verification_status,
+                "physical_status": self.physical_status,
+                "decommission_date": self.decommission_date,
+                "landing_date": self.landing_date,
+                "location_description": self.location_description,
+                "latitude": self.latitude,
+                "longitude": self.longitude,
+                "last_verified_at": self.last_verified_at,
+                "mission_type": self.mission_type,
+                "primary_agency": self.primary_agency,
+                "summary": self.summary,
+                "wiki_title": self.wiki_title,
+                "nssdca_id": self.nssdca_id,
+                "arrival_or_landing_date": self.arrival_or_landing_date,
+                "end_date": self.end_date,
+                "status_label": self.status_label,
+                "status_text": self.status_text,
+                "status_as_of": self.status_as_of,
+                "is_active_flag": self.is_active_flag,
                 "aliases": [a.to_dict() for a in self.aliases],
                 "images": [img.to_dict() for img in self.images],
                 "sources": [s.to_dict() for s in self.sources]
@@ -316,30 +412,48 @@ class Spacecraft(Base):
         return data
 
 
-class SpacecraftMission(Base):
-    __tablename__ = "spacecraft_missions"
+class MissionSpacecraft(Base):
+    __tablename__ = "mission_spacecraft"
 
     id = Column(Integer, primary_key=True, index=True)
-    spacecraft_id = Column(Integer, ForeignKey("spacecraft.id", ondelete="CASCADE"), nullable=False, index=True)
     mission_id = Column(Integer, ForeignKey("missions.id", ondelete="CASCADE"), nullable=False, index=True)
-    mission_role = Column(String(100), nullable=False, default="Primary Spacecraft")
+    spacecraft_id = Column(Integer, ForeignKey("spacecraft.id", ondelete="CASCADE"), nullable=False, index=True)
+    role = Column(String(100), nullable=False, default="Primary Spacecraft")
+    mission_role = Column(String(100), nullable=True)
+    notes = Column(Text, nullable=True)
     relationship_description = Column(Text, nullable=True)
 
     __table_args__ = (
-        UniqueConstraint("mission_id", "spacecraft_id", name="uq_spacecraft_mission"),
+        UniqueConstraint("mission_id", "spacecraft_id", name="uq_mission_spacecraft"),
     )
 
-    spacecraft = relationship("Spacecraft", back_populates="spacecraft_missions")
+    spacecraft = relationship("Spacecraft", back_populates="mission_associations")
     mission = relationship("Mission", back_populates="spacecraft_associations")
+
+    def __init__(self, **kwargs):
+        if "mission_role" in kwargs and "role" not in kwargs:
+            kwargs["role"] = kwargs["mission_role"]
+        elif "role" in kwargs and "mission_role" not in kwargs:
+            kwargs["mission_role"] = kwargs["role"]
+        if "relationship_description" in kwargs and "notes" not in kwargs:
+            kwargs["notes"] = kwargs["relationship_description"]
+        elif "notes" in kwargs and "relationship_description" not in kwargs:
+            kwargs["relationship_description"] = kwargs["notes"]
+        super().__init__(**kwargs)
 
     def to_dict(self):
         return {
             "id": self.id,
             "spacecraft_id": self.spacecraft_id,
             "mission_id": self.mission_id,
-            "mission_role": self.mission_role,
-            "relationship_description": self.relationship_description
+            "role": self.role or self.mission_role,
+            "mission_role": self.mission_role or self.role,
+            "notes": self.notes or self.relationship_description,
+            "relationship_description": self.relationship_description or self.notes
         }
+
+
+SpacecraftMission = MissionSpacecraft
 
 
 class MapObject(Base):
@@ -698,184 +812,6 @@ class SpacecraftModel(Base):
             "license": self.license,
             "viewer_url": self.viewer_url,
             "status": self.status
-        }
-
-
-class HardwareComponent(Base):
-    """One physical hardware item / 3D model asset from the NASA Eyes catalogue.
-
-    Every row links to the spacecraft entity it represents (``spacecraft_id``)
-    and to the mission that operated that hardware (``mission_id``).  The full
-    source JSON object is retained in ``raw_json`` so no source metadata is
-    lost, even when the remote ``models.json`` changes.
-    """
-
-    __tablename__ = "hardware_components"
-
-    id = Column(Integer, primary_key=True, index=True)
-    component_key = Column(String(255), nullable=False, unique=True, index=True)
-    model_name = Column(String(255), nullable=False, unique=True, index=True)
-    folder_name = Column(String(255), nullable=False)
-    display_name = Column(String(255), nullable=False)
-    full_name = Column(String(255), nullable=False)
-    component_type = Column(String(100), nullable=False, default="Spacecraft")
-    description = Column(Text, nullable=False)
-    description_html = Column(Text, nullable=False)
-    spacecraft_id = Column(
-        Integer, ForeignKey("spacecraft.id", ondelete="CASCADE"), nullable=False, index=True
-    )
-    mission_id = Column(
-        Integer, ForeignKey("missions.id", ondelete="CASCADE"), nullable=False, index=True
-    )
-    mission_match_method = Column(String(60), nullable=False, default="exact_match")
-    mission_match_confidence = Column(Float, nullable=False, default=1.0)
-    eotss_url = Column(String(1000), nullable=False)
-    viewer_url = Column(String(1000), nullable=False)
-    official_url = Column(String(1000), nullable=False)
-    gltf_filename = Column(String(255), nullable=False)
-    glb_filename = Column(String(255), nullable=False)
-    bin_filename = Column(String(255), nullable=False)
-    gltf_path = Column(String(1000), nullable=False)
-    glb_path = Column(String(1000), nullable=False)
-    bin_path = Column(String(1000), nullable=False)
-    download_gltf_url = Column(String(1500), nullable=False)
-    download_glb_url = Column(String(1500), nullable=False)
-    primary_format = Column(String(20), nullable=False, default="glb")
-    web_ready = Column(Boolean, nullable=False, default=True)
-    texture_files = Column(Text, nullable=False, default="[]")
-    texture_count = Column(Integer, nullable=False, default=0)
-    file_size_bytes = Column(BigInteger, nullable=False, default=0)
-    glb_size_bytes = Column(BigInteger, nullable=False, default=0)
-    gltf_size_bytes = Column(BigInteger, nullable=False, default=0)
-    binary_size_bytes = Column(BigInteger, nullable=False, default=0)
-    provenance = Column(
-        String(255),
-        nullable=False,
-        default="NASA Eyes on the Solar System (Official Public Domain)",
-    )
-    license = Column(
-        String(255),
-        nullable=False,
-        default="NASA 3D resources are free to use without copyright",
-    )
-    source_name = Column(
-        String(255), nullable=False, default="NASA Eyes on the Solar System"
-    )
-    source_url = Column(String(1000), nullable=False)
-    source_repository = Column(
-        String(1000),
-        nullable=False,
-        default="https://github.com/matthewgiarra/spacecraft-models",
-    )
-    raw_json = Column(Text, nullable=False)
-    ingestion_status = Column(String(30), nullable=False, default="complete")
-    created_at = Column(DateTime, server_default=func.now())
-    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
-
-    spacecraft = relationship("Spacecraft", back_populates="hardware_components")
-    mission = relationship(
-        "Mission", foreign_keys=[mission_id], back_populates="hardware_components"
-    )
-    mission_links = relationship(
-        "HardwareComponentMission",
-        back_populates="component",
-        cascade="all, delete-orphan",
-        order_by="HardwareComponentMission.id",
-    )
-
-    def to_dict(self, include_raw: bool = False) -> dict:
-        data = {
-            "id": self.id,
-            "component_key": self.component_key,
-            "model_name": self.model_name,
-            "folder_name": self.folder_name,
-            "display_name": self.display_name,
-            "full_name": self.full_name,
-            "component_type": self.component_type,
-            "description": self.description,
-            "spacecraft_id": self.spacecraft_id,
-            "mission_id": self.mission_id,
-            "mission_match_method": self.mission_match_method,
-            "mission_match_confidence": self.mission_match_confidence,
-            "eotss_url": self.eotss_url,
-            "viewer_url": self.viewer_url,
-            "official_url": self.official_url,
-            "gltf_filename": self.gltf_filename,
-            "glb_filename": self.glb_filename,
-            "bin_filename": self.bin_filename,
-            "gltf_path": self.gltf_path,
-            "glb_path": self.glb_path,
-            "bin_path": self.bin_path,
-            "download_gltf_url": self.download_gltf_url,
-            "download_glb_url": self.download_glb_url,
-            "primary_format": self.primary_format,
-            "web_ready": bool(self.web_ready),
-            "texture_files": json.loads(self.texture_files) if self.texture_files else [],
-            "texture_count": self.texture_count,
-            "file_size_bytes": self.file_size_bytes,
-            "glb_size_bytes": self.glb_size_bytes,
-            "gltf_size_bytes": self.gltf_size_bytes,
-            "binary_size_bytes": self.binary_size_bytes,
-            "provenance": self.provenance,
-            "license": self.license,
-            "source_name": self.source_name,
-            "source_url": self.source_url,
-            "source_repository": self.source_repository,
-            "ingestion_status": self.ingestion_status,
-            "created_at": self.created_at.isoformat() if self.created_at else None,
-            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
-        }
-        if include_raw:
-            try:
-                data["raw_json"] = json.loads(self.raw_json)
-            except (TypeError, ValueError):
-                data["raw_json"] = self.raw_json
-        return data
-
-
-class HardwareComponentMission(Base):
-    """Many-to-many bridge between hardware components and missions."""
-
-    __tablename__ = "hardware_component_missions"
-
-    id = Column(Integer, primary_key=True, index=True)
-    component_id = Column(
-        Integer,
-        ForeignKey("hardware_components.id", ondelete="CASCADE"),
-        nullable=False,
-        index=True,
-    )
-    mission_id = Column(
-        Integer, ForeignKey("missions.id", ondelete="CASCADE"), nullable=False, index=True
-    )
-    role = Column(String(150), nullable=False, default="Hardware / 3D model")
-    is_primary = Column(Boolean, nullable=False, default=False)
-    match_method = Column(String(60), nullable=False, default="exact_match")
-    match_confidence = Column(Float, nullable=False, default=1.0)
-    created_at = Column(DateTime, server_default=func.now())
-
-    component = relationship("HardwareComponent", back_populates="mission_links")
-    mission = relationship("Mission", back_populates="hardware_component_links")
-
-    __table_args__ = (
-        UniqueConstraint(
-            "component_id", "mission_id", name="uq_hardware_component_mission"
-        ),
-    )
-
-    def to_dict(self) -> dict:
-        return {
-            "id": self.id,
-            "component_id": self.component_id,
-            "mission_id": self.mission_id,
-            "mission_name": self.mission.mission_name or self.mission.name
-            if self.mission
-            else None,
-            "mission_slug": self.mission.slug if self.mission else None,
-            "role": self.role,
-            "is_primary": bool(self.is_primary),
-            "match_method": self.match_method,
-            "match_confidence": self.match_confidence,
         }
 
 

@@ -165,17 +165,10 @@ def run_ingestion():
         print(f"Creating safety backup at {backup_file}...")
         shutil.copyfile(db_file, backup_file)
 
-    # 2. Re-create NovaBase schema tables cleanly
-    print("[1/6] Initializing NovaBase database schema (SPACECRAFT, MISSIONS, SPACECRAFT_MISSIONS, MAP_OBJECTS)...")
-    with engine.connect() as conn:
-        for tbl in ["map_objects", "spacecraft_missions", "mission_spacecraft", "models_3d",
-                    "spacecraft_aliases", "spacecraft_keywords", "spacecraft_images", "spacecraft_sources",
-                    "hardware_aliases", "hardware_keywords", "hardware_images", "hardware_sources",
-                    "hardware", "spacecraft", "missions"]:
-            conn.execute(text(f"DROP TABLE IF EXISTS \"{tbl}\""))
-        conn.commit()
-
-    Base.metadata.create_all(bind=engine)
+    # 2. Initialize NovaBase schema idempotently
+    print("[1/6] Initializing NovaBase database schema...")
+    from NovaBase.schema_tools import bootstrap_schema
+    bootstrap_schema(engine)
 
     db = SessionLocal()
     try:
@@ -453,9 +446,19 @@ def run_ingestion():
         }
 
         # 6. Read spacecraft.json and import 122 Spacecraft records
-        repo_json = os.path.abspath(os.path.join(backend_dir, "..", "..", "spacecraft-models", "spacecraft.json"))
-        if not os.path.exists(repo_json):
-            repo_json = os.path.abspath(os.path.join(backend_dir, "..", "spacecraft-models", "spacecraft.json"))
+        repo_json = os.getenv("SPACECRAFT_JSON_PATH")
+        if not repo_json or not os.path.exists(repo_json):
+            for candidate in [
+                os.path.abspath(os.path.join(backend_dir, "..", "..", "spacecraft-models", "spacecraft.json")),
+                os.path.abspath(os.path.join(backend_dir, "..", "spacecraft-models", "spacecraft.json")),
+            ]:
+                if os.path.exists(candidate):
+                    repo_json = candidate
+                    break
+
+        if not repo_json or not os.path.exists(repo_json):
+            print(f"[5/6] Notice: spacecraft.json dataset not found at expected locations. Skipping file ingestion.")
+            return
 
         print(f"[5/6] Reading spacecraft dataset from {repo_json}...")
         with open(repo_json, "r", encoding="utf-8") as f:

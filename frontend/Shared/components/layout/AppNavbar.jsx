@@ -29,8 +29,9 @@ export default function AppNavbar({ mobileMenuOpen, setMobileMenuOpen }) {
   const isNovabase = pathname.startsWith('/novabase') || pathname.startsWith('/hardware/');
   const isNovaQuest =
     pathname === '/app' ||
+    pathname === '/missions' ||
     pathname === '/prologue' ||
-    pathname === '/play' ||
+    pathname.startsWith('/play') ||
     pathname === '/mission-echo';
   const isSettings = pathname.startsWith('/settings');
 

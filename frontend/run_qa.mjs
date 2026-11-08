@@ -1,8 +1,8 @@
 import puppeteer from 'puppeteer-core';
 import path from 'path';
 
-const CHROME_PATH = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
-const SCREENSHOT_DIR = 'C:\\Users\\mitro\\project\\NQ';
+const CHROME_PATH = process.env.CHROME_PATH || 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
+const SCREENSHOT_DIR = process.env.SCREENSHOT_DIR || path.resolve(process.cwd(), 'screenshots');
 
 async function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
