@@ -29,6 +29,7 @@ venv.bak/
 *.sqlite
 *.sqlite3
 *.db
+*.bak
 backend/*.db
 space_hardware.db
 

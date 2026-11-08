@@ -162,6 +162,69 @@ export const JPL_PLANETARY_ELEMENTS = {
     w_bar: 224.06876774, w_bar_dot: -0.04062942,
     node: 110.30393608, node_dot: -0.01183482,
     baseSceneDistance: 120.0
+  },
+  vesta: {
+    a: 2.3615, a_dot: 0.0,
+    e: 0.0887, e_dot: 0.0,
+    I: 7.140, I_dot: 0.0,
+    L: 108.5, L_dot: 9924.5,
+    w_bar: 150.62, w_bar_dot: 0.0,
+    node: 103.85, node_dot: 0.0,
+    baseSceneDistance: 44.0
+  },
+  bennu: {
+    a: 1.1264, a_dot: 0.0,
+    e: 0.2037, e_dot: 0.0,
+    I: 6.035, I_dot: 0.0,
+    L: 101.7, L_dot: 30120.0,
+    w_bar: 66.22, w_bar_dot: 0.0,
+    node: 2.06, node_dot: 0.0,
+    baseSceneDistance: 33.0
+  },
+  ryugu: {
+    a: 1.1896, a_dot: 0.0,
+    e: 0.1902, e_dot: 0.0,
+    I: 5.884, I_dot: 0.0,
+    L: 85.2, L_dot: 27740.0,
+    w_bar: 211.43, w_bar_dot: 0.0,
+    node: 251.62, node_dot: 0.0,
+    baseSceneDistance: 35.0
+  },
+  eros: {
+    a: 1.4582, a_dot: 0.0,
+    e: 0.2229, e_dot: 0.0,
+    I: 10.83, I_dot: 0.0,
+    L: 178.6, L_dot: 20450.0,
+    w_bar: 178.82, w_bar_dot: 0.0,
+    node: 304.32, node_dot: 0.0,
+    baseSceneDistance: 38.0
+  },
+  halley: {
+    a: 17.834, a_dot: 0.0,
+    e: 0.9671, e_dot: 0.0,
+    I: 162.26, I_dot: 0.0,
+    L: 45.2, L_dot: 478.1,
+    w_bar: 111.33, w_bar_dot: 0.0,
+    node: 58.42, node_dot: 0.0,
+    baseSceneDistance: 85.0
+  },
+  'churyumov-gerasimenko': {
+    a: 3.463, a_dot: 0.0,
+    e: 0.641, e_dot: 0.0,
+    I: 7.04, I_dot: 0.0,
+    L: 330.4, L_dot: 5589.0,
+    w_bar: 12.78, w_bar_dot: 0.0,
+    node: 50.15, node_dot: 0.0,
+    baseSceneDistance: 52.0
+  },
+  oumuamua: {
+    a: 3.5, a_dot: 0.0,
+    e: 0.85, e_dot: 0.0,
+    I: 122.68, I_dot: 0.0,
+    L: 180.0, L_dot: 5500.0,
+    w_bar: 241.7, w_bar_dot: 0.0,
+    node: 24.6, node_dot: 0.0,
+    baseSceneDistance: 95.0
   }
 };
 

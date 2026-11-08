@@ -18,7 +18,8 @@ from NovaBase.models import Organization, Mission, Hardware, HardwareAlias, Hard
 
 def seed_database():
     print("Initializing database tables...")
-    Base.metadata.create_all(bind=engine)
+    from NovaBase.schema_tools import bootstrap_schema
+    bootstrap_schema(engine)
     
     db = SessionLocal()
     try:
