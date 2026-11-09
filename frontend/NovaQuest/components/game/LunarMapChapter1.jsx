@@ -1052,6 +1052,9 @@ export default function LunarMapChapter1({
   };
 
   const triggerInterfaceReaction = () => {
+    completeStage4Objective('scannedStructure');
+    completeStage4Objective('inspectedConduit');
+    completeStage4Objective('locatedInterface');
     completeStage4Objective('activatedInterface');
     setIsHologramActive(true);
     isHologramActiveRef.current = true;
@@ -1061,54 +1064,22 @@ export default function LunarMapChapter1({
     if (triggerSparksRef.current) {
       triggerSparksRef.current(new THREE.Vector3(-77.2, getTerrainHeight(-78, -54) + 1.6, -53.2));
     }
-    setHudNotice('INTERFACE SYNCHRONIZED: Holographic Surveyor 1 projection active');
+    setHudNotice('NASA HEADQUARTERS ARCHIVES: Stage 5 Mission Echo online');
 
-    // Scripted Dialogue Sequence
-    // 1. Maya: "That structure is reading the spacecraft's data."
+    // Immediately advance straight to Stage 5
+    advanceJourneyStage(4);
+
     setActiveComms({
       callsign: 'CHEN-SCIENCE',
       speaker: 'Specialist Maya Chen',
-      text: "That structure is reading the spacecraft's data."
+      text: 'Mission Echo interface online! Accessing NASA Headquarters archives for Surveyor 1.'
     });
     audio.playRadioCommsChatter('chen');
 
-    // 2. Arin: "Can you identify the system?" (at 4.2s)
-    setTimeout(() => {
-      setActiveComms({
-        callsign: playerCallsignRef.current,
-        speaker: formalPlayerNameRef.current,
-        text: "Can you identify the system?"
-      });
-      audio.playEquipmentFeedback();
-    }, 4200);
-
-    // 3. Maya: "No. But it appears to have been collecting something from the lander." (at 8.0s)
-    setTimeout(() => {
-      setActiveComms({
-        callsign: 'CHEN-SCIENCE',
-        speaker: 'Specialist Maya Chen',
-        text: "No. But it appears to have been collecting something from the lander."
-      });
-      audio.playRadioCommsChatter('chen');
-    }, 8000);
-
-    // 4. Arin: "Then let's see what it collected." (at 12.2s)
-    setTimeout(() => {
-      setActiveComms({
-        callsign: playerCallsignRef.current,
-        speaker: formalPlayerNameRef.current,
-        text: "Then let's see what it collected."
-      });
-      audio.playEquipmentFeedback();
-    }, 12200);
-
-    // 5. Interface activates Mission Echo (at 15.5s)
     setTimeout(() => {
       audio.playMissionEchoArchivalAudio();
-      setHudNotice('MISSION ECHO ACTIVATED: Historical flight reconstruction initialized');
       setIsMissionEchoOpen(true);
-      advanceJourneyStage(4);
-    }, 15500);
+    }, 380);
   };
 
   // Stage 6 — Helper Functions
@@ -1362,15 +1333,9 @@ export default function LunarMapChapter1({
           inspectStage3Point('pointC');
         }
 
-        // Stage 4 Scanned Structure
-        if (target.id === 'poi_exposed_structure' || target.id === 'poi_alien_structure') {
-          completeStage4Objective('scannedStructure');
-        }
-        if (target.id === 'poi_crater_conduit' || target.id === 'poi_data_conduit') {
-          completeStage4Objective('inspectedConduit');
-        }
-        if (target.id === 'poi_central_interface') {
-          completeStage4Objective('locatedInterface');
+        // Stage 4: Scanning structure, conduit, or interface goes straight to Stage 5 NASA HQ
+        if (target.id === 'poi_exposed_structure' || target.id === 'poi_alien_structure' || target.id === 'poi_crater_conduit' || target.id === 'poi_data_conduit' || target.id === 'poi_central_interface') {
+          triggerInterfaceReaction();
         }
 
         // Stage 6 Stabilise Interface
@@ -1693,9 +1658,8 @@ export default function LunarMapChapter1({
           audio.playScanNoSignal();
           return;
         }
-        completeStage4Objective('inspectedConduit');
-        audio.playAnomalyHarmonic();
-        setInvestigateTarget(nearInteractableRef.current);
+        triggerInterfaceReaction();
+        return;
       } else if (id === 'poi_conduit_coupling') {
         if (journeyStageIndexRef.current === 5 && !stage6StepsRef.current.stabilized) {
           completeStage6Step('stabilized');
@@ -6723,23 +6687,11 @@ export default function LunarMapChapter1({
           }
         }
 
-        // Stage 4: Discovering something unknown -> Conduit inspection or interface activation
+        // Stage 4: Discovering something unknown -> Go straight to Stage 5 NASA HQ
         if (curStage === 3) {
           const distToConduit = Math.hypot(pPos.x - (-66), pPos.z - (-42));
-          if (distToConduit < 10.0 || nearInteractableRef.current?.id?.includes('conduit')) {
-            completeStage4Objective('inspectedConduit');
-            audio.playAnomalyHarmonic();
-            const conduitTarget = nearInteractableRef.current || interactables.find(i => i.id === 'poi_crater_conduit');
-            if (conduitTarget) {
-              setInvestigateTarget(conduitTarget);
-            }
-            setHudNotice('DATA CONDUIT INSPECTED: Precursor optoelectronic carrier wave confirmed.');
-            return;
-          }
           const distToStructure = Math.hypot(pPos.x - (-77.2), pPos.z - (-53.2));
-          if (distToStructure < 10.0 || nearInteractableRef.current?.id?.includes('interface') || nearInteractableRef.current?.id?.includes('structure') || nearInteractableRef.current?.id?.includes('panel')) {
-            completeStage4Objective('scannedStructure');
-            completeStage4Objective('locatedInterface');
+          if (distToConduit < 14.0 || distToStructure < 14.0 || nearInteractableRef.current?.id?.includes('conduit') || nearInteractableRef.current?.id?.includes('interface') || nearInteractableRef.current?.id?.includes('structure') || nearInteractableRef.current?.id?.includes('panel')) {
             triggerInterfaceReaction();
             return;
           }
@@ -8454,14 +8406,16 @@ export default function LunarMapChapter1({
               </div>
 
               {/* Contextual Action Shortcut Buttons */}
-              {journeyStageIndex === 4 && !isMissionEchoCompleted && (
+              {(journeyStageIndex === 3 || journeyStageIndex === 4) && !isMissionEchoCompleted && (
                 <button
                   type="button"
-                  onClick={() => setIsMissionEchoOpen(true)}
-                  className="w-full py-1.5 px-3 rounded-lg bg-cyan-500 text-black font-bold font-mono text-xs uppercase tracking-wider hover:bg-cyan-400 transition-colors flex items-center justify-center gap-1.5 shadow-md shadow-cyan-500/20"
+                  onClick={() => {
+                    triggerInterfaceReaction();
+                  }}
+                  className="w-full py-1.5 px-3 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 text-black font-bold font-mono text-xs uppercase tracking-wider hover:opacity-95 transition-all flex items-center justify-center gap-1.5 shadow-lg shadow-cyan-500/30 animate-pulse cursor-pointer"
                 >
-                  <span>Open Mission Echo Console [E]</span>
-                  <ChevronRight className="w-3.5 h-3.5" />
+                  <span>🚀 Enter Stage 5: NASA HQ Simulation [E]</span>
+                  <ChevronRight className="w-3.5 h-3.5 text-black" />
                 </button>
               )}
 
@@ -9200,12 +9154,8 @@ export default function LunarMapChapter1({
               inspectStage3Point('pointB');
             } else if (investigateTarget?.id === 'poi_crater_site_gamma') {
               inspectStage3Point('pointC');
-            } else if (investigateTarget?.id === 'poi_exposed_structure') {
-              completeStage4Objective('scannedStructure');
-            } else if (investigateTarget?.id === 'poi_crater_conduit' || investigateTarget?.id === 'poi_data_conduit') {
-              completeStage4Objective('inspectedConduit');
-            } else if (investigateTarget?.id === 'poi_central_interface') {
-              completeStage4Objective('locatedInterface');
+            } else if (investigateTarget?.id === 'poi_exposed_structure' || investigateTarget?.id === 'poi_crater_conduit' || investigateTarget?.id === 'poi_data_conduit' || investigateTarget?.id === 'poi_central_interface') {
+              triggerInterfaceReaction();
             }
             setInvestigateTarget(null);
           }}
@@ -9274,17 +9224,8 @@ export default function LunarMapChapter1({
             } else if (target.id === 'poi_crater_site_gamma') {
               inspectStage3Point('pointC');
               setActiveObjective('Point C inspected: Strong signal. Buried geometric fragment uncovered.');
-            } else if (target.id === 'poi_exposed_structure') {
-              completeStage4Objective('scannedStructure');
-              setActiveObjective('Structure scanned. Inspect the narrow conduit leading toward Surveyor 1.');
-            } else if (target.id === 'poi_crater_conduit' || target.id === 'poi_data_conduit') {
-              completeStage4Objective('inspectedConduit');
-              setActiveObjective('Conduit inspected. Locate the central interface console on the structure.');
-            } else if (target.id === 'poi_central_interface') {
-              completeStage4Objective('locatedInterface');
-              startInterfaceActivation();
-            } else if (target.id === 'poi_alien_structure' || target.id === 'poi_data_conduit') {
-              advanceJourneyStage(4);
+            } else if (target.id === 'poi_exposed_structure' || target.id === 'poi_crater_conduit' || target.id === 'poi_data_conduit' || target.id === 'poi_central_interface' || target.id === 'poi_alien_structure') {
+              triggerInterfaceReaction();
             } else if (target.id === 'poi_conduit_coupling') {
               if (journeyStageIndexRef.current === 5 && !stage6StepsRef.current.stabilized) {
                 completeStage6Step('stabilized');
