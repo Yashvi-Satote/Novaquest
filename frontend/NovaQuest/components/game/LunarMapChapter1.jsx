@@ -222,8 +222,8 @@ export function getInteractionPrompt(target, currentStage = 0) {
   if (currentStage === 6 && (id === 'poi_mission_terminal' || id === 'poi_lunar_transport')) {
     return '[E] Debrief with Commander Elena';
   }
-  if (currentStage === 3 && (id?.includes('interface') || id?.includes('structure') || id?.includes('panel'))) {
-    return '[E] Activate Memory Interface';
+  if (currentStage === 3 && (id?.includes('interface') || id?.includes('structure') || id?.includes('panel') || id?.includes('conduit'))) {
+    return '[E] Jump to Stage 5: NASA HQ Simulation';
   }
   if (currentStage === 1 && (id?.includes('surveyor') || id === 'surveyor_core')) {
     return '[E] Scan Surveyor 1 Components';
@@ -1076,10 +1076,8 @@ export default function LunarMapChapter1({
     });
     audio.playRadioCommsChatter('chen');
 
-    setTimeout(() => {
-      audio.playMissionEchoArchivalAudio();
-      setIsMissionEchoOpen(true);
-    }, 380);
+    setIsMissionEchoOpen(true);
+    audio.playMissionEchoArchivalAudio();
   };
 
   // Stage 6 — Helper Functions
@@ -1638,20 +1636,16 @@ export default function LunarMapChapter1({
           audio.playRadioCommsChatter('chen');
           return;
         }
-        if (!stage4ObjectivesRef.current.activatedInterface) {
-          startInterfaceActivation();
-        } else {
-          setIsMissionEchoOpen(true);
-        }
-      } else if (id === 'poi_exposed_structure') {
+        triggerInterfaceReaction();
+        return;
+      } else if (id === 'poi_exposed_structure' || id === 'poi_alien_structure') {
         if (journeyStageIndexRef.current < 3) {
           setHudNotice('PRECURSOR STRUCTURE DORMANT: No active energy or data carrier detected.');
           audio.playScanNoSignal();
           return;
         }
-        completeStage4Objective('scannedStructure');
-        audio.playSurveyorScannerBeep();
-        setInvestigateTarget(nearInteractableRef.current);
+        triggerInterfaceReaction();
+        return;
       } else if (id === 'poi_crater_conduit' || id === 'poi_data_conduit') {
         if (journeyStageIndexRef.current < 3) {
           setHudNotice('DATA CONDUIT INERT: Awaiting precursor core activation.');
@@ -6619,16 +6613,11 @@ export default function LunarMapChapter1({
           return;
         }
 
-        // Stage 4 assistance: scanning exposed structure
+        // Stage 4 assistance: scanning exposed structure or any Stage 4 objective -> Go straight to Stage 5 NASA HQ
         if (curStage === 3) {
-          const distToStructure = Math.hypot(pPos.x - (-77.2), pPos.z - (-53.2));
-          if (distToStructure < 14.0) {
-            completeStage4Objective('scannedStructure');
-            audio.playAlienGlyphHum();
-            setHudNotice('SCANNER AUDIT: Precursor obsidian carapace resonance calibrated.');
-            triggerScannerPulse();
-            return;
-          }
+          triggerInterfaceReaction();
+          triggerScannerPulse();
+          return;
         }
 
         // Toggle Visor HUD overlay + pulse wave
@@ -6687,14 +6676,10 @@ export default function LunarMapChapter1({
           }
         }
 
-        // Stage 4: Discovering something unknown -> Go straight to Stage 5 NASA HQ
+        // Stage 4: Discovering something unknown -> Scanning or pressing [E] goes straight to Stage 5 NASA HQ
         if (curStage === 3) {
-          const distToConduit = Math.hypot(pPos.x - (-66), pPos.z - (-42));
-          const distToStructure = Math.hypot(pPos.x - (-77.2), pPos.z - (-53.2));
-          if (distToConduit < 14.0 || distToStructure < 14.0 || nearInteractableRef.current?.id?.includes('conduit') || nearInteractableRef.current?.id?.includes('interface') || nearInteractableRef.current?.id?.includes('structure') || nearInteractableRef.current?.id?.includes('panel')) {
-            triggerInterfaceReaction();
-            return;
-          }
+          triggerInterfaceReaction();
+          return;
         }
 
         // Stage 5: Mission Echo Console
@@ -8182,7 +8167,18 @@ export default function LunarMapChapter1({
                 : 'w-2 h-2 border-cyan-400/80 bg-cyan-400/40'
             }`} />
             {nearInteractable && (
-              <button type="button" onClick={() => triggerInteractRef.current?.()} className="absolute -top-7 text-[11px] text-cyan-300 font-bold tracking-wider uppercase bg-black/85 hover:bg-cyan-950 px-3 py-1 rounded-lg border border-cyan-400 shadow-lg shadow-cyan-500/20 whitespace-nowrap font-mono flex items-center gap-1.5 animate-pulse cursor-pointer pointer-events-auto">
+              <button
+                type="button"
+                onClick={() => {
+                  if (journeyStageIndex === 3) {
+                    audio.playClick();
+                    triggerInterfaceReaction();
+                  } else {
+                    triggerInteractRef.current?.();
+                  }
+                }}
+                className="absolute -top-7 text-[11px] text-cyan-300 font-bold tracking-wider uppercase bg-black/85 hover:bg-cyan-950 px-3 py-1 rounded-lg border border-cyan-400 shadow-lg shadow-cyan-500/20 whitespace-nowrap font-mono flex items-center gap-1.5 animate-pulse cursor-pointer pointer-events-auto"
+              >
                 <Crosshair className="w-3 h-3 text-cyan-400" />
                 <span>{getInteractionPrompt(nearInteractable, journeyStageIndex)}</span>
               </button>
@@ -8405,17 +8401,20 @@ export default function LunarMapChapter1({
                 )}
               </div>
 
-              {/* Contextual Action Shortcut Buttons */}
-              {(journeyStageIndex === 3 || journeyStageIndex === 4) && !isMissionEchoCompleted && (
+              {/* Contextual Action Shortcut Buttons — Prominent Stage 5 Jump Button */}
+              {(journeyStageIndex === 3 || journeyStageIndex === 4) && (
                 <button
                   type="button"
                   onClick={() => {
+                    audio.playClick();
                     triggerInterfaceReaction();
                   }}
-                  className="w-full py-1.5 px-3 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 text-black font-bold font-mono text-xs uppercase tracking-wider hover:opacity-95 transition-all flex items-center justify-center gap-1.5 shadow-lg shadow-cyan-500/30 animate-pulse cursor-pointer"
+                  className="w-full py-2 px-3 rounded-lg bg-gradient-to-r from-cyan-500 via-blue-600 to-indigo-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold font-mono text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-lg shadow-cyan-500/40 animate-pulse cursor-pointer border border-cyan-300"
+                  title="Jump directly to Stage 5 NASA Headquarters Mission Echo"
                 >
-                  <span>🚀 Enter Stage 5: NASA HQ Simulation [E]</span>
-                  <ChevronRight className="w-3.5 h-3.5 text-black" />
+                  <Sparkles className="w-4 h-4 text-cyan-200 animate-spin" />
+                  <span>🚀 Jump to Stage 5: NASA HQ Simulation</span>
+                  <ChevronRight className="w-4 h-4 text-white" />
                 </button>
               )}
 
@@ -8436,6 +8435,19 @@ export default function LunarMapChapter1({
                   WASD: Move · Mouse: Look
                 </span>
                 <div className="flex items-center gap-1.5">
+                  {(journeyStageIndex === 3 || journeyStageIndex === 4) && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        audio.playClick();
+                        triggerInterfaceReaction();
+                      }}
+                      className="px-2.5 py-0.5 rounded bg-gradient-to-r from-cyan-500 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-white font-bold font-mono text-[10px] uppercase tracking-wider transition-all hover:scale-105 active:scale-95 cursor-pointer shadow-md shadow-cyan-500/30"
+                      title="Jump directly to Stage 5 NASA Headquarters Simulation"
+                    >
+                      🚀 Stage 5
+                    </button>
+                  )}
                   <button
                     type="button"
                     onClick={() => { audio.playClick(); triggerInteractRef.current?.(); }}
@@ -8650,11 +8662,33 @@ export default function LunarMapChapter1({
               <span>[Esc] Pause</span>
             </button>
 
+            {(journeyStageIndex === 3 || journeyStageIndex === 4) && (
+              <button
+                type="button"
+                onClick={() => {
+                  audio.playClick();
+                  triggerInterfaceReaction();
+                }}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 via-blue-600 to-indigo-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold text-xs uppercase tracking-wider border border-cyan-300 shadow-xl shadow-cyan-500/50 hover:scale-105 active:scale-95 animate-pulse font-mono cursor-pointer"
+                title="Jump directly to Stage 5: NASA Headquarters Surveyor 1 Mission Echo"
+              >
+                <Sparkles className="w-4 h-4 text-cyan-200 animate-spin" />
+                <span>🚀 Jump to Stage 5 (NASA HQ)</span>
+              </button>
+            )}
+
             {nearInteractable && (
               <button
                 type="button"
-                onClick={triggerInvestigation}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 via-blue-600 to-indigo-600 text-white font-bold text-xs uppercase tracking-wider border border-cyan-400 shadow-xl shadow-cyan-500/40 hover:scale-105 active:scale-95 animate-bounce font-mono"
+                onClick={() => {
+                  if (journeyStageIndex === 3) {
+                    audio.playClick();
+                    triggerInterfaceReaction();
+                  } else {
+                    triggerInvestigation();
+                  }
+                }}
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 via-blue-600 to-indigo-600 text-white font-bold text-xs uppercase tracking-wider border border-cyan-400 shadow-xl shadow-cyan-500/40 hover:scale-105 active:scale-95 animate-bounce font-mono cursor-pointer"
               >
                 <Crosshair className="w-4 h-4 text-cyan-200" />
                 <span>{getInteractionPrompt(nearInteractable, journeyStageIndex)}</span>
