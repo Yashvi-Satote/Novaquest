@@ -6,8 +6,7 @@ import {
   Sparkles, 
   Eye, 
   ArrowLeft,
-  Shield,
-  Rocket
+  Shield
 } from 'lucide-react';
 import PlayableBedroom3D from '../components/game/PlayableBedroom3D';
 import { createNewGame, saveGame, getSaveGame } from '../game/saveManager';
@@ -24,19 +23,11 @@ export default function ProloguePage() {
   // 5. 'match_cut_2126' (transition to spacecraft)
   const [phase, setPhase] = useState('gender_select');
   const [selectedGender, setSelectedGender] = useState('male');
+  const [customName, setCustomName] = useState('Arin Rao');
 
   // Telescope focus slider (0 to 100)
   const [focusValue, setFocusValue] = useState(25);
   const isMoonFocused = focusValue >= 85;
-
-  // Release any lingering pointer lock whenever exiting 3D bedroom phase
-  useEffect(() => {
-    if (phase !== 'bedroom_3d' && document.pointerLockElement) {
-      try {
-        document.exitPointerLock();
-      } catch {}
-    }
-  }, [phase]);
 
   // 2-second cinematic cutscene timer before starting the playable 3D bedroom
   useEffect(() => {
@@ -71,11 +62,20 @@ export default function ProloguePage() {
     descriptor: isFemale ? 'The Girl Who Looked Up' : 'The Boy Who Looked Up'
   };
 
-  // STEP 1: Handle Gender Selection
+  // STEP 1: Handle Gender Selection & Custom MC Name
   const handleSelectGender = (gender) => {
     audio.playClick();
     setSelectedGender(gender);
-    createNewGame({ gender });
+    const trimmed = customName.trim() || 'Arin Rao';
+    const cleanName = trimmed.replace(/^Captain\s+/i, '').trim() || 'Arin Rao';
+    const firstName = cleanName.split(' ')[0] || 'Arin';
+    const fullCaptain = trimmed.toLowerCase().startsWith('captain') ? trimmed : `Captain ${cleanName}`;
+
+    createNewGame({
+      gender,
+      name: fullCaptain,
+      mcFirstName: firstName
+    });
 
     // Transition smoothly to kid telescope memory cutscene (shown for 2 seconds)
     setTimeout(() => {
@@ -87,31 +87,7 @@ export default function ProloguePage() {
   // Step 2: Reached Telescope in 3D
   const handleInteractTelescope = () => {
     audio.playClick();
-    if (document.pointerLockElement) {
-      try {
-        document.exitPointerLock();
-      } catch {}
-    }
     setPhase('telescope_focus');
-  };
-
-  // Direct Skip to Chapter 1 (The First Footprint)
-  const handleSkipToChapter1 = () => {
-    audio.playStartGame();
-    if (document.pointerLockElement) {
-      try {
-        document.exitPointerLock();
-      } catch {}
-    }
-    const currentSave = getSaveGame() || createNewGame({ gender: selectedGender });
-    saveGame({
-      ...currentSave,
-      currentChapter: 'chapter_1',
-      title: 'Chapter 1: The First Footprint',
-      location: 'Oceanus Procellarum, Lunar Surface',
-      objective: 'Locate and inspect Surveyor 1 spacecraft components.'
-    });
-    navigate('/play');
   };
 
   // Step 2: Match-Cut Transition
@@ -125,9 +101,9 @@ export default function ProloguePage() {
       saveGame({
         ...currentSave,
         currentChapter: 'chapter_1',
-        title: 'Chapter 1: The First Footprint',
-        location: 'Oceanus Procellarum, Lunar Surface',
-        objective: 'Locate and inspect Surveyor 1 spacecraft components.'
+        title: 'Chapter 1: A Different Kind of Mission',
+        location: 'NASA Orbital Facility, Briefing Room',
+        objective: 'Attend assignment briefing with Commander Elena Voss and Maya Chen.'
       });
     }
   };
@@ -149,7 +125,7 @@ export default function ProloguePage() {
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(6,182,212,0.08),transparent_65%)] pointer-events-none" />
 
           {/* Dossier Header */}
-          <div className="text-center space-y-2 mb-10 max-w-xl z-10">
+          <div className="text-center space-y-2 mb-6 max-w-xl z-10">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-950/60 border border-cyan-500/40 text-cyan-300 text-xs font-mono tracking-widest uppercase">
               <Shield className="h-3.5 w-3.5 text-cyan-400" />
               <span>NASA RECONNAISSANCE CORPS · RECOVERY DIVISION</span>
@@ -158,8 +134,38 @@ export default function ProloguePage() {
               Select Officer Identity
             </h1>
             <p className="text-xs sm:text-sm text-slate-400 leading-relaxed font-light">
-              Choose the identity profile for <strong className="text-white font-medium">Captain Arin Rao</strong> to initialize personal mission archives.
+              Enter your Commander designation and select your identity profile to initialize personal mission archives.
             </p>
+          </div>
+
+          {/* MC Custom Name Input Box */}
+          <div className="w-full max-w-md mx-auto mb-8 z-10">
+            <div className="p-4 rounded-2xl bg-slate-900/80 border border-cyan-500/40 shadow-xl shadow-cyan-950/40 backdrop-blur-md space-y-2.5">
+              <div className="flex items-center justify-between">
+                <label htmlFor="mc-name-input" className="text-[11px] font-mono uppercase tracking-widest text-cyan-300 flex items-center gap-1.5 font-bold">
+                  <User className="w-3.5 h-3.5 text-cyan-400" />
+                  <span>Officer / Commander Name</span>
+                </label>
+                <span className="text-[10px] font-mono text-slate-400 bg-white/5 px-2 py-0.5 rounded border border-white/10">Type Below</span>
+              </div>
+
+              <div className="relative">
+                <input
+                  id="mc-name-input"
+                  type="text"
+                  value={customName}
+                  maxLength={28}
+                  onChange={(e) => setCustomName(e.target.value)}
+                  placeholder="e.g. Arin Rao"
+                  className="w-full px-4 py-2.5 rounded-xl bg-black/60 border border-cyan-500/40 text-white font-mono text-sm tracking-wide focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/30 transition-all placeholder:text-slate-600"
+                />
+              </div>
+
+              <div className="flex items-center justify-between text-[10px] font-mono text-slate-400 pt-0.5 px-1">
+                <span>Rank Title: <strong className="text-cyan-300">Captain {customName.trim().replace(/^Captain\s+/i, '') || 'Arin Rao'}</strong></span>
+                <span>Callsign: <strong className="text-cyan-300">{(customName.trim().replace(/^Captain\s+/i, '').split(' ')[0] || 'ARIN').toUpperCase()}-1</strong></span>
+              </div>
+            </div>
           </div>
 
           {/* Gender Cards */}
@@ -180,7 +186,9 @@ export default function ProloguePage() {
                 <span className="text-[10px] text-cyan-400 tracking-widest uppercase bg-cyan-500/10 px-2.5 py-0.5 rounded-full border border-cyan-500/20">
                   Profile // Male
                 </span>
-                <h3 className="text-lg font-bold text-white pt-1">Captain Arin Rao</h3>
+                <h3 className="text-lg font-bold text-white pt-1">
+                  Captain {customName.trim().replace(/^Captain\s+/i, '') || 'Arin Rao'}
+                </h3>
                 <div className="text-xs text-cyan-300 font-medium">He / Him</div>
               </div>
 
@@ -209,7 +217,9 @@ export default function ProloguePage() {
                 <span className="text-[10px] text-indigo-400 tracking-widest uppercase bg-indigo-500/10 px-2.5 py-0.5 rounded-full border border-indigo-500/20">
                   Profile // Female
                 </span>
-                <h3 className="text-lg font-bold text-white pt-1">Captain Arin Rao</h3>
+                <h3 className="text-lg font-bold text-white pt-1">
+                  Captain {customName.trim().replace(/^Captain\s+/i, '') || 'Arin Rao'}
+                </h3>
                 <div className="text-xs text-indigo-300 font-medium">She / Her</div>
               </div>
 
@@ -224,19 +234,9 @@ export default function ProloguePage() {
             </button>
           </div>
 
-          <div className="mt-8 flex flex-col items-center gap-3 z-10">
-            <button
-              type="button"
-              onClick={handleSkipToChapter1}
-              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-cyan-950/60 hover:bg-cyan-900/80 text-cyan-300 hover:text-white border border-cyan-500/40 text-xs font-mono uppercase tracking-wider transition-all hover:scale-105 active:scale-95 shadow-lg shadow-cyan-950/50"
-            >
-              <Rocket className="w-4 h-4 text-cyan-400 -rotate-45" />
-              <span>Skip Prologue & Launch Chapter 1 Directly</span>
-            </button>
-            <div className="text-[11px] font-mono text-slate-500 flex items-center gap-2">
-              <Shield className="w-3.5 h-3.5 text-slate-600" />
-              <span>SURVEYOR 1 RECOVERY EXPEDITION (2126)</span>
-            </div>
+          <div className="mt-10 text-xs font-mono text-slate-500 flex items-center gap-2 z-10">
+            <Shield className="w-3.5 h-3.5 text-slate-600" />
+            <span>ARCHIVE DOSSIER LINKED · INITIALIZING 3D WORLD</span>
           </div>
         </div>
       )}
@@ -249,7 +249,7 @@ export default function ProloguePage() {
           {/* Fullscreen Cinematic Background Artwork of Kid with Telescope */}
           <img
             src={isFemale ? '/images/kid_girl_telescope_stars.jpg' : '/images/kid_boy_telescope_stars.jpg'}
-            alt="Young Arin looking at stars through telescope"
+            alt={`Young ${customName.trim().replace(/^Captain\s+/i, '').split(' ')[0] || 'Arin'} looking at stars through telescope`}
             className="absolute inset-0 w-full h-full object-cover transition-transform duration-[2500ms] ease-out scale-100 hover:scale-105"
           />
 
@@ -263,17 +263,8 @@ export default function ProloguePage() {
               <Sparkles className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />
               <span>FLASHBACK ARCHIVE · {pronouns.descriptor.toUpperCase()}</span>
             </div>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={handleSkipToChapter1}
-                className="px-3 py-1 rounded-full bg-cyan-950/80 hover:bg-cyan-900 border border-cyan-500/40 text-cyan-300 text-xs font-mono transition-all"
-              >
-                Skip to Chapter 1
-              </button>
-              <div className="text-slate-300 text-[11px] bg-black/75 px-3 py-1.5 rounded-full border border-white/10 backdrop-blur-md hidden sm:block">
-                Earth · Late Night Bedroom
-              </div>
+            <div className="text-slate-300 text-[11px] bg-black/75 px-3 py-1.5 rounded-full border border-white/10 backdrop-blur-md hidden sm:block">
+              Earth · Late Night Bedroom
             </div>
           </div>
 
@@ -324,19 +315,8 @@ export default function ProloguePage() {
               </div>
             </div>
 
-            <div className="pointer-events-auto flex items-center gap-3">
-              <button
-                type="button"
-                onClick={handleSkipToChapter1}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-xs font-mono font-bold text-white uppercase tracking-wider transition-all shadow-md shadow-cyan-600/30 border border-cyan-400/40"
-              >
-                <Rocket className="w-3.5 h-3.5 -rotate-45" />
-                <span>Skip to Chapter 1</span>
-              </button>
-
-              <div className="text-xs font-mono text-slate-400 bg-black/60 px-3 py-1.5 rounded-lg border border-white/10 hidden md:block">
-                Walk with <strong className="text-cyan-300">WASD</strong> or <strong className="text-cyan-300">Arrow Keys</strong>
-              </div>
+            <div className="pointer-events-auto text-xs font-mono text-slate-400 bg-black/60 px-3 py-1.5 rounded-lg border border-white/10 hidden md:block">
+              Walk with <strong className="text-cyan-300">WASD</strong> or <strong className="text-cyan-300">Arrow Keys</strong>
             </div>
           </div>
 
@@ -359,22 +339,13 @@ export default function ProloguePage() {
               <Eye className="w-4 h-4" />
               <span>Through the Brass Telescope Eyepiece</span>
             </div>
-            <div className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={handleSkipToChapter1}
-                className="text-xs font-mono px-3 py-1 rounded-lg bg-cyan-950/80 hover:bg-cyan-900 border border-cyan-500/40 text-cyan-300 hover:text-white transition-colors"
-              >
-                Skip Focus & Launch Chapter 1
-              </button>
-              <button
-                type="button"
-                onClick={() => setPhase('bedroom_3d')}
-                className="text-xs font-mono text-slate-400 hover:text-white"
-              >
-                Step Away [Esc]
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={() => setPhase('bedroom_3d')}
+              className="text-xs font-mono text-slate-400 hover:text-white"
+            >
+              Step Away [Esc]
+            </button>
           </header>
 
           <main className="w-full max-w-md flex flex-col items-center text-center space-y-6 my-auto">
@@ -498,7 +469,7 @@ export default function ProloguePage() {
               </h2>
 
               <p className="text-xs sm:text-sm text-slate-300 font-sans leading-relaxed pt-2">
-                In 2126, <strong className="text-white">Captain Arin Rao ({pronouns.title})</strong> leads a specialized NASA recovery team. Years after gazing at the Moon through a childhood bedroom telescope, {pronouns.poss} first command begins not on a distant world, but returning to humanity's 1966 pioneer: <strong className="text-cyan-300">Surveyor 1</strong>.
+                In 2126, <strong className="text-white">Captain {customName.trim().replace(/^Captain\s+/i, '') || 'Arin Rao'} ({pronouns.title})</strong> leads a specialized NASA recovery team. Years after gazing at the Moon through a childhood bedroom telescope, {pronouns.poss} first command begins not on a distant world, but returning to humanity's 1966 pioneer: <strong className="text-cyan-300">Surveyor 1</strong>.
               </p>
 
               <div className="pt-4">

@@ -16,23 +16,18 @@ export default function NewGameModal({ isOpen, onClose, onConfirmStart }) {
   const saveExists = hasSaveGame();
   const existingSave = saveExists ? getSaveGame() : null;
 
+  const [mcName, setMcName] = useState('Arin Rao');
+  const [mcGender, setMcGender] = useState('male');
   const [callsign, setCallsign] = useState('Nova-1');
   const [difficulty, setDifficulty] = useState('Commander');
   const [confirmedOverwrite, setConfirmedOverwrite] = useState(!saveExists);
 
   if (!isOpen) return null;
 
-  const handleLaunchChapter1 = () => {
+  const handleLaunch = () => {
     audio.playStartGame();
     if (onConfirmStart) {
-      onConfirmStart({ target: 'chapter_1', callsign, difficulty });
-    }
-  };
-
-  const handleLaunchPrologue = () => {
-    audio.playClick();
-    if (onConfirmStart) {
-      onConfirmStart({ target: 'prologue', callsign, difficulty });
+      onConfirmStart({ name: mcName, gender: mcGender, callsign, difficulty });
     }
   };
 
@@ -105,6 +100,56 @@ export default function NewGameModal({ isOpen, onClose, onConfirmStart }) {
             </div>
           </div>
 
+          {/* Commander Name & Identity Input */}
+          <div className="space-y-3 p-3.5 rounded-xl bg-white/[0.02] border border-white/10">
+            <div className="space-y-1.5">
+              <label className="text-xs font-mono uppercase text-slate-300 flex items-center justify-between">
+                <span>Commander / Officer Name</span>
+                <span className="text-[10px] text-cyan-400 font-sans">Used across logs & radio comms</span>
+              </label>
+              <input
+                type="text"
+                value={mcName}
+                maxLength={28}
+                onChange={(e) => {
+                  setMcName(e.target.value);
+                  const first = e.target.value.trim().replace(/^Captain\s+/i, '').split(' ')[0];
+                  if (first) setCallsign(`${first.toUpperCase()}-1`);
+                }}
+                className="w-full px-3 py-2 rounded-xl bg-black/50 border border-cyan-500/30 text-white font-mono text-sm focus:border-cyan-400 focus:outline-none focus:ring-1 focus:ring-cyan-400"
+                placeholder="e.g. Arin Rao"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-mono uppercase text-slate-300">Identity Profile</label>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => { audio.playHover(); setMcGender('male'); }}
+                  className={`p-2.5 rounded-xl text-center border font-mono text-xs transition-all ${
+                    mcGender === 'male'
+                      ? 'bg-cyan-500/20 border-cyan-400 text-cyan-200 font-bold shadow-md shadow-cyan-900/30'
+                      : 'bg-white/[0.03] border-white/10 text-slate-400 hover:text-white'
+                  }`}
+                >
+                  Male (He / Him)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { audio.playHover(); setMcGender('female'); }}
+                  className={`p-2.5 rounded-xl text-center border font-mono text-xs transition-all ${
+                    mcGender === 'female'
+                      ? 'bg-indigo-500/20 border-indigo-400 text-indigo-200 font-bold shadow-md shadow-indigo-900/30'
+                      : 'bg-white/[0.03] border-white/10 text-slate-400 hover:text-white'
+                  }`}
+                >
+                  Female (She / Her)
+                </button>
+              </div>
+            </div>
+          </div>
+
           {/* Callsign Input */}
           <div className="space-y-1.5">
             <label className="text-xs font-mono uppercase text-slate-300">Pilot Callsign</label>
@@ -146,43 +191,28 @@ export default function NewGameModal({ isOpen, onClose, onConfirmStart }) {
         </div>
 
         {/* Footer */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-white/10 px-6 py-4 bg-black/60">
+        <div className="flex items-center justify-between border-t border-white/10 px-6 py-4 bg-black/60">
           <button
             type="button"
             onClick={() => { audio.playClick(); onClose(); }}
-            className="py-2 px-3 rounded-xl text-xs font-semibold text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+            className="py-2 px-4 rounded-xl text-xs font-semibold text-slate-300 hover:bg-white/10 transition-colors"
           >
             Cancel
           </button>
 
-          <div className="flex items-center gap-2.5 w-full sm:w-auto">
-            <button
-              type="button"
-              disabled={saveExists && !confirmedOverwrite}
-              onClick={handleLaunchPrologue}
-              className={`flex-1 sm:flex-initial py-2.5 px-4 rounded-xl text-xs font-bold font-mono uppercase tracking-wider transition-all border border-white/15 ${
-                saveExists && !confirmedOverwrite
-                  ? 'opacity-40 cursor-not-allowed bg-slate-800 text-slate-500'
-                  : 'bg-white/5 hover:bg-white/15 text-slate-200 hover:text-white'
-              }`}
-            >
-              Play Prologue
-            </button>
-
-            <button
-              type="button"
-              disabled={saveExists && !confirmedOverwrite}
-              onClick={handleLaunchChapter1}
-              className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 py-2.5 px-5 rounded-xl text-xs font-bold font-mono uppercase tracking-wider transition-all shadow-lg ${
-                saveExists && !confirmedOverwrite
-                  ? 'opacity-40 cursor-not-allowed bg-slate-700 text-slate-400'
-                  : 'bg-gradient-to-r from-cyan-500 via-blue-600 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-white shadow-cyan-600/30 hover:scale-[1.02] active:scale-[0.98]'
-              }`}
-            >
-              <span>Launch Chapter 1</span>
-              <ChevronRight className="h-4 w-4" />
-            </button>
-          </div>
+          <button
+            type="button"
+            disabled={saveExists && !confirmedOverwrite}
+            onClick={handleLaunch}
+            className={`flex items-center gap-2 py-2.5 px-6 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-lg ${
+              saveExists && !confirmedOverwrite
+                ? 'opacity-40 cursor-not-allowed bg-slate-700 text-slate-400'
+                : 'bg-gradient-to-r from-cyan-500 via-blue-600 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-white shadow-cyan-600/30 hover:scale-[1.02] active:scale-[0.98]'
+            }`}
+          >
+            <span>Launch Expedition</span>
+            <ChevronRight className="h-4 w-4" />
+          </button>
         </div>
       </div>
     </div>

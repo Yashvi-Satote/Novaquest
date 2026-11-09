@@ -44,6 +44,7 @@ export const INITIAL_MISSION_STATE = {
   playtimeSeconds: 0,
   player: {
     mcName: 'Captain Arin Rao',
+    mcFirstName: 'Arin',
     mcGender: 'male', // 'male' or 'female'
     pronouns: {
       subject: 'he',
@@ -96,14 +97,23 @@ export function createNewGame(options = {}) {
   const gender = options.gender || 'male';
   const isFemale = gender === 'female';
 
+  // Support custom Commander / MC name input
+  const rawInput = (options.name || options.mcName || (isFemale ? 'Aria Rao' : 'Arin Rao')).trim();
+  const cleanedName = rawInput.replace(/^Captain\s+/i, '').trim() || (isFemale ? 'Aria Rao' : 'Arin Rao');
+  const firstName = options.mcFirstName || cleanedName.split(' ')[0] || (isFemale ? 'Aria' : 'Arin');
+  const fullCaptainName = rawInput.toLowerCase().startsWith('captain') ? rawInput : `Captain ${cleanedName}`;
+  const callsign = options.callsign || `${firstName.toUpperCase()}-1`;
+
   const newSave = {
     ...INITIAL_MISSION_STATE,
     difficulty: options.difficulty || 'Commander',
     currentChapter: 'prologue',
     player: {
       ...INITIAL_MISSION_STATE.player,
+      mcName: fullCaptainName,
+      mcFirstName: firstName,
       mcGender: gender,
-      callsign: options.callsign || 'Captain Rao',
+      callsign: callsign,
       pronouns: {
         subject: isFemale ? 'she' : 'he',
         subjectCap: isFemale ? 'She' : 'He',

@@ -19,7 +19,7 @@ import {
 import MenuDustCanvas from '../components/game/MenuDustCanvas';
 import SettingsModal from '../components/game/SettingsModal';
 import NewGameModal from '../components/game/NewGameModal';
-import { hasSaveGame, getSaveGame, createNewGame, saveGame, getSettings, saveSettings } from '../game/saveManager';
+import { hasSaveGame, getSaveGame, createNewGame, getSettings, saveSettings } from '../game/saveManager';
 import { audio } from '../game/audioManager';
 
 export default function MainMenuPage({ theme, onToggleTheme, initialOpenSettings = false }) {
@@ -74,43 +74,22 @@ export default function MainMenuPage({ theme, onToggleTheme, initialOpenSettings
     }, 400);
   };
 
-  // Direct Chapter 1 Launch handler (Primary mission shortcut)
-  const handleStartChapter1 = () => {
-    audio.playStartGame();
-    const existing = getSaveGame();
-    if (!existing) {
-      createNewGame({ gender: 'male' });
-    }
-    const current = getSaveGame();
-    saveGame({
-      ...(current || {}),
-      currentChapter: 'chapter_1',
-      title: 'Chapter 1: The First Footprint',
-      location: 'Oceanus Procellarum, Lunar Surface',
-      objective: 'Locate and inspect Surveyor 1 spacecraft components.'
-    });
-    refreshSaveStatus();
-    setTimeout(() => {
-      navigate('/play');
-    }, 350);
-  };
-
-  // New Game handler -> opens expedition launch options
+  // New Game handler -> starts Step 1 Gender Selection on black screen
   const handleStartNewGame = () => {
     audio.playClick();
-    setIsNewGameOpen(true);
+    navigate('/prologue');
   };
 
-  // Confirm Start from NewGameModal
   const handleConfirmNewGame = (options = {}) => {
     setIsNewGameOpen(false);
-    if (options.target === 'prologue') {
-      createNewGame({ gender: options.gender || 'male', callsign: options.callsign, difficulty: options.difficulty });
-      refreshSaveStatus();
-      navigate('/prologue');
-    } else {
-      handleStartChapter1();
-    }
+    createNewGame({
+      gender: options.gender || 'male',
+      name: options.name || 'Arin Rao',
+      callsign: options.callsign,
+      difficulty: options.difficulty
+    });
+    refreshSaveStatus();
+    navigate('/prologue');
   };
 
   return (
@@ -212,34 +191,24 @@ export default function MainMenuPage({ theme, onToggleTheme, initialOpenSettings
           </p>
         </div>
 
-        {/* PRIMARY ACTION BUTTONS: CHAPTER 1, CONTINUE, NEW GAME, SETTINGS */}
-        <div className="space-y-3 w-full sm:w-[380px]">
+        {/* PRIMARY ACTION BUTTONS: NEW GAME, CONTINUE, SETTINGS */}
+        <div className="space-y-3.5 w-full sm:w-[360px]">
           
-          {/* PRIMARY BUTTON: START CHAPTER 1 DIRECTLY */}
+          {/* BUTTON 1: NEW GAME */}
           <button
             type="button"
-            onMouseEnter={() => { audio.playHover(); setIsHoveredBtn('ch1'); }}
+            onMouseEnter={() => { audio.playHover(); setIsHoveredBtn('new'); }}
             onMouseLeave={() => setIsHoveredBtn(null)}
-            onClick={handleStartChapter1}
-            className="group relative w-full flex items-center justify-between p-4 rounded-xl font-mono text-sm font-bold tracking-wider uppercase transition-all duration-300 bg-gradient-to-r from-cyan-500 via-blue-600 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-white shadow-xl shadow-cyan-600/30 hover:shadow-cyan-400/50 hover:scale-[1.02] active:scale-[0.98] border border-cyan-400/60 overflow-hidden"
-            id="btn-play-chapter1"
+            onClick={handleStartNewGame}
+            className="group relative w-full flex items-center justify-between p-4 rounded-xl font-mono text-sm font-bold tracking-wider uppercase transition-all duration-300 bg-gradient-to-r from-cyan-600 via-blue-600 to-indigo-600 text-white shadow-xl shadow-cyan-600/30 hover:shadow-cyan-400/50 hover:scale-[1.02] active:scale-[0.98] border border-cyan-400/50 overflow-hidden"
+            id="btn-new-game"
           >
             <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
             <div className="flex items-center gap-3">
-              <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-black/40 border border-white/20 text-cyan-300 shadow-inner">
-                <Rocket className="h-4 w-4 -rotate-45" />
+              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-black/30 border border-white/20">
+                <Rocket className="h-4 w-4 -rotate-45 text-cyan-300" />
               </span>
-              <div className="text-left">
-                <div className="leading-tight flex items-center gap-2">
-                  <span>Start Chapter 1</span>
-                  <span className="text-[9px] px-1.5 py-0.5 rounded bg-cyan-400/20 text-cyan-200 border border-cyan-400/40 font-mono">
-                    SURFACE EVA
-                  </span>
-                </div>
-                <div className="text-[10px] font-normal tracking-normal text-cyan-200/90 capitalize mt-0.5 font-sans">
-                  The First Footprint · Surveyor 1
-                </div>
-              </div>
+              <span>New Game</span>
             </div>
             <ChevronRight className="h-5 w-5 text-cyan-200 group-hover:translate-x-1 transition-transform" />
           </button>
@@ -252,7 +221,7 @@ export default function MainMenuPage({ theme, onToggleTheme, initialOpenSettings
               onMouseEnter={() => { if (saveExists) audio.playHover(); setIsHoveredBtn('continue'); }}
               onMouseLeave={() => setIsHoveredBtn(null)}
               onClick={handleContinue}
-              className={`group w-full flex items-center justify-between p-3.5 rounded-xl font-mono text-sm font-bold tracking-wider uppercase transition-all duration-300 border ${
+              className={`group w-full flex items-center justify-between p-4 rounded-xl font-mono text-sm font-bold tracking-wider uppercase transition-all duration-300 border ${
                 saveExists
                   ? 'bg-slate-900/80 hover:bg-slate-800/90 text-white border-cyan-500/40 hover:border-cyan-400 hover:shadow-lg hover:shadow-cyan-950/60 hover:scale-[1.02] active:scale-[0.98]'
                   : 'bg-black/40 text-slate-500 border-white/5 cursor-not-allowed opacity-60'
@@ -268,7 +237,7 @@ export default function MainMenuPage({ theme, onToggleTheme, initialOpenSettings
                 <div className="text-left">
                   <div className="leading-tight">Continue</div>
                   {saveExists && (
-                    <div className="text-[10px] font-normal tracking-normal text-cyan-300/80 capitalize mt-0.5 font-sans">
+                    <div className="text-[10px] font-normal tracking-normal text-cyan-300/80 lowercase mt-0.5">
                       {saveData?.title || 'Saved Checkpoint'}
                     </div>
                   )}
@@ -286,41 +255,18 @@ export default function MainMenuPage({ theme, onToggleTheme, initialOpenSettings
             </button>
           </div>
 
-          {/* BUTTON 3: NEW EXPEDITION / PROLOGUE STORY */}
-          <button
-            type="button"
-            onMouseEnter={() => { audio.playHover(); setIsHoveredBtn('new'); }}
-            onMouseLeave={() => setIsHoveredBtn(null)}
-            onClick={handleStartNewGame}
-            className="group w-full flex items-center justify-between p-3 rounded-xl font-mono text-xs font-bold tracking-wider uppercase transition-all duration-300 bg-white/[0.04] hover:bg-white/[0.08] text-slate-300 hover:text-white border border-white/10 hover:border-white/20 hover:scale-[1.01] active:scale-[0.98]"
-            id="btn-new-game"
-          >
-            <div className="flex items-center gap-3">
-              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-black/30 border border-white/15 text-slate-400 group-hover:text-cyan-300">
-                <Sparkles className="h-3.5 w-3.5" />
-              </span>
-              <div className="text-left">
-                <div className="leading-tight">Prologue / Story Intro</div>
-                <div className="text-[10px] font-normal text-slate-400 capitalize font-sans">
-                  Identity Select & Childhood Memory
-                </div>
-              </div>
-            </div>
-            <ChevronRight className="h-4 w-4 text-slate-400 group-hover:translate-x-1 transition-transform" />
-          </button>
-
-          {/* BUTTON 4: SETTINGS */}
+          {/* BUTTON 3: SETTINGS */}
           <button
             type="button"
             onMouseEnter={() => { audio.playHover(); setIsHoveredBtn('settings'); }}
             onMouseLeave={() => setIsHoveredBtn(null)}
             onClick={() => { audio.playClick(); setIsSettingsOpen(true); }}
-            className="group w-full flex items-center justify-between p-3 rounded-xl font-mono text-xs font-bold tracking-wider uppercase transition-all duration-300 bg-white/[0.03] hover:bg-white/[0.06] text-slate-400 hover:text-white border border-white/5 hover:border-white/15 hover:scale-[1.01] active:scale-[0.98]"
+            className="group w-full flex items-center justify-between p-4 rounded-xl font-mono text-sm font-bold tracking-wider uppercase transition-all duration-300 bg-white/[0.04] hover:bg-white/[0.08] text-slate-200 hover:text-white border border-white/10 hover:border-white/20 hover:scale-[1.01] active:scale-[0.98]"
             id="btn-settings"
           >
             <div className="flex items-center gap-3">
-              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-black/20 border border-white/10 text-slate-500 group-hover:text-cyan-400">
-                <Sliders className="h-3.5 w-3.5" />
+              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/5 border border-white/10 text-slate-300 group-hover:text-cyan-400 transition-colors">
+                <Sliders className="h-4 w-4" />
               </span>
               <span>Settings</span>
             </div>

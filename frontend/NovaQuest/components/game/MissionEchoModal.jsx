@@ -65,7 +65,7 @@ const DESCENT_STAGES = [
 // Initial scrambled tile order for Puzzle C (3x3 grid)
 const INITIAL_SCRAMBLED_TILES = [4, 0, 7, 1, 6, 2, 8, 3, 5];
 
-export default function MissionEchoModal({ isOpen, onClose, onCompleteEcho }) {
+export default function MissionEchoModal({ isOpen, onClose, onCompleteEcho, mcName = 'Captain Arin Rao', mcFirstName = 'Arin' }) {
   const [currentStep, setCurrentStep] = useState(1);
 
   // ==========================================
@@ -111,6 +111,9 @@ export default function MissionEchoModal({ isOpen, onClose, onCompleteEcho }) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [onClose]);
 
+  const playerSpeaker = mcName || 'Captain Arin Rao';
+  const playerCallsign = `${(mcFirstName || 'ARIN').toUpperCase()}-COMMAND`;
+
   // Dialogue steps for the Mystery Clue
   const MYSTERY_DIALOGUE = [
     {
@@ -119,8 +122,8 @@ export default function MissionEchoModal({ isOpen, onClose, onCompleteEcho }) {
       text: "Captain, the recovered records are intact. But there is something else hidden in the interface."
     },
     {
-      speaker: 'Captain Arin Rao',
-      callsign: 'RAO-COMMAND',
+      speaker: playerSpeaker,
+      callsign: playerCallsign,
       text: "What is it?"
     },
     {
@@ -129,8 +132,8 @@ export default function MissionEchoModal({ isOpen, onClose, onCompleteEcho }) {
       text: "A transmission pattern. It appears to have been attached to the archive."
     },
     {
-      speaker: 'Captain Arin Rao',
-      callsign: 'RAO-COMMAND',
+      speaker: playerSpeaker,
+      callsign: playerCallsign,
       text: "Can you trace it?"
     },
     {
@@ -231,9 +234,27 @@ export default function MissionEchoModal({ isOpen, onClose, onCompleteEcho }) {
         type: 'error',
         title: 'SEQUENCE CALIBRATION MISMATCH — MISTAKE ANALYSIS',
         mistakes: errorNotes,
-        message: 'The landing sequence violates lunar orbital descent physics. Review the explanation above, adjust any mistaken step, and retry with zero penalty.'
+        message: 'The landing sequence violates lunar orbital descent physics. Review the explanation above, adjust any mistaken step, or click Quick Sequence Assist.'
       });
     }
+  };
+
+  const handleAutoSolveDescent = () => {
+    audio.playInteract();
+    setSelectedStages({
+      step1: 'stage_retro',
+      step2: 'stage_jettison',
+      step3: 'stage_vernier',
+      step4: 'stage_cutoff'
+    });
+    setDescentAltitude(0);
+    setIsSimulatingDescent(false);
+    setDescentSolved(true);
+    setDescentFeedback({
+      type: 'success',
+      message: 'SIMPLIFIED SEQUENCE VERIFIED: Main retro-rocket cancels orbital speed, spent motor is jettisoned, Vernier engines decelerate to 1.5 m/s, and engines cutoff at 3.4m for touchdown.'
+    });
+    audio.playMissionEchoActivation();
   };
 
   // ==========================================
@@ -278,9 +299,24 @@ export default function MissionEchoModal({ isOpen, onClose, onCompleteEcho }) {
         type: 'error',
         title: 'SURFACE INTERPRETATION MISMATCH — GEOLOGICAL ANALYSIS',
         mistakes: detailedErrors,
-        message: 'One or more observations were correlated with incorrect geological principles. Review the analysis above, adjust the selections, and retry.'
+        message: 'One or more observations were correlated with incorrect geological principles. Review the analysis above, adjust the selections, or click Quick Verify Assist.'
       });
     }
+  };
+
+  const handleAutoSolveSurface = () => {
+    audio.playInteract();
+    setSurfaceAnswers({
+      footpad: 'contact',
+      rocks: 'terrain',
+      slope: 'stability'
+    });
+    setSurfaceSolved(true);
+    setSurfaceFeedback({
+      type: 'success',
+      message: 'SURFACE ANALYSIS CONFIRMED: Footpad impressions proved lunar soil had sufficient bearing strength to support heavy spacecraft. Rock distributions documented impact ejecta blankets, and the 1.2° slope verified tripod landing stability.'
+    });
+    audio.playMissionEchoActivation();
   };
 
   // ==========================================
@@ -346,12 +382,12 @@ export default function MissionEchoModal({ isOpen, onClose, onCompleteEcho }) {
               <Cpu className="w-5 h-5 text-cyan-400 animate-pulse" />
             </div>
             <div>
-              <div className="text-[10px] text-cyan-400 tracking-widest uppercase flex items-center gap-2">
-                <span>ZONE 5 · MISSION ECHO INTERFACE</span>
+              <div className="text-[10px] text-amber-300 tracking-widest uppercase flex items-center gap-2">
+                <span>TEMPORAL ARCHIVE · NASA HEADQUARTERS (1966)</span>
                 <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping" />
               </div>
               <h2 className="text-base sm:text-lg font-bold text-white tracking-wide uppercase">
-                Stage 5 — Mission Echo: Reconstructing Surveyor 1
+                Stage 5 — Reconstructing the Past: Surveyor 1
               </h2>
             </div>
           </div>
@@ -371,11 +407,11 @@ export default function MissionEchoModal({ isOpen, onClose, onCompleteEcho }) {
           </div>
         </header>
 
-        {/* Narrative Context Banner */}
-        <div className="px-5 py-2 bg-cyan-950/20 border-b border-cyan-500/20 text-[11px] text-slate-300 flex items-center gap-2">
-          <Info className="w-4 h-4 text-cyan-400 flex-shrink-0" />
-          <span className="font-sans">
-            <strong>Historical Reconstruction:</strong> Uses recovered telemetry, imagery and archived records to reconstruct parts of Surveyor 1's historic 1966 lunar mission.
+        {/* Narrative Context Banner: Past of NASA HQ */}
+        <div className="px-5 py-2.5 bg-gradient-to-r from-amber-950/30 via-slate-900 to-cyan-950/30 border-b border-cyan-500/20 text-[11px] text-slate-200 flex items-center gap-2.5">
+          <Info className="w-4 h-4 text-amber-400 flex-shrink-0" />
+          <span className="font-sans leading-relaxed">
+            <strong className="text-amber-300">NASA Headquarters (June 2, 1966):</strong> The structure's interface reconstructs the past of NASA headquarters. Complete the simplified 3-part reconstruction of Surveyor 1's historic mission to extract the archive and return to reality on the Moon.
           </span>
         </div>
 
@@ -547,12 +583,21 @@ export default function MissionEchoModal({ isOpen, onClose, onCompleteEcho }) {
               )}
 
               {/* Action Buttons */}
-              <div className="flex justify-end gap-3 pt-2">
+              <div className="flex flex-col sm:flex-row justify-end items-center gap-3 pt-2">
+                {!descentSolved && (
+                  <button
+                    type="button"
+                    onClick={handleAutoSolveDescent}
+                    className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-slate-300 hover:text-white font-mono text-xs transition-colors"
+                  >
+                    Quick Sequence (Auto-Align)
+                  </button>
+                )}
                 {!descentSolved ? (
                   <button
                     type="button"
                     onClick={handleCheckDescent}
-                    className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold tracking-wider uppercase text-xs shadow-lg shadow-cyan-600/30 transition-all hover:scale-105 active:scale-95 flex items-center gap-2"
+                    className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold tracking-wider uppercase text-xs shadow-lg shadow-cyan-600/30 transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-2"
                   >
                     <Zap className="w-4 h-4" />
                     <span>Check sequence</span>
@@ -561,7 +606,7 @@ export default function MissionEchoModal({ isOpen, onClose, onCompleteEcho }) {
                   <button
                     type="button"
                     onClick={() => { audio.playClick(); setCurrentStep(2); }}
-                    className="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold tracking-wider uppercase text-xs flex items-center gap-2 shadow-lg shadow-emerald-600/30 transition-all hover:scale-105"
+                    className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold tracking-wider uppercase text-xs flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/30 transition-all hover:scale-105"
                   >
                     <span>Proceed to Puzzle B — Reading Lunar Surface</span>
                     <ArrowRight className="w-4 h-4" />
@@ -757,12 +802,21 @@ export default function MissionEchoModal({ isOpen, onClose, onCompleteEcho }) {
               )}
 
               {/* Action Buttons */}
-              <div className="flex justify-end gap-3 pt-2">
+              <div className="flex flex-col sm:flex-row justify-end items-center gap-3 pt-2">
+                {!surfaceSolved && (
+                  <button
+                    type="button"
+                    onClick={handleAutoSolveSurface}
+                    className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-slate-300 hover:text-white font-mono text-xs transition-colors"
+                  >
+                    Quick Verify (Auto-Align)
+                  </button>
+                )}
                 {!surfaceSolved ? (
                   <button
                     type="button"
                     onClick={handleVerifySurfaceObservations}
-                    className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold tracking-wider uppercase text-xs shadow-lg shadow-cyan-600/30 transition-all hover:scale-105 active:scale-95 flex items-center gap-2"
+                    className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold tracking-wider uppercase text-xs shadow-lg shadow-cyan-600/30 transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-2"
                   >
                     <Check className="w-4 h-4" />
                     <span>Verify Surface Interpretations</span>
@@ -771,7 +825,7 @@ export default function MissionEchoModal({ isOpen, onClose, onCompleteEcho }) {
                   <button
                     type="button"
                     onClick={() => { audio.playClick(); setCurrentStep(3); }}
-                    className="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold tracking-wider uppercase text-xs flex items-center gap-2 shadow-lg shadow-emerald-600/30 transition-all hover:scale-105"
+                    className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold tracking-wider uppercase text-xs flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/30 transition-all hover:scale-105"
                   >
                     <span>Proceed to Puzzle C — Restore Image Archive</span>
                     <ArrowRight className="w-4 h-4" />
@@ -960,9 +1014,9 @@ export default function MissionEchoModal({ isOpen, onClose, onCompleteEcho }) {
                       <button
                         type="button"
                         onClick={handleFinishMissionEcho}
-                        className="px-6 py-3 rounded-xl bg-gradient-to-r from-purple-600 via-indigo-600 to-cyan-600 hover:from-purple-500 hover:to-cyan-500 text-white font-bold tracking-wider uppercase text-xs shadow-xl shadow-purple-600/40 transition-all hover:scale-105 active:scale-95 flex items-center gap-2 animate-bounce font-mono"
+                        className="px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-600 via-cyan-600 to-indigo-600 hover:from-emerald-500 hover:to-cyan-500 text-white font-bold tracking-wider uppercase text-xs shadow-xl shadow-cyan-600/40 transition-all hover:scale-105 active:scale-95 flex items-center gap-2 font-mono"
                       >
-                        <span>Proceed to Stage 6 — Recover Surveyor 1</span>
+                        <span>Return to Reality on the Moon & Recover Surveyor 1</span>
                         <ArrowRight className="w-4 h-4" />
                       </button>
                     </div>

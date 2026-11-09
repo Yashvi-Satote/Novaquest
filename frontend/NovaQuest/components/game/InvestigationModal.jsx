@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import { audio } from '../../game/audioManager';
 
-export default function InvestigationModal({ target, onClose, onLogData }) {
+export default function InvestigationModal({ target, onClose, onLogData, mcName = 'Captain Arin Rao' }) {
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') {
@@ -91,7 +91,7 @@ export default function InvestigationModal({ target, onClose, onLogData }) {
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent pointer-events-none" />
               <div className="absolute bottom-2 left-3 text-[10px] text-cyan-300">
-                LUNAR RECONNAISSANCE OPTICS · CAPTAIN ARIN RAO
+                LUNAR RECONNAISSANCE OPTICS · {(mcName || 'Captain Arin Rao').toUpperCase()}
               </div>
             </div>
           )}
@@ -173,7 +173,7 @@ export default function InvestigationModal({ target, onClose, onLogData }) {
             <div className="p-3.5 rounded-xl bg-gradient-to-r from-blue-950/40 to-indigo-950/40 border border-indigo-500/30 text-indigo-200">
               <div className="text-[10px] font-bold uppercase tracking-wider text-indigo-300 mb-1 flex items-center gap-1.5">
                 <Sparkles className="w-3 h-3 text-indigo-400" />
-                <span>Captain Arin Rao · Personal Mission Audio Log</span>
+                <span>{mcName || 'Captain Arin Rao'} · Personal Mission Audio Log</span>
               </div>
               <p className="italic text-xs font-sans text-indigo-100/90 leading-relaxed">
                 “{target.officerNote}”

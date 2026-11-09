@@ -1473,6 +1473,74 @@ class AudioManager {
   }
 
   /**
+   * Companion NOVA-Drone friendly robotic chirp & scanner guidance beacon
+   */
+  playCompanionDroneChirp() {
+    const ctx = this.ensureContext();
+    if (!ctx) return;
+    const { sfx } = this.getVolumes();
+    if (sfx <= 0.001) return;
+
+    try {
+      const now = ctx.currentTime;
+      const freqs = [1760, 2637, 3520]; // A6, E7, A7 bright ascending tri-tone
+      freqs.forEach((freq, idx) => {
+        const startTime = now + idx * 0.075;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, startTime);
+        osc.frequency.exponentialRampToValueAtTime(freq * 1.15, startTime + 0.06);
+
+        gain.gain.setValueAtTime(0.0001, startTime);
+        gain.gain.linearRampToValueAtTime(sfx * 0.22, startTime + 0.015);
+        gain.gain.exponentialRampToValueAtTime(0.0001, startTime + 0.07);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(startTime);
+        osc.stop(startTime + 0.08);
+      });
+    } catch {}
+  }
+
+  /**
+   * Companion Drone Holographic Guide Laser Beam activation sweep
+   */
+  playCompanionDroneBeam() {
+    const ctx = this.ensureContext();
+    if (!ctx) return;
+    const { sfx } = this.getVolumes();
+    if (sfx <= 0.001) return;
+
+    try {
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(880, now);
+      osc.frequency.exponentialRampToValueAtTime(1760, now + 0.18);
+
+      const filter = ctx.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(1200, now);
+      filter.frequency.exponentialRampToValueAtTime(3200, now + 0.2);
+
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.linearRampToValueAtTime(sfx * 0.18, now + 0.03);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.28);
+
+      osc.connect(filter);
+      filter.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.3);
+    } catch {}
+  }
+
+  /**
    * Stop all persistent audio loops upon level exit or pause
    */
   stopAllLoops() {
