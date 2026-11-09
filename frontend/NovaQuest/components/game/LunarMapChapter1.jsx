@@ -561,6 +561,7 @@ export default function LunarMapChapter1({
   const triggerScannerBeamRef = useRef(null);
   const triggerScanRef = useRef(null);
   const triggerInteractRef = useRef(null);
+  const triggerInvestigationRef = useRef(null);
 
   // Derive custom MC name, rank, first name, and dynamic callsign
   const save = typeof getSaveGame === 'function' ? getSaveGame() : null;
@@ -1284,7 +1285,7 @@ export default function LunarMapChapter1({
     if (!target) return;
 
     // Situation 7: Player approaches alien structure too early -> Show inactive interface
-    if (journeyStageIndex < 3 && (
+    if (journeyStageIndexRef.current < 3 && (
       target.id === 'poi_exposed_structure' ||
       target.id === 'poi_alien_structure' ||
       target.id === 'poi_central_interface' ||
@@ -1597,7 +1598,7 @@ export default function LunarMapChapter1({
       const id = nearInteractableRef.current.id;
 
       // Situation 7: Player approaches alien structure too early -> Show inactive interface
-      if (journeyStageIndex < 3 && (
+      if (journeyStageIndexRef.current < 3 && (
         id === 'poi_exposed_structure' ||
         id === 'poi_alien_structure' ||
         id === 'poi_central_interface' ||
@@ -1635,7 +1636,7 @@ export default function LunarMapChapter1({
         }
       } else if (id === 'poi_mission_terminal' || id === 'poi_lunar_transport' || id === 'poi_route_marker_alpha') {
         if (id === 'poi_mission_terminal' || id === 'poi_lunar_transport') {
-          if (journeyStageIndex === 6) {
+          if (journeyStageIndexRef.current === 6) {
             startEndingCinematic();
             return;
           }
@@ -1696,7 +1697,7 @@ export default function LunarMapChapter1({
         audio.playAnomalyHarmonic();
         setInvestigateTarget(nearInteractableRef.current);
       } else if (id === 'poi_conduit_coupling') {
-        if (journeyStageIndex === 5 && !stage6StepsRef.current.stabilized) {
+        if (journeyStageIndexRef.current === 5 && !stage6StepsRef.current.stabilized) {
           completeStage6Step('stabilized');
         } else {
           setInvestigateTarget(nearInteractableRef.current);
@@ -1718,7 +1719,7 @@ export default function LunarMapChapter1({
         setInvestigateTarget(nearInteractableRef.current);
       } else if (id === 'poi_extraction_pallet' && isMissionEchoCompletedRef.current) {
         audio.playEquipmentFeedback();
-        if (journeyStageIndex === 6) {
+        if (journeyStageIndexRef.current === 6) {
           startEndingCinematic();
         } else {
           setShowMissionCompleteModal(true);
@@ -6722,10 +6723,23 @@ export default function LunarMapChapter1({
           }
         }
 
-        // Stage 4: Discovering something unknown -> Instant interface activation
+        // Stage 4: Discovering something unknown -> Conduit inspection or interface activation
         if (curStage === 3) {
+          const distToConduit = Math.hypot(pPos.x - (-66), pPos.z - (-42));
+          if (distToConduit < 10.0 || nearInteractableRef.current?.id?.includes('conduit')) {
+            completeStage4Objective('inspectedConduit');
+            audio.playAnomalyHarmonic();
+            const conduitTarget = nearInteractableRef.current || interactables.find(i => i.id === 'poi_crater_conduit');
+            if (conduitTarget) {
+              setInvestigateTarget(conduitTarget);
+            }
+            setHudNotice('DATA CONDUIT INSPECTED: Precursor optoelectronic carrier wave confirmed.');
+            return;
+          }
           const distToStructure = Math.hypot(pPos.x - (-77.2), pPos.z - (-53.2));
           if (distToStructure < 10.0 || nearInteractableRef.current?.id?.includes('interface') || nearInteractableRef.current?.id?.includes('structure') || nearInteractableRef.current?.id?.includes('panel')) {
+            completeStage4Objective('scannedStructure');
+            completeStage4Objective('locatedInterface');
             triggerInterfaceReaction();
             return;
           }
@@ -6765,7 +6779,7 @@ export default function LunarMapChapter1({
             return;
           }
         }
-        triggerInvestigation();
+        triggerInvestigationRef.current ? triggerInvestigationRef.current() : triggerInvestigation();
         return;
       }
     };
@@ -9230,7 +9244,7 @@ export default function LunarMapChapter1({
             }
 
             if (target.id === 'poi_mission_terminal') {
-              if (journeyStageIndex === 6) {
+              if (journeyStageIndexRef.current === 6) {
                 startEndingCinematic();
                 return;
               }
@@ -9272,19 +9286,19 @@ export default function LunarMapChapter1({
             } else if (target.id === 'poi_alien_structure' || target.id === 'poi_data_conduit') {
               advanceJourneyStage(4);
             } else if (target.id === 'poi_conduit_coupling') {
-              if (journeyStageIndex === 5 && !stage6StepsRef.current.stabilized) {
+              if (journeyStageIndexRef.current === 5 && !stage6StepsRef.current.stabilized) {
                 completeStage6Step('stabilized');
               }
             } else if (target.id === 'poi_recovery_rig') {
-              if (journeyStageIndex === 5 && stage6StepsRef.current.stabilized && !stage6StepsRef.current.isolated) {
+              if (journeyStageIndexRef.current === 5 && stage6StepsRef.current.stabilized && !stage6StepsRef.current.isolated) {
                 setShowIsolateModal(true);
               }
             } else if (target.id === 'poi_quantum_storage_unit') {
-              if (journeyStageIndex === 5 && stage6StepsRef.current.isolated && !stage6StepsRef.current.secured) {
+              if (journeyStageIndexRef.current === 5 && stage6StepsRef.current.isolated && !stage6StepsRef.current.secured) {
                 completeStage6Step('secured');
               }
             } else if (target.id === 'poi_extraction_pallet') {
-              if (journeyStageIndex === 6) {
+              if (journeyStageIndexRef.current === 6) {
                 startEndingCinematic();
               } else {
                 setShowMissionCompleteModal(true);
