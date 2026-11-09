@@ -460,7 +460,7 @@ export function getCurrentTaskTarget({
     case 2:
       if (!stage3Inspections?.pointA) {
         return {
-          coords: { x: -68.0, y: 1.2, z: -40.0 },
+          coords: { x: -68.0, y: -2.40, z: -40.0 },
           label: 'Point A — Basalt Rock Formation',
           hint: 'Follow the signal beam west toward the shattered basalt outcrop.',
           callout: 'Point A locked! Aim scanner at the large basalt boulder outcrop ahead.'
@@ -468,7 +468,7 @@ export function getCurrentTaskTarget({
       }
       if (!stage3Inspections?.pointB) {
         return {
-          coords: { x: -74.0, y: 1.2, z: -48.0 },
+          coords: { x: -74.0, y: -6.33, z: -48.0 },
           label: 'Point B — Impact Crater Rim & Scree Slope',
           hint: 'Trace the rising 65% harmonic frequency toward the crater rim slope.',
           callout: 'Point B locked! Aim scanner along the scree ridge at the crater rim.'
@@ -476,14 +476,14 @@ export function getCurrentTaskTarget({
       }
       if (!stage3Inspections?.pointC && !isPointCDiscovered) {
         return {
-          coords: { x: -78.0, y: -2.5, z: -54.0 },
+          coords: { x: -78.0, y: -5.05, z: -54.0 },
           label: 'Point C — Subsurface Epicenter (Crater Basin)',
           hint: 'The 99.4% carrier epicenter is buried directly beneath the crater bowl floor.',
           callout: 'Signal epicenter locked! Aim scanner directly into the crater basin floor.'
         };
       }
       return {
-        coords: { x: -78.0, y: 1.5, z: -54.0 },
+        coords: { x: -78.0, y: -4.25, z: -54.0 },
         label: 'Exposed Alien Structure',
         hint: 'Examine the emerging obsidian carapace on the crater floor.',
         callout: 'Alien structure uncovered! Aim scanner at the glowing crystalline geometry.'
@@ -492,7 +492,7 @@ export function getCurrentTaskTarget({
     case 3:
       if (!stage4Objectives?.scannedStructure) {
         return {
-          coords: { x: -78.0, y: 1.8, z: -54.0 },
+          coords: { x: -78.0, y: -4.25, z: -54.0 },
           label: 'Exposed Obsidian Geometric Carapace',
           hint: 'Scan the non-human geometric structure protruding from the regolith.',
           callout: 'Carapace locked! Aim scanner at the pulsing cyan circuits on the structure face.'
@@ -500,14 +500,14 @@ export function getCurrentTaskTarget({
       }
       if (!stage4Objectives?.inspectedConduit) {
         return {
-          coords: { x: -66.0, y: 0.8, z: -42.0 },
+          coords: { x: -66.0, y: -0.79, z: -42.0 },
           label: 'Precursor Data Conduit Tether',
           hint: 'Inspect the glassy data conduit tethering the structure directly to Surveyor 1.',
           callout: 'Data conduit locked! Aim scanner at the glowing data conduit running across the ground.'
         };
       }
       return {
-        coords: { x: -77.2, y: 1.6, z: -53.2 },
+        coords: { x: -77.2, y: -4.65, z: -53.2 },
         label: 'Central Alien Interface Console',
         hint: 'Interact with the glowing cyan interface on the structure pedestal.',
         callout: 'Interface console locked! Approach the console and press [E] to activate.'
@@ -515,7 +515,7 @@ export function getCurrentTaskTarget({
 
     case 4:
       return {
-        coords: { x: -77.2, y: 1.6, z: -53.2 },
+        coords: { x: -77.2, y: -4.65, z: -53.2 },
         label: 'Mission Echo Volumetric Console',
         hint: 'Complete the Surveyor 1 descent, panoramic, and archive puzzles in Mission Echo.',
         callout: 'Mission Echo interface online. Interact [E] to complete historical reconstruction.'
@@ -1954,7 +1954,7 @@ export default function LunarMapChapter1({
     const laserPositions = new Float32Array(6);
     const laserGeo = new THREE.BufferGeometry();
     laserGeo.setAttribute('position', new THREE.BufferAttribute(laserPositions, 3));
-    const laserMat = new THREE.LineBasicMaterial({ color: 0x00ffff, transparent: true, opacity: 0.85, blending: THREE.AdditiveBlending });
+    const laserMat = new THREE.LineBasicMaterial({ color: 0xff1744, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending });
     const guideLaser = new THREE.Line(laserGeo, laserMat);
     guideLaser.visible = false;
     scene.add(guideLaser);
@@ -1965,13 +1965,13 @@ export default function LunarMapChapter1({
     targetBeaconGroup.visible = false;
     const beaconRing = new THREE.Mesh(
       new THREE.RingGeometry(0.4, 0.55, 32),
-      new THREE.MeshBasicMaterial({ color: 0x00ffff, side: THREE.DoubleSide, transparent: true, opacity: 0.85, blending: THREE.AdditiveBlending })
+      new THREE.MeshBasicMaterial({ color: 0xff1744, side: THREE.DoubleSide, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending })
     );
     beaconRing.rotation.x = Math.PI / 2;
     targetBeaconGroup.add(beaconRing);
     const beaconCore = new THREE.Mesh(
       new THREE.SphereGeometry(0.12, 12, 12),
-      new THREE.MeshBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending })
+      new THREE.MeshBasicMaterial({ color: 0xff5252, transparent: true, opacity: 0.95, blending: THREE.AdditiveBlending })
     );
     targetBeaconGroup.add(beaconCore);
     scene.add(targetBeaconGroup);
@@ -7140,6 +7140,9 @@ export default function LunarMapChapter1({
           const curTargetPos = activeGuideTargetRef.current;
           if (curTargetPos) {
             // 1. Drone faces the exact target
+            droneEyeMat.color.setHex(0xff1744);
+            droneEyeMat.emissive.setHex(0xff1744);
+            droneEyeMat.emissiveIntensity = 4.2 + Math.sin(time * 16.0) * 1.5;
             companionDroneGroup.lookAt(curTargetPos.x, curTargetPos.y, curTargetPos.z);
 
             // 2. Guide laser beam shines from drone eye to target
@@ -7174,10 +7177,14 @@ export default function LunarMapChapter1({
             setIsDroneGuiding(false);
             guideLaser.visible = false;
             targetBeaconGroup.visible = false;
+            droneEyeMat.color.setHex(0x00ffff);
+            droneEyeMat.emissive.setHex(0x00ffff);
           }
         } else {
           guideLaser.visible = false;
           targetBeaconGroup.visible = false;
+          droneEyeMat.color.setHex(0x00ffff);
+          droneEyeMat.emissive.setHex(0x00ffff);
           const targetRotY = yaw;
           companionDroneGroup.rotation.y += (targetRotY - companionDroneGroup.rotation.y) * 0.08;
           companionDroneGroup.rotation.x = Math.sin(time * 1.6) * 0.05;
@@ -8168,7 +8175,7 @@ export default function LunarMapChapter1({
               </button>
             )}
             {isDroneGuiding && (
-              <div className="absolute top-7 text-[10px] text-amber-300 font-bold tracking-wider uppercase bg-black/90 px-3 py-1 rounded-lg border border-amber-400/80 shadow-lg shadow-amber-500/20 whitespace-nowrap font-mono flex items-center gap-1.5 animate-pulse">
+              <div className="absolute top-7 text-[10px] text-red-400 font-bold tracking-wider uppercase bg-black/90 px-3 py-1 rounded-lg border border-red-500/80 shadow-lg shadow-red-500/25 whitespace-nowrap font-mono flex items-center gap-1.5 animate-pulse">
                 <span>🤖 NOVA-DRONE GUIDE: {droneTargetBearing}° · {droneTargetDistance}m</span>
               </div>
             )}
@@ -8250,26 +8257,26 @@ export default function LunarMapChapter1({
         {/* NOVA-DRONE SCANNER AIM GUIDANCE TOAST / BANNER */}
         {isDroneGuiding && droneTargetInfo && (
           <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 pointer-events-auto max-w-lg w-full px-4 animate-scale-up font-mono select-none">
-            <div className="p-3.5 rounded-2xl bg-slate-950/95 backdrop-blur-xl border-2 border-cyan-400 shadow-[0_0_45px_rgba(6,182,212,0.55)] flex items-start gap-3.5">
-              <div className="w-10 h-10 rounded-xl bg-cyan-950/90 border border-cyan-400/60 flex items-center justify-center text-cyan-300 flex-shrink-0 shadow-[0_0_15px_rgba(6,182,212,0.4)] text-lg animate-pulse">
+            <div className="p-3.5 rounded-2xl bg-slate-950/95 backdrop-blur-xl border-2 border-red-500 shadow-[0_0_45px_rgba(239,68,68,0.55)] flex items-start gap-3.5">
+              <div className="w-10 h-10 rounded-xl bg-red-950/90 border border-red-500/60 flex items-center justify-center text-red-400 flex-shrink-0 shadow-[0_0_15px_rgba(239,68,68,0.4)] text-lg animate-pulse">
                 🤖
               </div>
               <div className="space-y-1 flex-1">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
-                    <span className="text-[11px] font-bold text-cyan-300 uppercase tracking-widest">
+                    <span className="w-2 h-2 rounded-full bg-red-500 animate-ping" />
+                    <span className="text-[11px] font-bold text-red-400 uppercase tracking-widest">
                       NOVA-DRONE · SCANNER GUIDANCE
                     </span>
                   </div>
-                  <span className="text-[10px] text-amber-300 font-bold bg-amber-950/70 px-2 py-0.5 rounded border border-amber-500/50 animate-pulse font-mono">
+                  <span className="text-[10px] text-red-300 font-bold bg-red-950/70 px-2 py-0.5 rounded border border-red-500/50 animate-pulse font-mono">
                     BEAM ACTIVE [{Math.ceil(droneGuideTimeLeft)}s]
                   </span>
                 </div>
                 <div className="text-xs font-bold text-white font-sans">
                   Target: {droneTargetInfo.label}
                 </div>
-                <p className="text-[11px] text-cyan-100 font-sans leading-relaxed">
+                <p className="text-[11px] text-red-100 font-sans leading-relaxed">
                   {droneTargetInfo.callout}
                 </p>
                 <div className="flex items-center gap-2 pt-1 text-[10px] text-cyan-300 font-mono flex-wrap">
@@ -8280,7 +8287,7 @@ export default function LunarMapChapter1({
                     📏 Distance: {droneTargetDistance}m
                   </span>
                   <span className="text-slate-400 italic">
-                    Follow cyan guide laser
+                    Follow red guide laser
                   </span>
                 </div>
               </div>
@@ -8366,8 +8373,12 @@ export default function LunarMapChapter1({
                     <Target className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />
                     <span>ACTIVE OBJECTIVE</span>
                   </div>
-                  <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-cyan-900/80 border border-cyan-400/50 text-[9px] text-cyan-300 group-hover:text-white group-hover:border-cyan-300 group-hover:bg-cyan-800 transition-all font-mono font-bold">
-                    <span>🤖 Click Drone Guide</span>
+                  <div className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] transition-all font-mono font-bold ${
+                    isDroneGuiding
+                      ? 'bg-red-900/90 border border-red-500/80 text-red-300 shadow-[0_0_10px_rgba(239,68,68,0.5)] animate-pulse'
+                      : 'bg-cyan-900/80 border border-cyan-400/50 text-cyan-300 group-hover:text-white group-hover:border-cyan-300 group-hover:bg-cyan-800'
+                  }`}>
+                    <span>{isDroneGuiding ? '🔴 Aim Guide Active' : '🤖 Click Drone Guide'}</span>
                   </div>
                 </div>
                 <div className="text-white font-sans text-xs sm:text-sm font-bold leading-snug group-hover:text-cyan-100 transition-colors">
