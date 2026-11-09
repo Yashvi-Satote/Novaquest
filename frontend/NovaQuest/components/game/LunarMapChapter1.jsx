@@ -240,6 +240,7 @@ export function getInteractionPrompt(target, currentStage = 0) {
   if (id === 'poi_crater_site_alpha') return '[E] Trace Signal: Rock Formation';
   if (id === 'poi_crater_site_beta') return '[E] Trace Signal: Crater Rim';
   if (id === 'poi_crater_site_gamma') return '[E] Trace Signal: Crater Floor';
+  if (id === 'poi_crater_conduit' || id === 'poi_data_conduit') return '[E] Inspect Precursor Data Conduit';
   if (id === 'poi_exposed_structure' || id === 'poi_alien_structure') return '[E] Inspect Alien Structure';
   if (id === 'poi_central_interface') return '[E] Activate Memory Interface';
   if (id === 'poi_conduit_coupling' || id === 'poi_recovery_rig') return '[E] Isolate Transmission';
@@ -1364,6 +1365,12 @@ export default function LunarMapChapter1({
         if (target.id === 'poi_exposed_structure' || target.id === 'poi_alien_structure') {
           completeStage4Objective('scannedStructure');
         }
+        if (target.id === 'poi_crater_conduit' || target.id === 'poi_data_conduit') {
+          completeStage4Objective('inspectedConduit');
+        }
+        if (target.id === 'poi_central_interface') {
+          completeStage4Objective('locatedInterface');
+        }
 
         // Stage 6 Stabilise Interface
         if (target.id === 'poi_conduit_coupling' && journeyStageIndexRef.current === 5) {
@@ -1679,7 +1686,7 @@ export default function LunarMapChapter1({
         completeStage4Objective('scannedStructure');
         audio.playSurveyorScannerBeep();
         setInvestigateTarget(nearInteractableRef.current);
-      } else if (id === 'poi_crater_conduit') {
+      } else if (id === 'poi_crater_conduit' || id === 'poi_data_conduit') {
         if (journeyStageIndexRef.current < 3) {
           setHudNotice('DATA CONDUIT INERT: Awaiting precursor core activation.');
           audio.playScanNoSignal();
@@ -2632,6 +2639,12 @@ export default function LunarMapChapter1({
         const dist = mc.radius * rimPerturb * (0.95 + Math.random() * 0.32);
         const rx = mc.x + Math.cos(angle) * dist;
         const rz = mc.z + Math.sin(angle) * dist;
+        // Prevent random boulders from overlapping the conduit path or crater floor structure
+        if (mc.x === -75 && mc.z === -50) {
+          const dConduit = Math.hypot(rx - (-66), rz - (-42));
+          const dStructure = Math.hypot(rx - (-78), rz - (-54));
+          if (dConduit < 5.5 || dStructure < 5.5) continue;
+        }
         const ry = getTerrainHeight(rx, rz);
 
         const geoChoice = j % 2 === 0 ? rockGeoLarge : rockGeoMedium;
@@ -4329,7 +4342,7 @@ export default function LunarMapChapter1({
 
     // A. Massive Basalt Boulders Ringing the Irregular Medium Crater Rim (Radius ~11.5 - 13.5m)
     const rimBoulderGeo = createMediumPolyRockGeo(1.8, 2, 0.32);
-    const rimAngles = [0.15, 0.72, 1.35, 2.05, 2.78, 3.52, 4.25, 4.95, 5.75];
+    const rimAngles = [0.15, 0.44, 1.05, 1.48, 2.05, 2.78, 3.52, 4.25, 4.95, 5.75];
     for (let i = 0; i < rimAngles.length; i++) {
       const angle = rimAngles[i];
       const radius = 11.8 + (i % 3) * 1.2;
@@ -4959,6 +4972,40 @@ export default function LunarMapChapter1({
 
       scene.add(repeaterGroup);
     }
+
+    // Stage 4 Mission 2: Illuminated Precursor Conduit Diagnostic Coupler Node at (-66, -42)
+    const conduitNodeGroup = new THREE.Group();
+    const conduitNodeY = getTerrainHeight(-66, -42) + 0.14;
+    conduitNodeGroup.position.set(-66, conduitNodeY, -42);
+
+    const nodeChassis = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.55, 0.65, 0.42, 8),
+      new THREE.MeshStandardMaterial({ color: 0x0f172a, metalness: 0.95, roughness: 0.18 })
+    );
+    nodeChassis.castShadow = true;
+    conduitNodeGroup.add(nodeChassis);
+
+    const nodeGlowRing = new THREE.Mesh(
+      new THREE.TorusGeometry(0.58, 0.05, 12, 24),
+      new THREE.MeshStandardMaterial({ color: 0x00e5ff, emissive: 0x00e5ff, emissiveIntensity: 2.8, roughness: 0.1 })
+    );
+    nodeGlowRing.rotation.x = Math.PI / 2;
+    nodeGlowRing.position.y = 0.15;
+    conduitNodeGroup.add(nodeGlowRing);
+
+    const nodeHoloChevron = new THREE.Mesh(
+      new THREE.RingGeometry(0.75, 0.95, 32),
+      new THREE.MeshBasicMaterial({ color: 0x22d3ee, side: THREE.DoubleSide, transparent: true, opacity: 0.75, blending: THREE.AdditiveBlending })
+    );
+    nodeHoloChevron.rotation.x = -Math.PI / 2;
+    nodeHoloChevron.position.y = 0.55;
+    conduitNodeGroup.add(nodeHoloChevron);
+
+    const conduitNodeLight = new THREE.PointLight(0x00e5ff, 2.4, 7.5);
+    conduitNodeLight.position.set(0, 0.5, 0);
+    conduitNodeGroup.add(conduitNodeLight);
+
+    scene.add(conduitNodeGroup);
 
     // =========================================================================
     // 14. ZONE 5 — MISSION ECHO INTERFACE (X: -116, Z: -72)
@@ -6251,7 +6298,7 @@ export default function LunarMapChapter1({
         title: 'Narrow Data Conduit',
         shortName: 'Data Conduit',
         position: new THREE.Vector3(-66, getTerrainHeight(-66, -42) + 0.6, -42),
-        radius: 4.8,
+        radius: 6.2,
         sector: 'Zone 4 · Crater Rim Network',
         artifactAge: 'Synchronized with Lander Touchdown',
         integrity: 'Active Carrier Wave',
@@ -6274,7 +6321,7 @@ export default function LunarMapChapter1({
         id: 'poi_data_conduit',
         title: 'Subterranean Data Conduit',
         position: new THREE.Vector3(-60, getTerrainHeight(-60, -35) + 0.5, -35),
-        radius: 5.0,
+        radius: 6.2,
         sector: 'Zone 4 · Subterranean Network',
         artifactAge: 'Synchronized with Lander Touchdown',
         integrity: 'Active Carrier Wave',
@@ -9141,7 +9188,7 @@ export default function LunarMapChapter1({
               inspectStage3Point('pointC');
             } else if (investigateTarget?.id === 'poi_exposed_structure') {
               completeStage4Objective('scannedStructure');
-            } else if (investigateTarget?.id === 'poi_crater_conduit') {
+            } else if (investigateTarget?.id === 'poi_crater_conduit' || investigateTarget?.id === 'poi_data_conduit') {
               completeStage4Objective('inspectedConduit');
             } else if (investigateTarget?.id === 'poi_central_interface') {
               completeStage4Objective('locatedInterface');
@@ -9216,7 +9263,7 @@ export default function LunarMapChapter1({
             } else if (target.id === 'poi_exposed_structure') {
               completeStage4Objective('scannedStructure');
               setActiveObjective('Structure scanned. Inspect the narrow conduit leading toward Surveyor 1.');
-            } else if (target.id === 'poi_crater_conduit') {
+            } else if (target.id === 'poi_crater_conduit' || target.id === 'poi_data_conduit') {
               completeStage4Objective('inspectedConduit');
               setActiveObjective('Conduit inspected. Locate the central interface console on the structure.');
             } else if (target.id === 'poi_central_interface') {
