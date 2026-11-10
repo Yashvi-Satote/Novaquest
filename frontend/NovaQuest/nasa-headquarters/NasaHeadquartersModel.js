@@ -1,5 +1,7 @@
 import * as THREE from 'three';
 import { createSurveyor5Hologram } from './Surveyor5Hologram';
+import { createNasaHeadquartersAstronaut } from './NasaHeadquartersAstronaut';
+import { createNasaHeadquartersCorridor } from './NasaHeadquartersCorridor';
 
 /**
  * NasaHeadquartersModel.js
@@ -805,6 +807,10 @@ function createShadowTexture() {
 export function createNasaHeadquarters() {
   const root = new THREE.Group();
   root.name = 'NasaHeadquartersBase';
+  const character = createNasaHeadquartersAstronaut();
+  character.position.set(6, 0, -1.5);
+  character.rotation.y = -0.45;
+  root.add(character);
 
   const textures = [];
   const dynamic = {
@@ -948,6 +954,10 @@ export function createNasaHeadquarters() {
   const doorwayHalfAngle = 0.24;
   const wallRadius = ROOM_RADIUS + 0.05;
   const doorAngle = Math.PI + Math.PI / 8;
+  const corridor = createNasaHeadquartersCorridor();
+  corridor.root.position.copy(polar(wallRadius, doorAngle));
+  corridor.root.rotation.y = doorAngle;
+  root.add(corridor.root);
   const doorwayWallAngle = doorAngle;
   const doorwayStart = doorwayWallAngle - doorwayHalfAngle;
   const doorwayEnd = doorwayWallAngle + doorwayHalfAngle;
@@ -1315,31 +1325,6 @@ export function createNasaHeadquarters() {
     panelRidge.position.set(side < 0 ? -0.25 : 0.25, 0, -0.15);
     panel.add(panelRidge);
   });
-
-  // A short exterior service pad is visible through the open airlock.
-  const exteriorPad = new THREE.Group();
-  exteriorPad.position.set(0, 0, 1.95);
-  airlock.add(exteriorPad);
-  const padBase = new THREE.Mesh(
-    new THREE.BoxGeometry(4.5, 0.16, 4.5),
-    materials.doorFrame,
-  );
-  padBase.position.y = 0.22;
-  exteriorPad.add(padBase);
-  [-1.72, 1.72].forEach((x) => {
-    const guide = new THREE.Mesh(
-      new THREE.BoxGeometry(0.055, 0.025, 3.8),
-      materials.cyan,
-    );
-    guide.position.set(x, 0.315, 0);
-    exteriorPad.add(guide);
-  });
-  const padMark = new THREE.Mesh(
-    new THREE.BoxGeometry(1.25, 0.025, 0.07),
-    materials.white,
-  );
-  padMark.position.set(0, 0.315, -1.55);
-  exteriorPad.add(padMark);
 
   const threshold = new THREE.Mesh(
     new THREE.BoxGeometry(4.45, 0.12, 0.95),
@@ -1938,5 +1923,5 @@ export function createNasaHeadquarters() {
     isOpen: () => dynamic.doorTarget > 0.5,
   };
 
-  return { root, update, dispose, door, doorHitTarget };
+  return { root, update, dispose, door, doorHitTarget, character, corridor };
 }
