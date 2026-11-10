@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronRight } from 'lucide-react';
+import { ArrowUpRight, Building2, ChevronRight } from 'lucide-react';
 import AppNavbar from '../../Shared/components/layout/AppNavbar';
 import CinematicMoonHero3D from '../components/home/CinematicMoonHero3D';
 import SettingsModal from '../components/home/SettingsModal';
+import NasaHeadquartersModal from '../nasa-headquarters/NasaHeadquartersModal';
 import { gameAudio } from '../config/gameAudio';
 import { hasSaveGame, getSaveGame } from '../game/saveManager';
 import { ALL_MISSIONS } from '../config/missions';
@@ -37,6 +38,7 @@ function AnimatedWord({ text, delay = 0 }) {
 export default function TimeTravelersHomePage() {
   const navigate = useNavigate();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isHqOpen, setIsHqOpen] = useState(false);
   const [saveExists, setSaveExists] = useState(false);
   const [saveInfo, setSaveInfo] = useState(null);
 
@@ -66,6 +68,11 @@ export default function TimeTravelersHomePage() {
   const handleOpenSettings = () => {
     gameAudio.playClick();
     setIsSettingsOpen(true);
+  };
+
+  const handleOpenHeadquarters = () => {
+    gameAudio.playClick();
+    setIsHqOpen(true);
   };
 
   const totalLevels = String(ALL_MISSIONS.length).padStart(2, '0');
@@ -167,6 +174,32 @@ export default function TimeTravelersHomePage() {
             </span>
             <ChevronRight
               className="h-3.5 w-3.5 shrink-0 text-[#4F79FF] transition-transform group-hover:translate-x-1"
+              aria-hidden="true"
+            />
+          </button>
+
+          {/* 3D location shortcut — opens the interactive NASA HQ base. */}
+          <button
+            id="nasa-hq-btn"
+            type="button"
+            onClick={handleOpenHeadquarters}
+            className="cinematic-rise group mt-5 flex w-full max-w-[430px] items-center gap-3 border border-white/15 bg-white/[0.035] px-3.5 py-3 text-left backdrop-blur-sm transition-colors hover:border-[#4F79FF]/60 hover:bg-[#3D6BFF]/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#3D6BFF] focus-visible:ring-offset-4 focus-visible:ring-offset-[#070A12] sm:px-4"
+            style={{ animationDelay: '0.34s' }}
+            aria-label="Explore NASA Headquarters in 3D"
+          >
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center border border-[#4F79FF]/45 bg-[#3D6BFF]/10 text-[#8ce5ff]">
+              <Building2 className="h-4 w-4" aria-hidden="true" />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-[8px] font-semibold uppercase tracking-[0.3em] text-[#7f9fbe]">
+                Explore the 3D base
+              </span>
+              <span className="mt-1 block text-[10px] font-semibold uppercase tracking-[0.2em] text-white transition-colors group-hover:text-[#8ce5ff] sm:text-[11px]">
+                NASA HEADQUARTERS
+              </span>
+            </span>
+            <ArrowUpRight
+              className="h-4 w-4 shrink-0 text-[#4F79FF] transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
               aria-hidden="true"
             />
           </button>
@@ -301,6 +334,7 @@ export default function TimeTravelersHomePage() {
         </div>
       </div>
 
+      <NasaHeadquartersModal isOpen={isHqOpen} onClose={() => setIsHqOpen(false)} />
       <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
     </div>
   );
