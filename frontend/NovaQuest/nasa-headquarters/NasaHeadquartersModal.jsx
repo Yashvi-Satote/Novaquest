@@ -123,7 +123,7 @@ export default function NasaHeadquartersModal({ isOpen, onClose }) {
               </span>
               <span className="hidden items-center gap-1.5 rounded-full border border-[#4F79FF]/30 bg-[#071426]/80 px-3 py-1.5 text-[9px] font-semibold uppercase tracking-[0.22em] text-[#9cd8f2] sm:inline-flex">
                 <Sparkles className="h-3 w-3 text-[#7fe3ff]" aria-hidden="true" />
-                8 operator bays
+                7 operator bays
               </span>
             </div>
 

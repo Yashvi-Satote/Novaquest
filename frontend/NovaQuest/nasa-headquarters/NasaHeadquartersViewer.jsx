@@ -10,8 +10,8 @@ import { createNasaHeadquarters } from './NasaHeadquartersModel';
  * Reusable three.js viewport for the NASA Headquarters base. The camera lives
  * inside the circular room and orbits the command dais, so only the interior
  * ever needs to be modelled. A sci-fi blast door on the wall leads "outside";
- * it can be opened and closed with the D key or via the imperative handle
- * (toggleDoor / openDoor / closeDoor).
+ * it can be clicked, opened with the D key, or controlled via the imperative
+ * handle (toggleDoor / openDoor / closeDoor).
  */
 const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer({ className = '' }, ref) {
   const mountRef = useRef(null);
@@ -104,6 +104,42 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer({ clas
     controls.rotateSpeed = 0.55;
     controls.zoomSpeed = 0.65;
 
+    const raycaster = new THREE.Raycaster();
+    const pointer = new THREE.Vector2();
+    let pointerDown = null;
+    const updatePointerPosition = (event) => {
+      const bounds = renderer.domElement.getBoundingClientRect();
+      pointer.x = ((event.clientX - bounds.left) / bounds.width) * 2 - 1;
+      pointer.y = -((event.clientY - bounds.top) / bounds.height) * 2 + 1;
+    };
+    const isOverDoor = (event) => {
+      updatePointerPosition(event);
+      raycaster.setFromCamera(pointer, camera);
+      return raycaster.intersectObject(headquarters.doorHitTarget).length > 0;
+    };
+    const handlePointerDown = (event) => {
+      if (event.button !== 0) return;
+      pointerDown = { x: event.clientX, y: event.clientY, pointerId: event.pointerId };
+    };
+    const handlePointerUp = (event) => {
+      if (!pointerDown || event.pointerId !== pointerDown.pointerId) return;
+      const distance = Math.hypot(event.clientX - pointerDown.x, event.clientY - pointerDown.y);
+      pointerDown = null;
+      if (event.button === 0 && distance < 6 && isOverDoor(event)) {
+        doorControl.toggle();
+      }
+    };
+    const handlePointerCancel = () => {
+      pointerDown = null;
+    };
+    const handlePointerMove = (event) => {
+      renderer.domElement.style.cursor = isOverDoor(event) ? 'pointer' : '';
+    };
+    renderer.domElement.addEventListener('pointerdown', handlePointerDown);
+    renderer.domElement.addEventListener('pointerup', handlePointerUp);
+    renderer.domElement.addEventListener('pointercancel', handlePointerCancel);
+    renderer.domElement.addEventListener('pointermove', handlePointerMove);
+
     const prefersReducedMotion =
       typeof window.matchMedia === 'function' &&
       window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -171,6 +207,10 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer({ clas
       document.removeEventListener('visibilitychange', handleVisibility);
       controls.removeEventListener('start', stopAutoRotate);
       controls.dispose();
+      renderer.domElement.removeEventListener('pointerdown', handlePointerDown);
+      renderer.domElement.removeEventListener('pointerup', handlePointerUp);
+      renderer.domElement.removeEventListener('pointercancel', handlePointerCancel);
+      renderer.domElement.removeEventListener('pointermove', handlePointerMove);
 
       scene.remove(headquarters.root);
       headquarters.dispose();
@@ -212,6 +252,17 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer({ clas
             Enable hardware acceleration and reload to step inside mission control.
           </p>
         </div>
+      )}
+
+      {!webglFailed && (
+        <button
+          type="button"
+          onClick={() => doorHolderRef.current && doorHolderRef.current.toggle()}
+          aria-pressed={doorOpen}
+          className="absolute right-4 top-24 z-30 rounded-lg border border-[#7fe3ff]/35 bg-[#071426]/85 px-3 py-2 text-[9px] font-semibold uppercase tracking-[0.18em] text-[#9cd8f2] shadow-[0_0_20px_rgba(61,107,255,0.18)] backdrop-blur-md transition-colors hover:border-[#7fe3ff]/70 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7fe3ff]"
+        >
+          {doorOpen ? 'Close airlock · Click / D' : 'Open airlock · Click / D'}
+        </button>
       )}
     </div>
   );

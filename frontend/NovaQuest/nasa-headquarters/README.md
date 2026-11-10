@@ -1,13 +1,14 @@
 # NASA Headquarters — 3D Base
 
-A reusable, medium-poly NASA Headquarters mission-control base for NovaQuest. The scene is
-modelled procedurally with three.js, so it ships without any external model download.
+A reusable, medium-poly NASA Headquarters mission-control base for NovaQuest, including an
+exterior airlock built into the room wall. The scene is modelled procedurally with three.js,
+so it ships without any external model download.
 
 ## What is inside
 
 | File | Purpose |
 | --- | --- |
-| `NasaHeadquartersModel.js` | Builds the complete 360° interior: circular command room, eight curved display bays, operator desks and chairs, central dais, Surveyor 5 hologram, ceiling light panels and floor inlays. Returns `{ root, update, dispose }`. |
+| `NasaHeadquartersModel.js` | Builds the 360° interior, including a faceted titanium airlock with a maintenance console, segmented sliding panels, and an outside service pad, alongside the curved display bays, operator stations, central dais and Surveyor 5 hologram. Returns `{ root, update, dispose, door, doorHitTarget }`. |
 | `Surveyor5Hologram.js` | Procedural medium-poly Surveyor 5 lander built from additive wireframe panels, glowing edges, a rotating camera turret, antenna motion, base rings, scan ring and drifting particles. Returns `{ root, update }`. |
 | `NasaHeadquartersViewer.jsx` | Self-contained React viewport with OrbitControls, responsive resizing, WebGL fallback, visibility pausing and full resource disposal. |
 | `NasaHeadquartersModal.jsx` | Full-screen interactive presentation of the base, opened from the Level 1: The Moon hub. |
@@ -22,6 +23,9 @@ scene.add(headquarters.root);
 
 // In the render loop:
 headquarters.update(delta, elapsed);
+
+// Open or close the exterior airlock:
+headquarters.door.setOpen(true);
 
 // On teardown:
 headquarters.dispose();
@@ -43,6 +47,8 @@ import NasaHeadquartersViewer from './NasaHeadquartersViewer';
 ```
 
 The viewer expects a sized parent element and handles its own renderer lifecycle.
+Click the airlock in the 3D view, use the **Open airlock** button, or press **D** to
+open and close the exterior door.
 
 ## Presentation
 
