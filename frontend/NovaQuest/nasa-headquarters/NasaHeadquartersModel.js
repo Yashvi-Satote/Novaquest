@@ -1,15 +1,15 @@
 import * as THREE from 'three';
+import { createSurveyor5Hologram } from './Surveyor5Hologram';
 
 /**
  * NasaHeadquartersModel.js
  *
  * Medium-poly NASA Headquarters mission-control base inspired by the
  * reference art: a circular command room with a ring of curved display bays,
- * an operator deck, a glowing central dais and a holographic Earth.
+ * an operator deck, a glowing central dais and a holographic Surveyor 5 lander.
  *
  * The room is modelled as a full 360° interior so the camera can orbit inside
- * it. All geometry is generated procedurally (no external model download),
- * while the Earth uses the project's existing planetary texture set.
+ * it. All geometry is generated procedurally (no external model download).
  */
 
 const TAU = Math.PI * 2;
@@ -220,90 +220,267 @@ function drawGauge(ctx, cx, cy, radius, value, label, accent) {
   ctx.fillText(label, cx, cy + radius * 0.42);
 }
 
-function drawWireGlobe(ctx, cx, cy, radius, accent) {
+function drawSurveyorSchematic(ctx, cx, cy, radius, accent) {
   ctx.save();
+  const s = radius;
+  const px = (x) => cx + x * s;
+  const py = (y) => cy + y * s;
 
-  // Luminous body behind the wire grid, so the display reads even at a distance.
-  const body = ctx.createRadialGradient(
-    cx - radius * 0.28,
-    cy - radius * 0.3,
-    radius * 0.04,
-    cx,
-    cy,
-    radius * 1.02,
-  );
-  body.addColorStop(0, 'rgba(206, 249, 255, 0.9)');
-  body.addColorStop(0.38, 'rgba(104, 218, 255, 0.55)');
-  body.addColorStop(0.74, 'rgba(32, 133, 197, 0.25)');
-  body.addColorStop(0.96, 'rgba(11, 63, 106, 0.1)');
-  body.addColorStop(1, 'rgba(0, 0, 0, 0)');
-  ctx.fillStyle = body;
+  // Holographic bloom behind the lander.
+  const bloom = ctx.createRadialGradient(cx, cy - s * 0.1, s * 0.05, cx, cy, s * 1.3);
+  bloom.addColorStop(0, 'rgba(132, 232, 255, 0.24)');
+  bloom.addColorStop(0.5, 'rgba(45, 150, 228, 0.12)');
+  bloom.addColorStop(1, 'rgba(0, 0, 0, 0)');
+  ctx.fillStyle = bloom;
+  ctx.fillRect(cx - s * 1.45, cy - s * 1.45, s * 2.9, s * 2.9);
+
+  // Survey grid.
+  ctx.strokeStyle = 'rgba(96, 202, 240, 0.13)';
+  ctx.lineWidth = 1;
+  for (let i = -4; i <= 4; i += 1) {
+    ctx.beginPath();
+    ctx.moveTo(cx + i * s * 0.28, cy - s * 1.1);
+    ctx.lineTo(cx + i * s * 0.28, cy + s * 1.02);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(cx - s * 1.1, cy + i * s * 0.28);
+    ctx.lineTo(cx + s * 1.1, cy + i * s * 0.28);
+    ctx.stroke();
+  }
+
+  // Lunar surface plane with survey ticks.
+  ctx.strokeStyle = 'rgba(150, 230, 255, 0.5)';
+  ctx.lineWidth = 1.6;
+  ctx.setLineDash([9, 7]);
   ctx.beginPath();
-  ctx.arc(cx, cy, radius, 0, TAU);
+  ctx.ellipse(cx, py(0.82), s * 0.86, s * 0.13, 0, 0, TAU);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  for (let i = 0; i < 19; i += 1) {
+    const angle = (i * TAU) / 19;
+    const innerX = Math.cos(angle) * s * 0.86;
+    const innerY = Math.sin(angle) * s * 0.13;
+    const outerX = Math.cos(angle) * s * (i % 5 === 0 ? 0.94 : 0.9);
+    const outerY = Math.sin(angle) * s * (i % 5 === 0 ? 0.17 : 0.15);
+    ctx.strokeStyle = i % 5 === 0 ? 'rgba(174, 244, 255, 0.66)' : 'rgba(103, 202, 241, 0.3)';
+    ctx.lineWidth = i % 5 === 0 ? 1.8 : 1;
+    ctx.beginPath();
+    ctx.moveTo(cx + innerX, py(0.82) + innerY);
+    ctx.lineTo(cx + outerX, py(0.82) + outerY);
+    ctx.stroke();
+  }
+
+  // Landing legs (rear leg first so it sits behind the bus).
+  const drawLeg = (hipX, hipY, kneeX, kneeY, footX, footY, weight) => {
+    ctx.strokeStyle = 'rgba(184, 244, 255, 0.72)';
+    ctx.lineWidth = weight;
+    ctx.beginPath();
+    ctx.moveTo(px(hipX), py(hipY));
+    ctx.lineTo(px(kneeX), py(kneeY));
+    ctx.lineTo(px(footX), py(footY));
+    ctx.stroke();
+
+    ctx.strokeStyle = 'rgba(104, 214, 255, 0.5)';
+    ctx.lineWidth = weight * 2.1;
+    ctx.beginPath();
+    ctx.moveTo(px(kneeX), py(kneeY));
+    ctx.lineTo(px(footX), py(footY));
+    ctx.stroke();
+
+    ctx.fillStyle = 'rgba(211, 250, 255, 0.85)';
+    ctx.beginPath();
+    ctx.ellipse(px(footX), py(footY) + 1.5, s * 0.085, s * 0.024, 0, 0, TAU);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(146, 234, 255, 0.6)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  };
+
+  drawLeg(0.05, 0.14, 0.24, 0.52, 0.38, 0.8, 2);
+  drawLeg(-0.36, 0.02, -0.72, 0.46, -0.88, 0.79, 2.6);
+  drawLeg(0.36, 0.02, 0.72, 0.46, 0.88, 0.79, 2.6);
+
+  // Main triangular spaceframe bus.
+  ctx.fillStyle = 'rgba(96, 214, 255, 0.14)';
+  ctx.strokeStyle = accent;
+  ctx.lineWidth = 2.4;
+  ctx.beginPath();
+  ctx.moveTo(px(-0.32), py(-0.2));
+  ctx.lineTo(px(0.32), py(-0.2));
+  ctx.lineTo(px(0.42), py(0.22));
+  ctx.lineTo(px(-0.42), py(0.22));
+  ctx.closePath();
   ctx.fill();
-
-  // Outer bloom.
-  ctx.globalAlpha = 0.32;
-  ctx.strokeStyle = '#c8f7ff';
-  ctx.lineWidth = 8;
-  ctx.beginPath();
-  ctx.arc(cx, cy, radius, 0, TAU);
   ctx.stroke();
 
-  ctx.strokeStyle = accent;
-  ctx.globalAlpha = 0.95;
+  ctx.strokeStyle = 'rgba(158, 236, 255, 0.55)';
+  ctx.lineWidth = 1.3;
+  ctx.beginPath();
+  ctx.moveTo(px(-0.32), py(-0.2));
+  ctx.lineTo(px(0.42), py(0.22));
+  ctx.moveTo(px(0.32), py(-0.2));
+  ctx.lineTo(px(-0.42), py(0.22));
+  ctx.stroke();
+
+  // Solar array panel.
+  const panelTop = -0.38;
+  const panelBottom = -0.24;
+  ctx.fillStyle = 'rgba(76, 168, 255, 0.18)';
+  ctx.strokeStyle = 'rgba(198, 247, 255, 0.86)';
+  ctx.lineWidth = 1.8;
+  ctx.beginPath();
+  ctx.rect(px(-0.66), py(panelTop), s * 1.32, s * (panelBottom - panelTop));
+  ctx.fill();
+  ctx.stroke();
+  ctx.strokeStyle = 'rgba(126, 220, 255, 0.4)';
+  ctx.lineWidth = 1;
+  for (let i = 1; i < 4; i += 1) {
+    ctx.beginPath();
+    ctx.moveTo(px(-0.66 + i * 0.33), py(panelTop));
+    ctx.lineTo(px(-0.66 + i * 0.33), py(panelBottom));
+    ctx.stroke();
+  }
+  ctx.beginPath();
+  ctx.moveTo(px(-0.66), py((panelTop + panelBottom) / 2));
+  ctx.lineTo(px(0.66), py((panelTop + panelBottom) / 2));
+  ctx.stroke();
+
+  // Main retro engine bell.
+  ctx.fillStyle = 'rgba(104, 214, 255, 0.16)';
+  ctx.strokeStyle = 'rgba(174, 244, 255, 0.8)';
+  ctx.lineWidth = 1.8;
+  ctx.beginPath();
+  ctx.moveTo(px(-0.11), py(0.22));
+  ctx.lineTo(px(0.11), py(0.22));
+  ctx.lineTo(px(0.2), py(0.46));
+  ctx.lineTo(px(-0.2), py(0.46));
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Planar high-gain antenna.
+  ctx.save();
+  ctx.translate(px(-0.62), py(-0.5));
+  ctx.rotate(-0.42);
+  ctx.fillStyle = 'rgba(150, 236, 255, 0.18)';
+  ctx.strokeStyle = 'rgba(214, 250, 255, 0.85)';
+  ctx.lineWidth = 1.8;
+  ctx.beginPath();
+  ctx.rect(-s * 0.2, -s * 0.16, s * 0.4, s * 0.32);
+  ctx.fill();
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(-s * 0.2, 0);
+  ctx.lineTo(s * 0.2, 0);
+  ctx.moveTo(0, -s * 0.16);
+  ctx.lineTo(0, s * 0.16);
+  ctx.strokeStyle = 'rgba(126, 220, 255, 0.45)';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+  ctx.fillStyle = 'rgba(255, 213, 145, 0.85)';
+  ctx.beginPath();
+  ctx.arc(0, 0, s * 0.026, 0, TAU);
+  ctx.fill();
+  ctx.restore();
+
+  ctx.strokeStyle = 'rgba(174, 244, 255, 0.6)';
+  ctx.lineWidth = 1.4;
+  ctx.beginPath();
+  ctx.moveTo(px(-0.3), py(-0.28));
+  ctx.lineTo(px(-0.55), py(-0.44));
+  ctx.stroke();
+
+  // TV camera mast and rotatable turret.
+  ctx.strokeStyle = 'rgba(214, 250, 255, 0.85)';
   ctx.lineWidth = 2;
   ctx.beginPath();
-  ctx.arc(cx, cy, radius, 0, TAU);
+  ctx.moveTo(px(0.26), py(-0.18));
+  ctx.lineTo(px(0.26), py(-0.72));
+  ctx.stroke();
+  ctx.strokeStyle = 'rgba(126, 220, 255, 0.45)';
+  ctx.lineWidth = 1.2;
+  ctx.beginPath();
+  ctx.moveTo(px(0.14), py(-0.19));
+  ctx.lineTo(px(0.26), py(-0.5));
   ctx.stroke();
 
-  // Latitude rings.
-  for (let i = 1; i <= 3; i += 1) {
-    const ratio = Math.cos((i * Math.PI) / 8);
-    ctx.globalAlpha = 0.5;
-    ctx.beginPath();
-    ctx.ellipse(cx, cy, radius, radius * ratio, 0, 0, TAU);
-    ctx.stroke();
-  }
+  ctx.fillStyle = 'rgba(150, 236, 255, 0.2)';
+  ctx.strokeStyle = 'rgba(222, 251, 255, 0.9)';
+  ctx.lineWidth = 1.6;
+  ctx.beginPath();
+  ctx.rect(px(0.18), py(-0.86), s * 0.17, s * 0.14);
+  ctx.fill();
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(px(0.35), py(-0.82));
+  ctx.lineTo(px(0.43), py(-0.8));
+  ctx.lineTo(px(0.43), py(-0.76));
+  ctx.lineTo(px(0.35), py(-0.74));
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.92)';
+  ctx.beginPath();
+  ctx.arc(px(0.41), py(-0.78), s * 0.016, 0, TAU);
+  ctx.fill();
 
-  // Longitude rings.
-  for (let i = 0; i < 5; i += 1) {
-    const ratio = Math.cos((i * Math.PI) / 10);
-    ctx.globalAlpha = 0.52;
-    ctx.beginPath();
-    ctx.ellipse(cx, cy, radius * Math.abs(ratio), radius, 0, 0, TAU);
-    ctx.stroke();
-  }
+  // Alpha-scattering surface instrument and tether.
+  ctx.strokeStyle = 'rgba(255, 208, 138, 0.6)';
+  ctx.lineWidth = 1.3;
+  ctx.setLineDash([5, 4]);
+  ctx.beginPath();
+  ctx.moveTo(px(0.3), py(0.2));
+  ctx.bezierCurveTo(px(0.52), py(0.34), px(0.66), py(0.55), px(0.72), py(0.72));
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = 'rgba(255, 208, 138, 0.24)';
+  ctx.strokeStyle = 'rgba(255, 218, 160, 0.9)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.rect(px(0.66), py(0.7), s * 0.13, s * 0.1);
+  ctx.fill();
+  ctx.stroke();
 
-  // Abstract continent shapes.
-  ctx.globalAlpha = 0.33;
-  ctx.fillStyle = '#dffbff';
-  const continents = [
-    [-0.34, -0.24, 0.36, 0.23, 0.3],
-    [0.24, -0.38, 0.3, 0.18, -0.4],
-    [-0.14, 0.24, 0.22, 0.34, 0.15],
-    [0.42, 0.18, 0.2, 0.22, -0.2],
-  ];
-  continents.forEach(([dx, dy, rx, ry, rotation]) => {
+  // Bright hologram nodes.
+  [
+    [0, -0.24],
+    [0.26, -0.78],
+    [-0.62, -0.5],
+    [0.72, 0.74],
+  ].forEach(([nx, ny]) => {
+    ctx.fillStyle = 'rgba(235, 253, 255, 0.95)';
     ctx.beginPath();
-    ctx.ellipse(cx + dx * radius, cy + dy * radius, rx * radius, ry * radius, rotation, 0, TAU);
+    ctx.arc(px(nx), py(ny), s * 0.014, 0, TAU);
     ctx.fill();
   });
 
-  // Node markers.
-  const nodes = [
-    [-0.42, -0.32],
-    [0.3, -0.46],
-    [0.5, 0.2],
-    [-0.16, 0.5],
-  ];
-  nodes.forEach(([nx, ny]) => {
-    ctx.globalAlpha = 0.9;
-    ctx.fillStyle = '#e7fbff';
+  // Callout labels.
+  ctx.font = `600 ${Math.round(s * 0.072)}px "Courier New", monospace`;
+  ctx.fillStyle = 'rgba(174, 240, 255, 0.82)';
+  ctx.textBaseline = 'middle';
+
+  const callout = (label, tx, ty, lx, ly, align) => {
+    ctx.strokeStyle = 'rgba(122, 224, 255, 0.4)';
+    ctx.lineWidth = 1;
     ctx.beginPath();
-    ctx.arc(cx + nx * radius, cy + ny * radius, 3.4, 0, TAU);
-    ctx.fill();
-  });
+    ctx.moveTo(tx, ty);
+    ctx.lineTo(lx, ly);
+    ctx.stroke();
+    ctx.textAlign = align;
+    ctx.fillText(label, lx + (align === 'right' ? -s * 0.03 : s * 0.03), ly);
+  };
+
+  callout('PLANAR ANTENNA', px(-0.75), py(-0.6), px(-1.0), py(-0.72), 'right');
+  callout('SOLAR ARRAY', px(0.4), py(-0.32), px(0.78), py(-0.44), 'left');
+  callout('TV CAMERA', px(0.26), py(-0.82), px(0.62), py(-1.0), 'left');
+  callout('SHOCK LEG', px(-0.8), py(0.62), px(-1.0), py(0.76), 'right');
+  callout('ALPHA SCATTER', px(0.72), py(0.74), px(0.92), py(0.6), 'left');
+
+  ctx.textAlign = 'left';
+  ctx.fillStyle = 'rgba(139, 218, 247, 0.7)';
+  ctx.font = `600 ${Math.round(s * 0.062)}px "Courier New", monospace`;
+  ctx.fillText('SURVEYOR 5 / SPACECRAFT SCHEMATIC / SCALE 1:24', cx - s * 0.98, py(0.98));
+
   ctx.restore();
 }
 
@@ -390,7 +567,7 @@ function createScreenTexture(variant) {
     'NASA // FLIGHT TELEMETRY',
   ];
   const subtitles = [
-    'ORBIT 003 • EARTH LINK',
+    'SURVEYOR 5 • LUNAR LINK',
     'SURVEYOR 5 • TARGET LOCK',
     'REAL-TIME • 1967',
   ];
@@ -402,73 +579,29 @@ function createScreenTexture(variant) {
 
   if (variant === 0) {
     const radius = height * 0.285;
-    const globeGlow = ctx.createRadialGradient(
-      width * 0.5,
-      height * 0.52,
-      0,
-      width * 0.5,
-      height * 0.52,
-      radius * 2.05,
-    );
-    globeGlow.addColorStop(0, 'rgba(92, 214, 255, 0.4)');
-    globeGlow.addColorStop(0.48, 'rgba(45, 150, 228, 0.17)');
-    globeGlow.addColorStop(1, 'rgba(0, 0, 0, 0)');
-    ctx.fillStyle = globeGlow;
-    ctx.fillRect(width * 0.16, top, width * 0.68, contentHeight);
 
-    drawWireGlobe(ctx, width * 0.5, height * 0.52, radius, accent);
+    drawSurveyorSchematic(ctx, width * 0.5, height * 0.52, radius, accent);
 
-    ctx.strokeStyle = 'rgba(122, 224, 255, 0.5)';
+    ctx.strokeStyle = 'rgba(122, 224, 255, 0.45)';
     ctx.lineWidth = 2;
     ctx.setLineDash([10, 8]);
     ctx.beginPath();
-    ctx.ellipse(width * 0.5, height * 0.52, radius * 1.52, radius * 0.54, -0.18, 0, TAU);
+    ctx.ellipse(width * 0.5, height * 0.53, radius * 1.42, radius * 0.8, -0.06, 0, TAU);
     ctx.stroke();
     ctx.setLineDash([]);
 
-    // Radial tracking ticks around the live Earth feed.
-    const globeCx = width * 0.5;
-    const globeCy = height * 0.52;
-    for (let i = 0; i < 48; i += 1) {
-      const angle = (i * TAU) / 48;
-      const inner = radius * 1.14;
-      const outer = radius * (i % 6 === 0 ? 1.27 : 1.2);
-      ctx.strokeStyle = i % 6 === 0 ? 'rgba(166, 241, 255, 0.72)' : 'rgba(103, 202, 241, 0.32)';
-      ctx.lineWidth = i % 6 === 0 ? 2 : 1;
-      ctx.beginPath();
-      ctx.moveTo(globeCx + Math.cos(angle) * inner, globeCy + Math.sin(angle) * inner);
-      ctx.lineTo(globeCx + Math.cos(angle) * outer, globeCy + Math.sin(angle) * outer);
-      ctx.stroke();
-    }
-
-    ctx.strokeStyle = 'rgba(119, 226, 255, 0.4)';
-    ctx.lineWidth = 1.2;
-    for (let i = 0; i < 3; i += 1) {
-      ctx.beginPath();
-      ctx.ellipse(
-        globeCx,
-        globeCy,
-        radius * (1.36 + i * 0.12),
-        radius * (0.46 + i * 0.09),
-        -0.18 + i * 0.16,
-        0,
-        TAU,
-      );
-      ctx.stroke();
-    }
-
     const panelW = width * 0.2;
     const panelH = contentHeight * 0.34;
-    drawDataPanel(ctx, width * 0.03, top, panelW, panelH, 'EARTH RANGE', '384,400 km', 'NOMINAL / LOCKED', accent);
+    drawDataPanel(ctx, width * 0.03, top, panelW, panelH, 'TOUCHDOWN SITE', 'MARE TRANQ.', 'LANDING ZONE 5', accent);
     drawDataPanel(
       ctx,
       width * 0.03,
       top + panelH + height * 0.035,
       panelW,
       panelH,
-      'DEEP SPACE LINK',
-      '-112 dBm',
-      'DSN CANBERRA • 98.4%',
+      'SURFACE GRAVITY',
+      '1.62 m/s²',
+      'SURVEYOR 5 • SITE 5',
       accent,
     );
     drawDataPanel(
@@ -477,9 +610,9 @@ function createScreenTexture(variant) {
       top,
       panelW,
       panelH,
-      'LUNAR GRAVITY',
-      '1.62 m/s²',
-      'SURFACE MODEL v5.2',
+      'SOLAR ARRAY',
+      '112 W',
+      'SUN ANGLE 34°',
       accent,
     );
     drawDataPanel(
@@ -675,11 +808,8 @@ export function createNasaHeadquarters() {
 
   const textures = [];
   const dynamic = {
-    globe: null,
-    clouds: null,
-    points: null,
+    surveyor: null,
     hologram: null,
-    satellites: [],
     glowRings: [],
     screenLights: [],
     dust: null,
@@ -698,14 +828,6 @@ export function createNasaHeadquarters() {
   const glowTexture = createGlowTexture();
   const shadowTexture = createShadowTexture();
   textures.push(consoleTexture, glowTexture, shadowTexture);
-
-  const earthTexture = new THREE.TextureLoader().load('/textures/planets/earth_day.jpg');
-  earthTexture.colorSpace = THREE.SRGBColorSpace;
-  earthTexture.anisotropy = 8;
-  const cloudTexture = new THREE.TextureLoader().load('/textures/planets/earth_clouds.jpg');
-  cloudTexture.colorSpace = THREE.SRGBColorSpace;
-  cloudTexture.anisotropy = 8;
-  textures.push(earthTexture, cloudTexture);
 
   // ---------------------------------------------------------------- materials
   const materials = {
@@ -1312,147 +1434,23 @@ export function createNasaHeadquarters() {
   beam.position.y = 2.55;
   root.add(beam);
 
-  // ------------------------------------------------------------- hologram
+  // ------------------------------------------------------- Surveyor 5 hologram
   const hologram = new THREE.Group();
-  hologram.position.y = 3.48;
+  hologram.position.y = 3.45;
   root.add(hologram);
   dynamic.hologram = hologram;
 
-  const globe = new THREE.Group();
-  hologram.add(globe);
-  dynamic.globe = globe;
-
-  const earth = new THREE.Mesh(
-    new THREE.SphereGeometry(1.02, 48, 32),
-    new THREE.MeshBasicMaterial({
-      map: earthTexture,
-      color: 0x8fd8ff,
-      transparent: true,
-      opacity: 0.88,
-      depthWrite: false,
-      blending: THREE.AdditiveBlending,
-      toneMapped: false,
-    }),
-  );
-  globe.add(earth);
-
-  const clouds = new THREE.Mesh(
-    new THREE.SphereGeometry(1.035, 36, 24),
-    new THREE.MeshBasicMaterial({
-      map: cloudTexture,
-      color: 0xd3f3ff,
-      transparent: true,
-      opacity: 0.16,
-      depthWrite: false,
-      blending: THREE.AdditiveBlending,
-      toneMapped: false,
-    }),
-  );
-  clouds.rotation.y = 0.8;
-  globe.add(clouds);
-  dynamic.clouds = clouds;
-
-  const wire = new THREE.Mesh(
-    new THREE.SphereGeometry(1.055, 24, 16),
-    new THREE.MeshBasicMaterial({
-      color: 0x72dcff,
-      wireframe: true,
-      transparent: true,
-      opacity: 0.2,
-      depthWrite: false,
-      blending: THREE.AdditiveBlending,
-      toneMapped: false,
-    }),
-  );
-  globe.add(wire);
-
-  const surfacePositions = new Float32Array(150 * 3);
-  for (let i = 0; i < 150; i += 1) {
-    const y = 1 - Math.random() * 2;
-    const radius = Math.sqrt(1 - y * y);
-    const theta = Math.random() * TAU;
-    surfacePositions[i * 3] = Math.cos(theta) * radius * 1.06;
-    surfacePositions[i * 3 + 1] = y * 1.06;
-    surfacePositions[i * 3 + 2] = Math.sin(theta) * radius * 1.06;
-  }
-  const surfaceGeometry = new THREE.BufferGeometry();
-  surfaceGeometry.setAttribute('position', new THREE.BufferAttribute(surfacePositions, 3));
-  const surfacePoints = new THREE.Points(
-    surfaceGeometry,
-    new THREE.PointsMaterial({
-      color: 0xd7f8ff,
-      size: 0.02,
-      transparent: true,
-      opacity: 0.7,
-      depthWrite: false,
-      blending: THREE.AdditiveBlending,
-    }),
-  );
-  hologram.add(surfacePoints);
-  dynamic.points = surfacePoints;
+  const surveyorHologram = createSurveyor5Hologram();
+  hologram.add(surveyorHologram.root);
+  dynamic.surveyor = surveyorHologram;
 
   const hologramGlow = new THREE.Sprite(materials.holoGlow);
-  hologramGlow.scale.set(4.8, 4.8, 1);
+  hologramGlow.scale.set(3.8, 3.8, 1);
+  hologramGlow.position.y = 0.15;
   hologram.add(hologramGlow);
 
-  const orbitColors = [0x78e6ff, 0x5eb6ff, 0x9ff4ff];
-  const orbitTilts = [
-    [0.15, 0.2, -0.25],
-    [1.1, -0.25, 0.45],
-    [-0.85, 0.35, 1.0],
-  ];
-  for (let i = 0; i < 3; i += 1) {
-    const orbit = new THREE.Group();
-    orbit.rotation.set(orbitTilts[i][0], orbitTilts[i][1], orbitTilts[i][2]);
-    hologram.add(orbit);
-
-    const orbitRadius = 1.32 + i * 0.14;
-    const ring = new THREE.Mesh(
-      new THREE.TorusGeometry(orbitRadius, 0.006, 5, 96),
-      new THREE.MeshBasicMaterial({
-        color: orbitColors[i],
-        transparent: true,
-        opacity: 0.58,
-        depthWrite: false,
-        blending: THREE.AdditiveBlending,
-        toneMapped: false,
-      }),
-    );
-    orbit.add(ring);
-
-    const satellitePivot = new THREE.Group();
-    orbit.add(satellitePivot);
-
-    const satellite = new THREE.Mesh(
-      new THREE.SphereGeometry(0.045, 10, 8),
-      new THREE.MeshBasicMaterial({ color: 0xffffff, toneMapped: false }),
-    );
-    satellite.position.set(orbitRadius, 0, 0);
-    satellitePivot.add(satellite);
-
-    const satelliteGlow = new THREE.Sprite(
-      new THREE.SpriteMaterial({
-        map: glowTexture,
-        color: orbitColors[i],
-        transparent: true,
-        opacity: 0.8,
-        depthWrite: false,
-        blending: THREE.AdditiveBlending,
-        toneMapped: false,
-      }),
-    );
-    satelliteGlow.scale.set(0.28, 0.28, 1);
-    satellite.add(satelliteGlow);
-
-    dynamic.satellites.push({
-      pivot: satellitePivot,
-      speed: 0.32 + i * 0.13,
-      offset: i * 2.1,
-    });
-  }
-
   const hologramLight = new THREE.PointLight(0x53cfff, 28, 10, 2);
-  hologramLight.position.set(0, 3.48, 0);
+  hologramLight.position.set(0, 3.45, 0);
   root.add(hologramLight);
 
   // --------------------------------------------------------- ceiling details
@@ -1562,26 +1560,16 @@ export function createNasaHeadquarters() {
   root.add(podLight);
 
   const update = (delta, elapsed) => {
-    if (dynamic.globe) {
-      dynamic.globe.rotation.y += delta * 0.11;
-    }
-    if (dynamic.clouds) {
-      dynamic.clouds.rotation.y -= delta * 0.08;
-    }
-    if (dynamic.points) {
-      dynamic.points.rotation.y += delta * 0.045;
+    if (dynamic.surveyor) {
+      dynamic.surveyor.update(delta, elapsed);
     }
     if (dynamic.hologram) {
-      dynamic.hologram.position.y = 3.48 + Math.sin(elapsed * 0.9) * 0.035;
+      dynamic.hologram.position.y = 3.45 + Math.sin(elapsed * 0.9) * 0.03;
     }
     if (dynamic.dust) {
       dynamic.dust.rotation.y += delta * 0.012;
       dynamic.dust.position.y = Math.sin(elapsed * 0.22) * 0.08;
     }
-
-    dynamic.satellites.forEach(({ pivot, speed, offset }) => {
-      pivot.rotation.z = elapsed * speed + offset;
-    });
 
     dynamic.glowRings.forEach((ring, index) => {
       const material = ring.material;
