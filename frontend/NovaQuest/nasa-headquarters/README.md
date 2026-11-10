@@ -7,7 +7,8 @@ modelled procedurally with three.js, so it ships without any external model down
 
 | File | Purpose |
 | --- | --- |
-| `NasaHeadquartersModel.js` | Builds the complete 360° interior: circular command room, eight curved display bays, operator desks and chairs, central dais, holographic Earth, ceiling light panels and floor inlays. Returns `{ root, update, dispose }`. |
+| `NasaHeadquartersModel.js` | Builds the complete 360° interior: circular command room, eight curved display bays, operator desks and chairs, central dais, Surveyor 5 hologram, ceiling light panels and floor inlays. Returns `{ root, update, dispose }`. |
+| `Surveyor5Hologram.js` | Procedural medium-poly Surveyor 5 lander built from additive wireframe panels, glowing edges, a rotating camera turret, antenna motion, base rings, scan ring and drifting particles. Returns `{ root, update }`. |
 | `NasaHeadquartersViewer.jsx` | Self-contained React viewport with OrbitControls, responsive resizing, WebGL fallback, visibility pausing and full resource disposal. |
 | `NasaHeadquartersModal.jsx` | Full-screen interactive presentation of the base, opened from the Level 1: The Moon hub. |
 
@@ -26,8 +27,10 @@ headquarters.update(delta, elapsed);
 headquarters.dispose();
 ```
 
-The model uses the existing texture at `/textures/planets/earth_day.jpg` and
-`/textures/planets/earth_clouds.jpg`.
+All geometry and display artwork is generated at runtime, so the base needs no
+external model or planet textures. The central hologram is the Surveyor 5 lander
+from `Surveyor5Hologram.js`; the wall displays show its schematic, landing site
+and descent telemetry.
 
 ## Using the viewer
 

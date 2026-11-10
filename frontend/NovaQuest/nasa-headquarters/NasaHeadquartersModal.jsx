@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Building2, Earth, MousePointer2, ScanLine, Sparkles, X } from 'lucide-react';
+import { Building2, MousePointer2, Rocket, ScanLine, Sparkles, X } from 'lucide-react';
 import NasaHeadquartersViewer from './NasaHeadquartersViewer';
 import { gameAudio } from '../config/gameAudio';
 
@@ -118,8 +118,8 @@ export default function NasaHeadquartersModal({ isOpen, onClose }) {
                 Medium-poly base
               </span>
               <span className="inline-flex items-center gap-1.5 rounded-full border border-[#4F79FF]/30 bg-[#071426]/80 px-3 py-1.5 text-[8px] font-semibold uppercase tracking-[0.22em] text-[#9cd8f2] sm:text-[9px]">
-                <Earth className="h-3 w-3 text-[#7fe3ff]" aria-hidden="true" />
-                Holographic Earth
+                <Rocket className="h-3 w-3 text-[#7fe3ff]" aria-hidden="true" />
+                Surveyor 5 hologram
               </span>
               <span className="hidden items-center gap-1.5 rounded-full border border-[#4F79FF]/30 bg-[#071426]/80 px-3 py-1.5 text-[9px] font-semibold uppercase tracking-[0.22em] text-[#9cd8f2] sm:inline-flex">
                 <Sparkles className="h-3 w-3 text-[#7fe3ff]" aria-hidden="true" />

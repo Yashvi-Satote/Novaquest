@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
@@ -9,12 +9,22 @@ import { createNasaHeadquarters } from './NasaHeadquartersModel';
  *
  * Reusable three.js viewport for the NASA Headquarters base. The camera lives
  * inside the circular room and orbits the command dais, so only the interior
- * ever needs to be modelled.
+ * ever needs to be modelled. A sci-fi blast door on the wall leads "outside";
+ * it can be opened and closed with the D key or via the imperative handle
+ * (toggleDoor / openDoor / closeDoor).
  */
-export default function NasaHeadquartersViewer({ className = '' }) {
+const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer({ className = '' }, ref) {
   const mountRef = useRef(null);
   const [ready, setReady] = useState(false);
   const [webglFailed, setWebglFailed] = useState(false);
+  const [doorOpen, setDoorOpen] = useState(false);
+  const doorHolderRef = useRef(null);
+
+  useImperativeHandle(ref, () => ({
+    toggleDoor: () => doorHolderRef.current && doorHolderRef.current.toggle(),
+    openDoor: () => doorHolderRef.current && doorHolderRef.current.setOpen(true),
+    closeDoor: () => doorHolderRef.current && doorHolderRef.current.setOpen(false),
+  }));
 
   useEffect(() => {
     const container = mountRef.current;
@@ -63,6 +73,24 @@ export default function NasaHeadquartersViewer({ className = '' }) {
 
     const headquarters = createNasaHeadquarters();
     scene.add(headquarters.root);
+
+    // --- Blast door control -------------------------------------------------
+    const setDoorState = (open) => {
+      headquarters.door.setOpen(open);
+      setDoorOpen(open);
+    };
+    const doorControl = {
+      toggle: () => setDoorState(!headquarters.door.isOpen()),
+      setOpen: (open) => setDoorState(open),
+    };
+    doorHolderRef.current = doorControl;
+
+    const handleKeyDown = (event) => {
+      if (event.key === 'd' || event.key === 'D') {
+        doorControl.toggle();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
 
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
@@ -187,4 +215,6 @@ export default function NasaHeadquartersViewer({ className = '' }) {
       )}
     </div>
   );
-}
+});
+
+export default NasaHeadquartersViewer;
