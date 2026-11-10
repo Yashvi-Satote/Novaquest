@@ -813,6 +813,9 @@ export function createNasaHeadquarters() {
     glowRings: [],
     screenLights: [],
     dust: null,
+    doorPanels: [],
+    doorOpenAmount: 0,
+    doorTarget: 0,
   };
 
   const screenTextures = [0, 1, 2].map((variant) => {
@@ -851,6 +854,11 @@ export function createNasaHeadquarters() {
     desk: new THREE.MeshStandardMaterial({ color: 0x1a2736, roughness: 0.48, metalness: 0.38 }),
     deskTop: new THREE.MeshStandardMaterial({ color: 0x9aabbc, roughness: 0.52, metalness: 0.32 }),
     white: new THREE.MeshStandardMaterial({ color: 0xc4d2de, roughness: 0.5, metalness: 0.22 }),
+    doorFrame: new THREE.MeshStandardMaterial({ color: 0xc3d0d5, roughness: 0.46, metalness: 0.34 }),
+    doorArmor: new THREE.MeshStandardMaterial({ color: 0x8fa4af, roughness: 0.4, metalness: 0.5 }),
+    doorShell: new THREE.MeshStandardMaterial({ color: 0x596a74, roughness: 0.42, metalness: 0.52 }),
+    doorInset: new THREE.MeshStandardMaterial({ color: 0x455863, roughness: 0.52, metalness: 0.45 }),
+    doorEdge: new THREE.MeshStandardMaterial({ color: 0x233440, roughness: 0.48, metalness: 0.58 }),
     chair: new THREE.MeshStandardMaterial({ color: 0x111923, roughness: 0.72, metalness: 0.24 }),
     rubber: new THREE.MeshStandardMaterial({ color: 0x05090e, roughness: 0.95 }),
     cyan: new THREE.MeshBasicMaterial({
@@ -937,12 +945,33 @@ export function createNasaHeadquarters() {
   floor.rotation.x = -Math.PI / 2;
   root.add(floor);
 
-  const wall = new THREE.Mesh(
-    new THREE.CylinderGeometry(ROOM_RADIUS + 0.05, ROOM_RADIUS + 0.05, ROOM_HEIGHT, 96, 1, true),
-    materials.wall,
-  );
-  wall.position.y = ROOM_HEIGHT / 2;
-  root.add(wall);
+  const doorwayHalfAngle = 0.24;
+  const wallRadius = ROOM_RADIUS + 0.05;
+  const doorAngle = Math.PI + Math.PI / 8;
+  const doorwayWallAngle = doorAngle;
+  const doorwayStart = doorwayWallAngle - doorwayHalfAngle;
+  const doorwayEnd = doorwayWallAngle + doorwayHalfAngle;
+  const wallSegments = [
+    [0, doorwayStart],
+    [doorwayEnd, TAU - doorwayEnd],
+  ];
+  wallSegments.forEach(([thetaStart, thetaLength]) => {
+    const wall = new THREE.Mesh(
+      new THREE.CylinderGeometry(
+        wallRadius,
+        wallRadius,
+        ROOM_HEIGHT,
+        Math.max(4, Math.round((96 * thetaLength) / TAU)),
+        1,
+        true,
+        thetaStart,
+        thetaLength,
+      ),
+      materials.wall,
+    );
+    wall.position.y = ROOM_HEIGHT / 2;
+    root.add(wall);
+  });
 
   const ceiling = new THREE.Mesh(new THREE.CircleGeometry(ROOM_RADIUS + 0.05, 96), materials.ceiling);
   ceiling.rotation.x = Math.PI / 2;
@@ -1012,32 +1041,326 @@ export function createNasaHeadquarters() {
   root.add(daisShadow);
 
   // ------------------------------------------------------------- wall hardware
-  const lowerBand = new THREE.Mesh(
-    new THREE.CylinderGeometry(ROOM_RADIUS - 0.08, ROOM_RADIUS - 0.08, 1.25, 96, 1, true),
-    materials.wallBand,
-  );
-  lowerBand.position.y = 1.46;
-  root.add(lowerBand);
+  wallSegments.forEach(([thetaStart, thetaLength]) => {
+    const lowerBand = new THREE.Mesh(
+      new THREE.CylinderGeometry(
+        ROOM_RADIUS - 0.08,
+        ROOM_RADIUS - 0.08,
+        1.25,
+        Math.max(4, Math.round((96 * thetaLength) / TAU)),
+        1,
+        true,
+        thetaStart,
+        thetaLength,
+      ),
+      materials.wallBand,
+    );
+    lowerBand.position.y = 1.46;
+    root.add(lowerBand);
+  });
 
-  const bandTrim = new THREE.Mesh(
-    new THREE.TorusGeometry(ROOM_RADIUS - 0.12, 0.024, 8, 160),
-    materials.cyanSoft,
-  );
-  bandTrim.rotation.x = Math.PI / 2;
-  bandTrim.position.y = 2.09;
-  root.add(bandTrim);
+  const addWallTrim = (radius, thickness, y) => {
+    const trim = new THREE.Mesh(
+      new THREE.TorusGeometry(radius, thickness, 8, 160, TAU - doorwayHalfAngle * 2),
+      materials.cyanSoft,
+    );
+    trim.rotation.set(Math.PI / 2, 0, Math.PI / 2 - doorwayEnd);
+    trim.position.y = y;
+    root.add(trim);
+  };
+  addWallTrim(ROOM_RADIUS - 0.12, 0.024, 2.09);
+  addWallTrim(ROOM_RADIUS - 0.15, 0.028, 0.06);
 
-  const floorTrim = new THREE.Mesh(
-    new THREE.TorusGeometry(ROOM_RADIUS - 0.15, 0.028, 8, 160),
-    materials.cyanSoft,
+  // The airlock replaces a wall bay with a faceted, pressure-sealed portal.
+  const doorFrameShape = new THREE.Shape();
+  doorFrameShape.moveTo(-2.5, 0);
+  doorFrameShape.lineTo(2.5, 0);
+  doorFrameShape.lineTo(2.5, 5.25);
+  doorFrameShape.lineTo(2.16, 5.55);
+  doorFrameShape.lineTo(2.16, 5.93);
+  doorFrameShape.lineTo(1.72, 6.36);
+  doorFrameShape.lineTo(-1.72, 6.36);
+  doorFrameShape.lineTo(-2.16, 5.93);
+  doorFrameShape.lineTo(-2.16, 5.55);
+  doorFrameShape.lineTo(-2.5, 5.25);
+  doorFrameShape.closePath();
+
+  const doorOpening = new THREE.Path();
+  doorOpening.moveTo(-1.56, 0.3);
+  doorOpening.lineTo(1.56, 0.3);
+  doorOpening.lineTo(1.82, 0.58);
+  doorOpening.lineTo(1.82, 5.02);
+  doorOpening.lineTo(1.52, 5.32);
+  doorOpening.lineTo(-1.52, 5.32);
+  doorOpening.lineTo(-1.82, 5.02);
+  doorOpening.lineTo(-1.82, 0.58);
+  doorOpening.closePath();
+  doorFrameShape.holes.push(doorOpening);
+
+  const doorInnerRimShape = new THREE.Shape();
+  doorInnerRimShape.moveTo(-1.68, 0.18);
+  doorInnerRimShape.lineTo(1.68, 0.18);
+  doorInnerRimShape.lineTo(2.0, 0.52);
+  doorInnerRimShape.lineTo(2.0, 5.1);
+  doorInnerRimShape.lineTo(1.62, 5.5);
+  doorInnerRimShape.lineTo(-1.62, 5.5);
+  doorInnerRimShape.lineTo(-2.0, 5.1);
+  doorInnerRimShape.lineTo(-2.0, 0.52);
+  doorInnerRimShape.closePath();
+  doorInnerRimShape.holes.push(doorOpening.clone());
+
+  const doorArmorShape = new THREE.Shape();
+  doorArmorShape.moveTo(-2.35, 0.08);
+  doorArmorShape.lineTo(2.35, 0.08);
+  doorArmorShape.lineTo(2.35, 5.18);
+  doorArmorShape.lineTo(2.02, 5.5);
+  doorArmorShape.lineTo(2.02, 5.84);
+  doorArmorShape.lineTo(1.64, 6.2);
+  doorArmorShape.lineTo(-1.64, 6.2);
+  doorArmorShape.lineTo(-2.02, 5.84);
+  doorArmorShape.lineTo(-2.02, 5.5);
+  doorArmorShape.lineTo(-2.35, 5.18);
+  doorArmorShape.closePath();
+
+  const armorOpening = new THREE.Path();
+  armorOpening.moveTo(-1.72, 0.25);
+  armorOpening.lineTo(1.72, 0.25);
+  armorOpening.lineTo(1.94, 0.49);
+  armorOpening.lineTo(1.94, 5.08);
+  armorOpening.lineTo(1.56, 5.46);
+  armorOpening.lineTo(-1.56, 5.46);
+  armorOpening.lineTo(-1.94, 5.08);
+  armorOpening.lineTo(-1.94, 0.49);
+  armorOpening.closePath();
+  doorArmorShape.holes.push(armorOpening);
+
+  const doorFrame = new THREE.Mesh(
+    new THREE.ExtrudeGeometry(doorFrameShape, {
+      depth: 0.46,
+      bevelEnabled: true,
+      bevelSegments: 2,
+      bevelSize: 0.075,
+      bevelThickness: 0.08,
+    }),
+    materials.doorFrame,
   );
-  floorTrim.rotation.x = Math.PI / 2;
-  floorTrim.position.y = 0.06;
-  root.add(floorTrim);
+  doorFrame.position.set(0, 0.08, -0.46);
+  const doorArmor = new THREE.Mesh(
+    new THREE.ExtrudeGeometry(doorArmorShape, {
+      depth: 0.12,
+      bevelEnabled: true,
+      bevelSegments: 1,
+      bevelSize: 0.035,
+      bevelThickness: 0.035,
+    }),
+    materials.doorArmor,
+  );
+  doorArmor.position.set(0, 0.06, -0.67);
+  const doorInnerRim = new THREE.Mesh(
+    new THREE.ExtrudeGeometry(doorInnerRimShape, {
+      depth: 0.1,
+      bevelEnabled: true,
+      bevelSegments: 1,
+      bevelSize: 0.035,
+      bevelThickness: 0.025,
+    }),
+    materials.doorEdge,
+  );
+  doorInnerRim.position.set(0, 0, -0.79);
+  const airlock = new THREE.Group();
+  airlock.position.copy(polar(wallRadius, doorAngle));
+  airlock.rotation.y = doorAngle;
+  root.add(airlock);
+  airlock.add(doorFrame);
+  airlock.add(doorArmor);
+  airlock.add(doorInnerRim);
+
+  const doorHitTarget = new THREE.Mesh(
+    new THREE.PlaneGeometry(4.05, 5.45),
+    new THREE.MeshBasicMaterial({
+      transparent: true,
+      opacity: 0,
+      colorWrite: false,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+    }),
+  );
+  doorHitTarget.position.set(0, 2.85, -0.86);
+  airlock.add(doorHitTarget);
+
+  const doorHardware = new THREE.Group();
+  doorHardware.position.z = -0.62;
+  airlock.add(doorHardware);
+
+  const addDoorBox = (width, height, depth, material, x, y, z) => {
+    const mesh = new THREE.Mesh(new THREE.BoxGeometry(width, height, depth), material);
+    mesh.position.set(x, y, z);
+    doorHardware.add(mesh);
+    return mesh;
+  };
+
+  addDoorBox(3.46, 0.19, 0.18, materials.doorEdge, 0, 6.02, 0.015);
+  [-1.52, -0.51, 0.51, 1.52].forEach((x, index) => {
+    const cap = addDoorBox(0.96, 0.26, 0.2, materials.doorFrame, x, 6.12, -0.18);
+    cap.rotation.z = index % 2 === 0 ? -0.035 : 0.035;
+    addDoorBox(0.72, 0.035, 0.035, materials.doorArmor, x, 6.27, -0.22);
+  });
+
+  [-2.13, 2.13].forEach((x) => {
+    addDoorBox(0.34, 4.68, 0.22, materials.doorEdge, x, 2.85, -0.21);
+    addDoorBox(0.23, 4.32, 0.16, materials.doorFrame, x, 2.85, -0.27);
+    addDoorBox(0.055, 3.74, 0.035, materials.doorArmor, x, 2.86, -0.37);
+    addDoorBox(0.52, 0.18, 0.28, materials.doorFrame, x, 0.14, -0.24);
+    addDoorBox(0.52, 0.18, 0.28, materials.doorFrame, x, 5.61, -0.24);
+  });
+
+  // The left jamb carries a recessed maintenance panel and cooling grille.
+  addDoorBox(0.57, 0.88, 0.22, materials.doorArmor, -2.35, 2.54, -0.28);
+  addDoorBox(0.43, 0.47, 0.055, materials.doorEdge, -2.35, 2.59, -0.42);
+  for (let slot = 0; slot < 6; slot += 1) {
+    addDoorBox(0.025, 0.36, 0.025, materials.doorArmor, -2.53 + slot * 0.072, 2.59, -0.47);
+  }
+  addDoorBox(0.25, 0.15, 0.06, materials.cyanSoft, -2.35, 2.93, -0.47);
+  addDoorBox(0.15, 0.65, 0.1, materials.doorEdge, 2.35, 1.08, -0.3);
+  addDoorBox(0.085, 0.42, 0.04, materials.cyan, 2.35, 1.08, -0.37);
+
+  [-1.92, 1.92].forEach((x) => {
+    [4.58, 4.92].forEach((y, index) => {
+      const lock = new THREE.Mesh(
+        new THREE.CylinderGeometry(index === 0 ? 0.085 : 0.105, index === 0 ? 0.085 : 0.105, 0.075, 10),
+        materials.doorEdge,
+      );
+      lock.rotation.x = Math.PI / 2;
+      lock.position.set(x, y, -0.29);
+      doorHardware.add(lock);
+      const core = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.038, 0.038, 0.08, 8),
+        index === 0 ? materials.cyan : materials.doorArmor,
+      );
+      core.rotation.x = Math.PI / 2;
+      core.position.set(x, y, -0.34);
+      doorHardware.add(core);
+    });
+  });
+
+  addDoorBox(3.08, 0.09, 0.12, materials.whiteGlow, 0, 5.17, -0.24);
+  addDoorBox(2.84, 0.075, 0.16, materials.cyan, 0, 5.17, -0.32);
+  [-1.56, 1.56].forEach((x) => {
+    addDoorBox(0.12, 0.075, 0.12, materials.doorEdge, x, 5.35, -0.3);
+    addDoorBox(0.06, 0.09, 0.055, materials.cyan, x, 5.35, -0.38);
+  });
+
+  const doorPanelMaterial = materials.doorShell;
+  [-1, 1].forEach((side) => {
+    const panel = new THREE.Group();
+    panel.position.set(side * 0.91, 2.85, 0.02);
+    doorHardware.add(panel);
+    dynamic.doorPanels.push({ panel, side });
+
+    const panelShell = new THREE.Mesh(
+      new THREE.BoxGeometry(1.84, 4.76, 0.17),
+      doorPanelMaterial,
+    );
+    panel.add(panelShell);
+
+    const inset = new THREE.Mesh(
+      new THREE.BoxGeometry(1.56, 4.42, 0.045),
+      materials.doorInset,
+    );
+    inset.position.set(0, -0.02, -0.105);
+    panel.add(inset);
+
+    [-0.69, 0.69].forEach((x) => {
+      const rail = new THREE.Mesh(
+        new THREE.BoxGeometry(0.045, 4.18, 0.035),
+        materials.doorEdge,
+      );
+      rail.position.set(x, 0, -0.14);
+      panel.add(rail);
+
+      const highlight = new THREE.Mesh(
+        new THREE.BoxGeometry(0.018, 3.88, 0.02),
+        materials.doorArmor,
+      );
+      highlight.position.set(x + (x < 0 ? 0.04 : -0.04), 0, -0.17);
+      panel.add(highlight);
+    });
+
+    [-1.74, 1.74].forEach((y) => {
+      const joint = new THREE.Mesh(
+        new THREE.BoxGeometry(1.46, 0.055, 0.045),
+        materials.doorEdge,
+      );
+      joint.position.set(0, y, -0.14);
+      panel.add(joint);
+      const jointLight = new THREE.Mesh(
+        new THREE.BoxGeometry(0.84, 0.018, 0.025),
+        materials.doorArmor,
+      );
+      jointLight.position.set(0, y + (y < 0 ? 0.055 : -0.055), -0.17);
+      panel.add(jointLight);
+    });
+
+    const centerRidge = new THREE.Mesh(
+      new THREE.BoxGeometry(0.075, 3.92, 0.075),
+      materials.doorArmor,
+    );
+    centerRidge.position.set(side < 0 ? 0.78 : -0.78, 0, -0.18);
+    panel.add(centerRidge);
+
+    const panelRidge = new THREE.Mesh(
+      new THREE.BoxGeometry(0.09, 3.5, 0.06),
+      materials.doorShell,
+    );
+    panelRidge.position.set(side < 0 ? -0.25 : 0.25, 0, -0.15);
+    panel.add(panelRidge);
+  });
+
+  // A short exterior service pad is visible through the open airlock.
+  const exteriorPad = new THREE.Group();
+  exteriorPad.position.set(0, 0, 1.95);
+  airlock.add(exteriorPad);
+  const padBase = new THREE.Mesh(
+    new THREE.BoxGeometry(4.5, 0.16, 4.5),
+    materials.doorFrame,
+  );
+  padBase.position.y = 0.22;
+  exteriorPad.add(padBase);
+  [-1.72, 1.72].forEach((x) => {
+    const guide = new THREE.Mesh(
+      new THREE.BoxGeometry(0.055, 0.025, 3.8),
+      materials.cyan,
+    );
+    guide.position.set(x, 0.315, 0);
+    exteriorPad.add(guide);
+  });
+  const padMark = new THREE.Mesh(
+    new THREE.BoxGeometry(1.25, 0.025, 0.07),
+    materials.white,
+  );
+  padMark.position.set(0, 0.315, -1.55);
+  exteriorPad.add(padMark);
+
+  const threshold = new THREE.Mesh(
+    new THREE.BoxGeometry(4.45, 0.12, 0.95),
+    materials.darkMetal,
+  );
+  threshold.position.set(0, 0.06, -0.95);
+  airlock.add(threshold);
+
+  [-1.72, 1.72].forEach((x) => {
+    const thresholdGuide = new THREE.Mesh(
+      new THREE.BoxGeometry(0.055, 0.02, 0.82),
+      materials.cyan,
+    );
+    thresholdGuide.position.set(x, 0.13, -0.95);
+    airlock.add(thresholdGuide);
+  });
 
   // Small wall devices between display bays.
   for (let i = 0; i < 16; i += 1) {
     const angle = (i * TAU) / 16;
+    if (i === 9) continue;
     const device = new THREE.Mesh(
       new THREE.BoxGeometry(0.62, 0.32, 0.16),
       i % 3 === 0 ? materials.darkMetal : materials.frame,
@@ -1098,6 +1421,7 @@ export function createNasaHeadquarters() {
   const glowBarSide = new THREE.BoxGeometry(0.045, 2.76, 0.08);
 
   for (let i = 0; i < BAY_COUNT; i += 1) {
+    if (i === 4) continue;
     const angle = BAY_OFFSET + i * BAY_STEP;
     const bay = new THREE.Group();
     bay.position.copy(polar(SCREEN_RADIUS, angle, SCREEN_HEIGHT));
@@ -1278,6 +1602,7 @@ export function createNasaHeadquarters() {
 
   for (let i = 0; i < BAY_COUNT; i += 1) {
     const angle = BAY_OFFSET + i * BAY_STEP;
+    if (i === 4) continue;
 
     const station = createWorkstation();
     station.position.copy(polar(9.85, angle));
@@ -1560,6 +1885,14 @@ export function createNasaHeadquarters() {
   root.add(podLight);
 
   const update = (delta, elapsed) => {
+    dynamic.doorOpenAmount +=
+      (dynamic.doorTarget - dynamic.doorOpenAmount) * Math.min(1, delta * 4.5);
+    dynamic.doorPanels.forEach(({ panel, side }) => {
+      const openAmount = dynamic.doorOpenAmount;
+      panel.position.x = side * (0.91 + openAmount * 2.02);
+      panel.position.z = 0.02 + openAmount * 0.58;
+    });
+
     if (dynamic.surveyor) {
       dynamic.surveyor.update(delta, elapsed);
     }
@@ -1598,5 +1931,12 @@ export function createNasaHeadquarters() {
     root.clear();
   };
 
-  return { root, update, dispose };
+  const door = {
+    setOpen: (open) => {
+      dynamic.doorTarget = open ? 1 : 0;
+    },
+    isOpen: () => dynamic.doorTarget > 0.5,
+  };
+
+  return { root, update, dispose, door, doorHitTarget };
 }
