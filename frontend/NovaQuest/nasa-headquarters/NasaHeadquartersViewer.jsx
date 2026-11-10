@@ -124,7 +124,6 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer({ clas
       toggle: () =>
         setFiringRoomDoorState(!headquarters.corridor.firingRoom.door.isOpen()),
     };
-    doorHolderRef.current = doorControl;
 
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
@@ -267,15 +266,21 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer({ clas
       },
       toggleCharacterControl,
       resumeFirstPerson: enterFirstPerson,
+      toggleStorageDoor: storageDoorControl.toggle,
+      toggleFiringRoomDoor: firingRoomDoorControl.toggle,
     };
 
     const raycaster = new THREE.Raycaster();
     const pointer = new THREE.Vector2();
-    const interactionTargets = headquarters.interactionTargets.map((interaction) =>
-      interaction.target === headquarters.corridor.storageRoom.entryDoor.hitTarget
-        ? { ...interaction, toggle: storageDoorControl.toggle }
-        : interaction,
-    );
+    const interactionTargets = headquarters.interactionTargets.map((interaction) => {
+      if (interaction.target === headquarters.corridor.storageRoom.entryDoor.hitTarget) {
+        return { ...interaction, toggle: storageDoorControl.toggle };
+      }
+      if (interaction.target === headquarters.corridor.firingRoom.door.hitTarget) {
+        return { ...interaction, toggle: firingRoomDoorControl.toggle };
+      }
+      return interaction;
+    });
     let pointerDown = null;
     const updatePointerPosition = (event) => {
       const bounds = renderer.domElement.getBoundingClientRect();
@@ -912,7 +917,7 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer({ clas
             </button>
             <button
               type="button"
-              onClick={() => storageDoorControl.toggle()}
+              onClick={() => doorHolderRef.current && doorHolderRef.current.toggleStorageDoor()}
               aria-pressed={storageDoorOpen}
               className="rounded-lg border border-[#7fe3ff]/35 bg-[#071426]/85 px-3 py-2 text-[9px] font-semibold uppercase tracking-[0.18em] text-[#9cd8f2] shadow-[0_0_20px_rgba(61,107,255,0.18)] backdrop-blur-md transition-colors hover:border-[#7fe3ff]/70 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7fe3ff]"
             >
@@ -920,7 +925,7 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer({ clas
             </button>
             <button
               type="button"
-              onClick={() => firingRoomDoorControl.toggle()}
+              onClick={() => doorHolderRef.current && doorHolderRef.current.toggleFiringRoomDoor()}
               aria-pressed={firingRoomDoorOpen}
               className="rounded-lg border border-[#7fe3ff]/35 bg-[#071426]/85 px-3 py-2 text-[9px] font-semibold uppercase tracking-[0.18em] text-[#9cd8f2] shadow-[0_0_20px_rgba(61,107,255,0.18)] backdrop-blur-md transition-colors hover:border-[#7fe3ff]/70 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7fe3ff]"
             >
@@ -954,7 +959,7 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer({ clas
           </div>
           {(firstPersonMode || characterControlMode) && (
             <div className="pointer-events-none absolute bottom-6 left-1/2 z-20 -translate-x-1/2 rounded-full border border-[#7fe3ff]/25 bg-[#071426]/80 px-4 py-2 text-center text-[8px] font-semibold uppercase tracking-[0.18em] text-[#b8d8e8] backdrop-blur-md sm:text-[9px]">
-              WASD move · {characterControlMode ? 'Drag to orbit' : '360° mouse look'} · Shift sprint · E airlock · F parts room · Esc exit
+              WASD move · {characterControlMode ? 'Drag to orbit' : '360° mouse look'} · Shift sprint · E airlock · F parts room · G firing room · Esc exit
             </div>
           )}
         </>

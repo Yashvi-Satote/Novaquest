@@ -76,7 +76,9 @@ export function createNasaHeadquartersCorridor() {
   addBox(corridor, 1.0, 0.09, CORRIDOR_LENGTH, materials.trim, 0, 6.44, CORRIDOR_LENGTH / 2);
 
   for (let z = 2; z < CORRIDOR_LENGTH - 1; z += 5) {
-    addBox(corridor, 0.52, 6.2, 0.58, materials.trim, -3.67, 3.1, z);
+    if (Math.abs(z - STORAGE_ENTRY_Z) >= STORAGE_ENTRY_HALF_WIDTH + 0.6) {
+      addBox(corridor, 0.52, 6.2, 0.58, materials.trim, -3.67, 3.1, z);
+    }
     addBox(corridor, 0.52, 6.2, 0.58, materials.trim, 3.67, 3.1, z);
     addBox(corridor, 7.95, 0.5, 0.58, materials.trim, 0, 6.05, z);
 
