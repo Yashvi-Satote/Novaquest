@@ -165,23 +165,23 @@ export function createNasaHeadquartersFiringRoom() {
 
   [-1, 1].forEach((side) => {
     addBox(root, ROOM_HALF_WIDTH - DOOR_HALF_WIDTH, 6.75, 0.36, materials.wall, side * (ROOM_HALF_WIDTH + DOOR_HALF_WIDTH) / 2, 3.35, -0.08);
-    addBox(root, ROOM_HALF_WIDTH * 2, 0.35, 0.38, materials.wall, 0, 7.27, -0.08);
     addBox(root, 0.16, 5.55, 0.3, materials.trim, side * 2.14, 2.9, 0.02);
     addBox(root, 0.08, 5.1, 0.12, materials.cyan, side * 2.02, 2.9, 0.12);
   });
+  addBox(root, ROOM_HALF_WIDTH * 2, 0.35, 0.38, materials.wall, 0, 7.27, -0.08);
 
-  addBox(root, 0.22, 7.1, ROOM_HALF_WIDTH * 2, materials.wall, 0, 3.55, ROOM_DEPTH);
+  addBox(root, ROOM_HALF_WIDTH * 2, 7.1, 0.22, materials.wall, 0, 3.55, ROOM_DEPTH);
   addBox(root, 15.8, 6.8, 0.24, materials.frame, 0, 4.08, ROOM_DEPTH - 0.22);
-  addBox(root, 14.9, 5.9, 0.12, materials.screen, 0, 4.1, ROOM_DEPTH - 0.38);
+  addBox(root, 14.9, 5.9, 0.12, materials.screen, 0, 4.1, ROOM_DEPTH - 0.42);
   const launchDisplay = new THREE.Mesh(
     new THREE.PlaneGeometry(14.55, 5.55),
     materials.launch,
   );
   launchDisplay.rotation.y = Math.PI;
-  launchDisplay.position.set(0, 4.1, ROOM_DEPTH - 0.32);
+  launchDisplay.position.set(0, 4.1, ROOM_DEPTH - 0.49);
   root.add(launchDisplay);
-  addBox(root, 14.7, 0.07, 0.08, materials.cyan, 0, 7.04, ROOM_DEPTH - 0.3);
-  addBox(root, 14.7, 0.07, 0.08, materials.cyan, 0, 1.16, ROOM_DEPTH - 0.3);
+  addBox(root, 14.7, 0.07, 0.08, materials.cyan, 0, 7.04, ROOM_DEPTH - 0.47);
+  addBox(root, 14.7, 0.07, 0.08, materials.cyan, 0, 1.16, ROOM_DEPTH - 0.47);
 
   addBox(root, 10.4, 0.06, 0.045, materials.cyan, 0, 6.85, ROOM_DEPTH - 0.55);
   addBox(root, 10.4, 0.58, 0.12, materials.frame, 0, 6.46, ROOM_DEPTH - 0.54);
@@ -225,7 +225,7 @@ export function createNasaHeadquartersFiringRoom() {
       addBox(desk, 1.08, 0.76, 0.09, materials.frame, x, 2.0, 0.15);
       const display = new THREE.Mesh(new THREE.PlaneGeometry(0.94, 0.61), screenMaterial);
       display.rotation.y = Math.PI;
-      display.position.set(x, 2.0, 0.2);
+      display.position.set(x, 2.0, 0.095);
       desk.add(display);
       addBox(desk, 0.08, 0.42, 0.08, materials.trim, x, 1.58, 0.15);
       addBox(desk, 0.52, 0.06, 0.08, materials.trim, x, 1.42, 0.15);
