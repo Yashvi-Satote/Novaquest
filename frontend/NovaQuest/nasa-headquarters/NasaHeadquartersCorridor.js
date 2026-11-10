@@ -1,6 +1,10 @@
 import * as THREE from 'three';
+import { createNasaHeadquartersFiringRoom } from './NasaHeadquartersFiringRoom';
+import { createNasaHeadquartersStorageRoom } from './NasaHeadquartersStorageRoom';
 
 const CORRIDOR_LENGTH = 54;
+const STORAGE_ENTRY_Z = 27;
+const STORAGE_ENTRY_HALF_WIDTH = 2.4;
 
 export function createNasaHeadquartersCorridor() {
   const corridor = new THREE.Group();
@@ -38,17 +42,48 @@ export function createNasaHeadquartersCorridor() {
   addBox(corridor, 1.22, 0.035, CORRIDOR_LENGTH, materials.lane, 3.05, 0.035, CORRIDOR_LENGTH / 2);
   addBox(corridor, 0.075, 0.025, CORRIDOR_LENGTH, materials.light, 0, 0.045, CORRIDOR_LENGTH / 2);
 
-  addBox(corridor, 0.24, 6.7, CORRIDOR_LENGTH, materials.shell, -4.18, 3.28, CORRIDOR_LENGTH / 2);
-  addBox(corridor, 0.24, 6.7, CORRIDOR_LENGTH, materials.shell, 4.18, 3.28, CORRIDOR_LENGTH / 2);
+  [-1, 1].forEach((side) => {
+    if (side > 0) {
+      addBox(corridor, 0.24, 6.7, CORRIDOR_LENGTH, materials.shell, side * 4.18, 3.28, CORRIDOR_LENGTH / 2);
+      return;
+    }
+
+    const openingStart = STORAGE_ENTRY_Z - STORAGE_ENTRY_HALF_WIDTH;
+    const openingEnd = STORAGE_ENTRY_Z + STORAGE_ENTRY_HALF_WIDTH;
+    addBox(corridor, 0.24, 6.7, openingStart, materials.shell, side * 4.18, 3.28, openingStart / 2);
+    addBox(
+      corridor,
+      0.24,
+      6.7,
+      CORRIDOR_LENGTH - openingEnd,
+      materials.shell,
+      side * 4.18,
+      3.28,
+      (openingEnd + CORRIDOR_LENGTH) / 2,
+    );
+    addBox(
+      corridor,
+      0.24,
+      1.35,
+      openingEnd - openingStart,
+      materials.shell,
+      side * 4.18,
+      6.025,
+      STORAGE_ENTRY_Z,
+    );
+  });
   addBox(corridor, 8.55, 0.3, CORRIDOR_LENGTH, materials.shell, 0, 6.66, CORRIDOR_LENGTH / 2);
   addBox(corridor, 1.0, 0.09, CORRIDOR_LENGTH, materials.trim, 0, 6.44, CORRIDOR_LENGTH / 2);
 
   for (let z = 2; z < CORRIDOR_LENGTH - 1; z += 5) {
-    addBox(corridor, 0.52, 6.2, 0.58, materials.trim, -3.67, 3.1, z);
+    if (Math.abs(z - STORAGE_ENTRY_Z) >= STORAGE_ENTRY_HALF_WIDTH + 0.6) {
+      addBox(corridor, 0.52, 6.2, 0.58, materials.trim, -3.67, 3.1, z);
+    }
     addBox(corridor, 0.52, 6.2, 0.58, materials.trim, 3.67, 3.1, z);
     addBox(corridor, 7.95, 0.5, 0.58, materials.trim, 0, 6.05, z);
 
     [-1, 1].forEach((side) => {
+      if (side < 0 && Math.abs(z - STORAGE_ENTRY_Z) < 3.2) return;
       const shoulder = addBox(
         corridor,
         0.42,
@@ -77,6 +112,7 @@ export function createNasaHeadquartersCorridor() {
     addBox(corridor, 0.08, 0.12, CORRIDOR_LENGTH, materials.panel, side * 3.44, 6.1, CORRIDOR_LENGTH / 2);
 
     for (let z = 5; z < CORRIDOR_LENGTH - 5; z += 10) {
+      if (side < 0 && Math.abs(z - STORAGE_ENTRY_Z) < 4.5) continue;
       addPanel(side, z, 2.4, 1.72, materials.panel, 2.55);
       addPanel(side, z, 1.45, 0.08, materials.trim, 3.58);
       addPanel(side, z, 1.5, 0.06, materials.trim, 1.5);
@@ -107,12 +143,10 @@ export function createNasaHeadquartersCorridor() {
     corridor.add(lamp);
   }
 
-  const endWall = addBox(corridor, 8.2, 6.5, 0.42, materials.shell, 0, 3.18, CORRIDOR_LENGTH);
-  endWall.castShadow = true;
-  addBox(corridor, 4.2, 3.35, 0.22, materials.trim, 0, 2.25, CORRIDOR_LENGTH - 0.3);
-  addBox(corridor, 3.65, 2.82, 0.12, materials.panel, 0, 2.25, CORRIDOR_LENGTH - 0.16);
-  addBox(corridor, 2.7, 0.075, 0.06, materials.cyan, 0, 3.15, CORRIDOR_LENGTH - 0.07);
-  addBox(corridor, 8.3, 0.5, 0.6, materials.dark, 0, 0.12, CORRIDOR_LENGTH - 0.18);
+  const storageRoom = createNasaHeadquartersStorageRoom();
+  corridor.add(storageRoom.root);
+  const firingRoom = createNasaHeadquartersFiringRoom();
+  corridor.add(firingRoom.root);
 
-  return { root: corridor, length: CORRIDOR_LENGTH };
+  return { root: corridor, length: CORRIDOR_LENGTH, storageRoom, firingRoom };
 }

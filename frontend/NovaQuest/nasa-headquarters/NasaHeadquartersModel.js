@@ -1074,7 +1074,7 @@ export function createNasaHeadquarters() {
       new THREE.TorusGeometry(radius, thickness, 8, 160, TAU - doorwayHalfAngle * 2),
       materials.cyanSoft,
     );
-    trim.rotation.set(Math.PI / 2, 0, Math.PI / 2 - doorwayEnd);
+    trim.rotation.set(Math.PI / 2, 0, Math.PI / 2 - doorwayStart);
     trim.position.y = y;
     root.add(trim);
   };
@@ -1178,6 +1178,7 @@ export function createNasaHeadquarters() {
   );
   doorInnerRim.position.set(0, 0, -0.79);
   const airlock = new THREE.Group();
+  airlock.userData.noCollision = true;
   airlock.position.copy(polar(wallRadius, doorAngle));
   airlock.rotation.y = doorAngle;
   root.add(airlock);
@@ -1263,6 +1264,7 @@ export function createNasaHeadquarters() {
   const doorPanelMaterial = materials.doorShell;
   [-1, 1].forEach((side) => {
     const panel = new THREE.Group();
+    panel.userData.noCollision = true;
     panel.position.set(side * 0.91, 2.85, 0.02);
     doorHardware.add(panel);
     dynamic.doorPanels.push({ panel, side });
@@ -1870,6 +1872,8 @@ export function createNasaHeadquarters() {
   root.add(podLight);
 
   const update = (delta, elapsed) => {
+    corridor.storageRoom.update(delta);
+    corridor.firingRoom.update(delta);
     dynamic.doorOpenAmount +=
       (dynamic.doorTarget - dynamic.doorOpenAmount) * Math.min(1, delta * 4.5);
     dynamic.doorPanels.forEach(({ panel, side }) => {
@@ -1923,5 +1927,11 @@ export function createNasaHeadquarters() {
     isOpen: () => dynamic.doorTarget > 0.5,
   };
 
-  return { root, update, dispose, door, doorHitTarget, character, corridor };
+  const interactionTargets = [
+    { target: doorHitTarget, toggle: () => door.setOpen(!door.isOpen()) },
+    ...corridor.storageRoom.interactionTargets,
+    ...corridor.firingRoom.interactionTargets,
+  ];
+
+  return { root, update, dispose, door, doorHitTarget, character, corridor, interactionTargets };
 }
