@@ -26,7 +26,9 @@ import { createCapeCanaveralEnvironment } from '../components/gameplay/three/Cap
 import { createLaunchSmokeSystem } from '../components/gameplay/three/RocketLaunchpadModel';
 import { createThirdPersonController } from '../components/gameplay/three/ThirdPersonPlayerController';
 import { gameAudio } from '../config/gameAudio';
+import { USE_OLD_LUNAR_MAP } from '../config/lunarMapConfig';
 import { saveGame } from '../game/saveManager';
+import OldLunarMapPage from './OldLunarMapPage';
 
 /**
  * Level1Surveyor5Page.jsx
@@ -47,10 +49,18 @@ import { saveGame } from '../game/saveManager';
 export default function Level1Surveyor5Page() {
   const navigate = useNavigate();
   const canvasContainerRef = useRef(null);
+  const introVideoRef = useRef(null);
+  const introFadeFrameRef = useRef(null);
+  const introFadeStartedRef = useRef(false);
 
   // --- Game Master Phase State ---
-  // 'phase1_launch' | 'phase2_emergency' | 'phase3_cockpit' | 'phase4_open_world' | 'phase5_victory'
-  const [gamePhase, setGamePhase] = useState('phase1_launch');
+  // 'phase0_intro' | 'phase1_launch' | 'phase2_emergency' | 'phase3_cockpit' | 'phase4_open_world' | 'phase5_victory'
+  const [gamePhase, setGamePhase] = useState('phase0_intro');
+  const [openingStage, setOpeningStage] = useState('video');
+  const [hasStartedIntro, setHasStartedIntro] = useState(false);
+  const [isIntroVideoFading, setIsIntroVideoFading] = useState(false);
+  const [introVideoError, setIntroVideoError] = useState(false);
+  const [introPlaybackBlocked, setIntroPlaybackBlocked] = useState(false);
 
   // Inventory & Component Recovery Tracking
   const [inventory, setInventory] = useState([]); // array of collected component ids
@@ -66,7 +76,6 @@ export default function Level1Surveyor5Page() {
 
   // Radio / Character Dialogue Overlay State
   const [radioTransmission, setRadioTransmission] = useState(null);
-  const [isAudioSpeaking, setIsAudioSpeaking] = useState(false);
 
   // Cockpit Flight Telemetry (Phase 3)
   const [flightAltitude, setFlightAltitude] = useState(120);
@@ -81,16 +90,71 @@ export default function Level1Surveyor5Page() {
   const installedSlotsRef = useRef(installedSlots);
   installedSlotsRef.current = installedSlots;
 
+  useEffect(() => {
+    if (openingStage !== 'date') return undefined;
+
+    const launchTimeout = window.setTimeout(() => {
+      setOpeningStage('complete');
+      phaseRef.current = 'phase1_launch';
+      setGamePhase('phase1_launch');
+    }, 3500);
+
+    return () => window.clearTimeout(launchTimeout);
+  }, [openingStage]);
+
+  useEffect(() => () => {
+    if (introFadeFrameRef.current !== null) {
+      cancelAnimationFrame(introFadeFrameRef.current);
+    }
+  }, []);
+
   // -------------------------------------------------------------
-  // RADIO TRANSMISSION HELPER
+  // RADIO TEXT HELPER
   // -------------------------------------------------------------
   const playRadioMessage = (speaker, title, text, onEnd = null) => {
     setRadioTransmission({ speaker, title, text });
-    setIsAudioSpeaking(true);
-    gameAudio.speakDialogue(text, speaker === 'jaffe' ? 'jaffe' : 'leo', null, () => {
-      setIsAudioSpeaking(false);
-      if (onEnd) onEnd();
-    });
+    if (onEnd) onEnd();
+  };
+
+  const fadeOutIntro = () => {
+    if (introFadeStartedRef.current) return;
+    introFadeStartedRef.current = true;
+
+    const video = introVideoRef.current;
+    const startVolume = video?.volume ?? 1;
+    const startTime = performance.now();
+    const fadeDuration = 1000;
+    setIsIntroVideoFading(true);
+
+    const fadeAudio = now => {
+      const progress = Math.min((now - startTime) / fadeDuration, 1);
+      if (video) video.volume = startVolume * (1 - progress);
+      if (progress < 1) {
+        introFadeFrameRef.current = requestAnimationFrame(fadeAudio);
+      } else {
+        introFadeFrameRef.current = null;
+      }
+    };
+
+    introFadeFrameRef.current = requestAnimationFrame(fadeAudio);
+  };
+
+  const startIntroVideo = () => {
+    const video = introVideoRef.current;
+    if (!video) return;
+
+    introFadeStartedRef.current = false;
+    setIsIntroVideoFading(false);
+    video.muted = false;
+    video.volume = 1;
+    video.play()
+      .then(() => {
+        setHasStartedIntro(true);
+        setIntroPlaybackBlocked(false);
+      })
+      .catch(() => {
+        setIntroPlaybackBlocked(true);
+      });
   };
 
   // -------------------------------------------------------------
@@ -242,26 +306,10 @@ export default function Level1Surveyor5Page() {
     let rocketVel = 0;
     let phaseTimer = 0;
     let locatorPingTimer = 0;
-
-    // Start Phase 1 launch sequence
-    setTimeout(() => {
-      playRadioMessage(
-        'jaffe',
-        'Dr. Leonard Jaffe • NASA Project Scientist',
-        'Cape Canaveral, September 8, 1967. The Atlas-Centaur rocket is primed on Launch Complex 36. Surveyor 5 must reach the Moon to test the lunar soil for Apollo!'
-      );
-    }, 1200);
-
-    // Retract Service Swing Arms at 4.5s
-    setTimeout(() => {
-      capeEnvironment.setSwingArmsRetracted(true);
-    }, 4500);
-
-    // Launch Engine Ignition at 5.5s
-    setTimeout(() => {
-      atlasCentaur.staging.state = 'liftoff';
-      gameAudio.playThruster(6.0);
-    }, 5500);
+    let activePhase = phaseRef.current;
+    let launchBriefingSent = false;
+    let swingArmsRetracted = false;
+    let engineIgnited = false;
 
     let animFrameId;
     const animate = () => {
@@ -269,11 +317,26 @@ export default function Level1Surveyor5Page() {
 
       const now = performance.now();
       const delta = Math.min((now - prevTime) / 1000, 0.1);
-      const elapsed = (now - startTime) / 1000;
       prevTime = now;
-      phaseTimer += delta;
-
       const curPhase = phaseRef.current;
+
+      if (curPhase !== activePhase) {
+        activePhase = curPhase;
+        phaseTimer = 0;
+
+        if (curPhase === 'phase1_launch') {
+          startTime = now;
+          rocketY = 0;
+          rocketVel = 0;
+          atlasCentaur.root.position.y = 3.2;
+          launchBriefingSent = false;
+          swingArmsRetracted = false;
+          engineIgnited = false;
+        }
+      }
+
+      if (curPhase !== 'phase0_intro') phaseTimer += delta;
+      const elapsed = (now - startTime) / 1000;
 
       // =========================================================
       // PHASE 1: CAPE CANAVERAL LAUNCH & MECHANICAL STAGING
@@ -282,6 +345,26 @@ export default function Level1Surveyor5Page() {
         launchpadGroup.visible = true;
         cockpitGroup.visible = false;
         openWorldGroup.visible = false;
+
+        if (!launchBriefingSent && phaseTimer >= 1.2) {
+          launchBriefingSent = true;
+          playRadioMessage(
+            'jaffe',
+            'Dr. Leonard Jaffe • Launch Control',
+            "June 29, 2126. Surveyor 5 is waiting on the Moon. You're launching from Cape Canaveral to retrieve the probe and restore its science systems. You're go for lunar transfer!"
+          );
+        }
+
+        if (!swingArmsRetracted && phaseTimer >= 4.5) {
+          swingArmsRetracted = true;
+          capeEnvironment.setSwingArmsRetracted(true);
+        }
+
+        if (!engineIgnited && phaseTimer >= 5.5) {
+          engineIgnited = true;
+          atlasCentaur.staging.state = 'liftoff';
+          gameAudio.playThruster(6.0);
+        }
 
         // Update environment & rocket staging
         capeEnvironment.update(delta, elapsed, rocketY);
@@ -355,7 +438,7 @@ export default function Level1Surveyor5Page() {
             playRadioMessage(
               'jaffe',
               'Dr. Leonard Jaffe • Launch Control',
-              'Payload fairing jettisoned! Surveyor 5 is exposed to space, on track for the Moon!'
+              'Payload fairing jettisoned! The rescue craft is exposed to space and on course for the Moon!'
             );
           }
 
@@ -375,7 +458,7 @@ export default function Level1Surveyor5Page() {
             playRadioMessage(
               'jaffe',
               'Dr. Leonard Jaffe • Launch Control',
-              'Surveyor 5 spacecraft separation confirmed! Landing gear locked! Translunar injection successful!'
+              'Lunar transfer confirmed! Your rescue craft is on course to Surveyor 5!'
             );
           }
 
@@ -396,7 +479,7 @@ export default function Level1Surveyor5Page() {
           playRadioMessage(
             'jaffe',
             'Dr. Leonard Jaffe • Emergency Broadcast',
-            "Leo! Mayday! Surveyor 5 touched down in the Sea of Tranquility, but an electrical malfunction blew four vital components across the crater! We need you to fly the rescue ship, recover the lost parts, and repair Surveyor 5!"
+            "Surveyor 5 landed in Mare Tranquillitatis and is waiting to be retrieved. Fly the rescue craft to the probe, recover its four missing science components, and bring Surveyor 5 back online!"
           );
         }
       }
@@ -450,7 +533,7 @@ export default function Level1Surveyor5Page() {
           playRadioMessage(
             'jaffe',
             'Dr. Leonard Jaffe • Mission Control',
-            "Touchdown confirmed in Mare Tranquillitatis! Leo, scan the crater for the colored light beacons! Recover the four scattered components and bring them back to Surveyor 5!"
+            "You've landed at Mare Tranquillitatis! Find Surveyor 5 and its four science components, then retrieve and restore the probe."
           );
         }
       }
@@ -712,14 +795,6 @@ export default function Level1Surveyor5Page() {
   // -------------------------------------------------------------
   // USER ACTIONS / HANDLERS
   // -------------------------------------------------------------
-  const handleStartCockpitMission = () => {
-    gameAudio.playClick();
-    gameAudio.playThruster(4.0);
-    setGamePhase('phase3_cockpit');
-    setFlightAltitude(120);
-    setFlightVelocity(2450);
-  };
-
   const handleSkipToOpenWorld = () => {
     gameAudio.playClick();
     phaseRef.current = 'phase4_open_world';
@@ -727,7 +802,7 @@ export default function Level1Surveyor5Page() {
     playRadioMessage(
       'jaffe',
       'Dr. Leonard Jaffe • Mission Control',
-      "Touchdown confirmed in Mare Tranquillitatis! Leo, scan the crater for the colored light beacons! Recover the four scattered components and bring them back to Surveyor 5!"
+      "Surveyor 5 is waiting at Mare Tranquillitatis! Pilot the rescue craft to the probe, locate its four science components, and bring Surveyor 5 back online!"
     );
   };
 
@@ -739,9 +814,88 @@ export default function Level1Surveyor5Page() {
   };
 
   return (
-    <div className="relative w-screen h-screen overflow-hidden bg-slate-950 font-sans text-slate-100 select-none">
+    <>
+    <div className={`relative w-screen h-screen overflow-hidden bg-slate-950 font-sans text-slate-100 select-none${USE_OLD_LUNAR_MAP && gamePhase === 'phase4_open_world' ? ' hidden' : ''}`}>
       {/* Master 3D Viewport */}
       <div ref={canvasContainerRef} className="w-full h-full cursor-crosshair" />
+
+      {openingStage === 'video' && (
+        <div className="absolute inset-0 z-50 overflow-hidden bg-black">
+          <video
+            ref={introVideoRef}
+            playsInline
+            preload="auto"
+            src="/videos/milky-way-intro.mp4"
+            onEnded={fadeOutIntro}
+            onError={() => setIntroVideoError(true)}
+            onTransitionEnd={event => {
+              if (event.propertyName === 'opacity' && isIntroVideoFading) {
+                introVideoRef.current?.pause();
+                setOpeningStage('date');
+              }
+            }}
+            className={`h-full w-full object-cover transition-opacity duration-1000 ease-in-out ${
+              isIntroVideoFading ? 'opacity-0' : 'opacity-100'
+            }`}
+          />
+          {!hasStartedIntro && !introVideoError && (
+            <button
+              type="button"
+              onClick={startIntroVideo}
+              className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-black/50 text-white transition hover:bg-black/35"
+            >
+              <span className="flex h-20 w-20 items-center justify-center rounded-full border border-white/60 bg-white/10 text-3xl backdrop-blur">
+                ▶
+              </span>
+              <span className="text-sm font-bold uppercase tracking-[0.3em]">
+                Play intro with sound
+              </span>
+              {introPlaybackBlocked && (
+                <span className="text-sm text-red-200">
+                  Playback was blocked. Click to try again.
+                </span>
+              )}
+            </button>
+          )}
+          {introVideoError && (
+            <div className="absolute inset-x-0 bottom-20 mx-auto w-fit rounded-xl border border-red-400/40 bg-slate-950/90 px-5 py-3 text-center text-sm text-red-200">
+              <p>The intro video could not be played.</p>
+              <button
+                type="button"
+                onClick={fadeOutIntro}
+                className="mt-2 font-bold text-white underline underline-offset-4"
+              >
+                Continue to launch
+              </button>
+            </div>
+          )}
+          {hasStartedIntro && !introVideoError && (
+            <button
+              type="button"
+              onClick={fadeOutIntro}
+              className="absolute bottom-8 right-8 rounded-full border border-white/30 bg-black/50 px-5 py-2 text-sm font-bold text-white/80 backdrop-blur transition hover:bg-black/80 hover:text-white"
+            >
+              Skip intro
+            </button>
+          )}
+        </div>
+      )}
+
+      {openingStage === 'date' && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black animate-fade-in">
+          <div className="text-center">
+            <p className="mb-4 text-xs font-semibold uppercase tracking-[0.5em] text-slate-400">
+              Cape Canaveral • Earth
+            </p>
+            <h2 className="text-4xl font-light tracking-[0.28em] text-white sm:text-6xl">
+              29 JUNE 2126
+            </h2>
+            <p className="mt-5 text-sm uppercase tracking-[0.35em] text-sky-300">
+              Lunar Transfer Mission
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* ----------------------------------------------------------- */}
       {/* TOP HUD BAR: Mission Status, Radar, Inventory, Skip Controls */}
@@ -756,11 +910,11 @@ export default function Level1Surveyor5Page() {
                 Level 1 • Mare Tranquillitatis
               </span>
               <span className="text-[9px] px-1.5 py-0.2 rounded bg-sky-950 text-sky-300 font-bold border border-sky-500/30">
-                1967
+                2126
               </span>
             </div>
             <h1 className="text-xs sm:text-sm font-extrabold text-white">
-              Surveyor 5 — The Lost Components
+              Surveyor 5 — Retrieval Mission
             </h1>
           </div>
         </div>
@@ -850,20 +1004,20 @@ export default function Level1Surveyor5Page() {
             </span>
 
             <h2 className="text-2xl sm:text-3xl font-black text-white mt-1 mb-3">
-              Surveyor 5 Subsystems Scattered!
+              Retrieve Surveyor 5
             </h2>
 
             <p className="text-sm sm:text-base text-slate-300 mb-6 leading-relaxed">
-              Dr. Leonard Jaffe reports that a post-landing shockwave detached Surveyor 5's vital instruments into the surrounding crater. Enter your spacecraft, fly to Mare Tranquillitatis, and recover the 4 lost components!
+              Your rescue craft has reached Mare Tranquillitatis. Land and explore the lunar surface, locate Surveyor 5 and its four science components, then retrieve and restore the probe.
             </p>
 
             <button
-              id="enter-spacecraft-btn"
-              onClick={handleStartCockpitMission}
+              id="land-on-moon-btn"
+              onClick={handleSkipToOpenWorld}
               className="flex items-center justify-center gap-3 w-full py-4 rounded-2xl bg-gradient-to-r from-red-600 via-amber-600 to-sky-600 hover:from-red-500 hover:to-sky-500 text-white font-extrabold text-base shadow-xl shadow-red-500/25 active:scale-95 transition-all"
             >
               <Rocket className="w-5 h-5" />
-              <span>Enter Spacecraft & Fly to Moon</span>
+              <span>Land on Moon</span>
             </button>
           </div>
         </div>
@@ -1013,12 +1167,6 @@ export default function Level1Surveyor5Page() {
                 <span className="text-[10px] font-black text-sky-400 uppercase tracking-wider">
                   {radioTransmission.title.split('•')[0]}
                 </span>
-                {isAudioSpeaking && (
-                  <span className="flex items-center gap-1 text-[9px] text-amber-300 font-bold">
-                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping" />
-                    Voice
-                  </span>
-                )}
               </div>
               <p className="text-xs text-slate-100 font-medium truncate sm:whitespace-normal leading-snug">
                 {radioTransmission.text}
@@ -1102,5 +1250,12 @@ export default function Level1Surveyor5Page() {
         </div>
       )}
     </div>
+    {USE_OLD_LUNAR_MAP && gamePhase === 'phase4_open_world' && (
+      <OldLunarMapPage
+        onComplete={() => setGamePhase('phase5_victory')}
+        onReturnMenu={() => navigate('/missions')}
+      />
+    )}
+    </>
   );
 }
