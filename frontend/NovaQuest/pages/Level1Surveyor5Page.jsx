@@ -61,6 +61,7 @@ export default function Level1Surveyor5Page() {
   const [isIntroVideoFading, setIsIntroVideoFading] = useState(false);
   const [introVideoError, setIntroVideoError] = useState(false);
   const [introPlaybackBlocked, setIntroPlaybackBlocked] = useState(false);
+  const isOldLunarMapActive = USE_OLD_LUNAR_MAP && gamePhase === 'phase4_open_world';
 
   // Inventory & Component Recovery Tracking
   const [inventory, setInventory] = useState([]); // array of collected component ids
@@ -161,6 +162,8 @@ export default function Level1Surveyor5Page() {
   // THREE.JS MASTER ENGINE
   // -------------------------------------------------------------
   useEffect(() => {
+    if (isOldLunarMapActive) return undefined;
+
     const container = canvasContainerRef.current;
     if (!container) return;
 
@@ -777,9 +780,28 @@ export default function Level1Surveyor5Page() {
       if (renderer.domElement && container.contains(renderer.domElement)) {
         container.removeChild(renderer.domElement);
       }
+      const geometries = new Set();
+      const materials = new Set();
+      const textures = new Set();
+      scene.traverse((object) => {
+        if (object.geometry) geometries.add(object.geometry);
+        const objectMaterials = Array.isArray(object.material)
+          ? object.material
+          : object.material ? [object.material] : [];
+        objectMaterials.forEach((material) => materials.add(material));
+      });
+      materials.forEach((material) => {
+        Object.values(material).forEach((value) => {
+          if (value?.isTexture) textures.add(value);
+        });
+      });
+      textures.forEach((texture) => texture.dispose());
+      materials.forEach((material) => material.dispose());
+      geometries.forEach((geometry) => geometry.dispose());
       renderer.dispose();
+      renderer.forceContextLoss();
     };
-  }, []);
+  }, [isOldLunarMapActive]);
 
   // Reference for test / debug mission completion
   useEffect(() => {
@@ -824,7 +846,7 @@ export default function Level1Surveyor5Page() {
           <video
             ref={introVideoRef}
             playsInline
-            preload="auto"
+            preload="metadata"
             src="/videos/milky-way-intro.mp4"
             onEnded={fadeOutIntro}
             onError={() => setIntroVideoError(true)}
