@@ -1,5 +1,6 @@
 import React, { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import * as THREE from 'three';
+import { Box, MousePointerClick, X } from 'lucide-react';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls.js';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
@@ -26,7 +27,13 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer({ clas
   const [firstPersonMode, setFirstPersonMode] = useState(false);
   const [characterControlMode, setCharacterControlMode] = useState(false);
   const [pointerLocked, setPointerLocked] = useState(false);
+  const [selectedComponent, setSelectedComponent] = useState(null);
   const doorHolderRef = useRef(null);
+  const selectedComponentRef = useRef(null);
+
+  useEffect(() => {
+    selectedComponentRef.current = selectedComponent;
+  }, [selectedComponent]);
 
   useImperativeHandle(ref, () => ({
     toggleDoor: () => doorHolderRef.current && doorHolderRef.current.toggle(),
@@ -218,6 +225,7 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer({ clas
     pointerControls.addEventListener('unlock', handlePointerLock);
 
     const handleKeyDown = (event) => {
+      if (selectedComponentRef.current) return;
       const key = event.key.toLowerCase();
       if (firstPersonActive || characterControlActive) {
         if (['w', 'a', 's', 'd', 'arrowup', 'arrowleft', 'arrowdown', 'arrowright', 'shift'].includes(key)) {
@@ -243,7 +251,14 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer({ clas
     };
     const handleKeyUp = (event) => movementKeys.delete(event.key.toLowerCase());
     const handleEscapeCapture = (event) => {
-      if (event.key === 'Escape' && (firstPersonActive || characterControlActive)) {
+      if (event.key !== 'Escape') return;
+      if (selectedComponentRef.current) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        setSelectedComponent(null);
+        return;
+      }
+      if (firstPersonActive || characterControlActive) {
         event.preventDefault();
         event.stopImmediatePropagation();
         if (firstPersonActive) {
@@ -312,7 +327,12 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer({ clas
       lookPointer = null;
       if (event.button === 0 && distance < 6) {
         const interaction = getInteractionAtPointer(event);
-        if (interaction) interaction.toggle();
+        if (interaction?.component) {
+          if (firstPersonActive && pointerControls.isLocked) pointerControls.unlock();
+          setSelectedComponent(interaction.component);
+        } else if (interaction?.toggle) {
+          interaction.toggle();
+        }
       }
     };
     const handlePointerCancel = () => {
@@ -960,6 +980,102 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer({ clas
           {(firstPersonMode || characterControlMode) && (
             <div className="pointer-events-none absolute bottom-6 left-1/2 z-20 -translate-x-1/2 rounded-full border border-[#7fe3ff]/25 bg-[#071426]/80 px-4 py-2 text-center text-[8px] font-semibold uppercase tracking-[0.18em] text-[#b8d8e8] backdrop-blur-md sm:text-[9px]">
               WASD move · {characterControlMode ? 'Drag to orbit' : '360° mouse look'} · Shift sprint · E airlock · F parts room · G firing room · Esc exit
+            </div>
+          )}
+
+          {selectedComponent && (
+            <div
+              className="absolute inset-0 z-40 flex items-center justify-center bg-[#02060d]/55 p-4 backdrop-blur-[2px] sm:p-8"
+              role="presentation"
+              onClick={(event) => {
+                if (event.target === event.currentTarget) setSelectedComponent(null);
+              }}
+            >
+              <div
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="storage-component-title"
+                className="relative w-full max-w-lg overflow-hidden rounded-2xl border bg-[#050c16]/95 shadow-[0_24px_90px_rgba(0,0,0,0.65)]"
+                style={{
+                  borderColor: `${selectedComponent.accent}66`,
+                  boxShadow: `0 24px 90px rgba(0,0,0,0.7), 0 0 45px ${selectedComponent.accentSoft}`,
+                }}
+              >
+                <div
+                  className="h-1 w-full"
+                  style={{
+                    background: `linear-gradient(90deg, ${selectedComponent.accent}, transparent 75%)`,
+                  }}
+                />
+
+                <div className="flex items-start gap-3 border-b border-white/10 px-5 py-4 sm:px-6">
+                  <span
+                    className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border"
+                    style={{
+                      borderColor: `${selectedComponent.accent}66`,
+                      backgroundColor: selectedComponent.accentSoft,
+                      color: selectedComponent.accent,
+                    }}
+                  >
+                    <Box className="h-5 w-5" aria-hidden="true" />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p
+                      className="text-[8px] font-semibold uppercase tracking-[0.3em]"
+                      style={{ color: selectedComponent.accent }}
+                    >
+                      Storage Room · Part Inventory
+                    </p>
+                    <p className="mt-1 text-[9px] font-semibold uppercase tracking-[0.22em] text-[#91aabd]">
+                      {selectedComponent.missionName} · {selectedComponent.missionEra}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedComponent(null)}
+                    aria-label="Close component details"
+                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/15 bg-white/5 text-[#bcd0e2] transition-colors hover:border-[#7fe3ff]/60 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7fe3ff]"
+                  >
+                    <X className="h-4 w-4" aria-hidden="true" />
+                  </button>
+                </div>
+
+                <div className="px-5 py-5 sm:px-6 sm:py-6">
+                  <div className="mb-3 flex flex-wrap items-center gap-2">
+                    <span
+                      className="rounded-full border px-2.5 py-1 text-[8px] font-semibold uppercase tracking-[0.2em]"
+                      style={{
+                        borderColor: `${selectedComponent.accent}55`,
+                        backgroundColor: selectedComponent.accentSoft,
+                        color: selectedComponent.accent,
+                      }}
+                    >
+                      {selectedComponent.missionCode}
+                    </span>
+                    <span className="rounded-full border border-white/10 bg-white/[0.035] px-2.5 py-1 text-[8px] font-semibold uppercase tracking-[0.2em] text-[#9db5c8]">
+                      {selectedComponent.category}
+                    </span>
+                  </div>
+
+                  <h3
+                    id="storage-component-title"
+                    className="text-xl font-semibold leading-snug text-white sm:text-2xl"
+                  >
+                    {selectedComponent.name}
+                  </h3>
+                  <p className="mt-3 text-sm leading-relaxed text-[#b8c9d8]">
+                    {selectedComponent.description}
+                  </p>
+                </div>
+
+                <div className="flex flex-col gap-2 border-t border-white/10 bg-white/[0.025] px-5 py-3 text-[8px] font-semibold uppercase tracking-[0.22em] text-[#7f9bb0] sm:flex-row sm:items-center sm:justify-between sm:px-6">
+                  <span className="inline-flex items-center gap-2">
+                    <MousePointerClick className="h-3.5 w-3.5 text-[#7fe3ff]" aria-hidden="true" />
+                    Click a sprite to inspect it
+                  </span>
+                  <span>50 catalogued components</span>
+                </div>
+              </div>
             </div>
           )}
         </>
