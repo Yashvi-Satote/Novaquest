@@ -1,4 +1,6 @@
 import * as THREE from 'three';
+import { createComponentSpriteTexture } from './componentSpriteTexture';
+import { STORAGE_ROOM_COMPONENTS } from './storageRoomComponents';
 
 const ROOM_DEPTH = 17;
 const ROOM_HALF_WIDTH = 8.25;
@@ -104,6 +106,7 @@ export function createNasaHeadquartersStorageRoom() {
   };
   const cupboardDoors = [];
   const interactionTargets = [];
+  const componentSprites = [];
   const entryDoorPanels = [];
   let entryDoorTarget = 0;
   let entryDoorOpenAmount = 0;
@@ -192,7 +195,45 @@ export function createNasaHeadquartersStorageRoom() {
   };
   interactionTargets.push({ target: entryHitTarget, toggle: entryDoor.toggle });
 
-  // Eight illuminated, glass-front parts cupboards with independent hinged doors.
+  // Scatter the component catalog through eight illuminated glass cupboards.
+  // A fixed shuffle keeps the layout deterministic while mixing all three
+  // spacecraft collections across both walls of the room.
+  const componentOrder = [...STORAGE_ROOM_COMPONENTS];
+  let shuffleSeed = 0x5f3759df;
+  for (let index = componentOrder.length - 1; index > 0; index -= 1) {
+    shuffleSeed = (Math.imul(shuffleSeed, 1664525) + 1013904223) >>> 0;
+    const swapIndex = shuffleSeed % (index + 1);
+    [componentOrder[index], componentOrder[swapIndex]] = [
+      componentOrder[swapIndex],
+      componentOrder[index],
+    ];
+  }
+  const cabinetComponentCounts = [7, 6, 7, 6, 6, 6, 6, 6];
+  const shelfCenters = [0.69, 1.85, 3.01, 4.1];
+  const rowScales = [0.72, 0.72, 0.72, 0.62];
+  const slotLayouts = {
+    6: [
+      [0, -0.58],
+      [0, 0.58],
+      [1, -0.58],
+      [1, 0.58],
+      [2, 0],
+      [3, 0],
+    ],
+    7: [
+      [0, -0.58],
+      [0, 0.58],
+      [1, -0.58],
+      [1, 0.58],
+      [2, -0.58],
+      [2, 0.58],
+      [3, 0],
+    ],
+  };
+  let componentCursor = 0;
+  let cabinetCursor = 0;
+  let componentElapsed = 0;
+
   const cabinetPositions = [-2.2, -5.7, -9.2, -12.7];
   [-1, 1].forEach((side) => {
     cabinetPositions.forEach((centerX, cabinetIndex) => {
@@ -211,34 +252,62 @@ export function createNasaHeadquartersStorageRoom() {
         addBox(cabinet, 2.58, 0.12, 0.76, materials.shelf, 0, y, 0);
       });
 
-      for (let shelfIndex = 0; shelfIndex < 4; shelfIndex += 1) {
-        const rowY = 0.8 + shelfIndex * 1.08;
-        const partCount = 3 + ((cabinetIndex + shelfIndex) % 3);
-        for (let partIndex = 0; partIndex < partCount; partIndex += 1) {
-          const partX = -0.92 + partIndex * (1.84 / Math.max(1, partCount - 1));
-          if ((cabinetIndex + shelfIndex) % 2 === 0 && partIndex % 2 === 0) {
-            const canister = new THREE.Mesh(
-              new THREE.CylinderGeometry(0.095, 0.12, 0.45 + (partIndex % 3) * 0.08, 8),
-              materials.parts,
-            );
-            canister.position.set(partX, rowY + 0.24, side * -0.15);
-            cabinet.add(canister);
-            addBox(cabinet, 0.23, 0.045, 0.23, materials.cyan, partX, rowY + 0.48, side * -0.15);
-          } else {
-            const part = addBox(
-              cabinet,
-              0.34 + (partIndex % 2) * 0.1,
-              0.28 + (shelfIndex % 2) * 0.08,
-              0.3,
-              partIndex % 3 === 0 ? materials.trim : materials.parts,
-              partX,
-              rowY + 0.2,
-              side * -0.14,
-            );
-            part.rotation.y = (partIndex % 2 ? 1 : -1) * 0.14;
-          }
-        }
-      }
+      const componentCount = cabinetComponentCounts[cabinetCursor] ?? 6;
+      const slots = slotLayouts[componentCount] || slotLayouts[6];
+
+      slots.forEach(([shelfIndex, x], slotIndex) => {
+        const component = componentOrder[componentCursor];
+        if (!component) return;
+        componentCursor += 1;
+
+        const scale = rowScales[shelfIndex] ?? 0.7;
+        const y = shelfCenters[shelfIndex] ?? 1.8;
+        const texture = createComponentSpriteTexture(component);
+        const material = new THREE.SpriteMaterial({
+          map: texture,
+          transparent: true,
+          depthWrite: false,
+          toneMapped: false,
+          alphaTest: 0.02,
+        });
+        const sprite = new THREE.Sprite(material);
+        sprite.name = `StorageComponent:${component.id}`;
+        sprite.position.set(x, y, side * -0.1);
+        sprite.scale.set(scale, scale, 1);
+        sprite.userData.component = component;
+        sprite.userData.componentSprite = true;
+        sprite.userData.baseY = y;
+        sprite.userData.phase = (componentCursor + cabinetIndex + slotIndex) * 0.73;
+        sprite.renderOrder = 3;
+        cabinet.add(sprite);
+
+        // A thin lit plinth grounds each floating inventory card on its shelf.
+        addBox(
+          cabinet,
+          0.5,
+          0.022,
+          0.16,
+          materials.cyan,
+          x,
+          y - scale / 2 - 0.015,
+          side * -0.1,
+        );
+        addBox(
+          cabinet,
+          scale + 0.06,
+          scale + 0.06,
+          0.012,
+          materials.display,
+          x,
+          y,
+          side * 0.01,
+        );
+
+        componentSprites.push(sprite);
+        interactionTargets.push({ target: sprite, component });
+      });
+
+      cabinetCursor += 1;
 
       const label = addBox(cabinet, 0.76, 0.22, 0.055, materials.display, 0, 4.94, side * -0.49);
       label.rotation.y = side > 0 ? 0 : Math.PI;
@@ -249,7 +318,7 @@ export function createNasaHeadquartersStorageRoom() {
         width: 2.48,
         height: 3.92,
         hingeSide,
-        open: false,
+        open: true,
         side,
         materials,
       });
@@ -314,13 +383,21 @@ export function createNasaHeadquartersStorageRoom() {
     entryDoor,
     cupboardDoors,
     interactionTargets,
+    components: STORAGE_ROOM_COMPONENTS,
+    componentSprites,
     update: (delta) => {
+      componentElapsed += delta;
       entryDoorOpenAmount += (entryDoorTarget - entryDoorOpenAmount) * Math.min(1, delta * 4.5);
       entryDoorPanels.forEach(({ panel, side }) => {
         panel.position.z = side * (0.96 + entryDoorOpenAmount * 1.9);
       });
       cupboardDoors.forEach((door) => {
         door.update(delta);
+      });
+      componentSprites.forEach((sprite) => {
+        const wave = Math.sin(componentElapsed * 0.9 + sprite.userData.phase);
+        sprite.position.y = sprite.userData.baseY + wave * 0.006;
+        sprite.material.opacity = 0.95 + wave * 0.04;
       });
     },
   };
