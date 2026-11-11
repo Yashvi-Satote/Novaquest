@@ -8,6 +8,7 @@ import SolarSystemPage from '../NovaMap/pages/SolarSystemPage';
 import TimeTravelersHomePage from '../NovaQuest/pages/TimeTravelersHomePage';
 import MissionSelectPage from '../NovaQuest/pages/MissionSelectPage';
 import Level1Surveyor5Page from '../NovaQuest/pages/Level1Surveyor5Page';
+import MemoirPage from '../NovaQuest/pages/MemoirPage';
 import SignInPage from '../NovaUser/pages/SignInPage';
 import RegisterPage from '../NovaUser/pages/RegisterPage';
 import LegalPage from '../NovaUser/pages/LegalPage';
@@ -89,6 +90,7 @@ export default function App() {
 
       {/* Public application routes: guests have full access. */}
       <Route path="/app" element={<TimeTravelersHomePage />} />
+      <Route path="/memoir" element={<MemoirPage />} />
       <Route path="/missions" element={<MissionSelectPage />} />
       <Route path="/play" element={<Level1Surveyor5Page />} />
       <Route path="/play/surveyor-5" element={<Level1Surveyor5Page />} />

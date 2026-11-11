@@ -27,6 +27,7 @@ export default function AppNavbar({ mobileMenuOpen, setMobileMenuOpen }) {
     pathname.startsWith('/solar-system') ||
     pathname.startsWith('/spacecraft/');
   const isNovabase = pathname.startsWith('/novabase') || pathname.startsWith('/hardware/');
+  const isMemoir = pathname.startsWith('/memoir');
   const isNovaQuest =
     pathname === '/app' ||
     pathname === '/missions' ||
@@ -76,6 +77,9 @@ export default function AppNavbar({ mobileMenuOpen, setMobileMenuOpen }) {
           <Link to="/novabase" className={navClass(isNovabase)} aria-current={isNovabase ? 'page' : undefined}>
             <Layers className="h-3.5 w-3.5 shrink-0" />
             <span>Novabase</span>
+          </Link>
+          <Link to="/memoir" className={navClass(isMemoir)} aria-current={isMemoir ? 'page' : undefined}>
+            <span>Memoir</span>
           </Link>
         </nav>
 

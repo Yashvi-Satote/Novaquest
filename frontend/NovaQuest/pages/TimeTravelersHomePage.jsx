@@ -10,7 +10,8 @@ import {
   Award, 
   Star,
   Clock,
-  ChevronRight
+  ChevronRight,
+  Film
 } from 'lucide-react';
 import AppNavbar from '../../Shared/components/layout/AppNavbar';
 import EarthMoonHero3D from '../components/home/EarthMoonHero3D';
@@ -174,6 +175,63 @@ export default function TimeTravelersHomePage() {
           </GameButton>
         </div>
 
+        {/* Dedicated MEMOIR Module Card */}
+        <div
+          id="memoir-module-card"
+          className="group mt-8 w-full max-w-xl overflow-hidden rounded-2xl border border-sky-400/30 bg-slate-900/80 p-4 sm:p-5 text-left backdrop-blur-xl shadow-xl transition-all duration-300 hover:border-sky-400/60 hover:shadow-sky-500/20"
+        >
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+            <div className="relative h-28 w-full shrink-0 overflow-hidden rounded-xl border border-sky-400/20 bg-black sm:w-36">
+              <img
+                src="/assets/memoir/scene1_surveyor3_anime_establishing.jpg"
+                alt="Memoir Preview - Surveyor 3"
+                className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+              <span className="absolute bottom-1.5 left-2 rounded bg-sky-500/90 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white">
+                EPISODE 01
+              </span>
+            </div>
+
+            <div className="min-w-0 flex-1 space-y-1.5">
+              <div className="flex items-center gap-1.5">
+                <Film className="h-3.5 w-3.5 text-sky-400" />
+                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-sky-300">
+                  Cinematic Series
+                </span>
+              </div>
+
+              <h2 className="text-lg font-black tracking-wider text-white sm:text-xl">
+                MEMOIR
+              </h2>
+
+              <p className="text-xs font-semibold italic text-sky-200">
+                Every machine has a story.
+              </p>
+
+              <p className="text-xs leading-relaxed text-slate-300">
+                Explore the forgotten stories of machines left behind on the Moon and Mars through
+                cinematic animated storytelling.
+              </p>
+
+              <div className="pt-1.5">
+                <button
+                  id="enter-memoir-btn"
+                  type="button"
+                  onClick={() => {
+                    gameAudio.playClick();
+                    navigate('/memoir');
+                  }}
+                  className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-sky-500 to-blue-600 px-4 py-2 text-xs font-bold uppercase tracking-wider text-white shadow-md shadow-sky-500/25 transition-all hover:from-sky-400 hover:to-blue-500 hover:shadow-sky-500/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
+                >
+                  <span>ENTER MEMOIR</span>
+                  <ChevronRight className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Quick Highlights / Learning Badges */}
         <div className="mt-8 flex flex-wrap items-center justify-center gap-4 text-xs font-bold text-slate-300">
           <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-900/60 border border-slate-700/60">
@@ -224,4 +282,3 @@ export default function TimeTravelersHomePage() {
     </div>
   );
 }
-
