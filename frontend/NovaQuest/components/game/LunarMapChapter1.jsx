@@ -28,7 +28,6 @@ import {
 import { audio } from '../../game/moonMapAudioManager';
 import InvestigationModal from './InvestigationModal';
 import MissionEchoModal from './MissionEchoModal';
-import { createSurveyor5InteractiveLander } from '../gameplay/three/Surveyor5InteractiveLander';
 import { 
   createLunarRegolithTexture,
   createLunarBumpTexture,
@@ -1379,14 +1378,7 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
     footpadMagnet.position.set(Math.cos((2 * Math.PI) / 3) * 3.6, 0.24, Math.sin((2 * Math.PI) / 3) * 3.6 + 0.3);
     surveyorGroup.add(footpadMagnet);
 
-    surveyorGroup.visible = false;
     scene.add(surveyorGroup);
-
-    // The historic placeholder stays in the scene for its interaction references,
-    // while the playable map uses the shared Surveyor 5 lander model.
-    const surveyor5Lander = createSurveyor5InteractiveLander();
-    surveyor5Lander.root.position.set(0, surveyorTerrainY, 0);
-    scene.add(surveyor5Lander.root);
 
     // =========================================================================
     // 11. ZONE 1 — TEAM LANDING ZONE (X: 105, Z: 65)
@@ -4165,8 +4157,6 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
       animId = requestAnimationFrame(animate);
       const delta = Math.min(clock.getDelta(), 0.08);
       const time = clock.getElapsedTime();
-      surveyor5Lander.update(delta, time);
-
       // Earth slow planetary rotation
       earthSphere.rotation.y += delta * 0.02;
       earthClouds.rotation.y += delta * 0.028;
@@ -4673,7 +4663,7 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
       sporeGeo.dispose();
       bootprintGeo.dispose();
       dracoLoader.dispose();
-      surveyor5Lander.root.traverse((object) => {
+      surveyorGroup.traverse((object) => {
         if (!object.isMesh) return;
         object.geometry.dispose();
         const materials = Array.isArray(object.material) ? object.material : [object.material];
