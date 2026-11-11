@@ -1,0 +1,1727 @@
+{
+  "retrieved_at": "2026-11-06",
+  "entries": {
+    "chandra": {
+      "retrieved_at": "2026-11-06",
+      "confidence": "high",
+      "sections": {
+        "how_it_works": {
+          "text": "Chandra uses four nested pairs of grazing-incidence mirrors, coated with iridium, to deflect X-rays that would otherwise pass straight through or be absorbed. The mirror shells focus incoming photons onto a 9.2-metre optical bench, where either the ACIS CCD camera or the HRC microchannel-plate detector records an image, while the HETGS and LETG gratings spread the X-rays into spectra. Because Earth's atmosphere blocks X-rays, the observatory flies in a highly elliptical orbit that reaches roughly 139,000 km above the surface.",
+          "source_url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1999-040B",
+          "confidence": "high",
+          "attribution": "NASA/NSSDCA; NASA/CXC",
+          "license": "Public domain (NASA)"
+        },
+        "why_important": {
+          "text": "Chandra was the first X-ray telescope to deliver sub-arcsecond imaging, letting astronomers resolve structures that earlier missions could only blur together. It has mapped million-degree gas in galaxy clusters, traced shock fronts in supernova remnants, measured matter falling toward black holes, and shown how dark matter separates from ordinary gas during cluster collisions. Those observations underpin much of modern high-energy astrophysics and complement the infrared and visible-light work of Hubble and Webb.",
+          "source_url": "https://science.nasa.gov/mission/chandra/",
+          "confidence": "high",
+          "attribution": "NASA Science",
+          "license": "Public domain (NASA)"
+        },
+        "status": {
+          "text": "NASA lists Chandra as an active mission as of the agency page's 14 April 2026 update. The Chandra X-ray Center, operated for NASA by the Smithsonian Astrophysical Observatory, continues to run flight operations and science activities, and the observatory remains in its highly elliptical orbit.",
+          "source_url": "https://science.nasa.gov/mission/chandra/",
+          "confidence": "high",
+          "attribution": "NASA Science",
+          "license": "Public domain (NASA)"
+        }
+      },
+      "timeline": [
+        {
+          "event_date": "1998-03-12",
+          "event_date_precision": "day",
+          "title": "Assembly of AXAF completed at TRW",
+          "description": "The observatory's structure was completed with installation of its twin solar panels, ahead of launch on STS-93.",
+          "event_type": "assembly",
+          "source_url": "https://chandra.harvard.edu/about/mission_milestones.html"
+        },
+        {
+          "event_date": "1998-12-21",
+          "event_date_precision": "day",
+          "title": "AXAF renamed Chandra",
+          "description": "NASA renamed the Advanced X-ray Astrophysics Facility in honour of Nobel laureate Subrahmanyan Chandrasekhar.",
+          "event_type": "milestone",
+          "source_url": "https://chandra.harvard.edu/about/mission_milestones.html"
+        },
+        {
+          "event_date": "1999-07-23",
+          "event_date_precision": "day",
+          "title": "Launch and deployment on STS-93",
+          "description": "Space Shuttle Columbia lifted off with Chandra aboard and deployed the observatory later the same day.",
+          "event_type": "launch",
+          "source_url": "https://chandra.harvard.edu/about/mission_milestones.html"
+        },
+        {
+          "event_date": "1999-08-07",
+          "event_date_precision": "day",
+          "title": "Chandra reaches its planned operating orbit",
+          "description": "A final burn of the Integral Propulsion System raised perigee and left the observatory in its highly elliptical science orbit.",
+          "event_type": "orbit",
+          "source_url": "https://chandra.harvard.edu/about/mission_milestones.html"
+        },
+        {
+          "event_date": "1999-08-19",
+          "event_date_precision": "day",
+          "title": "First light: Cassiopeia A",
+          "description": "The ACIS instrument recorded Chandra's first focused image, showing the remnant of a massive star that exploded roughly 320 years earlier.",
+          "event_type": "science",
+          "source_url": "https://chandra.harvard.edu/about/mission_milestones.html"
+        },
+        {
+          "event_date": "2020-09-28",
+          "event_date_precision": "day",
+          "title": "Patrick Slane becomes CXC director",
+          "description": "Slane succeeded Belinda Wilkes as director of the Chandra X-ray Center, which runs science and flight operations for the mission.",
+          "event_type": "leadership",
+          "source_url": "https://chandra.harvard.edu/about/who.html"
+        }
+      ],
+      "imagery": [
+        {
+          "title": "Chandra X-ray Observatory spacecraft",
+          "image_url": "https://nssdc.gsfc.nasa.gov/image/spacecraft/chandra.jpg",
+          "thumbnail_url": "https://nssdc.gsfc.nasa.gov/thumbnail/spacecraft/chandra.gif",
+          "source_url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1999-040B",
+          "attribution": "NASA/NSSDCA",
+          "description": "The Chandra spacecraft during ground processing.",
+          "kind": "photo",
+          "item_type": "Photo",
+          "license": "Public domain (NASA)"
+        },
+        {
+          "title": "Chandra in orbit (artist's concept)",
+          "image_url": "https://assets.science.nasa.gov/dynamicimage/assets/science/astro/missions/Chandra20years.webp?w=1536",
+          "source_url": "https://science.nasa.gov/mission/chandra/",
+          "attribution": "NASA/CXC & J. Vaughan",
+          "description": "Illustration of the Chandra X-ray Observatory in space.",
+          "kind": "illustration",
+          "item_type": "Illustration",
+          "license": "Public domain (NASA)"
+        },
+        {
+          "title": "Cassiopeia A, Chandra's first-light image",
+          "image_url": "https://chandra.harvard.edu/photo/0237/0237_xray.jpg",
+          "source_url": "https://chandra.harvard.edu/about/mission_milestones.html",
+          "attribution": "NASA/CXC/SAO",
+          "description": "The supernova remnant Cassiopeia A as recorded by Chandra's ACIS detector in August 1999.",
+          "kind": "science",
+          "item_type": "Science image",
+          "license": "Public domain (NASA)"
+        }
+      ],
+      "stakeholders": [
+        {
+          "name": "NASA Marshall Space Flight Center",
+          "organization_type": "Government Agency",
+          "country": "United States",
+          "official_url": "https://www.nasa.gov/marshall/",
+          "role": "Program management",
+          "source_url": "https://science.nasa.gov/mission/chandra/"
+        },
+        {
+          "name": "Smithsonian Astrophysical Observatory",
+          "organization_type": "Research Institute",
+          "country": "United States",
+          "official_url": "https://www.cfa.harvard.edu/",
+          "role": "Flight operations and science (Chandra X-ray Center)",
+          "source_url": "https://science.nasa.gov/mission/chandra/"
+        },
+        {
+          "name": "Massachusetts Institute of Technology",
+          "organization_type": "University",
+          "country": "United States",
+          "official_url": "https://www.mit.edu/",
+          "role": "ACIS and HETG instrument provider",
+          "source_url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1999-040B"
+        },
+        {
+          "name": "Max Planck Institute for Extraterrestrial Physics",
+          "organization_type": "Research Institute",
+          "country": "Germany",
+          "official_url": "https://www.mpe.mpg.de/",
+          "role": "LETG instrument provider",
+          "source_url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1999-040B"
+        },
+        {
+          "name": "Northrop Grumman (TRW)",
+          "organization_type": "Contractor",
+          "country": "United States",
+          "official_url": "https://www.northropgrumman.com/",
+          "role": "Prime spacecraft contractor",
+          "source_url": "https://chandra.harvard.edu/about/mission_milestones.html"
+        }
+      ],
+      "people": [
+        {
+          "full_name": "Fred S. Wojtalik",
+          "role_on_mission": "Project Manager",
+          "affiliation": "NASA Goddard Space Flight Center",
+          "source_url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1999-040B",
+          "rank_order": 1
+        },
+        {
+          "full_name": "Jeffrey S. McKenzie",
+          "role_on_mission": "Mission Manager",
+          "affiliation": "NASA Goddard Space Flight Center",
+          "source_url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1999-040B",
+          "rank_order": 2
+        },
+        {
+          "full_name": "Michael M. Harrington",
+          "role_on_mission": "Mission Operations Manager",
+          "affiliation": "NASA Marshall Space Flight Center",
+          "source_url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1999-040B",
+          "rank_order": 3
+        },
+        {
+          "full_name": "Patrick Slane",
+          "role_on_mission": "Director, Chandra X-ray Center (from 2020)",
+          "affiliation": "Center for Astrophysics | Harvard & Smithsonian",
+          "source_url": "https://chandra.harvard.edu/about/who.html",
+          "rank_order": 4
+        },
+        {
+          "full_name": "Belinda Wilkes",
+          "role_on_mission": "Director, Chandra X-ray Center (2014-2020)",
+          "affiliation": "Center for Astrophysics | Harvard & Smithsonian",
+          "source_url": "https://chandra.harvard.edu/about/who.html",
+          "rank_order": 5
+        },
+        {
+          "full_name": "Mark Weber",
+          "role_on_mission": "Manager, Chandra X-ray Center",
+          "affiliation": "Center for Astrophysics | Harvard & Smithsonian",
+          "source_url": "https://chandra.harvard.edu/about/who.html",
+          "rank_order": 6
+        },
+        {
+          "full_name": "Herman Marshall",
+          "role_on_mission": "Associate Director for MIT",
+          "affiliation": "Massachusetts Institute of Technology",
+          "source_url": "https://chandra.harvard.edu/about/who.html",
+          "rank_order": 7
+        },
+        {
+          "full_name": "Thomas Aldcroft",
+          "role_on_mission": "Lead Flight Director and Mission Operations Manager",
+          "affiliation": "Chandra X-ray Center",
+          "source_url": "https://chandra.harvard.edu/about/who.html",
+          "rank_order": 8
+        },
+        {
+          "full_name": "Scott Wolk",
+          "role_on_mission": "Deputy Flight Director",
+          "affiliation": "Chandra X-ray Center",
+          "source_url": "https://chandra.harvard.edu/about/who.html",
+          "rank_order": 9
+        },
+        {
+          "full_name": "Jan Vrtilek",
+          "role_on_mission": "Deputy Flight Director",
+          "affiliation": "Chandra X-ray Center",
+          "source_url": "https://chandra.harvard.edu/about/who.html",
+          "rank_order": 10
+        }
+      ]
+    },
+    "clementine": {
+      "retrieved_at": "2026-11-06",
+      "confidence": "high",
+      "sections": {
+        "how_it_works": {
+          "text": "Clementine was built around a small, lightweight bus and carried 15 advanced flight-test components alongside nine science instruments. Its lunar mapping payload combined an ultraviolet/visible camera, a near-infrared camera and a laser altimeter, which together recorded surface colour, mineral signatures and topography. Two further cameras served as star trackers for the spacecraft's autonomous attitude system. The Naval Research Laboratory designed, integrated and flew the spacecraft for the Ballistic Missile Defense Organization, while NASA provided science oversight and investigators.",
+          "source_url": "https://science.nasa.gov/mission/clementine/",
+          "confidence": "high",
+          "attribution": "NASA Science",
+          "license": "Public domain (NASA)"
+        },
+        "why_important": {
+          "text": "Clementine produced the first near-global multispectral map of the Moon and the first global topographic map from lunar orbit, giving scientists a consistent data set for studying the crust's composition and relief. Its bistatic radar experiment returned signals consistent with water ice trapped in a permanently shadowed crater near the south pole, a result that reshaped lunar polar science and motivated later ice-hunting missions. The project also became an early template for the 'faster, better, cheaper' approach that shaped NASA's Discovery programme.",
+          "source_url": "https://science.nasa.gov/mission/clementine/",
+          "confidence": "high",
+          "attribution": "NASA Science",
+          "license": "Public domain (NASA)"
+        },
+        "status": {
+          "text": "Clementine's mission ended on 8 August 1994, after a thruster fault and a power-system failure prevented the planned Geographos flyby and drained the spacecraft's battery. Lunar gravity had already pushed it into a heliocentric orbit on 20 July 1994, and controllers briefly regained contact between 20 February and 10 May 1995. The spacecraft has not been operated since.",
+          "source_url": "https://science.nasa.gov/mission/clementine/",
+          "confidence": "high",
+          "attribution": "NASA Science",
+          "license": "Public domain (NASA)"
+        }
+      },
+      "timeline": [
+        {
+          "event_date": "1994-01-25",
+          "event_date_precision": "day",
+          "title": "Launch from Vandenberg",
+          "description": "A Titan IIG rocket carried Clementine into a temporary parking orbit at the start of its lunar mission.",
+          "event_type": "launch",
+          "source_url": "https://science.nasa.gov/mission/clementine/",
+          "confidence": "high"
+        },
+        {
+          "event_date": "1994-02-19",
+          "event_date_precision": "day",
+          "title": "Entered lunar orbit",
+          "description": "After two Earth flybys, Clementine entered an elliptical polar orbit around the Moon with a period of about five days.",
+          "event_type": "orbit",
+          "source_url": "https://science.nasa.gov/mission/clementine/",
+          "confidence": "high"
+        },
+        {
+          "event_date": "1994-05-03",
+          "event_date_precision": "day",
+          "title": "Departed lunar orbit",
+          "description": "Clementine left lunar orbit and began the cruise toward asteroid 1620 Geographos.",
+          "event_type": "departure",
+          "source_url": "https://science.nasa.gov/mission/clementine/",
+          "confidence": "high"
+        },
+        {
+          "event_date": "1994-05-07",
+          "event_date_precision": "day",
+          "title": "Thruster fault",
+          "description": "A malfunction left the spacecraft without spin control, forcing controllers to cancel the asteroid flyby.",
+          "event_type": "anomaly",
+          "source_url": "https://science.nasa.gov/mission/clementine/",
+          "confidence": "high"
+        },
+        {
+          "event_date": "1994-07-20",
+          "event_date_precision": "day",
+          "title": "Pushed into heliocentric orbit",
+          "description": "Lunar gravity took control of the unresponsive spacecraft and deflected it away from Earth into a solar orbit.",
+          "event_type": "orbit",
+          "source_url": "https://science.nasa.gov/mission/clementine/",
+          "confidence": "high"
+        },
+        {
+          "event_date": "1994-08-08",
+          "event_date_precision": "day",
+          "title": "Mission terminated",
+          "description": "Falling power levels ended clear telemetry exchange and the mission was formally terminated.",
+          "event_type": "end_of_mission",
+          "source_url": "https://science.nasa.gov/mission/clementine/",
+          "confidence": "high"
+        },
+        {
+          "event_date": "1996-12-03",
+          "event_date_precision": "day",
+          "title": "Lunar ice announced",
+          "description": "The Department of Defense announced that Clementine radar data indicated ice in a permanently shadowed crater at the lunar south pole.",
+          "event_type": "science",
+          "source_url": "https://science.nasa.gov/mission/clementine/",
+          "confidence": "high"
+        }
+      ],
+      "imagery": [
+        {
+          "title": "Clementine fully deployed (artist's concept)",
+          "image_url": "https://images-assets.nasa.gov/image/PIA18159/PIA18159~orig.jpg",
+          "source_url": "https://science.nasa.gov/mission/clementine/",
+          "attribution": "NASA/GSFC",
+          "description": "Artist's impression of the Clementine spacecraft with its solar panels and sensors deployed.",
+          "kind": "illustration",
+          "item_type": "Illustration",
+          "license": "Public domain (NASA)",
+          "confidence": "high"
+        },
+        {
+          "title": "Clementine during final checks",
+          "image_url": "https://upload.wikimedia.org/wikipedia/commons/f/f7/Clementine_final_checks.jpg",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Clementine_final_checks.jpg",
+          "attribution": "U.S. Department of Defense",
+          "description": "Clementine undergoing pre-launch verification before shipment to Vandenberg.",
+          "kind": "photo",
+          "item_type": "Photo",
+          "license": "Public domain (U.S. Government)",
+          "confidence": "high"
+        }
+      ],
+      "stakeholders": [
+        {
+          "name": "Ballistic Missile Defense Organization",
+          "organization_type": "Government Agency",
+          "country": "United States",
+          "official_url": "https://www.acq.osd.mil/",
+          "role": "Mission sponsor and programme management",
+          "source_url": "https://science.nasa.gov/mission/clementine/",
+          "confidence": "high"
+        },
+        {
+          "name": "NASA",
+          "organization_type": "Government Agency",
+          "country": "United States",
+          "official_url": "https://www.nasa.gov/",
+          "role": "Science payload, investigators and data archiving",
+          "source_url": "https://science.nasa.gov/mission/clementine/",
+          "confidence": "high"
+        },
+        {
+          "name": "Naval Research Laboratory",
+          "organization_type": "Government Laboratory",
+          "country": "United States",
+          "official_url": "https://www.nrl.navy.mil/",
+          "role": "Spacecraft design, integration and flight operations",
+          "source_url": "https://ntrs.nasa.gov/api/citations/19980041408/downloads/19980041408.pdf",
+          "confidence": "high"
+        }
+      ],
+      "people": [
+        {
+          "full_name": "Paul Regeon",
+          "role_on_mission": "NRL Program Manager",
+          "affiliation": "Naval Research Laboratory",
+          "source_url": "https://ntrs.nasa.gov/api/citations/19980041408/downloads/19980041408.pdf",
+          "confidence": "high",
+          "rank_order": 1
+        },
+        {
+          "full_name": "Stewart Nozette",
+          "role_on_mission": "BMDO Deputy Program Manager",
+          "affiliation": "Ballistic Missile Defense Organization",
+          "source_url": "https://ntrs.nasa.gov/api/citations/19980041408/downloads/19980041408.pdf",
+          "confidence": "high",
+          "rank_order": 2
+        },
+        {
+          "full_name": "Donald Horan",
+          "role_on_mission": "Science Operations Manager",
+          "affiliation": "Naval Research Laboratory",
+          "source_url": "https://ntrs.nasa.gov/api/citations/19980041408/downloads/19980041408.pdf",
+          "confidence": "high",
+          "rank_order": 3
+        },
+        {
+          "full_name": "Trevor Sorenson",
+          "role_on_mission": "Lunar Mission Manager",
+          "affiliation": "Naval Research Laboratory",
+          "source_url": "https://ntrs.nasa.gov/api/citations/19980041408/downloads/19980041408.pdf",
+          "confidence": "high",
+          "rank_order": 4
+        },
+        {
+          "full_name": "Eugene Shoemaker",
+          "role_on_mission": "Science Team Leader",
+          "affiliation": "U.S. Geological Survey",
+          "source_url": "https://ntrs.nasa.gov/api/citations/19980041408/downloads/19980041408.pdf",
+          "confidence": "high",
+          "rank_order": 5
+        },
+        {
+          "full_name": "Pedro Rustan",
+          "role_on_mission": "BMDO Program Manager",
+          "affiliation": "Ballistic Missile Defense Organization",
+          "source_url": "https://ntrs.nasa.gov/api/citations/19980041408/downloads/19980041408.pdf",
+          "confidence": "high",
+          "rank_order": 6
+        }
+      ]
+    },
+    "cloudsat": {
+      "retrieved_at": "2026-11-06",
+      "confidence": "high",
+      "sections": {
+        "how_it_works": {
+          "text": "CloudSat carried a single instrument, the Cloud Profiling Radar, a nadir-pointing 94 GHz W-band radar that measured the strength of backscattered pulses at successive heights through a cloud. That produced vertical slices of cloud structure with about 500 m resolution, revealing where liquid water, ice and precipitation sit inside a cloud rather than only how its top appears. The spacecraft flew in a 705 km, 98.2-degree sun-synchronous orbit as part of the A-Train, and had a launch mass of 847 kg.",
+          "source_url": "https://science.nasa.gov/mission/cloudsat/",
+          "confidence": "high",
+          "attribution": "NASA Science",
+          "license": "Public domain (NASA)"
+        },
+        "why_important": {
+          "text": "CloudSat was the first satellite to profile the vertical structure of clouds across the globe, filling a gap previously covered only by cloud-top imagers and ground-based radars. Its measurements of cloud water content, snowfall and precipitation helped test and improve the cloud parameterisations used in climate and weather models. The mission's long global record continues to support studies of how cloud systems vary with season, region and climate.",
+          "source_url": "https://science.nasa.gov/mission/cloudsat/",
+          "confidence": "high",
+          "attribution": "NASA Science",
+          "license": "Public domain (NASA)"
+        },
+        "status": {
+          "text": "NASA decommissioned CloudSat on 20 December 2023, when radar science operations concluded. The spacecraft completed final orbit-lowering manoeuvres and was passivated in April 2024, leaving it inactive and awaiting disposal. Its radar data remain archived and continue to be used for climate and weather research.",
+          "source_url": "https://science.nasa.gov/mission/cloudsat/",
+          "confidence": "high",
+          "attribution": "NASA Science",
+          "license": "Public domain (NASA)"
+        }
+      },
+      "timeline": [
+        {
+          "event_date": "2006-04-28",
+          "event_date_precision": "day",
+          "title": "Launch on Delta II",
+          "description": "CloudSat lifted off from Vandenberg Air Force Base and entered a sun-synchronous orbit as part of the A-Train.",
+          "event_type": "launch",
+          "source_url": "https://science.nasa.gov/mission/cloudsat/",
+          "confidence": "high"
+        },
+        {
+          "event_date": "2018-02-22",
+          "event_date_precision": "day",
+          "title": "Moved to the C-Train",
+          "description": "CloudSat left the A-Train and later joined the C-Train, allowing continued coordinated observations with other Earth-observing satellites.",
+          "event_type": "orbit",
+          "source_url": "https://science.nasa.gov/mission/cloudsat/",
+          "confidence": "high"
+        },
+        {
+          "event_date": "2023-12-20",
+          "event_date_precision": "day",
+          "title": "Radar operations ended",
+          "description": "NASA concluded CloudSat's radar science operations after more than 17 years of cloud profiling.",
+          "event_type": "end_of_mission",
+          "source_url": "https://science.nasa.gov/mission/cloudsat/",
+          "confidence": "high"
+        },
+        {
+          "event_date": "2024-04-01",
+          "event_date_precision": "month",
+          "title": "Spacecraft passivated",
+          "description": "After final orbit-lowering manoeuvres, the spacecraft was passivated and left inactive.",
+          "event_type": "disposal",
+          "source_url": "https://science.nasa.gov/mission/cloudsat/",
+          "confidence": "high"
+        }
+      ],
+      "imagery": [
+        {
+          "title": "CloudSat spacecraft",
+          "image_url": "https://assets.science.nasa.gov/dynamicimage/assets/science/missions/cloudsat/cloudsat_16x9.jpg",
+          "source_url": "https://science.nasa.gov/mission/cloudsat/",
+          "attribution": "NASA/JPL",
+          "description": "The CloudSat spacecraft, built around a Ball Aerospace bus and carrying the Cloud Profiling Radar.",
+          "kind": "illustration",
+          "item_type": "Illustration",
+          "license": "Public domain (NASA)",
+          "confidence": "high"
+        }
+      ],
+      "stakeholders": [
+        {
+          "name": "NASA",
+          "organization_type": "Government Agency",
+          "country": "United States",
+          "official_url": "https://www.nasa.gov/",
+          "role": "Mission sponsor and programme management",
+          "source_url": "https://science.nasa.gov/mission/cloudsat/",
+          "confidence": "high"
+        },
+        {
+          "name": "NASA Jet Propulsion Laboratory",
+          "organization_type": "Government Laboratory",
+          "country": "United States",
+          "official_url": "https://www.jpl.nasa.gov/",
+          "role": "Project management and Cloud Profiling Radar development",
+          "source_url": "https://science.nasa.gov/mission/cloudsat/",
+          "confidence": "high"
+        },
+        {
+          "name": "Canadian Space Agency",
+          "organization_type": "Government Agency",
+          "country": "Canada",
+          "official_url": "https://www.asc-csa.gc.ca/",
+          "role": "Radar hardware contributions",
+          "source_url": "https://science.nasa.gov/mission/cloudsat/",
+          "confidence": "high"
+        },
+        {
+          "name": "Colorado State University",
+          "organization_type": "University",
+          "country": "United States",
+          "official_url": "https://www.colostate.edu/",
+          "role": "Science leadership and cloud-property retrievals",
+          "source_url": "https://science.nasa.gov/mission/cloudsat/",
+          "confidence": "high"
+        },
+        {
+          "name": "Ball Aerospace (now BAE Space and Mission Systems)",
+          "organization_type": "Contractor",
+          "country": "United States",
+          "official_url": "https://www.baesystems.com/",
+          "role": "Spacecraft bus design and integration",
+          "source_url": "https://science.nasa.gov/mission/cloudsat/",
+          "confidence": "high"
+        }
+      ],
+      "people": [
+        {
+          "full_name": "Graeme L. Stephens",
+          "role_on_mission": "Principal Investigator",
+          "affiliation": "Colorado State University / NASA JPL",
+          "source_url": "https://www.jpl.nasa.gov/news/send-in-the-clouds/",
+          "confidence": "high",
+          "rank_order": 1
+        },
+        {
+          "full_name": "Deborah G. Vane",
+          "role_on_mission": "Project Manager and Deputy Principal Investigator",
+          "affiliation": "NASA Jet Propulsion Laboratory",
+          "source_url": "https://www.nasa.gov/missions/cloudsat/nasas-cloudsat-ends-mission-peering-into-the-heart-of-clouds/",
+          "confidence": "high",
+          "rank_order": 2
+        },
+        {
+          "full_name": "Tom Livermore",
+          "role_on_mission": "Development Project Manager",
+          "affiliation": "NASA Jet Propulsion Laboratory",
+          "source_url": "https://www.jpl.nasa.gov/universe/archive/un0604.pdf",
+          "confidence": "high",
+          "rank_order": 3
+        }
+      ]
+    },
+    "cluster-ii": {
+      "retrieved_at": "2026-11-06",
+      "confidence": "high",
+      "sections": {
+        "how_it_works": {
+          "text": "Cluster II is a set of four identical spinning spacecraft that fly in a tetrahedral formation, so the same region of near-Earth space is sampled at four points at once. Their orbits are highly eccentric and near-polar, with a nominal perigee of about 4 Earth radii, apogee of about 19.6 Earth radii, a period near 57 hours and an inclination of about 90.7 degrees. Each spacecraft carries a matched suite of magnetometers, electric-field sensors, wave receivers and particle spectrometers, and the separation between the four is adjusted to match the scale of the plasma structures being studied.",
+          "source_url": "https://science.nasa.gov/mission/cluster/",
+          "confidence": "high",
+          "attribution": "NASA Science",
+          "license": "Public domain (NASA)"
+        },
+        "why_important": {
+          "text": "Before Cluster, most magnetospheric measurements came from single spacecraft, which could not separate spatial structure from temporal change. Flying four identical observatories in a known formation let researchers resolve boundaries, currents, waves and turbulence in three dimensions and trace how solar-wind energy enters Earth's magnetosphere. The mission operated for more than two decades, supported space-weather modelling, and ended with the first repeated targeted reentries of a multi-spacecraft science constellation.",
+          "source_url": "https://science.nasa.gov/mission/cluster/",
+          "confidence": "high",
+          "attribution": "NASA Science",
+          "license": "Public domain (NASA)"
+        },
+        "status": {
+          "text": "Cluster's science operations are complete. The four satellites were disposed of through targeted reentries over the South Pacific: Salsa on 8 September 2024, Rumba on 22 October 2025, Samba on 31 August 2026 and Tango on 1 September 2026. ESA describes the campaign as the first repeated, controlled reentry of a multi-spacecraft science mission.",
+          "source_url": "https://www.esa.int/Space_Safety/Space_Debris/Cluster_s_encore_for_reentry_science_a_success",
+          "confidence": "high",
+          "attribution": "European Space Agency",
+          "license": "ESA content, reused with attribution"
+        }
+      },
+      "timeline": [
+        {
+          "event_date": "2000-07-16",
+          "event_date_precision": "day",
+          "title": "Salsa and Samba launched",
+          "description": "A Soyuz-Fregat rocket lifted off from Baikonur carrying the first pair of Cluster II spacecraft.",
+          "event_type": "launch",
+          "source_url": "https://science.nasa.gov/mission/cluster/",
+          "confidence": "high"
+        },
+        {
+          "event_date": "2000-08-09",
+          "event_date_precision": "day",
+          "title": "Rumba and Tango launched",
+          "description": "The second pair of Cluster II spacecraft followed on a second Soyuz-Fregat launch.",
+          "event_type": "launch",
+          "source_url": "https://science.nasa.gov/mission/cluster/",
+          "confidence": "high"
+        },
+        {
+          "event_date": "2024-09-08",
+          "event_date_precision": "day",
+          "title": "Salsa reentered",
+          "description": "Salsa reentered over the South Pacific in the first targeted reentry of an ESA science satellite.",
+          "event_type": "reentry",
+          "source_url": "https://www.esa.int/Science_Exploration/Space_Science/Cluster/Goodnight_Cluster_brilliant_end_to_trailblazing_mission",
+          "confidence": "high"
+        },
+        {
+          "event_date": "2025-10-22",
+          "event_date_precision": "day",
+          "title": "Rumba reentered",
+          "description": "Rumba followed Salsa with a targeted reentry over a remote part of the South Pacific.",
+          "event_type": "reentry",
+          "source_url": "https://www.esa.int/ESA_Multimedia/Images/2025/10/Saying_goodbye_to_Rumba",
+          "confidence": "high"
+        },
+        {
+          "event_date": "2026-08-31",
+          "event_date_precision": "day",
+          "title": "Samba reentered",
+          "description": "Samba reentered over the South Pacific and was observed by the ROSIE airborne campaign.",
+          "event_type": "reentry",
+          "source_url": "https://www.esa.int/Space_Safety/Space_Debris/Cluster_s_encore_for_reentry_science_a_success",
+          "confidence": "high"
+        },
+        {
+          "event_date": "2026-09-01",
+          "event_date_precision": "day",
+          "title": "Tango reentered",
+          "description": "Tango reentered at 23:30 CEST, completing the disposal of the Cluster quartet.",
+          "event_type": "reentry",
+          "source_url": "https://www.esa.int/Space_Safety/Space_Debris/Cluster_s_encore_for_reentry_science_a_success",
+          "confidence": "high"
+        }
+      ],
+      "imagery": [
+        {
+          "title": "Artist's impression of the Cluster constellation",
+          "image_url": "https://media.esa.int/legacy/web/images/science_exploration/space_science/cluster/19716616-17-eng-GB/394079/image-thumb__394079__fill_hero/Cluster.7d57bcb2.webp",
+          "source_url": "https://sci.esa.int/web/cluster/-/53694-mission-team",
+          "attribution": "ESA",
+          "description": "Illustration of the four Cluster spacecraft flying in formation through Earth's magnetosphere.",
+          "kind": "illustration",
+          "item_type": "Illustration",
+          "license": "ESA content, reused with attribution",
+          "confidence": "high"
+        }
+      ],
+      "stakeholders": [
+        {
+          "name": "European Space Agency",
+          "organization_type": "Government Agency",
+          "country": "Europe",
+          "official_url": "https://www.esa.int/",
+          "role": "Mission owner, spacecraft operations and science coordination",
+          "source_url": "https://science.nasa.gov/mission/cluster/",
+          "confidence": "high"
+        },
+        {
+          "name": "NASA",
+          "organization_type": "Government Agency",
+          "country": "United States",
+          "official_url": "https://www.nasa.gov/",
+          "role": "Partner agency and instrument contributions",
+          "source_url": "https://science.nasa.gov/mission/cluster/",
+          "confidence": "high"
+        }
+      ],
+      "people": [
+        {
+          "full_name": "Philippe Escoubet",
+          "role_on_mission": "Mission Manager and Project Scientist",
+          "affiliation": "ESA/ESTEC",
+          "source_url": "https://sci.esa.int/web/cluster/-/53694-mission-team",
+          "confidence": "high",
+          "rank_order": 1
+        },
+        {
+          "full_name": "Klaus Torkar",
+          "role_on_mission": "Principal Investigator, ASPOC",
+          "affiliation": "IWF Graz",
+          "source_url": "https://sci.esa.int/web/cluster/-/53694-mission-team",
+          "confidence": "high",
+          "rank_order": 2
+        },
+        {
+          "full_name": "Iannis Dandouras",
+          "role_on_mission": "Principal Investigator, CIS",
+          "affiliation": "IRAP Toulouse",
+          "source_url": "https://sci.esa.int/web/cluster/-/53694-mission-team",
+          "confidence": "high",
+          "rank_order": 3
+        },
+        {
+          "full_name": "Misha Balikhin",
+          "role_on_mission": "Principal Investigator, DWP",
+          "affiliation": "University of Sheffield",
+          "source_url": "https://sci.esa.int/web/cluster/-/53694-mission-team",
+          "confidence": "high",
+          "rank_order": 4
+        },
+        {
+          "full_name": "Roy B. Torbert",
+          "role_on_mission": "Principal Investigator, EDI",
+          "affiliation": "University of New Hampshire",
+          "source_url": "https://sci.esa.int/web/cluster/-/53694-mission-team",
+          "confidence": "high",
+          "rank_order": 5
+        },
+        {
+          "full_name": "Mats Andre",
+          "role_on_mission": "Principal Investigator, EFW",
+          "affiliation": "Swedish Institute of Space Physics",
+          "source_url": "https://sci.esa.int/web/cluster/-/53694-mission-team",
+          "confidence": "high",
+          "rank_order": 6
+        },
+        {
+          "full_name": "Chris Carr",
+          "role_on_mission": "Principal Investigator, FGM",
+          "affiliation": "Imperial College London",
+          "source_url": "https://sci.esa.int/web/cluster/-/53694-mission-team",
+          "confidence": "high",
+          "rank_order": 7
+        },
+        {
+          "full_name": "Andrew Fazakerley",
+          "role_on_mission": "Principal Investigator, PEACE",
+          "affiliation": "Mullard Space Science Laboratory, UCL",
+          "source_url": "https://sci.esa.int/web/cluster/-/53694-mission-team",
+          "confidence": "high",
+          "rank_order": 8
+        },
+        {
+          "full_name": "Patrick Daly",
+          "role_on_mission": "Principal Investigator, RAPID",
+          "affiliation": "Max Planck Institute for Solar System Research",
+          "source_url": "https://sci.esa.int/web/cluster/-/53694-mission-team",
+          "confidence": "high",
+          "rank_order": 9
+        },
+        {
+          "full_name": "Patrick Canu",
+          "role_on_mission": "Principal Investigator, STAFF",
+          "affiliation": "Laboratoire de Physique des Plasmas, Palaiseau",
+          "source_url": "https://sci.esa.int/web/cluster/-/53694-mission-team",
+          "confidence": "high",
+          "rank_order": 10
+        }
+      ]
+    },
+    "curiosity": {
+      "retrieved_at": "2026-11-06",
+      "confidence": "high",
+      "sections": {
+        "how_it_works": {
+          "text": "Curiosity is a car-sized rover that landed in Gale Crater using a rocket-powered descent stage, which lowered it to the surface on a tether before flying away. It moves on six wheels with a rocker-bogie suspension and draws power from a radioisotope thermoelectric generator rather than solar panels. Its instruments include the SAM and CheMin laboratories for analysing drilled rock powder, the ChemCam laser spectrometer and Mastcam cameras on the mast, the APXS and MAHLI sensors on the robotic arm, and the DAN, REMS and RAD environment instruments.",
+          "source_url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=2011-070A",
+          "confidence": "high",
+          "attribution": "NASA/NSSDCA",
+          "license": "Public domain (NASA)"
+        },
+        "why_important": {
+          "text": "Curiosity's central question was whether Gale Crater ever offered conditions that could have supported microbial life. The mission established that the crater once held a long-lived freshwater lake with the chemical ingredients and energy sources needed for life, detected complex organic molecules in ancient mudstones, and documented how Martian climate and habitability changed over time. Its radiation and weather measurements also inform planning for human exploration.",
+          "source_url": "https://science.nasa.gov/mission/msl-curiosity/",
+          "confidence": "high",
+          "attribution": "NASA Science",
+          "license": "Public domain (NASA)"
+        },
+        "status": {
+          "text": "Curiosity remains active in Gale Crater. NASA reported on 26 August 2026 that the rover had gained about 1 km of elevation during its climb of Mount Sharp, and the mission continues to study progressively younger sedimentary layers.",
+          "source_url": "https://science.nasa.gov/mission/msl-curiosity/",
+          "confidence": "high",
+          "attribution": "NASA Science",
+          "license": "Public domain (NASA)"
+        }
+      },
+      "timeline": [
+        {
+          "event_date": "2011-11-26",
+          "event_date_precision": "day",
+          "title": "Launch toward Mars",
+          "description": "An Atlas V rocket launched the Mars Science Laboratory spacecraft carrying Curiosity.",
+          "event_type": "launch",
+          "source_url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=2011-070A",
+          "confidence": "high"
+        },
+        {
+          "event_date": "2012-08-06",
+          "event_date_precision": "day",
+          "title": "Landing in Gale Crater",
+          "description": "Curiosity touched down at 05:32 UTC after being lowered from its descent stage on a tether.",
+          "event_type": "landing",
+          "source_url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=2011-070A",
+          "confidence": "high"
+        },
+        {
+          "event_date": "2012-08-22",
+          "event_date_precision": "day",
+          "title": "First drive",
+          "description": "After a checkout period, the rover completed its first drive on the Martian surface.",
+          "event_type": "milestone",
+          "source_url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=2011-070A",
+          "confidence": "high"
+        },
+        {
+          "event_date": "2026-08-26",
+          "event_date_precision": "day",
+          "title": "One kilometre of elevation gain",
+          "description": "NASA reported that Curiosity had climbed about 1 km above its landing site while ascending Mount Sharp.",
+          "event_type": "science",
+          "source_url": "https://science.nasa.gov/mission/msl-curiosity/",
+          "confidence": "high"
+        }
+      ],
+      "imagery": [
+        {
+          "title": "Curiosity's 42 drill holes",
+          "image_url": "https://assets.science.nasa.gov/dynamicimage/assets/science/missions/msl/2024/08/image-release/PIA26403.jpg?w=1536&h=987&fit=clip&crop=faces%2Cfocalpoint",
+          "source_url": "https://science.nasa.gov/mission/msl-curiosity/",
+          "attribution": "NASA/JPL-Caltech/MSSS",
+          "description": "A grid of the 42 rock-powder sample holes drilled by Curiosity's robotic arm between 2013 and 2024.",
+          "kind": "science",
+          "item_type": "Science image",
+          "license": "Public domain (NASA)",
+          "confidence": "high"
+        }
+      ],
+      "stakeholders": [
+        {
+          "name": "NASA",
+          "organization_type": "Government Agency",
+          "country": "United States",
+          "official_url": "https://www.nasa.gov/",
+          "role": "Mission sponsor and programme management",
+          "source_url": "https://science.nasa.gov/mission/msl-curiosity/",
+          "confidence": "high"
+        },
+        {
+          "name": "NASA Jet Propulsion Laboratory",
+          "organization_type": "Government Laboratory",
+          "country": "United States",
+          "official_url": "https://www.jpl.nasa.gov/",
+          "role": "Spacecraft development, landing and rover operations",
+          "source_url": "https://science.nasa.gov/mission/msl-curiosity/",
+          "confidence": "high"
+        },
+        {
+          "name": "California Institute of Technology",
+          "organization_type": "University",
+          "country": "United States",
+          "official_url": "https://www.caltech.edu/",
+          "role": "JPL management and science participation",
+          "source_url": "https://science.nasa.gov/mission/msl-curiosity/",
+          "confidence": "high"
+        }
+      ],
+      "people": [
+        {
+          "full_name": "Michael A. Meyer",
+          "role_on_mission": "Program Scientist",
+          "affiliation": "NASA Headquarters",
+          "source_url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=2011-070A",
+          "confidence": "high",
+          "rank_order": 1
+        },
+        {
+          "full_name": "John Grotzinger",
+          "role_on_mission": "Project Scientist",
+          "affiliation": "California Institute of Technology",
+          "source_url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=2011-070A",
+          "confidence": "high",
+          "rank_order": 2
+        },
+        {
+          "full_name": "Peter C. Theisinger",
+          "role_on_mission": "Project Manager",
+          "affiliation": "NASA Jet Propulsion Laboratory",
+          "source_url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=2011-070A",
+          "confidence": "high",
+          "rank_order": 3
+        },
+        {
+          "full_name": "Rob Manning",
+          "role_on_mission": "Chief Engineer, Mars Science Laboratory",
+          "affiliation": "NASA Jet Propulsion Laboratory",
+          "source_url": "https://www.nasa.gov/people/robert-m-manning-nesc-academy-biography/",
+          "confidence": "high",
+          "rank_order": 4
+        }
+      ]
+    },
+    "cygnss": {
+      "retrieved_at": "2026-11-06",
+      "confidence": "high",
+      "sections": {
+        "how_it_works": {
+          "text": "CYGNSS uses eight small observatories in low Earth orbit, each carrying a Delay Doppler Mapping Instrument that listens for GPS signals reflected from the ocean surface. The shape and strength of the reflected signal depend on surface roughness, which is used to retrieve wind speed beneath the storm. Each satellite uses under 60 W of power and weighs less than 30 kg, deploying solar panels after launch, and the constellation's orbits are arranged to revisit tropical storms frequently.",
+          "source_url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=2016-078A",
+          "confidence": "high",
+          "attribution": "NASA/NSSDCA",
+          "license": "Public domain (NASA)"
+        },
+        "why_important": {
+          "text": "CYGNSS was designed to measure ocean surface winds inside tropical cyclones, where heavy rain and cloud tops block or obscure visible and infrared images. By flying a constellation of small satellites, it increases the number of observations of a storm's inner core and helps forecasters track intensification, complementing larger weather satellites and aircraft reconnaissance.",
+          "source_url": "https://science.nasa.gov/mission/cygnss/",
+          "confidence": "high",
+          "attribution": "NASA Science",
+          "license": "Public domain (NASA)"
+        },
+        "status": {
+          "text": "CYGNSS is listed by NASA as an active mission and continues to operate in extended mission. Its data are used in research on tropical cyclones, ocean surface winds and air-sea exchange.",
+          "source_url": "https://science.nasa.gov/mission/cygnss/",
+          "confidence": "high",
+          "attribution": "NASA Science",
+          "license": "Public domain (NASA)"
+        }
+      },
+      "timeline": [
+        {
+          "event_date": "2016-12-15",
+          "event_date_precision": "day",
+          "title": "Launch of the eight-satellite constellation",
+          "description": "CYGNSS lifted off from Cape Canaveral Air Force Station aboard a Pegasus XL rocket released from an L-1011 aircraft.",
+          "event_type": "launch",
+          "source_url": "https://science.nasa.gov/mission/cygnss/",
+          "confidence": "high"
+        }
+      ],
+      "imagery": [
+        {
+          "title": "CYGNSS constellation (artist's concept)",
+          "image_url": "https://science.nasa.gov/wp-content/uploads/2023/06/cygnss-0-jpg.webp?w=1536",
+          "source_url": "https://science.nasa.gov/mission/cygnss/",
+          "attribution": "NASA",
+          "description": "Illustration of the eight CYGNSS microsatellites in low Earth orbit.",
+          "kind": "illustration",
+          "item_type": "Illustration",
+          "license": "Public domain (NASA)",
+          "confidence": "high"
+        }
+      ],
+      "stakeholders": [
+        {
+          "name": "NASA",
+          "organization_type": "Government Agency",
+          "country": "United States",
+          "official_url": "https://www.nasa.gov/",
+          "role": "Mission sponsor and programme management",
+          "source_url": "https://science.nasa.gov/mission/cygnss/",
+          "confidence": "high"
+        },
+        {
+          "name": "University of Michigan",
+          "organization_type": "University",
+          "country": "United States",
+          "official_url": "https://www.umich.edu/",
+          "role": "Principal Investigator and science leadership",
+          "source_url": "https://science.nasa.gov/mission/cygnss/",
+          "confidence": "high"
+        },
+        {
+          "name": "Southwest Research Institute",
+          "organization_type": "Research Institute",
+          "country": "United States",
+          "official_url": "https://www.swri.org/",
+          "role": "Project management and mission integration",
+          "source_url": "https://science.nasa.gov/mission/cygnss/",
+          "confidence": "high"
+        },
+        {
+          "name": "Surrey Satellite Technology Ltd",
+          "organization_type": "Contractor",
+          "country": "United Kingdom",
+          "official_url": "https://www.sstl.co.uk/",
+          "role": "Microsatellite bus and observatory construction",
+          "source_url": "https://science.nasa.gov/mission/cygnss/",
+          "confidence": "high"
+        }
+      ],
+      "people": [
+        {
+          "full_name": "Chris Ruf",
+          "role_on_mission": "Principal Investigator",
+          "affiliation": "University of Michigan",
+          "source_url": "https://www.nasa.gov/news-release/nasa-announces-media-briefing-on-new-hurricane-mission/",
+          "confidence": "high",
+          "rank_order": 1
+        },
+        {
+          "full_name": "John Scherrer",
+          "role_on_mission": "Project Manager",
+          "affiliation": "Southwest Research Institute",
+          "source_url": "https://www.nasa.gov/news-release/nasa-announces-media-briefing-on-new-hurricane-mission/",
+          "confidence": "high",
+          "rank_order": 2
+        },
+        {
+          "full_name": "Christine Bonniksen",
+          "role_on_mission": "Program Executive",
+          "affiliation": "NASA Headquarters, Earth Science Division",
+          "source_url": "https://www.nasa.gov/news-release/nasa-announces-media-briefing-on-new-hurricane-mission/",
+          "confidence": "high",
+          "rank_order": 3
+        }
+      ]
+    },
+    "danuri": {
+      "retrieved_at": "2026-11-06",
+      "confidence": "high",
+      "sections": {
+        "how_it_works": {
+          "text": "Danuri, also called the Korea Pathfinder Lunar Orbiter, is a 678 kg spacecraft about 1.8 by 2.1 by 2.3 m in size. It reached the Moon on a ballistic lunar transfer that uses solar, Earth and lunar gravity rather than a direct braking burn, then entered a 100 km circular polar orbit. Its six payloads include Korean cameras, a magnetometer and a gamma-ray spectrometer, together with NASA's ShadowCam, which is sensitive enough to image permanently shadowed polar terrain using light reflected from nearby crater walls.",
+          "source_url": "https://www.kari.re.kr/eng/contents/194",
+          "confidence": "high",
+          "attribution": "Korea Aerospace Research Institute",
+          "license": "KARI content, reused with attribution"
+        },
+        "why_important": {
+          "text": "Danuri is the Republic of Korea's first mission beyond Earth orbit and its first lunar orbiter. It gives Korean engineers and scientists operational experience in lunar trajectory design, deep-space communications and payload operations, while its imagery, magnetic and gamma-ray data add to international lunar datasets. ShadowCam's images of permanently shadowed regions support planning for future polar landings, including Artemis.",
+          "source_url": "https://www.nasa.gov/solar-system/nasa-selects-nine-scientists-to-join-korea-pathfinder-lunar-orbiter-mission/",
+          "confidence": "high",
+          "attribution": "NASA Science",
+          "license": "Public domain (NASA)"
+        },
+        "status": {
+          "text": "Danuri is active. KARI states that the mission was extended by two years and is scheduled to continue science operations through 2027.",
+          "source_url": "https://www.kari.re.kr/eng/contents/193",
+          "confidence": "high",
+          "attribution": "Korea Aerospace Research Institute",
+          "license": "KARI content, reused with attribution"
+        }
+      },
+      "timeline": [
+        {
+          "event_date": "2022-08-05",
+          "event_date_precision": "day",
+          "title": "Launch on Falcon 9",
+          "description": "Danuri launched from Cape Canaveral on a SpaceX Falcon 9 and began its ballistic lunar transfer.",
+          "event_type": "launch",
+          "source_url": "https://www.kari.re.kr/eng/contents/193",
+          "confidence": "high"
+        },
+        {
+          "event_date": "2022-12-26",
+          "event_date_precision": "day",
+          "title": "Entered lunar orbit",
+          "description": "The spacecraft entered lunar orbit after following a ballistic lunar transfer trajectory.",
+          "event_type": "orbit",
+          "source_url": "https://www.kari.re.kr/eng/contents/193",
+          "confidence": "high"
+        },
+        {
+          "event_date": "2023-01-01",
+          "event_date_precision": "year",
+          "title": "Mission extended to 2027",
+          "description": "KARI extended the mission by two years, allowing science operations to continue through 2027.",
+          "event_type": "milestone",
+          "source_url": "https://www.kari.re.kr/eng/contents/193",
+          "confidence": "high"
+        }
+      ],
+      "imagery": [
+        {
+          "title": "Danuri (KPLO) rendered view",
+          "image_url": "https://upload.wikimedia.org/wikipedia/commons/e/e9/Kplo_rendered_image.png",
+          "source_url": "https://commons.wikimedia.org/wiki/File:Kplo_rendered_image.png",
+          "attribution": "Ministry of Science and ICT, Republic of Korea",
+          "description": "Rendered image of the Korea Pathfinder Lunar Orbiter with its solar arrays and payload deck.",
+          "kind": "illustration",
+          "item_type": "Illustration",
+          "license": "KOGL Type 1 (attribution required)",
+          "confidence": "high"
+        }
+      ],
+      "stakeholders": [
+        {
+          "name": "Korea Aerospace Research Institute",
+          "organization_type": "Government Research Institute",
+          "country": "South Korea",
+          "official_url": "https://www.kari.re.kr/",
+          "role": "Mission owner, spacecraft development and operations",
+          "source_url": "https://www.kari.re.kr/eng/contents/194",
+          "confidence": "high"
+        },
+        {
+          "name": "Ministry of Science and ICT",
+          "organization_type": "Government Agency",
+          "country": "South Korea",
+          "official_url": "https://www.msit.go.kr/",
+          "role": "Mission sponsorship and programme oversight",
+          "source_url": "https://www.kari.re.kr/eng/contents/194",
+          "confidence": "high"
+        },
+        {
+          "name": "NASA",
+          "organization_type": "Government Agency",
+          "country": "United States",
+          "official_url": "https://www.nasa.gov/",
+          "role": "Partner agency and ShadowCam contribution",
+          "source_url": "https://www.nasa.gov/solar-system/nasa-selects-nine-scientists-to-join-korea-pathfinder-lunar-orbiter-mission/",
+          "confidence": "high"
+        }
+      ],
+      "people": [
+        {
+          "full_name": "Sang-Ryool Lee",
+          "role_on_mission": "KPLO Project Manager",
+          "affiliation": "Korea Aerospace Research Institute",
+          "source_url": "https://www.nasa.gov/solar-system/nasa-selects-nine-scientists-to-join-korea-pathfinder-lunar-orbiter-mission/",
+          "confidence": "high",
+          "rank_order": 1
+        },
+        {
+          "full_name": "Mark Robinson",
+          "role_on_mission": "Principal Investigator, ShadowCam",
+          "affiliation": "Arizona State University",
+          "source_url": "https://www.nasa.gov/solar-system/nasa-selects-nine-scientists-to-join-korea-pathfinder-lunar-orbiter-mission/",
+          "confidence": "high",
+          "rank_order": 2
+        }
+      ]
+    },
+    "dawn": {
+      "retrieved_at": "2026-11-06",
+      "confidence": "high",
+      "sections": {
+        "how_it_works": {
+          "text": "Dawn used three 30 cm xenon ion thrusters, derived from the engine flown on Deep Space 1, as its main propulsion. The thrusters ionise xenon and accelerate it electrostatically, producing up to about 92 mN of thrust at 2.6 kW with a specific impulse between 1900 and 3200 seconds, so the spacecraft could change orbit around Vesta and Ceres using very little propellant. Two 2.3 by 8.3 m solar arrays supplied up to 10.3 kW at 1 AU, and a 35 Ah nickel-hydrogen battery carried the spacecraft through eclipse.",
+          "source_url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=2007-043A",
+          "confidence": "high",
+          "attribution": "NASA/NSSDCA",
+          "license": "Public domain (NASA)"
+        },
+        "why_important": {
+          "text": "Dawn was the first spacecraft to orbit two separate extraterrestrial bodies, Vesta and Ceres, and the first to use ion propulsion to do so. At Vesta it showed a differentiated protoplanet with a basaltic crust and huge impact basins; at Ceres it found a water-ice-rich crust, bright carbonate deposits and evidence of briny material reaching the surface. Together the two encounters let scientists compare how a rocky inner-belt body and an ice-rich dwarf planet evolved.",
+          "source_url": "https://science.nasa.gov/mission/dawn/",
+          "confidence": "high",
+          "attribution": "NASA Science",
+          "license": "Public domain (NASA)"
+        },
+        "status": {
+          "text": "Dawn's mission ended on 1 November 2018, when the spacecraft exhausted its hydrazine. It remains in orbit around Ceres, where it is expected to stay for decades.",
+          "source_url": "https://science.nasa.gov/mission/dawn/",
+          "confidence": "high",
+          "attribution": "NASA Science",
+          "license": "Public domain (NASA)"
+        }
+      },
+      "timeline": [
+        {
+          "event_date": "2007-09-27",
+          "event_date_precision": "day",
+          "title": "Launch",
+          "description": "Dawn lifted off on a Delta II rocket from Cape Canaveral Air Force Station.",
+          "event_type": "launch",
+          "source_url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=2007-043A",
+          "confidence": "high"
+        },
+        {
+          "event_date": "2009-02-18",
+          "event_date_precision": "day",
+          "title": "Mars gravity assist",
+          "description": "Dawn flew past Mars, using the planet's gravity to shape its trajectory toward Vesta.",
+          "event_type": "flyby",
+          "source_url": "https://science.nasa.gov/mission/dawn/",
+          "confidence": "high"
+        },
+        {
+          "event_date": "2011-07-16",
+          "event_date_precision": "day",
+          "title": "Entered orbit around Vesta",
+          "description": "Dawn became the first spacecraft to orbit a main-belt asteroid.",
+          "event_type": "orbit",
+          "source_url": "https://science.nasa.gov/mission/dawn/",
+          "confidence": "high"
+        },
+        {
+          "event_date": "2015-03-06",
+          "event_date_precision": "day",
+          "title": "Entered orbit around Ceres",
+          "description": "Dawn arrived at Ceres and became the first spacecraft to orbit a dwarf planet.",
+          "event_type": "orbit",
+          "source_url": "https://science.nasa.gov/mission/dawn/",
+          "confidence": "high"
+        },
+        {
+          "event_date": "2018-11-01",
+          "event_date_precision": "day",
+          "title": "Mission ended",
+          "description": "After exhausting its hydrazine, Dawn stopped operating in orbit around Ceres.",
+          "event_type": "end_of_mission",
+          "source_url": "https://science.nasa.gov/mission/dawn/",
+          "confidence": "high"
+        }
+      ],
+      "imagery": [
+        {
+          "title": "Dawn spacecraft",
+          "image_url": "https://nssdc.gsfc.nasa.gov/image/spacecraft/dawn.jpg",
+          "source_url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=2007-043A",
+          "attribution": "NASA/NSSDCA",
+          "description": "The Dawn spacecraft with its two large solar arrays and ion propulsion system.",
+          "kind": "photo",
+          "item_type": "Photo",
+          "license": "Public domain (NASA)",
+          "confidence": "high"
+        }
+      ],
+      "stakeholders": [
+        {
+          "name": "NASA",
+          "organization_type": "Government Agency",
+          "country": "United States",
+          "official_url": "https://www.nasa.gov/",
+          "role": "Mission sponsor and programme management",
+          "source_url": "https://science.nasa.gov/mission/dawn/",
+          "confidence": "high"
+        },
+        {
+          "name": "NASA Jet Propulsion Laboratory",
+          "organization_type": "Government Laboratory",
+          "country": "United States",
+          "official_url": "https://www.jpl.nasa.gov/",
+          "role": "Project management, flight operations and mission design",
+          "source_url": "https://science.nasa.gov/mission/dawn/",
+          "confidence": "high"
+        },
+        {
+          "name": "University of California, Los Angeles",
+          "organization_type": "University",
+          "country": "United States",
+          "official_url": "https://www.ucla.edu/",
+          "role": "Principal Investigator and science leadership",
+          "source_url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=2007-043A",
+          "confidence": "high"
+        },
+        {
+          "name": "Orbital Sciences Corporation (now Northrop Grumman)",
+          "organization_type": "Contractor",
+          "country": "United States",
+          "official_url": "https://www.northropgrumman.com/",
+          "role": "Spacecraft design and construction",
+          "source_url": "https://science.nasa.gov/mission/dawn/",
+          "confidence": "high"
+        }
+      ],
+      "people": [
+        {
+          "full_name": "Christopher T. Russell",
+          "role_on_mission": "Principal Investigator",
+          "affiliation": "University of California, Los Angeles",
+          "source_url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=2007-043A",
+          "confidence": "high",
+          "rank_order": 1
+        },
+        {
+          "full_name": "Marc Rayman",
+          "role_on_mission": "Mission Director and Chief Engineer",
+          "affiliation": "NASA Jet Propulsion Laboratory",
+          "source_url": "https://science.nasa.gov/people/dr-marc-rayman/",
+          "confidence": "high",
+          "rank_order": 2
+        },
+        {
+          "full_name": "Carol Raymond",
+          "role_on_mission": "Deputy Principal Investigator",
+          "affiliation": "NASA Jet Propulsion Laboratory",
+          "source_url": "https://science.nasa.gov/people/carol-raymond/",
+          "confidence": "high",
+          "rank_order": 3
+        },
+        {
+          "full_name": "Robert Mase",
+          "role_on_mission": "Project Manager",
+          "affiliation": "NASA Jet Propulsion Laboratory",
+          "source_url": "https://www.jpl.nasa.gov/news/dawn-mission-honored-by-rnasa-foundation/",
+          "confidence": "high",
+          "rank_order": 4
+        }
+      ]
+    },
+    "deep-impact": {
+      "retrieved_at": "2026-11-06",
+      "confidence": "high",
+      "sections": {
+        "how_it_works": {
+          "text": "Deep Impact flew two connected spacecraft: a 370 kg copper impactor and a 650 kg flyby bus. The impactor was released about 24 hours before encounter and struck comet Tempel 1 at 10.2 km/s, while the flyby watched from a safe distance with its High Resolution Instrument, Medium Resolution Instrument and infrared spectrometer. The copper mass was chosen so that the impactor's own material would not confuse measurements of the comet's composition.",
+          "source_url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=2005-001A",
+          "confidence": "high",
+          "attribution": "NASA/NSSDCA",
+          "license": "Public domain (NASA)"
+        },
+        "why_important": {
+          "text": "The collision excavated material from beneath Tempel 1's surface, allowing the flyby to analyse fresh cometary ice, dust and organic compounds and to watch how a crater forms on a low-gravity body. The experiment produced the first direct look inside a comet nucleus and linked the mission to later studies of cometary structure and the delivery of volatiles to the inner solar system.",
+          "source_url": "https://science.nasa.gov/mission/deep-impact-epoxi/",
+          "confidence": "high",
+          "attribution": "NASA Science",
+          "license": "Public domain (NASA)"
+        },
+        "status": {
+          "text": "Deep Impact's primary mission ended after the Tempel 1 encounter, and the spacecraft was then reused as EPOXI for a flyby of comet Hartley 2 in 2010 and other observations. NASA lost contact with the spacecraft on 16 September 2013 and declared the mission complete.",
+          "source_url": "https://science.nasa.gov/mission/deep-impact-epoxi/",
+          "confidence": "high",
+          "attribution": "NASA Science",
+          "license": "Public domain (NASA)"
+        }
+      },
+      "timeline": [
+        {
+          "event_date": "2005-01-12",
+          "event_date_precision": "day",
+          "title": "Launch",
+          "description": "Deep Impact lifted off on a Delta II rocket from Cape Canaveral Air Force Station.",
+          "event_type": "launch",
+          "source_url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=2005-001A",
+          "confidence": "high"
+        },
+        {
+          "event_date": "2005-07-04",
+          "event_date_precision": "day",
+          "title": "Impactor strikes Tempel 1",
+          "description": "The copper impactor hit the comet nucleus at 10.2 km/s at 05:52 UT while the flyby spacecraft recorded the event.",
+          "event_type": "encounter",
+          "source_url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=2005-001A",
+          "confidence": "high"
+        },
+        {
+          "event_date": "2010-11-04",
+          "event_date_precision": "day",
+          "title": "Flyby of comet Hartley 2",
+          "description": "The reused spacecraft, now called EPOXI, passed comet Hartley 2 and returned close-up images.",
+          "event_type": "flyby",
+          "source_url": "https://science.nasa.gov/mission/deep-impact-epoxi/",
+          "confidence": "high"
+        },
+        {
+          "event_date": "2013-09-16",
+          "event_date_precision": "day",
+          "title": "Mission ended",
+          "description": "NASA lost contact with the spacecraft and concluded the extended mission.",
+          "event_type": "end_of_mission",
+          "source_url": "https://science.nasa.gov/mission/deep-impact-epoxi/",
+          "confidence": "high"
+        }
+      ],
+      "imagery": [
+        {
+          "title": "Deep Impact spacecraft",
+          "image_url": "https://nssdc.gsfc.nasa.gov/image/spacecraft/deep_impact.jpg",
+          "source_url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=2005-001A",
+          "attribution": "NASA/NSSDCA",
+          "description": "The Deep Impact flyby spacecraft and its separate copper impactor before launch.",
+          "kind": "photo",
+          "item_type": "Photo",
+          "license": "Public domain (NASA)",
+          "confidence": "high"
+        }
+      ],
+      "stakeholders": [
+        {
+          "name": "NASA",
+          "organization_type": "Government Agency",
+          "country": "United States",
+          "official_url": "https://www.nasa.gov/",
+          "role": "Mission sponsor and programme management",
+          "source_url": "https://science.nasa.gov/mission/deep-impact-epoxi/",
+          "confidence": "high"
+        },
+        {
+          "name": "NASA Jet Propulsion Laboratory",
+          "organization_type": "Government Laboratory",
+          "country": "United States",
+          "official_url": "https://www.jpl.nasa.gov/",
+          "role": "Project management and flight operations",
+          "source_url": "https://science.nasa.gov/mission/deep-impact-epoxi/",
+          "confidence": "high"
+        },
+        {
+          "name": "University of Maryland",
+          "organization_type": "University",
+          "country": "United States",
+          "official_url": "https://www.umd.edu/",
+          "role": "Principal Investigator and science leadership",
+          "source_url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=2005-001A",
+          "confidence": "high"
+        }
+      ],
+      "people": [
+        {
+          "full_name": "Michael F. A'Hearn",
+          "role_on_mission": "Principal Investigator",
+          "affiliation": "University of Maryland",
+          "source_url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=2005-001A",
+          "confidence": "high",
+          "rank_order": 1
+        },
+        {
+          "full_name": "Tim Larson",
+          "role_on_mission": "Project Manager",
+          "affiliation": "NASA Jet Propulsion Laboratory",
+          "source_url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=2005-001A",
+          "confidence": "high",
+          "rank_order": 2
+        }
+      ]
+    },
+    "deep-space-1": {
+      "retrieved_at": "2026-11-06",
+      "confidence": "high",
+      "sections": {
+        "how_it_works": {
+          "text": "Deep Space 1 was built around a xenon ion propulsion system that used electricity from solar arrays to accelerate ions and produce a very small but continuous thrust. The 30 cm engine carried about 81.5 kg of xenon, and the spacecraft's total launch mass was 486.3 kg. It also flew an autonomous navigation package, AutoNav, that used camera images of asteroids and stars to steer the spacecraft without ground intervention, plus the MICAS camera/spectrometer and the PEPE plasma instrument.",
+          "source_url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1998-061A",
+          "confidence": "high",
+          "attribution": "NASA/NSSDCA",
+          "license": "Public domain (NASA)"
+        },
+        "why_important": {
+          "text": "Deep Space 1 was a technology demonstration that proved ion propulsion could serve as a primary deep-space propulsion system, and it validated autonomous optical navigation and miniaturised science instruments. Its encounters with asteroid Braille and comet Borrelly showed that these technologies could deliver real science, and the ion engine design became the basis for the propulsion used on Dawn.",
+          "source_url": "https://science.nasa.gov/mission/deep-space-1/",
+          "confidence": "high",
+          "attribution": "NASA Science",
+          "license": "Public domain (NASA)"
+        },
+        "status": {
+          "text": "Deep Space 1 completed its mission on 18 December 2001, after the Borrelly flyby. The spacecraft was intentionally shut down and remains inactive in heliocentric orbit.",
+          "source_url": "https://science.nasa.gov/mission/deep-space-1/",
+          "confidence": "high",
+          "attribution": "NASA Science",
+          "license": "Public domain (NASA)"
+        }
+      },
+      "timeline": [
+        {
+          "event_date": "1998-10-24",
+          "event_date_precision": "day",
+          "title": "Launch",
+          "description": "Deep Space 1 lifted off on a Delta II rocket from Cape Canaveral Air Force Station.",
+          "event_type": "launch",
+          "source_url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1998-061A",
+          "confidence": "high"
+        },
+        {
+          "event_date": "1999-07-29",
+          "event_date_precision": "day",
+          "title": "Flyby of asteroid Braille",
+          "description": "The spacecraft passed asteroid 9969 Braille, returning images and spectra during a high-speed encounter.",
+          "event_type": "flyby",
+          "source_url": "https://science.nasa.gov/mission/deep-space-1/",
+          "confidence": "high"
+        },
+        {
+          "event_date": "2001-09-22",
+          "event_date_precision": "day",
+          "title": "Flyby of comet Borrelly",
+          "description": "Deep Space 1 passed comet Borrelly and returned images and spectra of its nucleus.",
+          "event_type": "flyby",
+          "source_url": "https://science.nasa.gov/mission/deep-space-1/",
+          "confidence": "high"
+        },
+        {
+          "event_date": "2001-12-18",
+          "event_date_precision": "day",
+          "title": "Mission ended",
+          "description": "The spacecraft was shut down after completing its extended mission.",
+          "event_type": "end_of_mission",
+          "source_url": "https://science.nasa.gov/mission/deep-space-1/",
+          "confidence": "high"
+        }
+      ],
+      "imagery": [
+        {
+          "title": "Deep Space 1 spacecraft",
+          "image_url": "https://assets.science.nasa.gov/dynamicimage/assets/science/psd/solar/2023/07/deep_space_1.jpg?w=1277&h=1024&fit=clip&crop=faces%2Cfocalpoint",
+          "source_url": "https://science.nasa.gov/mission/deep-space-1/",
+          "attribution": "NASA",
+          "description": "The Deep Space 1 spacecraft, whose ion engine was the first used as primary propulsion on a deep-space mission.",
+          "kind": "illustration",
+          "item_type": "Illustration",
+          "license": "Public domain (NASA)",
+          "confidence": "high"
+        }
+      ],
+      "stakeholders": [
+        {
+          "name": "NASA",
+          "organization_type": "Government Agency",
+          "country": "United States",
+          "official_url": "https://www.nasa.gov/",
+          "role": "Mission sponsor and programme management",
+          "source_url": "https://science.nasa.gov/mission/deep-space-1/",
+          "confidence": "high"
+        },
+        {
+          "name": "NASA Jet Propulsion Laboratory",
+          "organization_type": "Government Laboratory",
+          "country": "United States",
+          "official_url": "https://www.jpl.nasa.gov/",
+          "role": "Project management, flight operations and ion propulsion testing",
+          "source_url": "https://science.nasa.gov/mission/deep-space-1/",
+          "confidence": "high"
+        },
+        {
+          "name": "Spectrum Astro",
+          "organization_type": "Contractor",
+          "country": "United States",
+          "official_url": "https://en.wikipedia.org/wiki/Deep_Space_1",
+          "role": "Spacecraft bus design and construction",
+          "source_url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1998-061A",
+          "confidence": "high"
+        }
+      ],
+      "people": [
+        {
+          "full_name": "E. Kane Casani",
+          "role_on_mission": "Program Manager",
+          "affiliation": "NASA Jet Propulsion Laboratory",
+          "source_url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1998-061A",
+          "confidence": "high",
+          "rank_order": 1
+        },
+        {
+          "full_name": "David H. Lehman",
+          "role_on_mission": "Project Manager",
+          "affiliation": "NASA Jet Propulsion Laboratory",
+          "source_url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1998-061A",
+          "confidence": "high",
+          "rank_order": 2
+        },
+        {
+          "full_name": "Robert M. Nelson",
+          "role_on_mission": "Mission Scientist",
+          "affiliation": "NASA Jet Propulsion Laboratory",
+          "source_url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1998-061A",
+          "confidence": "high",
+          "rank_order": 3
+        },
+        {
+          "full_name": "Philip Varghese",
+          "role_on_mission": "Mission Manager",
+          "affiliation": "NASA Jet Propulsion Laboratory",
+          "source_url": "https://en.wikipedia.org/wiki/Deep_Space_1",
+          "confidence": "medium",
+          "rank_order": 4
+        },
+        {
+          "full_name": "Marc Rayman",
+          "role_on_mission": "Chief Mission Engineer and Deputy Mission Manager",
+          "affiliation": "NASA Jet Propulsion Laboratory",
+          "source_url": "https://en.wikipedia.org/wiki/Deep_Space_1",
+          "confidence": "medium",
+          "rank_order": 5
+        }
+      ]
+    },
+    "dscovr": {
+      "retrieved_at": "2026-11-06",
+      "confidence": "high",
+      "sections": {
+        "how_it_works": {
+          "text": "DSCOVR orbits the Sun-Earth L1 point about 1.5 million km sunward of Earth, where it can sample the solar wind before it reaches the planet. Its PlasMag suite combines a Faraday cup and a magnetometer to measure the speed, density, temperature and magnetic field of the incoming plasma. A pair of Earth-viewing instruments, EPIC and NISTAR, look back at the fully illuminated Earth to image the disk and measure reflected sunlight and emitted radiation.",
+          "source_url": "https://science.nasa.gov/mission/dscovr/",
+          "confidence": "high",
+          "attribution": "NASA Science",
+          "license": "Public domain (NASA)"
+        },
+        "why_important": {
+          "text": "DSCOVR is NOAA's operational real-time solar-wind monitor and the successor to NASA's ACE at L1. Its measurements give forecasters roughly 15 to 60 minutes of warning before a solar-wind disturbance reaches Earth, supporting geomagnetic storm watches and alerts that protect satellites, power grids, aviation and GPS users. EPIC's images also provide a continuous view of the sunlit Earth for climate and cloud studies.",
+          "source_url": "https://science.nasa.gov/mission/dscovr/",
+          "confidence": "high",
+          "attribution": "NASA Science",
+          "license": "Public domain (NASA)"
+        },
+        "status": {
+          "text": "DSCOVR is listed by NASA as an active mission and continues to operate at L1 under NOAA. NOAA took over routine operations on 28 October 2015.",
+          "source_url": "https://science.nasa.gov/mission/dscovr/",
+          "confidence": "high",
+          "attribution": "NASA Science",
+          "license": "Public domain (NASA)"
+        }
+      },
+      "timeline": [
+        {
+          "event_date": "2015-02-11",
+          "event_date_precision": "day",
+          "title": "Launch",
+          "description": "DSCOVR launched on a SpaceX Falcon 9 from Cape Canaveral Air Force Station.",
+          "event_type": "launch",
+          "source_url": "https://science.nasa.gov/mission/dscovr/",
+          "confidence": "high"
+        },
+        {
+          "event_date": "2015-06-08",
+          "event_date_precision": "day",
+          "title": "Arrival at L1",
+          "description": "The spacecraft reached its observing station around the Sun-Earth L1 point.",
+          "event_type": "orbit",
+          "source_url": "https://science.nasa.gov/mission/dscovr/",
+          "confidence": "high"
+        },
+        {
+          "event_date": "2015-10-28",
+          "event_date_precision": "day",
+          "title": "Handover to NOAA",
+          "description": "NOAA assumed responsibility for routine DSCOVR operations and space-weather data products.",
+          "event_type": "milestone",
+          "source_url": "https://science.nasa.gov/mission/dscovr/",
+          "confidence": "high"
+        }
+      ],
+      "imagery": [
+        {
+          "title": "DSCOVR spacecraft",
+          "image_url": "https://assets.science.nasa.gov/dynamicimage/assets/science/psd/solar/2023/07/DSCOVR_768.jpg",
+          "source_url": "https://science.nasa.gov/mission/dscovr/",
+          "attribution": "NASA",
+          "description": "The DSCOVR spacecraft, which monitors the solar wind from the Sun-Earth L1 point.",
+          "kind": "photo",
+          "item_type": "Photo",
+          "license": "Public domain (NASA)",
+          "confidence": "high"
+        }
+      ],
+      "stakeholders": [
+        {
+          "name": "National Oceanic and Atmospheric Administration",
+          "organization_type": "Government Agency",
+          "country": "United States",
+          "official_url": "https://www.noaa.gov/",
+          "role": "Mission owner and operational space-weather services",
+          "source_url": "https://science.nasa.gov/mission/dscovr/",
+          "confidence": "high"
+        },
+        {
+          "name": "NASA",
+          "organization_type": "Government Agency",
+          "country": "United States",
+          "official_url": "https://www.nasa.gov/",
+          "role": "Spacecraft refurbishment, science instruments and launch support",
+          "source_url": "https://science.nasa.gov/mission/dscovr/",
+          "confidence": "high"
+        },
+        {
+          "name": "U.S. Air Force",
+          "organization_type": "Government Agency",
+          "country": "United States",
+          "official_url": "https://www.spaceforce.mil/",
+          "role": "Original mission sponsorship and launch support",
+          "source_url": "https://science.nasa.gov/mission/dscovr/",
+          "confidence": "high"
+        },
+        {
+          "name": "SpaceX",
+          "organization_type": "Contractor",
+          "country": "United States",
+          "official_url": "https://www.spacex.com/",
+          "role": "Launch services",
+          "source_url": "https://science.nasa.gov/mission/dscovr/",
+          "confidence": "high"
+        }
+      ],
+      "people": [
+        {
+          "full_name": "Adam Szabo",
+          "role_on_mission": "Project Scientist",
+          "affiliation": "NASA Goddard Space Flight Center",
+          "source_url": "https://avdc.gsfc.nasa.gov/pub/DSCOVR/Web_EPIC/Contacts.html",
+          "confidence": "high",
+          "rank_order": 1
+        },
+        {
+          "full_name": "Alexander Marshak",
+          "role_on_mission": "Deputy Project Scientist",
+          "affiliation": "NASA Goddard Space Flight Center",
+          "source_url": "https://avdc.gsfc.nasa.gov/pub/DSCOVR/Web_EPIC/Contacts.html",
+          "confidence": "high",
+          "rank_order": 2
+        },
+        {
+          "full_name": "Jay Herman",
+          "role_on_mission": "EPIC Instrument Scientist",
+          "affiliation": "NASA Goddard Space Flight Center",
+          "source_url": "https://avdc.gsfc.nasa.gov/pub/DSCOVR/Web_EPIC/Contacts.html",
+          "confidence": "high",
+          "rank_order": 3
+        },
+        {
+          "full_name": "Albert Vernacchio",
+          "role_on_mission": "Project Manager",
+          "affiliation": "NASA Goddard Space Flight Center",
+          "source_url": "https://www.nasa.gov/news-release/media-invited-to-see-dscovr-spacecraft-prior-to-shipment-for-launch/",
+          "confidence": "high",
+          "rank_order": 4
+        },
+        {
+          "full_name": "Al Gore",
+          "role_on_mission": "Conceived the original Triana mission as U.S. Vice President",
+          "affiliation": "U.S. Government",
+          "source_url": "https://science.nasa.gov/mission/dscovr/",
+          "confidence": "high",
+          "rank_order": 5
+        }
+      ]
+    }
+  }
+}

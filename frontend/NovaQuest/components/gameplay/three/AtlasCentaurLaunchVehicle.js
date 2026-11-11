@@ -3,7 +3,7 @@ import * as THREE from 'three';
 /**
  * AtlasCentaurLaunchVehicle.js
  * 
- * High-Detail 3D Model of the 1967 Atlas-Centaur SLV-3C Launch Vehicle
+ * Medium-poly 3D Model of the 1967 Atlas-Centaur SLV-3C Launch Vehicle
  * Features:
  * - Stage 1: Atlas Booster with polished stainless steel balloon tank, external propellant conduits,
  *   aerodynamic booster skirt, and 3 Rocketdyne engine bells
@@ -63,7 +63,7 @@ export function createAtlasCentaurVehicle() {
   root.add(atlasStage);
 
   // Main Atlas Propellant Tank (Pressurized stainless steel balloon cylinder)
-  const atlasTankGeo = new THREE.CylinderGeometry(1.5, 1.5, 14, 32);
+  const atlasTankGeo = new THREE.CylinderGeometry(1.5, 1.5, 14, 16);
   const atlasTank = new THREE.Mesh(atlasTankGeo, stainlessSteelMat);
   atlasTank.position.y = 8.5;
   atlasTank.castShadow = true;
@@ -78,7 +78,7 @@ export function createAtlasCentaurVehicle() {
   }
 
   // USA & NASA markings (Black & Red geometric roll pattern bands)
-  const stripeGeo = new THREE.CylinderGeometry(1.52, 1.52, 0.6, 32);
+  const stripeGeo = new THREE.CylinderGeometry(1.52, 1.52, 0.6, 16);
   const stripe1 = new THREE.Mesh(stripeGeo, blackStripeMat);
   stripe1.position.y = 13.5;
   atlasStage.add(stripe1);
@@ -88,7 +88,7 @@ export function createAtlasCentaurVehicle() {
   atlasStage.add(stripe2);
 
   // Atlas Booster Skirt & Engine Fairing
-  const skirtGeo = new THREE.CylinderGeometry(1.55, 1.72, 3.2, 32);
+  const skirtGeo = new THREE.CylinderGeometry(1.55, 1.72, 3.2, 16);
   const skirt = new THREE.Mesh(skirtGeo, stainlessSteelMat);
   skirt.position.y = 2.6;
   skirt.castShadow = true;
@@ -138,7 +138,7 @@ export function createAtlasCentaurVehicle() {
   atlasFlameGroup.visible = false;
 
   // Interstage Adapter Ring
-  const interstageGeo = new THREE.CylinderGeometry(1.5, 1.5, 1.6, 32);
+  const interstageGeo = new THREE.CylinderGeometry(1.5, 1.5, 1.6, 16);
   const interstage = new THREE.Mesh(interstageGeo, blackStripeMat);
   interstage.position.y = 16.3;
   atlasStage.add(interstage);
@@ -152,7 +152,7 @@ export function createAtlasCentaurVehicle() {
   root.add(centaurStage);
 
   // Centaur Hydrogen-Oxygen Cylindrical Body
-  const centaurTankGeo = new THREE.CylinderGeometry(1.48, 1.48, 6.5, 32);
+  const centaurTankGeo = new THREE.CylinderGeometry(1.48, 1.48, 6.5, 16);
   const centaurTank = new THREE.Mesh(centaurTankGeo, centaurWhiteMat);
   centaurTank.position.y = 3.25;
   centaurTank.castShadow = true;
@@ -185,7 +185,7 @@ export function createAtlasCentaurVehicle() {
   centaurFlameGroup.visible = false;
 
   // Payload Adapter Cone
-  const adapterGeo = new THREE.CylinderGeometry(1.2, 1.48, 1.2, 32);
+  const adapterGeo = new THREE.CylinderGeometry(1.2, 1.48, 1.2, 16);
   const adapter = new THREE.Mesh(adapterGeo, centaurWhiteMat);
   adapter.position.y = 7.1;
   centaurStage.add(adapter);
@@ -202,14 +202,14 @@ export function createAtlasCentaurVehicle() {
   fairingGroup.add(fairingL);
 
   const fCylL = new THREE.Mesh(
-    new THREE.CylinderGeometry(1.5, 1.5, 5.0, 24, 1, false, 0, Math.PI),
+    new THREE.CylinderGeometry(1.5, 1.5, 5.0, 16, 1, false, 0, Math.PI),
     centaurWhiteMat
   );
   fCylL.position.y = 2.5;
   fairingL.add(fCylL);
 
   const fConeL = new THREE.Mesh(
-    new THREE.ConeGeometry(1.5, 3.5, 24, 1, false, 0, Math.PI),
+    new THREE.ConeGeometry(1.5, 3.5, 16, 1, false, 0, Math.PI),
     centaurWhiteMat
   );
   fConeL.position.y = 6.75;
@@ -217,7 +217,7 @@ export function createAtlasCentaurVehicle() {
 
   // Red roll alignment stripes on Fairing
   const fStripeL = new THREE.Mesh(
-    new THREE.CylinderGeometry(1.51, 1.51, 0.4, 24, 1, false, 0, Math.PI),
+    new THREE.CylinderGeometry(1.51, 1.51, 0.4, 16, 1, false, 0, Math.PI),
     redDecalMat
   );
   fStripeL.position.y = 4.2;
@@ -228,21 +228,21 @@ export function createAtlasCentaurVehicle() {
   fairingGroup.add(fairingR);
 
   const fCylR = new THREE.Mesh(
-    new THREE.CylinderGeometry(1.5, 1.5, 5.0, 24, 1, false, Math.PI, Math.PI),
+    new THREE.CylinderGeometry(1.5, 1.5, 5.0, 16, 1, false, Math.PI, Math.PI),
     centaurWhiteMat
   );
   fCylR.position.y = 2.5;
   fairingR.add(fCylR);
 
   const fConeR = new THREE.Mesh(
-    new THREE.ConeGeometry(1.5, 3.5, 24, 1, false, Math.PI, Math.PI),
+    new THREE.ConeGeometry(1.5, 3.5, 16, 1, false, Math.PI, Math.PI),
     centaurWhiteMat
   );
   fConeR.position.y = 6.75;
   fairingR.add(fConeR);
 
   const fStripeR = new THREE.Mesh(
-    new THREE.CylinderGeometry(1.51, 1.51, 0.4, 24, 1, false, Math.PI, Math.PI),
+    new THREE.CylinderGeometry(1.51, 1.51, 0.4, 16, 1, false, Math.PI, Math.PI),
     redDecalMat
   );
   fStripeR.position.y = 4.2;

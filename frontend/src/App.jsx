@@ -9,6 +9,7 @@ import TimeTravelersHomePage from '../NovaQuest/pages/TimeTravelersHomePage';
 import MissionSelectPage from '../NovaQuest/pages/MissionSelectPage';
 import Level1Surveyor5Page from '../NovaQuest/pages/Level1Surveyor5Page';
 import MemoirPage from '../NovaQuest/pages/MemoirPage';
+import OldLunarMapPage from '../NovaQuest/pages/OldLunarMapPage';
 import SignInPage from '../NovaUser/pages/SignInPage';
 import RegisterPage from '../NovaUser/pages/RegisterPage';
 import LegalPage from '../NovaUser/pages/LegalPage';
@@ -94,6 +95,7 @@ export default function App() {
       <Route path="/missions" element={<MissionSelectPage />} />
       <Route path="/play" element={<Level1Surveyor5Page />} />
       <Route path="/play/surveyor-5" element={<Level1Surveyor5Page />} />
+      <Route path="/old-lunar-map" element={<OldLunarMapPage />} />
       <Route path="/level/surveyor-5" element={<Navigate to="/play/surveyor-5" replace />} />
       <Route path="/prologue" element={<Navigate to="/play" replace />} />
       <Route path="/mission-echo" element={<Navigate to="/play" replace />} />
