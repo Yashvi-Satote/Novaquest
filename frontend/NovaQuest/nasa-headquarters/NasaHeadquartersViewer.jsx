@@ -231,9 +231,6 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer({ clas
         if (['w', 'a', 's', 'd', 'arrowup', 'arrowleft', 'arrowdown', 'arrowright', 'shift'].includes(key)) {
           event.preventDefault();
           movementKeys.add(key);
-        } else if (key === 'e') {
-          event.preventDefault();
-          doorControl.toggle();
         } else if (key === 'f') {
           event.preventDefault();
           storageDoorControl.toggle();
@@ -243,7 +240,7 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer({ clas
         }
       } else if (key === 'f') {
         storageDoorControl.toggle();
-      } else if (key === 'd' || key === 'e') {
+      } else if (key === 'd') {
         doorControl.toggle();
       } else if (key === 'g') {
         firingRoomDoorControl.toggle();
@@ -932,8 +929,8 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer({ clas
               className="rounded-lg border border-[#7fe3ff]/35 bg-[#071426]/85 px-3 py-2 text-[9px] font-semibold uppercase tracking-[0.18em] text-[#9cd8f2] shadow-[0_0_20px_rgba(61,107,255,0.18)] backdrop-blur-md transition-colors hover:border-[#7fe3ff]/70 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7fe3ff]"
             >
               {doorOpen
-                ? `Close airlock · Click / ${firstPersonMode || characterControlMode ? 'E' : 'D'}`
-                : `Open airlock · Click / ${firstPersonMode || characterControlMode ? 'E' : 'D'}`}
+                ? `Close airlock · Click${firstPersonMode || characterControlMode ? '' : ' / D'}`
+                : `Open airlock · Click${firstPersonMode || characterControlMode ? '' : ' / D'}`}
             </button>
             <button
               type="button"
@@ -979,7 +976,7 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer({ clas
           </div>
           {(firstPersonMode || characterControlMode) && (
             <div className="pointer-events-none absolute bottom-6 left-1/2 z-20 -translate-x-1/2 rounded-full border border-[#7fe3ff]/25 bg-[#071426]/80 px-4 py-2 text-center text-[8px] font-semibold uppercase tracking-[0.18em] text-[#b8d8e8] backdrop-blur-md sm:text-[9px]">
-              WASD move · {characterControlMode ? 'Drag to orbit' : '360° mouse look'} · Shift sprint · E airlock · F parts room · G firing room · Esc exit
+              WASD move · {characterControlMode ? 'Drag to orbit' : '360° mouse look'} · Shift sprint · Click airlock · F parts room · G firing room · Esc exit
             </div>
           )}
 

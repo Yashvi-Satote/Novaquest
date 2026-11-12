@@ -35,7 +35,7 @@ export default function GameplayHUD({
   onExit,
   onToggleHelp,
   showHelp = false,
-  interactionPrompt = null, // e.g. "Press [E] to Inspect Surveyor 5"
+  interactionPrompt = null, // e.g. "Click to Inspect Surveyor 5"
   className = ''
 }) {
   const [isMuted, setIsMuted] = useState(gameAudio.isMuted);

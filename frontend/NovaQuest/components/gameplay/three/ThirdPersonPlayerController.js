@@ -105,7 +105,6 @@ export function createThirdPersonController({
         characterMesh.userData.anim.state = 'jump';
       }
     }
-    if (k === 'e') keys.e = true;
   };
 
   const handleKeyUp = (e) => {
@@ -116,7 +115,6 @@ export function createThirdPersonController({
     if (k === 'd' || k === 'arrowright') keys.d = false;
     if (e.key === 'Shift') keys.shift = false;
     if (e.key === ' ') keys.space = false;
-    if (k === 'e') keys.e = false;
   };
 
   // Attach event listeners
