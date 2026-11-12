@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import * as THREE from 'three';
 import {
@@ -31,6 +31,29 @@ import { USE_OLD_LUNAR_MAP } from '../config/lunarMapConfig';
 import { saveGame } from '../game/saveManager';
 import OldLunarMapPage from './OldLunarMapPage';
 
+const IntroVideoPlayer = memo(function IntroVideoPlayer({
+  isFading,
+  onEnded,
+  onError,
+  onTransitionEnd,
+  videoRef
+}) {
+  return (
+    <video
+      ref={videoRef}
+      playsInline
+      preload="auto"
+      src="/videos/milky-way-intro.mp4"
+      onEnded={onEnded}
+      onError={onError}
+      onTransitionEnd={onTransitionEnd}
+      className={`h-full w-full object-cover transition-opacity duration-1000 ease-in-out ${
+        isFading ? 'opacity-0' : 'opacity-100'
+      }`}
+    />
+  );
+});
+
 /**
  * Level1Surveyor5Page.jsx
  * 
@@ -41,7 +64,7 @@ import OldLunarMapPage from './OldLunarMapPage';
  *   (Golden Florida sunrise, azure blue sky dome, Atlantic ocean, open red steel lattice gantry,
  *    retracting swing arms, engine ignition, cloud punch, Atlas booster staging, Centaur RL10 burn,
  *    clamshell fairing jettison, and Surveyor 5 leg unfolding in space!)
- * - Phase 2: Post-Landing Malfunction Briefing from Dr. Leonard Jaffe
+ * - Phase 2: Post-Launch Mission Briefing from Dr. Leonard Jaffe
  * - Phase 3: Human Spacecraft Cockpit Flight & Mare Tranquillitatis Touchdown
  * - Phase 4: GTA-Style Third-Person Open-World Lunar Exploration & Component Hunt
  *   (Approved Cute Cyan Alien Astronaut Leo, 4 Physical Scattered Components, Proximity Audio Radar, Vertical Light Beams)
@@ -119,7 +142,7 @@ export default function Level1Surveyor5Page() {
     if (onEnd) onEnd();
   };
 
-  const fadeOutIntro = () => {
+  const fadeOutIntro = useCallback(() => {
     if (introFadeStartedRef.current) return;
     introFadeStartedRef.current = true;
 
@@ -142,9 +165,9 @@ export default function Level1Surveyor5Page() {
     };
 
     introFadeFrameRef.current = requestAnimationFrame(fadeAudio);
-  };
+  }, []);
 
-  const startIntroVideo = () => {
+  const startIntroVideo = useCallback(() => {
     const video = introVideoRef.current;
     if (!video) return;
 
@@ -163,7 +186,18 @@ export default function Level1Surveyor5Page() {
         setIsIntroVideoLoading(false);
         setIntroPlaybackBlocked(true);
       });
-  };
+  }, []);
+
+  const handleIntroVideoError = useCallback(() => {
+    setIntroVideoError(true);
+  }, []);
+
+  const handleIntroVideoTransitionEnd = useCallback(event => {
+    if (event.propertyName === 'opacity' && isIntroVideoFading) {
+      introVideoRef.current?.pause();
+      setOpeningStage('date');
+    }
+  }, [isIntroVideoFading]);
 
   // -------------------------------------------------------------
   // THREE.JS MASTER ENGINE
@@ -482,21 +516,20 @@ export default function Level1Surveyor5Page() {
           );
           camera.lookAt(0, 22 + rocketY, 0);
         }
-        // 20.0s+: Transition to Phase 2 Emergency Alert
+        // 20.0s+: Transition to Phase 2 Mission Briefing
         else {
           setGamePhase('phase2_emergency');
           phaseTimer = 0;
-          gameAudio.playAlarm();
           playRadioMessage(
             'jaffe',
-            'Dr. Leonard Jaffe • Emergency Broadcast',
-            "Surveyor 5 landed in Mare Tranquillitatis and is waiting to be retrieved. Fly the rescue craft to the probe, recover its four missing science components, and bring Surveyor 5 back online!"
+            'Dr. Leonard Jaffe • Mission Briefing',
+            "Surveyor 5 landed in Mare Tranquillitatis and is waiting to be retrieved. Fly the spacecraft to the probe, recover its four missing science components, and bring Surveyor 5 back online!"
           );
         }
       }
 
       // =========================================================
-      // PHASE 2: EMERGENCY BRIEFING
+      // PHASE 2: MISSION BRIEFING
       // =========================================================
       else if (curPhase === 'phase2_emergency') {
         launchpadGroup.visible = false;
@@ -630,7 +663,7 @@ export default function Level1Surveyor5Page() {
         if (nearbyLost) {
           const compDef = nearbyLost.item;
           const promptObj = {
-            text: `Press [E] to Collect ${compDef.name}`,
+            text: `Click to Collect ${compDef.name}`,
             action: () => {
               gameAudio.playPickup();
               astronautHero.userData.anim.state = 'pickup';
@@ -682,7 +715,7 @@ export default function Level1Surveyor5Page() {
                 : 'Alpha-Scattering Surface Analyzer';
 
             const promptObj = {
-              text: `Press [E] to Install ${slotName}`,
+              text: `Click to Install ${slotName}`,
               action: () => {
                 gameAudio.playAttachSnap();
                 astronautHero.userData.anim.state = 'repair';
@@ -739,7 +772,7 @@ export default function Level1Surveyor5Page() {
             setInteractionPrompt(null);
           } else {
             const scanObj = {
-              text: 'Press [E] to Run Diagnostic Scan',
+              text: 'Click to Run Diagnostic Scan',
               action: () => {
                 gameAudio.playScanner();
                 playRadioMessage(
@@ -757,11 +790,6 @@ export default function Level1Surveyor5Page() {
           setInteractionPrompt(null);
         }
 
-        // Handle physical [E] key trigger with reliable ref check
-        if (controller.keys.e && activeInteractionRef.current) {
-          controller.keys.e = false;
-          activeInteractionRef.current.action();
-        }
       }
 
       renderer.render(scene, camera);
@@ -816,7 +844,7 @@ export default function Level1Surveyor5Page() {
     playRadioMessage(
       'jaffe',
       'Dr. Leonard Jaffe • Mission Control',
-      "Surveyor 5 is waiting at Mare Tranquillitatis! Pilot the rescue craft to the probe, locate its four science components, and bring Surveyor 5 back online!"
+      "Surveyor 5 is waiting at Mare Tranquillitatis! Pilot the spacecraft to the probe, locate its four science components, and bring Surveyor 5 back online!"
     );
   };
 
@@ -835,30 +863,12 @@ export default function Level1Surveyor5Page() {
 
       {openingStage === 'video' && (
         <div className="absolute inset-0 z-50 overflow-hidden bg-black">
-          <video
-            ref={introVideoRef}
-            playsInline
-            preload="metadata"
-            src="/videos/milky-way-intro.mp4"
-            onLoadStart={() => setIsIntroVideoLoading(true)}
-            onCanPlay={() => setIsIntroVideoLoading(false)}
-            onWaiting={() => setIsIntroVideoLoading(true)}
-            onStalled={() => setIsIntroVideoLoading(true)}
-            onPlaying={() => setIsIntroVideoLoading(false)}
+          <IntroVideoPlayer
+            videoRef={introVideoRef}
+            isFading={isIntroVideoFading}
             onEnded={fadeOutIntro}
-            onError={() => {
-              setIsIntroVideoLoading(false);
-              setIntroVideoError(true);
-            }}
-            onTransitionEnd={event => {
-              if (event.propertyName === 'opacity' && isIntroVideoFading) {
-                introVideoRef.current?.pause();
-                setOpeningStage('date');
-              }
-            }}
-            className={`h-full w-full object-cover transition-opacity duration-1000 ease-in-out ${
-              isIntroVideoFading ? 'opacity-0' : 'opacity-100'
-            }`}
+            onError={handleIntroVideoError}
+            onTransitionEnd={handleIntroVideoTransitionEnd}
           />
           {!hasStartedIntro && !introVideoError && (
             <button
@@ -1030,28 +1040,28 @@ export default function Level1Surveyor5Page() {
       </div>
 
       {/* ----------------------------------------------------------- */}
-      {/* PHASE 2 OVERLAY: EMERGENCY ALERT & MISSION BRIEFING         */}
+      {/* PHASE 2 OVERLAY: MISSION BRIEFING                           */}
       {/* ----------------------------------------------------------- */}
       {gamePhase === 'phase2_emergency' && (
-        <div className="absolute inset-0 flex items-center justify-center p-6 bg-slate-950/70 backdrop-blur-sm z-30 animate-fade-in pointer-events-auto">
-          <div className="max-w-xl w-full p-8 rounded-3xl bg-slate-900/95 border-2 border-red-500/60 shadow-[0_0_60px_rgba(239,68,68,0.4)] text-center">
-            {/* Mission Hero & Emergency Dispatch Badge */}
+        <div className="absolute inset-0 flex items-center justify-center p-6 bg-slate-950/60 backdrop-blur-sm z-30 animate-fade-in pointer-events-auto">
+          <div className="max-w-xl w-full p-8 rounded-3xl bg-slate-900/95 border-2 border-sky-400/50 shadow-[0_0_60px_rgba(56,189,248,0.25)] text-center">
+            {/* Mission Specialist & Briefing Badge */}
             <div className="flex items-center justify-center gap-4 mb-4">
               <div className="relative w-16 h-16 rounded-2xl bg-gradient-to-tr from-sky-400 via-cyan-500 to-indigo-600 p-0.5 shadow-xl">
                 <div className="w-full h-full bg-slate-950 rounded-2xl flex items-center justify-center overflow-hidden">
-                  <img src="/images/nova_alien_companion.png" alt="Astronaut Leo" className="w-14 h-14 object-contain drop-shadow" />
+                  <span className="text-4xl" role="img" aria-label="Astronaut Leo">🧑‍🚀</span>
                 </div>
               </div>
               <div className="text-left">
                 <span className="text-[10px] font-black uppercase tracking-widest text-sky-400">
                   Mission Specialist: Leo
                 </span>
-                <p className="text-sm font-bold text-white">Direct Dispatch from Dr. Jaffe</p>
+                <p className="text-sm font-bold text-white">Mission Briefing from Dr. Jaffe</p>
               </div>
             </div>
 
-            <span className="text-xs font-black uppercase tracking-widest text-red-400">
-              PRIORITY ALPHA EMERGENCY • NASA HQ
+            <span className="text-xs font-black uppercase tracking-widest text-sky-400">
+              MISSION BRIEFING • NASA HQ
             </span>
 
             <h2 className="text-2xl sm:text-3xl font-black text-white mt-1 mb-3">
@@ -1059,13 +1069,13 @@ export default function Level1Surveyor5Page() {
             </h2>
 
             <p className="text-sm sm:text-base text-slate-300 mb-6 leading-relaxed">
-              Your rescue craft has reached Mare Tranquillitatis. Land and explore the lunar surface, locate Surveyor 5 and its four science components, then retrieve and restore the probe.
+              Your spacecraft has reached Mare Tranquillitatis. Land and explore the lunar surface, locate Surveyor 5 and its four science components, then retrieve and restore the probe.
             </p>
 
             <button
               id="land-on-moon-btn"
               onClick={handleSkipToOpenWorld}
-              className="flex items-center justify-center gap-3 w-full py-4 rounded-2xl bg-gradient-to-r from-red-600 via-amber-600 to-sky-600 hover:from-red-500 hover:to-sky-500 text-white font-extrabold text-base shadow-xl shadow-red-500/25 active:scale-95 transition-all"
+              className="flex items-center justify-center gap-3 w-full py-4 rounded-2xl bg-gradient-to-r from-sky-500 via-cyan-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 text-white font-extrabold text-base shadow-xl shadow-sky-500/25 active:scale-95 transition-all"
             >
               <Rocket className="w-5 h-5" />
               <span>Land on Moon</span>
@@ -1099,7 +1109,7 @@ export default function Level1Surveyor5Page() {
       )}
 
       {/* ----------------------------------------------------------- */}
-      {/* IN-WORLD 3D INTERACTION PROMPT ([E] Key Float)             */}
+      {/* IN-WORLD 3D INTERACTION PROMPT (Click Action Float)        */}
       {/* ----------------------------------------------------------- */}
       {interactionPrompt && gamePhase === 'phase4_open_world' && (
         <div className="absolute top-28 left-1/2 -translate-x-1/2 z-30 animate-bounce pointer-events-auto">
@@ -1196,7 +1206,7 @@ export default function Level1Surveyor5Page() {
               <span>Orbit Camera</span>
             </div>
             <div className="flex items-center gap-2">
-              <kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 text-amber-400 font-mono">E</kbd>
+              <kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 text-amber-400 font-mono">Click</kbd>
               <span>Collect / Install</span>
             </div>
           </div>

@@ -48,9 +48,6 @@ export default function MoonLandingCinematic({ onComplete, onSkip }) {
         playerPosRef.current.isGrounded = false;
         gameAudio.playClick();
       }
-      if (k === 'e' && isNearLander) {
-        handleInteractLander();
-      }
     };
 
     const handleKeyUp = (e) => {

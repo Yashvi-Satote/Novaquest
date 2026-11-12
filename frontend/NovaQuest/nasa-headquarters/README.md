@@ -62,13 +62,13 @@ click an interactive door or use the on-screen controls. Press **D**
 to toggle the base airlock, **F** to toggle the parts-room entrance, or **G** to toggle
 the firing-room entrance outside first person.
 Choose **Control astronaut** to move the visible character with **WASD** or the arrow
-keys, **Shift** to sprint, and drag to orbit the follow camera. Use **E** for the airlock,
-**F** for the parts-room door, **G** for the firing-room door, and **Esc** to stop
-character control. Choose **Enter
+keys, **Shift** to sprint, and drag to orbit the follow camera. Click the airlock to
+operate it, use **F** for the parts-room door, **G** for the firing-room door, and **Esc**
+to stop character control. Choose **Enter
 first person** to explore the base and walk through the open airlock
 into the exterior corridor, parts room and firing room with **WASD**, unrestricted 360° horizontal
 mouse look, and **Shift** to sprint. The player collides with scene props while moving;
-airlock and cupboard door panels remain passable. Press **E** to operate the airlock,
+airlock and cupboard door panels remain passable. Click the airlock to operate it,
 **F** to open the parts-room door, and **G** to open the firing-room door. Click any
 cupboard glass panel to swing it open or closed. **Esc** releases the mouse or exits
 first person.
