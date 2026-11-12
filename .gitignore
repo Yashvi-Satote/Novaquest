@@ -2,7 +2,7 @@
 node_modules/
 */node_modules/
 
-# Environment variables & credentials
+# Environment variables & credentials (NEVER COMMIT SECRETS)
 .env
 .env.local
 .env.*.local
@@ -10,6 +10,8 @@ node_modules/
 !.env.example
 *.pem
 *.key
+*.cert
+*.crt
 
 # Python virtual environments & bytecode
 __pycache__/
@@ -45,13 +47,15 @@ dist-ssr/
 build/
 *.egg-info/
 
-# Logs
+# Logs & Runtime
 logs/
 *.log
+*.err
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
+logging/
 
 # Editor & OS files
 .vscode/*
@@ -59,31 +63,28 @@ pnpm-debug.log*
 .idea/
 .DS_Store
 Thumbs.db
+ehthumbs.db
+desktop.ini
 
+# Blender backups & temporary render outputs
+*.blend1
+*.blend2
+*.blend3
+*.blend@
+*.blend[0-9]
+frames_*/
+poc_frames/
+render_frames/
+memoir_test_frames/
+preview_audit_frames/
 
+# Production workspace directory (heavy 3D/video workspace kept outside repo)
+production/
+clip/
+scratch/
 
-# Runtime logs
-*.log
-*.err
-
-# Generated logs and diagnostic output
-logging/
-
-# Python cache
-__pycache__/
-*.py[cod]
-
-# Environment secrets
-.env
-.env.*
-!.env.example
-
-# External 3D model asset junction
+# External 3D model asset junction & local paths
 frontend/public/models/spacecraft-models/
-
 backend/NovaUser/.pg/
-.venv/
-__pycache__/
 .tmp/
-
 frontend/NovaUser/tests/screenshots/
