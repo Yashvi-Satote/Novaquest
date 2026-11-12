@@ -1756,6 +1756,20 @@ export function createNasaHeadquarters() {
   hologram.add(surveyorHologram.root);
   dynamic.surveyor = surveyorHologram;
 
+  // Invisible pick volume so the whole projection can be clicked in the viewer.
+  const hologramHitTarget = new THREE.Mesh(
+    new THREE.SphereGeometry(1.72, 16, 12),
+    new THREE.MeshBasicMaterial({
+      transparent: true,
+      opacity: 0,
+      colorWrite: false,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+    }),
+  );
+  hologramHitTarget.userData.noCollision = true;
+  hologram.add(hologramHitTarget);
+
   const hologramGlow = new THREE.Sprite(materials.holoGlow);
   hologramGlow.scale.set(3.8, 3.8, 1);
   hologramGlow.position.y = 0.15;
@@ -1929,9 +1943,25 @@ export function createNasaHeadquarters() {
 
   const interactionTargets = [
     { target: doorHitTarget, toggle: () => door.setOpen(!door.isOpen()) },
+    { target: hologramHitTarget, action: 'hologram' },
     ...corridor.storageRoom.interactionTargets,
     ...corridor.firingRoom.interactionTargets,
   ];
 
-  return { root, update, dispose, door, doorHitTarget, character, corridor, interactionTargets };
+  const setHologramMaterialized = (value) => {
+    surveyorHologram.setMaterialized(Boolean(value));
+  };
+
+  return {
+    root,
+    update,
+    dispose,
+    door,
+    doorHitTarget,
+    character,
+    corridor,
+    interactionTargets,
+    hologramHitTarget,
+    setHologramMaterialized,
+  };
 }

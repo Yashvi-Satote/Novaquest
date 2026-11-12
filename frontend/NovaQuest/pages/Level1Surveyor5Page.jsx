@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import * as THREE from 'three';
 import {
@@ -29,6 +29,29 @@ import { gameAudio } from '../config/gameAudio';
 import { USE_OLD_LUNAR_MAP } from '../config/lunarMapConfig';
 import { saveGame } from '../game/saveManager';
 import OldLunarMapPage from './OldLunarMapPage';
+
+const IntroVideoPlayer = memo(function IntroVideoPlayer({
+  isFading,
+  onEnded,
+  onError,
+  onTransitionEnd,
+  videoRef
+}) {
+  return (
+    <video
+      ref={videoRef}
+      playsInline
+      preload="auto"
+      src="/videos/milky-way-intro.mp4"
+      onEnded={onEnded}
+      onError={onError}
+      onTransitionEnd={onTransitionEnd}
+      className={`h-full w-full object-cover transition-opacity duration-1000 ease-in-out ${
+        isFading ? 'opacity-0' : 'opacity-100'
+      }`}
+    />
+  );
+});
 
 /**
  * Level1Surveyor5Page.jsx
@@ -117,7 +140,7 @@ export default function Level1Surveyor5Page() {
     if (onEnd) onEnd();
   };
 
-  const fadeOutIntro = () => {
+  const fadeOutIntro = useCallback(() => {
     if (introFadeStartedRef.current) return;
     introFadeStartedRef.current = true;
 
@@ -138,9 +161,9 @@ export default function Level1Surveyor5Page() {
     };
 
     introFadeFrameRef.current = requestAnimationFrame(fadeAudio);
-  };
+  }, []);
 
-  const startIntroVideo = () => {
+  const startIntroVideo = useCallback(() => {
     const video = introVideoRef.current;
     if (!video) return;
 
@@ -156,7 +179,18 @@ export default function Level1Surveyor5Page() {
       .catch(() => {
         setIntroPlaybackBlocked(true);
       });
-  };
+  }, []);
+
+  const handleIntroVideoError = useCallback(() => {
+    setIntroVideoError(true);
+  }, []);
+
+  const handleIntroVideoTransitionEnd = useCallback(event => {
+    if (event.propertyName === 'opacity' && isIntroVideoFading) {
+      introVideoRef.current?.pause();
+      setOpeningStage('date');
+    }
+  }, [isIntroVideoFading]);
 
   // -------------------------------------------------------------
   // THREE.JS MASTER ENGINE
@@ -837,22 +871,12 @@ export default function Level1Surveyor5Page() {
 
       {openingStage === 'video' && (
         <div className="absolute inset-0 z-50 overflow-hidden bg-black">
-          <video
-            ref={introVideoRef}
-            playsInline
-            preload="metadata"
-            src="/videos/milky-way-intro.mp4"
+          <IntroVideoPlayer
+            videoRef={introVideoRef}
+            isFading={isIntroVideoFading}
             onEnded={fadeOutIntro}
-            onError={() => setIntroVideoError(true)}
-            onTransitionEnd={event => {
-              if (event.propertyName === 'opacity' && isIntroVideoFading) {
-                introVideoRef.current?.pause();
-                setOpeningStage('date');
-              }
-            }}
-            className={`h-full w-full object-cover transition-opacity duration-1000 ease-in-out ${
-              isIntroVideoFading ? 'opacity-0' : 'opacity-100'
-            }`}
+            onError={handleIntroVideoError}
+            onTransitionEnd={handleIntroVideoTransitionEnd}
           />
           {!hasStartedIntro && !introVideoError && (
             <button

@@ -1,7 +1,9 @@
-import React, { useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Box, Building2, MousePointer2, Rocket, ScanLine, Sparkles, X } from 'lucide-react';
 import NasaHeadquartersViewer from './NasaHeadquartersViewer';
+import Surveyor5TaskPage from './Surveyor5TaskPage';
+import { SURVEYOR5_CART_LIMIT, SURVEYOR5_MANIFEST_IDS } from './surveyor5Mission';
 import { gameAudio } from '../config/gameAudio';
 
 /**
@@ -9,8 +11,22 @@ import { gameAudio } from '../config/gameAudio';
  *
  * Immersive full-screen view of the 3D NASA Headquarters base. Opened from the
  * Level 1: The Moon hub, and reusable anywhere else in the game.
+ *
+ * Entry always opens the Surveyor 5 task page, then hands control to the 3D
+ * base where the player collects the manifest, materialises the hologram and
+ * launches the lander from the firing room.
  */
 export default function NasaHeadquartersModal({ isOpen, onClose }) {
+  const [taskOpen, setTaskOpen] = useState(false);
+  const [collectedPartIds, setCollectedPartIds] = useState([]);
+  const [cartPartIds, setCartPartIds] = useState([]);
+  const [hologramConverted, setHologramConverted] = useState(false);
+  const [launched, setLaunched] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) setTaskOpen(true);
+  }, [isOpen]);
+
   useEffect(() => {
     if (!isOpen) return undefined;
 
@@ -18,10 +34,14 @@ export default function NasaHeadquartersModal({ isOpen, onClose }) {
     document.body.style.overflow = 'hidden';
 
     const handleKeyDown = (event) => {
-      if (event.key === 'Escape') {
+      if (event.key !== 'Escape') return;
+      if (taskOpen) {
         gameAudio.playClick();
-        onClose();
+        setTaskOpen(false);
+        return;
       }
+      gameAudio.playClick();
+      onClose();
     };
 
     window.addEventListener('keydown', handleKeyDown);
@@ -29,7 +49,92 @@ export default function NasaHeadquartersModal({ isOpen, onClose }) {
       document.body.style.overflow = previousOverflow;
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [isOpen, onClose]);
+  }, [isOpen, onClose, taskOpen]);
+
+  const handleCollectPart = useCallback(
+    (component) => {
+      if (!component?.id) return;
+      if (collectedPartIds.includes(component.id) || cartPartIds.includes(component.id)) return;
+      if (cartPartIds.length >= SURVEYOR5_CART_LIMIT) return;
+      setCartPartIds((current) =>
+        current.includes(component.id) || current.length >= SURVEYOR5_CART_LIMIT
+          ? current
+          : [...current, component.id],
+      );
+      gameAudio.playPickup();
+    },
+    [cartPartIds, collectedPartIds],
+  );
+
+  /**
+   * Assemble the cart at the hologram. Correct manifest parts are installed
+   * (crossed off the list); anything that does not belong on Surveyor 5 is
+   * rejected and returned to the storage room shelves. Returns a detailed
+   * summary so the viewer can display the verification report.
+   */
+  const handleDepositCart = useCallback(() => {
+    if (cartPartIds.length === 0) {
+      return {
+        deposited: 0,
+        installed: 0,
+        rejected: 0,
+        installedIds: [],
+        rejectedIds: [],
+        manifestComplete: false,
+      };
+    }
+
+    const manifestSet = new Set(SURVEYOR5_MANIFEST_IDS);
+    const installedIds = cartPartIds.filter(
+      (id) => manifestSet.has(id) && !collectedPartIds.includes(id),
+    );
+    const rejectedIds = cartPartIds.filter((id) => !manifestSet.has(id));
+    const merged = [...collectedPartIds, ...installedIds];
+    const manifestComplete = SURVEYOR5_MANIFEST_IDS.every((id) => merged.includes(id));
+
+    setCollectedPartIds(merged);
+    setCartPartIds([]);
+
+    if (manifestComplete) {
+      setHologramConverted(true);
+      gameAudio.playPowerUp();
+    } else if (installedIds.length > 0) {
+      gameAudio.playPickup();
+    } else {
+      gameAudio.playClick();
+    }
+
+    return {
+      deposited: cartPartIds.length,
+      installed: installedIds.length,
+      rejected: rejectedIds.length,
+      installedIds,
+      rejectedIds,
+      manifestComplete,
+    };
+  }, [cartPartIds, collectedPartIds]);
+
+  const handleConvertHologram = useCallback(() => {
+    if (!SURVEYOR5_MANIFEST_IDS.every((id) => collectedPartIds.includes(id))) return;
+    setHologramConverted(true);
+    gameAudio.playPowerUp();
+  }, [collectedPartIds]);
+
+  const handleLaunchMission = useCallback(() => {
+    if (!hologramConverted || launched) return;
+    setLaunched(true);
+    gameAudio.playVictory();
+    setTaskOpen(true);
+  }, [hologramConverted, launched]);
+
+  const handleOpenTask = useCallback(() => {
+    gameAudio.playClick();
+    setTaskOpen(true);
+  }, []);
+
+  const handleCloseTask = useCallback(() => {
+    setTaskOpen(false);
+  }, []);
 
   if (!isOpen) return null;
 
@@ -51,7 +156,19 @@ export default function NasaHeadquartersModal({ isOpen, onClose }) {
         aria-label="NASA Headquarters 3D mission control base"
         className="relative flex h-full w-full flex-col overflow-hidden rounded-2xl border border-[#3D6BFF]/35 bg-[#040911] shadow-[0_0_80px_rgba(28,88,255,0.22)]"
       >
-        <NasaHeadquartersViewer />
+        <NasaHeadquartersViewer
+          collectedIds={collectedPartIds}
+          cartIds={cartPartIds}
+          cartLimit={SURVEYOR5_CART_LIMIT}
+          hologramConverted={hologramConverted}
+          launched={launched}
+          overlayOpen={taskOpen}
+          onCollectPart={handleCollectPart}
+          onDepositCart={handleDepositCart}
+          onConvertHologram={handleConvertHologram}
+          onLaunchMission={handleLaunchMission}
+          onOpenTask={handleOpenTask}
+        />
 
         {/* Cinematic vignette + scan lines over the live 3D feed. */}
         <div
@@ -151,6 +268,16 @@ export default function NasaHeadquartersModal({ isOpen, onClose }) {
           <span className="absolute bottom-0 left-0 h-8 w-8 border-b border-l border-[#4F79FF]/35" />
           <span className="absolute bottom-0 right-0 h-8 w-8 border-b border-r border-[#4F79FF]/35" />
         </div>
+
+        <Surveyor5TaskPage
+          isOpen={taskOpen}
+          collectedIds={collectedPartIds}
+          cartIds={cartPartIds}
+          cartLimit={SURVEYOR5_CART_LIMIT}
+          hologramConverted={hologramConverted}
+          launched={launched}
+          onClose={handleCloseTask}
+        />
       </section>
     </div>,
     document.body,

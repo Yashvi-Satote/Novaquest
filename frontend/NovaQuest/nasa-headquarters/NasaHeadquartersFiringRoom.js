@@ -245,6 +245,47 @@ export function createNasaHeadquartersFiringRoom() {
     });
   }
 
+  // ------------------------------------------------------ launch console
+  // The player uses this console to launch the materialised Surveyor 5.
+  const launchConsole = new THREE.Group();
+  launchConsole.position.set(0, 0, ROOM_DEPTH - 2.15);
+  root.add(launchConsole);
+  addBox(launchConsole, 2.7, 1.05, 1.0, materials.console, 0, 0.55, 0);
+  addBox(launchConsole, 2.52, 0.09, 0.88, materials.trim, 0, 1.12, 0);
+  addBox(launchConsole, 2.18, 0.035, 0.06, materials.cyan, 0, 1.18, -0.32);
+  addBox(launchConsole, 0.9, 0.04, 0.28, materials.screen, 0, 1.17, 0.16);
+  const launchButton = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.19, 0.19, 0.09, 20),
+    new THREE.MeshBasicMaterial({ color: 0xffc36b, toneMapped: false }),
+  );
+  launchButton.position.set(0, 1.2, 0.16);
+  launchConsole.add(launchButton);
+  const launchButtonRing = new THREE.Mesh(
+    new THREE.TorusGeometry(0.27, 0.02, 6, 36),
+    materials.cyan,
+  );
+  launchButtonRing.rotation.x = Math.PI / 2;
+  launchButtonRing.position.set(0, 1.19, 0.16);
+  launchConsole.add(launchButtonRing);
+  const launchConsoleLight = new THREE.PointLight(0xffb75e, 9, 6, 2);
+  launchConsoleLight.position.set(0, 1.65, 0.3);
+  launchConsole.add(launchConsoleLight);
+
+  const launchHitTarget = new THREE.Mesh(
+    new THREE.BoxGeometry(3.5, 2.5, 1.9),
+    new THREE.MeshBasicMaterial({
+      transparent: true,
+      opacity: 0,
+      colorWrite: false,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+    }),
+  );
+  launchHitTarget.position.set(0, 1.35, ROOM_DEPTH - 2.15);
+  launchHitTarget.userData.noCollision = true;
+  root.add(launchHitTarget);
+  interactionTargets.push({ target: launchHitTarget, action: 'launch' });
+
   [-5.8, 5.8].forEach((x) => {
     const sideLight = new THREE.PointLight(0x64cfff, 18, 12, 2);
     sideLight.position.set(x, 5.9, 11);
