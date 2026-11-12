@@ -40,13 +40,16 @@ import { STORAGE_ROOM_COMPONENTS } from './storageRoomComponents';
 const HEADQUARTERS_ROOM_RADIUS = 12.5;
 const PLAYER_COLLISION_RADIUS = 0.34;
 const PLAYER_COLLISION_HEIGHT = 1.82;
+const PLAYER_WALK_SPEED = 4.6;
+const PLAYER_SPRINT_SPEED = 8.4;
+const TRACKPAD_LOOK_SENSITIVITY = 0.0032;
 
 /**
  * NasaHeadquartersViewer
  *
  * Reusable three.js viewport for the NASA Headquarters base, adjoining corridor,
  * and first-person exploration. The wall airlock can be clicked, opened with
- * the D key, or controlled via the imperative handle.
+ * the E key (nearest door), or controlled via the imperative handle.
  *
  * It also runs the Surveyor 5 build mission: parts are collected from the
  * storage room, the central hologram materialises the lander once the manifest
@@ -267,7 +270,8 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer(
     controls.maxPolarAngle = Math.PI - 0.02;
     controls.target.set(0, 2.9, 0);
     controls.rotateSpeed = 0.55;
-    controls.zoomSpeed = 0.65;
+    // Two-finger trackpad swipes drive the view instead of zooming.
+    controls.enableZoom = false;
 
     const pointerControls = new PointerLockControls(camera, renderer.domElement);
     pointerControls.pointerSpeed = 0.75;
@@ -282,9 +286,9 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer(
     let characterControlActive = false;
     let lookPointer = null;
 
-    const enterFirstPerson = () => {
+    const enterFirstPerson = (lockPointer = false) => {
       if (firstPersonActive) {
-        if (!pointerControls.isLocked) pointerControls.lock();
+        if (lockPointer && !pointerControls.isLocked) pointerControls.lock();
         return;
       }
 
@@ -299,7 +303,8 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer(
       camera.rotation.set(0, airlockAngle - Math.PI, 0);
       movementKeys.clear();
       setFirstPersonMode(true);
-      pointerControls.lock();
+      // Keep the pointer unlocked so one-finger trackpad input always drives
+      // the cursor. Mouse-look locking stays available from the HUD button.
     };
 
     const exitFirstPerson = () => {
@@ -345,6 +350,48 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer(
       else enterCharacterControl();
     };
 
+    // One key controls every door. The nearest door to the player (or the
+    // orbit target when not exploring) is toggled.
+    const nearestDoorCandidates = [
+      { name: 'airlock', control: doorControl, target: headquarters.doorHitTarget },
+      {
+        name: 'parts room',
+        control: storageDoorControl,
+        target: headquarters.corridor.storageRoom.entryDoor.hitTarget,
+      },
+      {
+        name: 'firing room',
+        control: firingRoomDoorControl,
+        target: headquarters.corridor.firingRoom.door.hitTarget,
+      },
+    ];
+    const toggleNearestDoor = () => {
+      const userPosition = new THREE.Vector3();
+      if (characterControlActive) {
+        headquarters.character.getWorldPosition(userPosition);
+      } else {
+        userPosition.copy(camera.position);
+      }
+
+      scene.updateMatrixWorld(true);
+      const targetPosition = new THREE.Vector3();
+      let nearest = null;
+      let nearestDistance = Infinity;
+      nearestDoorCandidates.forEach((candidate) => {
+        candidate.target.getWorldPosition(targetPosition);
+        const distance = Math.hypot(
+          targetPosition.x - userPosition.x,
+          targetPosition.z - userPosition.z,
+        );
+        if (distance < nearestDistance) {
+          nearestDistance = distance;
+          nearest = candidate;
+        }
+      });
+
+      if (nearest) nearest.control.toggle();
+    };
+
     const handlePointerLock = (event) => setPointerLocked(event.type === 'lock');
     pointerControls.addEventListener('lock', handlePointerLock);
     pointerControls.addEventListener('unlock', handlePointerLock);
@@ -357,19 +404,12 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer(
         if (['w', 'a', 's', 'd', 'arrowup', 'arrowleft', 'arrowdown', 'arrowright', 'shift'].includes(key)) {
           event.preventDefault();
           movementKeys.add(key);
-        } else if (key === 'f') {
+        } else if (key === 'e') {
           event.preventDefault();
-          storageDoorControl.toggle();
-        } else if (key === 'g') {
-          event.preventDefault();
-          firingRoomDoorControl.toggle();
+          if (!event.repeat) toggleNearestDoor();
         }
-      } else if (key === 'f') {
-        storageDoorControl.toggle();
-      } else if (key === 'd') {
-        doorControl.toggle();
-      } else if (key === 'g') {
-        firingRoomDoorControl.toggle();
+      } else if (key === 'e') {
+        if (!event.repeat) toggleNearestDoor();
       }
     };
     const handleKeyUp = (event) => movementKeys.delete(event.key.toLowerCase());
@@ -411,7 +451,8 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer(
         else enterFirstPerson();
       },
       toggleCharacterControl,
-      resumeFirstPerson: enterFirstPerson,
+      toggleNearestDoor,
+      resumeFirstPerson: () => enterFirstPerson(true),
       toggleStorageDoor: storageDoorControl.toggle,
       toggleFiringRoomDoor: firingRoomDoorControl.toggle,
       pauseForOverlay: () => {
@@ -541,10 +582,53 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer(
       }
       renderer.domElement.style.cursor = getInteractionAtPointer(event) ? 'pointer' : '';
     };
+
+    // A two-finger trackpad swipe arrives as a wheel event. Use it to look
+    // around in first person and to orbit around the target in every other
+    // view. One-finger trackpad input is left untouched so the cursor works.
+    const trackpadOffset = new THREE.Vector3();
+    const trackpadSpherical = new THREE.Spherical();
+    const handleWheel = (event) => {
+      if (overlayOpenRef.current || localOverlayOpenRef.current || selectedComponentRef.current) return;
+      const deltaMultiplier =
+        event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? 100 : 1;
+      const deltaX = event.deltaX * deltaMultiplier;
+      const deltaY = event.deltaY * deltaMultiplier;
+      if (deltaX === 0 && deltaY === 0) return;
+
+      event.preventDefault();
+      controls.autoRotate = false;
+
+      if (firstPersonActive) {
+        camera.rotation.order = 'YXZ';
+        camera.rotation.y -= deltaX * TRACKPAD_LOOK_SENSITIVITY;
+        camera.rotation.x = THREE.MathUtils.clamp(
+          camera.rotation.x - deltaY * TRACKPAD_LOOK_SENSITIVITY,
+          -Math.PI / 2 + 0.02,
+          Math.PI / 2 - 0.02,
+        );
+        return;
+      }
+
+      trackpadOffset.copy(camera.position).sub(controls.target);
+      trackpadSpherical.setFromVector3(trackpadOffset);
+      trackpadSpherical.theta -= deltaX * TRACKPAD_LOOK_SENSITIVITY;
+      trackpadSpherical.phi = THREE.MathUtils.clamp(
+        trackpadSpherical.phi - deltaY * TRACKPAD_LOOK_SENSITIVITY,
+        0.02,
+        Math.PI - 0.02,
+      );
+      trackpadOffset.setFromSpherical(trackpadSpherical);
+      camera.position.copy(controls.target).add(trackpadOffset);
+      camera.lookAt(controls.target);
+      controls.update();
+    };
+
     renderer.domElement.addEventListener('pointerdown', handlePointerDown);
     renderer.domElement.addEventListener('pointerup', handlePointerUp);
     renderer.domElement.addEventListener('pointercancel', handlePointerCancel);
     renderer.domElement.addEventListener('pointermove', handlePointerMove);
+    renderer.domElement.addEventListener('wheel', handleWheel, { passive: false });
 
     const moveForward = new THREE.Vector3();
     const moveRight = new THREE.Vector3();
@@ -569,7 +653,7 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer(
       moveForward.y = 0;
       moveForward.normalize();
       moveRight.set(-moveForward.z, 0, moveForward.x);
-      const speed = movementKeys.has('shift') ? 5 : 2.8;
+      const speed = movementKeys.has('shift') ? PLAYER_SPRINT_SPEED : PLAYER_WALK_SPEED;
       const nextPosition = previousPosition.clone()
         .addScaledVector(moveForward, (forwardInput / inputLength) * speed * delta)
         .addScaledVector(moveRight, (rightInput / inputLength) * speed * delta);
@@ -819,7 +903,7 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer(
         const inputLength = Math.hypot(forwardInput, rightInput);
 
         if (inputLength > 0) {
-          const speed = movementKeys.has('shift') ? 5 : 2.8;
+          const speed = movementKeys.has('shift') ? PLAYER_SPRINT_SPEED : PLAYER_WALK_SPEED;
           const previousPosition = camera.position.clone();
           camera.getWorldDirection(moveForward);
           moveForward.y = 0;
@@ -1112,6 +1196,7 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer(
       renderer.domElement.removeEventListener('pointerup', handlePointerUp);
       renderer.domElement.removeEventListener('pointercancel', handlePointerCancel);
       renderer.domElement.removeEventListener('pointermove', handlePointerMove);
+      renderer.domElement.removeEventListener('wheel', handleWheel);
 
       scene.remove(headquarters.root);
       headquarters.dispose();
@@ -1393,8 +1478,8 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer(
               className="rounded-lg border border-[#7fe3ff]/35 bg-[#071426]/85 px-3 py-2 text-[9px] font-semibold uppercase tracking-[0.18em] text-[#9cd8f2] shadow-[0_0_20px_rgba(61,107,255,0.18)] backdrop-blur-md transition-colors hover:border-[#7fe3ff]/70 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7fe3ff]"
             >
               {doorOpen
-                ? `Close airlock · Click${firstPersonMode || characterControlMode ? '' : ' / D'}`
-                : `Open airlock · Click${firstPersonMode || characterControlMode ? '' : ' / D'}`}
+                ? 'Close airlock · Click'
+                : 'Open airlock · Click'}
             </button>
             <button
               type="button"
@@ -1402,7 +1487,7 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer(
               aria-pressed={storageDoorOpen}
               className="rounded-lg border border-[#7fe3ff]/35 bg-[#071426]/85 px-3 py-2 text-[9px] font-semibold uppercase tracking-[0.18em] text-[#9cd8f2] shadow-[0_0_20px_rgba(61,107,255,0.18)] backdrop-blur-md transition-colors hover:border-[#7fe3ff]/70 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7fe3ff]"
             >
-              {storageDoorOpen ? 'Close parts room · Click / F' : 'Open parts room · Click / F'}
+              {storageDoorOpen ? 'Close parts room · Click' : 'Open parts room · Click'}
             </button>
             <button
               type="button"
@@ -1410,7 +1495,7 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer(
               aria-pressed={firingRoomDoorOpen}
               className="rounded-lg border border-[#7fe3ff]/35 bg-[#071426]/85 px-3 py-2 text-[9px] font-semibold uppercase tracking-[0.18em] text-[#9cd8f2] shadow-[0_0_20px_rgba(61,107,255,0.18)] backdrop-blur-md transition-colors hover:border-[#7fe3ff]/70 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7fe3ff]"
             >
-              {firingRoomDoorOpen ? 'Close firing room · Click / G' : 'Open firing room · Click / G'}
+              {firingRoomDoorOpen ? 'Close firing room · Click' : 'Open firing room · Click'}
             </button>
             <button
               type="button"
@@ -1434,13 +1519,13 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer(
                 onClick={() => doorHolderRef.current && doorHolderRef.current.resumeFirstPerson()}
                 className="rounded-lg border border-[#7fe3ff]/35 bg-[#071426]/85 px-3 py-2 text-[9px] font-semibold uppercase tracking-[0.18em] text-[#9cd8f2] backdrop-blur-md transition-colors hover:border-[#7fe3ff]/70 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7fe3ff]"
               >
-                Resume controls
+                Enable mouse look
               </button>
             )}
           </div>
           {(firstPersonMode || characterControlMode) && (
             <div className="pointer-events-none absolute bottom-6 left-1/2 z-20 -translate-x-1/2 rounded-full border border-[#7fe3ff]/25 bg-[#071426]/80 px-4 py-2 text-center text-[8px] font-semibold uppercase tracking-[0.18em] text-[#b8d8e8] backdrop-blur-md sm:text-[9px]">
-              WASD move · {characterControlMode ? 'Drag to orbit' : '360° mouse look'} · Shift sprint · Click airlock · F parts room · G firing room · Esc exit
+              WASD move · Shift sprint · E nearest door · 2-finger swipe {characterControlMode ? 'orbits' : 'looks'} · 1 finger cursor · Esc exit
             </div>
           )}
 
