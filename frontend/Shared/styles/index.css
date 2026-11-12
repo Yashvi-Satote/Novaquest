@@ -3,6 +3,45 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+.global-loading-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: grid;
+  place-items: center;
+  background: #070b14;
+}
+
+.global-loading-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  color: #14d7df;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.28em;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.global-loading-spinner {
+  width: 56px;
+  height: 56px;
+  filter: drop-shadow(0 0 8px rgba(20, 215, 223, 0.65));
+  animation: global-loading-spin 0.9s linear infinite;
+}
+
+@keyframes global-loading-spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .global-loading-spinner {
+    animation-duration: 2.5s;
+  }
+}
+
 /* Shared navbar typography (Oswald wordmark + Montserrat navigation links) */
 .nav-wordmark {
   font-family: 'Oswald', system-ui, sans-serif;

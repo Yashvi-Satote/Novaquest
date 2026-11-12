@@ -1,0 +1,24 @@
+{
+  "name": "cosmic-timekeepers",
+  "version": "1.0.0",
+  "description": "**Every forgotten mission has a story waiting to be rediscovered.**",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Yashvi-Satote/Novaquest.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Yashvi-Satote/Novaquest/issues"
+  },
+  "homepage": "https://github.com/Yashvi-Satote/Novaquest#readme"
+}

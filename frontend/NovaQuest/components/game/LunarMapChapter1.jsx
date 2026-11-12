@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
+import { acquireGltfModel, disposeObject3D } from '../../../Shared/three/gltfModelLoader';
 import { 
   Compass, 
   Eye, 
@@ -32,8 +31,6 @@ import MissionEchoModal from './MissionEchoModal';
 import NasaHeadquartersModal from '../../nasa-headquarters/NasaHeadquartersModal';
 import { 
   createLunarRegolithTexture,
-  createLunarBumpTexture,
-  createLunarRoughnessTexture,
   createBasaltRockTexture,
   createGoldFoilTexture,
   createSolarPanelTexture,
@@ -271,16 +268,13 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x000000); // 100% Black deep space, no atmospheric haze
 
-    // GLTF & DRACO Loaders for official NASA 3D Resources
-    const dracoLoader = new DRACOLoader();
-    dracoLoader.setDecoderPath('/draco/');
-    const gltfLoader = new GLTFLoader();
-    gltfLoader.setDRACOLoader(dracoLoader);
+    // Chapter model handles are released in the cleanup below so the shared
+    // loader can dispose their GPU resources when the scene unmounts.
+    const modelHandles = [];
+    let isDisposed = false;
 
-    // 2. PROCEDURAL HIGH-RESOLUTION PBR TEXTURES (GENERATED IN-MEMORY WITHOUT EXTERNAL NETWORK ASSETS)
-    const regolithMap = createLunarRegolithTexture(1024, 1024);
-    const regolithBumpMap = createLunarBumpTexture(512, 512);
-    const regolithRoughnessMap = createLunarRoughnessTexture(512, 512);
+    // 2. PROCEDURAL REGOLITH AND PROP TEXTURES (GENERATED IN-MEMORY)
+    const regolithMap = createLunarRegolithTexture(512, 512);
     const basaltRockMap = createBasaltRockTexture(512, 512);
     const goldFoilMap = createGoldFoilTexture(512, 512);
     const solarPanelMap = createSolarPanelTexture(512, 512);
@@ -400,25 +394,33 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
     // 3. RENDERER WITH HIGH-CONTRAST PBR SHADOWS
     let renderer;
     try {
-      renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+      renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'high-performance' });
     } catch {
-      renderer = new THREE.WebGLRenderer();
+      renderer = new THREE.WebGLRenderer({ antialias: false });
     }
     renderer.setSize(width, height);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFShadowMap; // Sharp shadow edges (authentic vacuum shadows, no atmospheric blur)
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.35; // High dynamic range
     container.appendChild(renderer.domElement);
 
+    // Load chapter models through the shared, cached GLTF loader. The NASA
+    // assets use KTX2/Basis textures so decompressed GPU textures stay small.
+    const loadChapterModel = (url) => {
+      const handle = acquireGltfModel(url, renderer);
+      modelHandles.push(handle);
+      return handle.promise;
+    };
+
     // 4. LOW-ANGLE HARSH LUNAR SUNLIGHT & EARTHSHINE (VACUUM EXPOSURE)
     // One strong directional light representing the Sun at low elevation (~14.4 deg) casting long, sharp, inky shadows
     const sunLight = new THREE.DirectionalLight(0xfffef2, 5.5);
     sunLight.position.set(290, 72, -180);
     sunLight.castShadow = true;
-    sunLight.shadow.mapSize.width = 4096;
-    sunLight.shadow.mapSize.height = 4096;
+    sunLight.shadow.mapSize.width = 1024;
+    sunLight.shadow.mapSize.height = 1024;
     sunLight.shadow.camera.near = 10;
     sunLight.shadow.camera.far = 700;
     const shadowSize = 240;
@@ -525,10 +527,9 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
     const bootprints = [];
     let footStepToggle = false;
 
-    // 7. MEDIUM-POLY 500m x 500m LUNAR TERRAIN & NATURAL BOUNDARY CRATER WALLS
-    // 200x200 resolution = 40,000 vertices, 80,000 faces (crisp medium-poly terrain)
+    // 7. LOW-POLY 500m x 500m LUNAR TERRAIN & NATURAL BOUNDARY CRATER WALLS
     const TERRAIN_SIZE = 500;
-    const terrainGeo = new THREE.PlaneGeometry(TERRAIN_SIZE, TERRAIN_SIZE, 200, 200);
+    const terrainGeo = new THREE.PlaneGeometry(TERRAIN_SIZE, TERRAIN_SIZE, 80, 80);
     terrainGeo.rotateX(-Math.PI / 2);
 
     // THREE DISTINCT CRATER SIZES & IRREGULAR NON-CIRCULAR RIMS
@@ -651,7 +652,7 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
       return h;
     };
 
-    // Evaluate medium-poly vertices and compute geological elevation coloring
+    // Evaluate low-poly vertices and compute geological elevation coloring
     const posAttr = terrainGeo.attributes.position;
     const colors = new Float32Array(posAttr.count * 3);
     for (let i = 0; i < posAttr.count; i++) {
@@ -670,15 +671,13 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
     terrainGeo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
     terrainGeo.computeVertexNormals();
 
-    // Medium-Poly Textured Terrain Material (Authentic Dusty Grey Lunar Regolith)
+    // Flat-shaded regolith keeps the low-poly terrain facets visible.
     const terrainMat = new THREE.MeshStandardMaterial({
       map: regolithMap,
-      bumpMap: regolithBumpMap,
-      bumpScale: 0.28,
-      roughnessMap: regolithRoughnessMap,
       roughness: 0.98,
       metalness: 0.01,
-      vertexColors: true
+      vertexColors: true,
+      flatShading: true,
     });
     const terrainMesh = new THREE.Mesh(terrainGeo, terrainMat);
     terrainMesh.receiveShadow = true;
@@ -780,7 +779,7 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
     scene.add(createTrackRibbon(trackPointsC, 1.5));
 
     // 9. MEDIUM-POLY BASALT ROCKS: LARGE BOULDERS NEAR CRATER RIMS & SMALL ANGULAR EJECTA STONES
-    // Procedural sculpted rock generator (perturbs icosahedron vertices with angular cleavage)
+    // Low-poly sculpted rocks preserve angular facets with fewer vertices.
     const createMediumPolyRockGeo = (radius, detail = 2, roughnessScale = 0.28) => {
       const geo = new THREE.IcosahedronGeometry(radius, detail);
       const p = geo.attributes.position;
@@ -811,9 +810,9 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
     });
 
     const boulderGroup = new THREE.Group();
-    const rockGeoLarge = createMediumPolyRockGeo(1.8, 2, 0.30);
-    const rockGeoMedium = createMediumPolyRockGeo(1.0, 1, 0.24);
-    const rockGeoSmallStone = createMediumPolyRockGeo(0.28, 1, 0.20); // Small angular ejecta stone
+    const rockGeoLarge = createMediumPolyRockGeo(1.8, 1, 0.30);
+    const rockGeoMedium = createMediumPolyRockGeo(1.0, 0, 0.24);
+    const rockGeoSmallStone = createMediumPolyRockGeo(0.28, 0, 0.20); // Small angular ejecta stone
     const rockGeoC = rockGeoSmallStone; // Backward compatibility alias
 
     // 1. Larger boulders placed along the irregular rims of Medium Craters
@@ -840,7 +839,7 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
     }
 
     // 2. Small angular ejecta stones (0.15m–0.45m) scattered across the terrain
-    for (let s = 0; s < 130; s++) {
+    for (let s = 0; s < 80; s++) {
       const angle = Math.random() * Math.PI * 2;
       const dist = 8 + Math.random() * 155;
       const sx = Math.cos(angle) * dist;
@@ -1620,9 +1619,11 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
     landingZoneGroup.add(transportVehicleGroup);
 
     // Official NASA 3D Resource: Space Exploration Vehicle (SEV)
-    gltfLoader.load(
-      '/models/nasa/Space_Exploration_Vehicle.glb',
-      (gltf) => {
+    const loadNasaVehicle = async () => {
+      try {
+        const gltf = await loadChapterModel('/models/nasa/Space_Exploration_Vehicle.glb');
+        if (isDisposed) return;
+
         const nasaVeh = gltf.scene;
         const initialBox = new THREE.Box3().setFromObject(nasaVeh);
         const size = new THREE.Vector3();
@@ -1652,12 +1653,10 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
         // Seamless swap: hide procedural fallback chassis once official NASA model is loaded
         fallbackVehMeshGroup.visible = false;
         transportVehicleGroup.add(nasaVeh);
-      },
-      undefined,
-      (err) => {
+      } catch (err) {
         console.warn('NASA SEV model failed to load, retaining procedural vehicle:', err);
       }
-    );
+    };
 
     // =========================================================================
     // C. HIGH-DETAIL NASA xEMU ASTRONAUT CREWMATES (MAYA CHEN & LEO VANCE)
@@ -1882,9 +1881,11 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
     landingZoneGroup.add(mayaMesh);
 
     // Official NASA 3D Resource: Maya Chen EMU Astronaut Model
-    gltfLoader.load(
-      '/models/nasa/Astronaut.glb',
-      (gltf) => {
+    const loadMayaAstronaut = async () => {
+      try {
+        const gltf = await loadChapterModel('/models/nasa/Astronaut.glb');
+        if (isDisposed) return;
+
         const mayaModel = gltf.scene;
         const initialBox = new THREE.Box3().setFromObject(mayaModel);
         const size = new THREE.Vector3();
@@ -1918,12 +1919,10 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
           mayaMesh._fallbackGroup.visible = false;
         }
         mayaMesh.add(mayaModel);
-      },
-      undefined,
-      (err) => {
+      } catch (err) {
         console.warn('NASA Maya Astronaut failed to load, retaining procedural astronaut:', err);
       }
-    );
+    };
 
     // Astronaut 2: Officer Leo Vance (Ops Engineer) at (-4.5, 0, -2.5)
     const leoMesh = createAstronautMesh('Officer Leo Vance', 'Surface Operations', 0xf59e0b, false);
@@ -1932,9 +1931,11 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
     landingZoneGroup.add(leoMesh);
 
     // Official NASA 3D Resource: Leo Vance Z2 Spacesuit Model
-    gltfLoader.load(
-      '/models/nasa/Z2_Spacesuit.glb',
-      (gltf) => {
+    const loadLeoAstronaut = async () => {
+      try {
+        const gltf = await loadChapterModel('/models/nasa/Z2_Spacesuit.glb');
+        if (isDisposed) return;
+
         const leoModel = gltf.scene;
         const initialBox = new THREE.Box3().setFromObject(leoModel);
         const size = new THREE.Vector3();
@@ -1977,12 +1978,20 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
           leoMesh._fallbackGroup.visible = false;
         }
         leoMesh.add(leoModel);
-      },
-      undefined,
-      (err) => {
+      } catch (err) {
         console.warn('NASA Leo Vance Z2 Spacesuit failed to load, retaining procedural astronaut:', err);
       }
-    );
+    };
+
+    // Load the chapter's NASA assets one at a time. This avoids decoding three
+    // large GLBs (and their 4K textures) in the same frame on the main thread.
+    (async () => {
+      await loadNasaVehicle();
+      if (isDisposed) return;
+      await loadMayaAstronaut();
+      if (isDisposed) return;
+      await loadLeoAstronaut();
+    })();
 
     // D. Portable High-Gain Satellite Communication Dish on Tripod
     const commsGroup = new THREE.Group();
@@ -4087,11 +4096,21 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
     let lastRadioChatterTime = 0;
     let isAlienVibrating = false;
     let isMachineryRunning = false;
+    let lastMemoryLog = 0;
 
     const animate = () => {
       animId = requestAnimationFrame(animate);
       const delta = Math.min(clock.getDelta(), 0.08);
       const time = clock.getElapsedTime();
+
+      if (import.meta.env && import.meta.env.DEV && time - lastMemoryLog > 5) {
+        lastMemoryLog = time;
+        console.debug('[LunarMapChapter1] renderer.info.memory:', JSON.stringify({
+          textures: renderer.info.memory.textures,
+          geometries: renderer.info.memory.geometries,
+        }));
+      }
+
       // Earth slow planetary rotation
       earthSphere.rotation.y += delta * 0.02;
       earthClouds.rotation.y += delta * 0.028;
@@ -4563,6 +4582,8 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
     const resizeTimer = setTimeout(handleResize, 100);
 
     return () => {
+      isDisposed = true;
+
       audio.stopAllLoops();
       clearTimeout(resizeTimer);
       window.removeEventListener('keydown', onKeyDown);
@@ -4573,13 +4594,31 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
       if (renderer.domElement) {
         renderer.domElement.removeEventListener('click', handleCanvasClick);
       }
+      if (document.pointerLockElement) {
+        document.exitPointerLock();
+      }
       if (animId) cancelAnimationFrame(animId);
       if (renderer.domElement && container.contains(renderer.domElement)) {
         container.removeChild(renderer.domElement);
       }
+
+      if (import.meta.env && import.meta.env.DEV) {
+        console.info('[LunarMapChapter1] GPU resources before teardown:', JSON.stringify(renderer.info.memory));
+      }
+
+      // Release the cached NASA models first. Their shared assets are skipped
+      // by the scene traversal below and disposed by the loader when the last
+      // reference is released.
+      modelHandles.forEach((handle) => handle.release());
+      modelHandles.length = 0;
+
+      // Dispose every geometry/material/texture the chapter created, including
+      // the procedural terrain, props, scanner, particles, and shadow maps.
+      disposeObject3D(scene, { skipSharedAssets: true });
+
+      // Explicitly release procedural map textures that may not be reachable
+      // from a material at teardown (dispose is idempotent).
       regolithMap.dispose();
-      regolithBumpMap.dispose();
-      regolithRoughnessMap.dispose();
       basaltRockMap.dispose();
       goldFoilMap.dispose();
       solarPanelMap.dispose();
@@ -4598,16 +4637,11 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
       sparkMat.dispose();
       sporeGeo.dispose();
       bootprintGeo.dispose();
-      dracoLoader.dispose();
-      surveyorGroup.traverse((object) => {
-        if (!object.isMesh) return;
-        object.geometry.dispose();
-        const materials = Array.isArray(object.material) ? object.material : [object.material];
-        materials.forEach((material) => material.dispose());
-      });
+
       triggerSparksRef.current = null;
       triggerScannerBeamRef.current = null;
       renderer.dispose();
+      renderer.forceContextLoss();
     };
   }, []);
 
