@@ -895,20 +895,46 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer({ clas
   }, []);
 
   return (
-    <div ref={mountRef} className={`relative h-full w-full overflow-hidden bg-[#030811] ${className}`}>
+    <div
+      ref={mountRef}
+      aria-busy={!ready && !webglFailed}
+      className={`relative h-full w-full overflow-hidden bg-[#030811] ${className}`}
+    >
       <div
         className={`pointer-events-none absolute inset-0 z-10 flex items-center justify-center bg-[#030811] transition-opacity duration-700 ${
           ready ? 'opacity-0' : 'opacity-100'
         }`}
         aria-hidden={ready}
       >
-        <div className="flex flex-col items-center gap-3 text-center">
+        <div
+          className="flex flex-col items-center gap-4 text-center"
+          role="status"
+          aria-live="polite"
+          aria-label="Loading NASA Headquarters"
+        >
           <span className="relative flex h-14 w-14 items-center justify-center">
-            <span className="absolute inset-0 animate-ping rounded-full border border-[#4F79FF]/30" />
-            <span className="h-9 w-9 animate-spin rounded-full border border-[#3D6BFF]/30 border-t-[#7fe3ff]" />
+            <span className="absolute inset-1 rounded-full bg-[#14d7df]/10 blur-md" />
+            <svg
+              aria-hidden="true"
+              viewBox="0 0 40 40"
+              className="relative h-12 w-12 animate-spin drop-shadow-[0_0_8px_rgba(20,215,223,0.65)] motion-reduce:animate-none"
+            >
+              <circle cx="20" cy="4" r="2.2" fill="#14d7df" />
+              <circle cx="28" cy="6.1" r="2.1" fill="#14d7df" opacity=".92" />
+              <circle cx="33.9" cy="12" r="2" fill="#14d7df" opacity=".84" />
+              <circle cx="36" cy="20" r="1.9" fill="#14d7df" opacity=".76" />
+              <circle cx="33.9" cy="28" r="1.8" fill="#14d7df" opacity=".68" />
+              <circle cx="28" cy="33.9" r="1.7" fill="#14d7df" opacity=".6" />
+              <circle cx="20" cy="36" r="1.6" fill="#14d7df" opacity=".52" />
+              <circle cx="12" cy="33.9" r="1.5" fill="#14d7df" opacity=".44" />
+              <circle cx="6.1" cy="28" r="1.4" fill="#14d7df" opacity=".36" />
+              <circle cx="4" cy="20" r="1.3" fill="#14d7df" opacity=".28" />
+              <circle cx="6.1" cy="12" r="1.2" fill="#14d7df" opacity=".2" />
+              <circle cx="12" cy="6.1" r="1.1" fill="#14d7df" opacity=".12" />
+            </svg>
           </span>
-          <span className="text-[9px] font-semibold uppercase tracking-[0.34em] text-[#7fc9e8]">
-            Establishing secure link
+          <span className="text-[9px] font-semibold uppercase tracking-[0.34em] text-[#14d7df]">
+            Preparing mission control
           </span>
         </div>
       </div>
