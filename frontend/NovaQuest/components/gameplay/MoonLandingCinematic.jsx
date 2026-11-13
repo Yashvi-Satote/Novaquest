@@ -38,10 +38,14 @@ export default function MoonLandingCinematic({ onComplete, onSkip }) {
   useEffect(() => {
     const handleKeyDown = (e) => {
       const k = e.key.toLowerCase();
+      if (['w', 'a', 's', 'd', 'arrowup', 'arrowleft', 'arrowdown', 'arrowright', 'shift', ' '].includes(k)) {
+        e.preventDefault();
+      }
       if (k === 'w' || k === 'arrowup') keysRef.current.w = true;
       if (k === 'a' || k === 'arrowleft') keysRef.current.a = true;
       if (k === 's' || k === 'arrowdown') keysRef.current.s = true;
       if (k === 'd' || k === 'arrowright') keysRef.current.d = true;
+      if (k === 'shift') keysRef.current.shift = true;
       if (k === ' ' && playerPosRef.current.isGrounded) {
         keysRef.current.space = true;
         playerPosRef.current.vy = 0.14; // Lunar microgravity jump
@@ -56,6 +60,7 @@ export default function MoonLandingCinematic({ onComplete, onSkip }) {
       if (k === 'a' || k === 'arrowleft') keysRef.current.a = false;
       if (k === 's' || k === 'arrowdown') keysRef.current.s = false;
       if (k === 'd' || k === 'arrowright') keysRef.current.d = false;
+      if (k === 'shift') keysRef.current.shift = false;
       if (k === ' ') keysRef.current.space = false;
     };
 
@@ -87,6 +92,57 @@ export default function MoonLandingCinematic({ onComplete, onSkip }) {
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     container.appendChild(renderer.domElement);
+
+    // Camera Orbit State & Touchpad Controls (NASA Headquarters style)
+    let camYaw = 0;
+    let camPitch = 0.28;
+    let camDistance = 7.0;
+    const TRACKPAD_LOOK_SENSITIVITY = 0.0032;
+
+    let pointerDown = null;
+    let prevPointerX = 0;
+    let prevPointerY = 0;
+
+    const handlePointerDown = (e) => {
+      if (e.button !== 0 && e.pointerType === 'mouse') return;
+      pointerDown = { x: e.clientX, y: e.clientY, pointerId: e.pointerId };
+      prevPointerX = e.clientX;
+      prevPointerY = e.clientY;
+    };
+
+    const handlePointerMove = (e) => {
+      if (!pointerDown) return;
+      const deltaX = e.clientX - prevPointerX;
+      const deltaY = e.clientY - prevPointerY;
+      prevPointerX = e.clientX;
+      prevPointerY = e.clientY;
+      camYaw -= deltaX * 0.0035;
+      camPitch = Math.max(-0.15, Math.min(1.2, camPitch + deltaY * 0.0035));
+    };
+
+    const handlePointerUp = () => { pointerDown = null; };
+
+    const handleWheel = (e) => {
+      const deltaMultiplier = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? 100 : 1;
+      const deltaX = e.deltaX * deltaMultiplier;
+      const deltaY = e.deltaY * deltaMultiplier;
+      if (deltaX === 0 && deltaY === 0) return;
+      if (e.cancelable) e.preventDefault();
+
+      if (e.ctrlKey) {
+        camDistance = Math.max(3.5, Math.min(16.0, camDistance + deltaY * 0.005));
+        return;
+      }
+
+      camYaw -= deltaX * TRACKPAD_LOOK_SENSITIVITY;
+      camPitch = Math.max(-0.15, Math.min(1.2, camPitch + deltaY * TRACKPAD_LOOK_SENSITIVITY));
+    };
+
+    container.addEventListener('pointerdown', handlePointerDown);
+    window.addEventListener('pointermove', handlePointerMove);
+    window.addEventListener('pointerup', handlePointerUp);
+    window.addEventListener('pointercancel', handlePointerUp);
+    container.addEventListener('wheel', handleWheel, { passive: false });
 
     // --- Textures & Celestial Background ---
     const texLoader = new THREE.TextureLoader();
@@ -359,22 +415,22 @@ export default function MoonLandingCinematic({ onComplete, onSkip }) {
         const p = playerPosRef.current;
         const keys = keysRef.current;
 
-        let moveX = 0;
-        let moveZ = 0;
-        const speed = 4.2;
+        const forward = new THREE.Vector3(-Math.sin(camYaw), 0, -Math.cos(camYaw));
+        const right = new THREE.Vector3(Math.cos(camYaw), 0, -Math.sin(camYaw));
+        const moveDir = new THREE.Vector3();
+        if (keys.w) moveDir.add(forward);
+        if (keys.s) moveDir.sub(forward);
+        if (keys.d) moveDir.add(right);
+        if (keys.a) moveDir.sub(right);
 
-        if (keys.w) moveZ -= 1;
-        if (keys.s) moveZ += 1;
-        if (keys.a) moveX -= 1;
-        if (keys.d) moveX += 1;
-
-        const isMoving = moveX !== 0 || moveZ !== 0;
+        const isMoving = moveDir.lengthSq() > 0.001;
+        const speed = (keys.shift ? 7.2 : 4.2);
 
         if (isMoving) {
-          const mag = Math.sqrt(moveX * moveX + moveZ * moveZ);
-          p.x += (moveX / mag) * speed * delta;
-          p.z += (moveZ / mag) * speed * delta;
-          p.rotY = Math.atan2(moveX, moveZ);
+          moveDir.normalize();
+          p.x += moveDir.x * speed * delta;
+          p.z += moveDir.z * speed * delta;
+          p.rotY = Math.atan2(moveDir.x, moveDir.z);
           astronaut.rotation.y = p.rotY;
           astronaut.userData.anim.state = 'walk';
         } else {
@@ -395,15 +451,17 @@ export default function MoonLandingCinematic({ onComplete, onSkip }) {
         astronaut.position.set(p.x, p.y, p.z);
         astronaut.userData.anim.update(delta, elapsed);
 
-        // Smooth third-person chase camera follow
-        const targetCamX = p.x;
-        const targetCamY = p.y + 3.0;
-        const targetCamZ = p.z + 6.5;
+        // Smooth third-person chase camera follow with orbit
+        const hDist = camDistance * Math.cos(camPitch);
+        const vDist = camDistance * Math.sin(camPitch);
+        const targetCamX = p.x + Math.sin(camYaw) * hDist;
+        const targetCamY = Math.max(1.0, p.y + 1.2 + vDist);
+        const targetCamZ = p.z + Math.cos(camYaw) * hDist;
 
-        camera.position.x += (targetCamX - camera.position.x) * 0.1;
-        camera.position.y += (targetCamY - camera.position.y) * 0.1;
-        camera.position.z += (targetCamZ - camera.position.z) * 0.1;
-        camera.lookAt(p.x, p.y + 1.2, p.z - 2.5);
+        camera.position.x += (targetCamX - camera.position.x) * 0.12;
+        camera.position.y += (targetCamY - camera.position.y) * 0.12;
+        camera.position.z += (targetCamZ - camera.position.z) * 0.12;
+        camera.lookAt(p.x, p.y + 1.2, p.z);
 
         // Proximity detection to Surveyor 5
         const dx = p.x - landerPos.x;
@@ -440,6 +498,11 @@ export default function MoonLandingCinematic({ onComplete, onSkip }) {
 
     return () => {
       cancelAnimationFrame(animFrameId);
+      container.removeEventListener('pointerdown', handlePointerDown);
+      window.removeEventListener('pointermove', handlePointerMove);
+      window.removeEventListener('pointerup', handlePointerUp);
+      window.removeEventListener('pointercancel', handlePointerUp);
+      container.removeEventListener('wheel', handleWheel);
       window.removeEventListener('resize', handleResize);
       if (renderer.domElement && container.contains(renderer.domElement)) {
         container.removeChild(renderer.domElement);

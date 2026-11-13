@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import * as THREE from 'three';
 import { acquireGltfModel, disposeObject3D } from '../../../Shared/three/gltfModelLoader';
 import { 
@@ -22,11 +23,20 @@ import {
   Clock,
   ListOrdered,
   X,
-  Wifi
+  Wifi,
+  RotateCcw,
+  ArrowDownToLine,
+  ChevronUp,
+  VolumeX,
+  Target
 } from 'lucide-react';
 import { audio } from '../../game/moonMapAudioManager';
+import { createSurveyorGuidanceSystem, GUIDANCE_CONFIG } from '../gameplay/three/SurveyorGuidanceSystem';
+import { guidanceAudio } from '../../game/guidanceAudio';
+import { ALL_MISSIONS } from '../../config/missions';
 import MissionEchoModal from './MissionEchoModal';
 import NasaHeadquartersModal from '../../nasa-headquarters/NasaHeadquartersModal';
+import LunarSoilAnalysisModal from './LunarSoilAnalysisModal';
 import { 
   createLunarRegolithTexture,
   createBasaltRockTexture,
@@ -131,10 +141,48 @@ export const JOURNEY_STAGES = [
 export default function LunarMapChapter1({ mcGender = 'male', onComplete, onReturnMenu }) {
   const mountRef = useRef(null);
   const nearInteractableRef = useRef(null);
+  const navigate = useNavigate();
   const nearSurveyorRef = useRef(false);
   const isMissionEchoCompletedRef = useRef(false);
   const triggerSparksRef = useRef(null);
   const triggerScannerBeamRef = useRef(null);
+
+  // Return from HQ & Surveyor 5 Retrieval State
+  const [hasReturnedFromHq, setHasReturnedFromHq] = useState(false);
+  const hasReturnedFromHqRef = useRef(false);
+  const [isSurveyorCollected, setIsSurveyorCollected] = useState(false);
+  const isSurveyorCollectedRef = useRef(false);
+  const [showRetrievalModal, setShowRetrievalModal] = useState(false);
+  const [surveyorScreenCoords, setSurveyorScreenCoords] = useState({ x: 0, y: 0, visible: false });
+  const collectSurveyorRef = useRef(null);
+  const surveyorGroupRef = useRef(null);
+  const collectionBeamRef = useRef(null);
+
+  // --- Sci-Fi Guidance & Interaction System State ---
+  const guidanceSystemRef = useRef(null);
+  const latestGuidanceRef = useRef(null);
+  const [guidanceData, setGuidanceData] = useState({
+    distance: 124,
+    inRange: false,
+    marker: { x: 0, y: 0, visible: false, inRange: false, bobOffset: 0 },
+    offScreen: { isOffScreen: false, edgeX: 0, edgeY: 0, angleDeg: 0, distanceMeters: 124 }
+  });
+  const [smoothedProximity, setSmoothedProximity] = useState(0);
+  const currentProximityRef = useRef(0);
+  const [showSignalDetected, setShowSignalDetected] = useState(true);
+  const [showSecuredAnimation, setShowSecuredAnimation] = useState(false);
+  const [isAudioMuted, setIsAudioMuted] = useState(guidanceAudio.isMuted);
+  const [showMuteToast, setShowMuteToast] = useState(false);
+
+  // First-time long-range beacon signal detection alert
+  useEffect(() => {
+    setShowSignalDetected(true);
+    guidanceAudio.playBeaconActivated();
+    const t = setTimeout(() => {
+      setShowSignalDetected(false);
+    }, 4200);
+    return () => clearTimeout(t);
+  }, []);
 
   // HUD & Game State
   const activeZoneRef = useRef('ZONE 1 · TEAM LANDING');
@@ -149,6 +197,127 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
   const [nearInteractable, setNearInteractable] = useState(null);
   const [isHqOpen, setIsHqOpen] = useState(false);
   const isHqOpenRef = useRef(false);
+
+  const [isSoilAnalysisReady, setIsSoilAnalysisReady] = useState(false);
+  const isSoilAnalysisReadyRef = useRef(false);
+  const [soilAnalysisModalOpen, setSoilAnalysisModalOpen] = useState(false);
+  const [soilAnalysisMode, setSoilAnalysisMode] = useState('scanning');
+  const teleportPlayerRef = useRef(null);
+  const triggerSoilAnalysisRef = useRef(null);
+
+  useEffect(() => {
+    isSoilAnalysisReadyRef.current = isSoilAnalysisReady;
+  }, [isSoilAnalysisReady]);
+
+  useEffect(() => {
+    hasReturnedFromHqRef.current = hasReturnedFromHq;
+  }, [hasReturnedFromHq]);
+
+  useEffect(() => {
+    isSurveyorCollectedRef.current = isSurveyorCollected;
+  }, [isSurveyorCollected]);
+
+  const handleSoilAnalysisFromHq = () => {
+    isHqOpenRef.current = false;
+    setIsHqOpen(false);
+    setIsSoilAnalysisReady(true);
+    isSoilAnalysisReadyRef.current = true;
+    setHasReturnedFromHq(true);
+    hasReturnedFromHqRef.current = true;
+
+    // Teleport player directly into close radius to Surveyor 5 (Surveyor 5 is at 0, 0)
+    // Position (0, 3.8), looking at (0, 0) with yaw = 0, pitch = -0.06
+    if (teleportPlayerRef.current) {
+      teleportPlayerRef.current(0, 3.8, 0);
+    }
+    audio.playSurveyorScannerBeep?.();
+    setTimeout(() => {
+      audio.playEquipmentFeedback?.();
+    }, 280);
+  };
+
+  const handleConductSoilAnalysis = () => {
+    audio.playCraterScannerPulse?.();
+    setSoilAnalysisMode('scanning');
+    setSoilAnalysisModalOpen(true);
+  };
+  triggerSoilAnalysisRef.current = handleConductSoilAnalysis;
+
+  const handleRetrieveSurveyor = () => {
+    if (isSurveyorCollectedRef.current) return;
+    guidanceAudio.playRetrieveConfirm();
+    setShowSecuredAnimation(true);
+    if (guidanceSystemRef.current) {
+      guidanceSystemRef.current.dispose();
+      guidanceSystemRef.current = null;
+    }
+    handleCollectSurveyor();
+  };
+
+  const handleCollectSurveyor = () => {
+    if (isSurveyorCollectedRef.current) return;
+    audio.playMissionEchoActivation?.();
+    audio.playSurveyorScannerBeep?.();
+    setTimeout(() => {
+      audio.playEquipmentFeedback?.();
+    }, 320);
+
+    // Make 3D model of Surveyor 5 disappear!
+    if (surveyorGroupRef.current) {
+      surveyorGroupRef.current.visible = false;
+    }
+
+    // Trigger sci-fi tractor beam upward effect
+    if (collectionBeamRef.current) {
+      collectionBeamRef.current.trigger();
+    }
+
+    setIsSurveyorCollected(true);
+    isSurveyorCollectedRef.current = true;
+
+    // Show popup modal after collection animation
+    setTimeout(() => {
+      setShowRetrievalModal(true);
+    }, 500);
+  };
+  collectSurveyorRef.current = handleCollectSurveyor;
+
+  const handleNextLevel = () => {
+    audio.playClick?.();
+    // Unlock Level 2: Voyager 1 in ALL_MISSIONS
+    const voyager = ALL_MISSIONS.find((m) => m.id === 'voyager-1');
+    if (voyager) {
+      voyager.status = 'unlocked';
+    }
+    try {
+      localStorage.setItem('novaquest_level2_unlocked', 'true');
+    } catch (e) {
+      console.warn('Could not save level 2 state to localStorage', e);
+    }
+    // Enter Level 2: Message of Earth — Voyager 1
+    navigate('/play/message-of-earth');
+  };
+
+  const handleReplayGame = () => {
+    audio.playClick?.();
+    setShowRetrievalModal(false);
+    setIsSurveyorCollected(false);
+    isSurveyorCollectedRef.current = false;
+    setHasReturnedFromHq(false);
+    hasReturnedFromHqRef.current = false;
+    setIsSoilAnalysisReady(false);
+    isSoilAnalysisReadyRef.current = false;
+
+    // Make Surveyor 5 3D model visible again
+    if (surveyorGroupRef.current) {
+      surveyorGroupRef.current.visible = true;
+    }
+
+    // Teleport player back to initial spacecraft landing zone (104, 66)
+    if (teleportPlayerRef.current) {
+      teleportPlayerRef.current(104, 66, 1.01);
+    }
+  };
 
   const [journeyStageIndex, setJourneyStageIndex] = useState(0);
   const [completedStageIndices, setCompletedStageIndices] = useState([]);
@@ -870,6 +1039,41 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
     const surveyorGroup = new THREE.Group();
     const surveyorTerrainY = getTerrainHeight(0, 0);
     surveyorGroup.position.set(0, surveyorTerrainY, 0);
+    surveyorGroupRef.current = surveyorGroup;
+
+    // Upward sci-fi collection / tractor beam effect
+    const beamGeo = new THREE.CylinderGeometry(1.2, 4.0, 160, 24, 1, true);
+    const beamMat = new THREE.MeshBasicMaterial({
+      color: 0x38bdf8,
+      transparent: true,
+      opacity: 0,
+      side: THREE.DoubleSide,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    });
+    const beamMesh = new THREE.Mesh(beamGeo, beamMat);
+    beamMesh.position.set(0, surveyorTerrainY + 80, 0);
+    scene.add(beamMesh);
+
+    let beamActive = false;
+    let beamTimer = 0;
+    collectionBeamRef.current = {
+      trigger: () => {
+        beamActive = true;
+        beamTimer = 0;
+        beamMat.opacity = 0.92;
+      }
+    };
+
+    // 10b. SCI-FI SURVEYOR 5 GUIDANCE SYSTEM (Tall Blue Pillar, Ground Sonar Rings, Audio Radar)
+    const guidanceSystem = createSurveyorGuidanceSystem({
+      scene,
+      camera,
+      surveyorPosition: new THREE.Vector3(0, 0, 0),
+      terrainHeight: surveyorTerrainY,
+      config: GUIDANCE_CONFIG
+    });
+    guidanceSystemRef.current = guidanceSystem;
 
     // Medium-poly PBR materials
     const matAluminum = new THREE.MeshStandardMaterial({ color: 0xd4d4d8, metalness: 0.88, roughness: 0.24 });
@@ -4007,6 +4211,21 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
     const initialGroundY = getTerrainHeight(104, 66);
     let playerPos = new THREE.Vector3(104, initialGroundY + EYE_HEIGHT, 66);
     camera.position.set(104, initialGroundY + EYE_HEIGHT, 66);
+
+    teleportPlayerRef.current = (targetX, targetZ, targetYaw) => {
+      const groundY = getTerrainHeight(targetX, targetZ);
+      playerPos.set(targetX, groundY + EYE_HEIGHT, targetZ);
+      camera.position.set(targetX, groundY + EYE_HEIGHT, targetZ);
+      if (typeof targetYaw === 'number') {
+        yaw = targetYaw;
+        pitch = -0.06;
+      }
+      playerVelocityY = 0;
+      underground = false;
+      nearSurveyorRef.current = true;
+      setDistanceToSurveyor(Math.round(Math.hypot(targetX, targetZ)));
+      setActiveZone('ZONE 2 · SURVEYOR 5 RETRIEVAL SITE');
+    };
     let playerVelocityY = 0;
     let isGrounded = true;
     const LUNAR_GRAVITY = 6.2; // Adjusted for responsive gameplay feel (real 1.62m/s^2)
@@ -4020,6 +4239,9 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
       audio.startSuitBreathing();
       audio.startAmbience();
       const code = e.code;
+      if (['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ArrowUp', 'ArrowLeft', 'ArrowDown', 'ArrowRight', 'Space'].includes(code)) {
+        e.preventDefault();
+      }
       if (code === 'KeyW' || code === 'ArrowUp') keys.w = true;
       if (code === 'KeyS' || code === 'ArrowDown') keys.s = true;
       if (code === 'KeyA' || code === 'ArrowLeft') keys.a = true;
@@ -4040,11 +4262,34 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
       }
 
       if (code === 'KeyE' && !e.repeat) {
+        // Sci-Fi Guidance Interaction: Retrieve Surveyor 5 when within interaction range (8m)
+        const curGDist = latestGuidanceRef.current?.distance ?? Math.hypot(playerPos.x, playerPos.z);
+        if (!isSurveyorCollectedRef.current && (curGDist <= GUIDANCE_CONFIG.INTERACT_RANGE || nearSurveyorRef.current)) {
+          handleRetrieveSurveyor();
+          return;
+        }
+
+        if (hasReturnedFromHqRef.current && !isSurveyorCollectedRef.current) {
+          handleRetrieveSurveyor();
+          return;
+        }
+        if (isSoilAnalysisReadyRef.current && nearSurveyorRef.current) {
+          triggerSoilAnalysisRef.current?.();
+          return;
+        }
         if (nearSurveyorRef.current) {
-          openHeadquarters();
+          handleRetrieveSurveyor();
           return;
         }
         if (nearInteractableRef.current) triggerInvestigation();
+      }
+
+      // M Key: Mute/Unmute Guidance & Game Audio
+      if (code === 'KeyM' && !e.repeat) {
+        const nextMuted = guidanceAudio.toggleMute();
+        setIsAudioMuted(nextMuted);
+        setShowMuteToast(true);
+        setTimeout(() => setShowMuteToast(false), 2200);
       }
     };
 
@@ -4061,18 +4306,52 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
     window.addEventListener('keydown', onKeyDown);
     window.addEventListener('keyup', onKeyUp);
 
-    // Mouse Look (Pointer Lock)
-    const onMouseMove = (e) => {
-      if (document.pointerLockElement !== renderer.domElement) return;
-      const movementX = e.movementX || 0;
-      const movementY = e.movementY || 0;
+    // Mouse & Touchpad Look (1-finger drag & Pointer Lock)
+    let pointerDown = null;
+    const TRACKPAD_LOOK_SENSITIVITY = 0.0032;
 
-      yaw -= movementX * 0.0022;
-      pitch -= movementY * 0.0022;
-      pitch = Math.max(-1.3, Math.min(1.3, pitch));
+    const onPointerDown = (e) => {
+      if (e.button !== 0 && e.pointerType === 'mouse') return;
+      pointerDown = { x: e.clientX, y: e.clientY, pointerId: e.pointerId };
     };
 
-    document.addEventListener('mousemove', onMouseMove);
+    const onPointerMove = (e) => {
+      if (document.pointerLockElement === renderer.domElement) {
+        const movementX = e.movementX || 0;
+        const movementY = e.movementY || 0;
+        yaw -= movementX * 0.0022;
+        pitch -= movementY * 0.0022;
+        pitch = Math.max(-1.3, Math.min(1.3, pitch));
+      } else if (pointerDown) {
+        const deltaX = e.clientX - pointerDown.x;
+        const deltaY = e.clientY - pointerDown.y;
+        pointerDown.x = e.clientX;
+        pointerDown.y = e.clientY;
+        yaw -= deltaX * 0.003;
+        pitch = Math.max(-1.3, Math.min(1.3, pitch - deltaY * 0.003));
+      }
+    };
+
+    const onPointerUp = () => {
+      pointerDown = null;
+    };
+
+    // 2-finger laptop touchpad swipe look
+    const onWheel = (e) => {
+      const deltaMultiplier = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? 100 : 1;
+      const deltaX = e.deltaX * deltaMultiplier;
+      const deltaY = e.deltaY * deltaMultiplier;
+      if (deltaX === 0 && deltaY === 0) return;
+      if (e.cancelable) e.preventDefault();
+      yaw -= deltaX * TRACKPAD_LOOK_SENSITIVITY;
+      pitch = Math.max(-1.3, Math.min(1.3, pitch - deltaY * TRACKPAD_LOOK_SENSITIVITY));
+    };
+
+    renderer.domElement.addEventListener('pointerdown', onPointerDown);
+    window.addEventListener('pointermove', onPointerMove);
+    window.addEventListener('pointerup', onPointerUp);
+    window.addEventListener('pointercancel', onPointerUp);
+    renderer.domElement.addEventListener('wheel', onWheel, { passive: false });
 
     const handleCanvasClick = () => {
       audio.ensureContext();
@@ -4382,6 +4661,56 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
         }
       }
 
+      // Animate collection beam if active
+      if (beamActive) {
+        beamTimer += delta;
+        beamMesh.rotation.y += delta * 4.0;
+        beamMat.opacity = Math.max(0, 0.92 - (beamTimer / 1.4));
+        if (beamTimer >= 1.4) {
+          beamActive = false;
+          beamMat.opacity = 0;
+        }
+      }
+
+      // Sci-Fi Surveyor 5 Guidance System Update
+      if (guidanceSystemRef.current) {
+        const gUpdate = guidanceSystemRef.current.update(
+          delta,
+          time,
+          playerPos,
+          isSurveyorCollectedRef.current
+        );
+        if (gUpdate) {
+          latestGuidanceRef.current = gUpdate;
+
+          // Smooth Proximity Fill using lerp
+          const maxD = GUIDANCE_CONFIG.MAX_TRACK_DISTANCE;
+          const minD = GUIDANCE_CONFIG.INTERACT_RANGE;
+          let targetFill = 0;
+          if (gUpdate.distance <= minD) {
+            targetFill = 1.0;
+          } else if (gUpdate.distance >= maxD) {
+            targetFill = 0.0;
+          } else {
+            targetFill = (maxD - gUpdate.distance) / (maxD - minD);
+          }
+          currentProximityRef.current += (targetFill - currentProximityRef.current) * Math.min(1.0, delta * 7.5);
+        }
+      }
+
+      // Calculate on-screen coordinates for Surveyor 5 "Collect Surveyor 5" glowing button
+      if (hasReturnedFromHqRef.current && !isSurveyorCollectedRef.current) {
+        const probeTarget = new THREE.Vector3(0, surveyorTerrainY + 1.5, 0);
+        probeTarget.project(camera);
+        if (probeTarget.z < 1) {
+          const sx = (probeTarget.x * 0.5 + 0.5) * window.innerWidth;
+          const sy = (-(probeTarget.y * 0.5) + 0.5) * window.innerHeight;
+          setSurveyorScreenCoords({ x: sx, y: sy, visible: true });
+        } else {
+          setSurveyorScreenCoords(prev => prev.visible ? { ...prev, visible: false } : prev);
+        }
+      }
+
       // Dynamic Zone 4 & 6 state responsiveness (lighting & conduit)
       if (isMissionEchoCompletedRef.current) {
         if (alienGlowLight) alienGlowLight.intensity = 0.35;
@@ -4397,10 +4726,15 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
         if (conduitMat) conduitMat.emissiveIntensity = 0.45 + Math.sin(time * 3.0) * 0.2;
       }
 
-      // Throttled HUD Telemetry Updates (5 Hz updates instead of 60 FPS state flooding)
+      // Throttled HUD Telemetry Updates
       hudTimer += delta;
-      if (hudTimer >= 0.2) {
+      if (hudTimer >= 0.05) {
         hudTimer = 0;
+
+        if (latestGuidanceRef.current) {
+          setGuidanceData({ ...latestGuidanceRef.current });
+          setSmoothedProximity(currentProximityRef.current);
+        }
 
         const distLanding = Math.round(Math.hypot(playerPos.x - 105, playerPos.z - 65));
         const exactSurveyorDistance = Math.hypot(playerPos.x, playerPos.z);
@@ -4590,8 +4924,12 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
       window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('keyup', onKeyUp);
       window.removeEventListener('resize', handleResize);
-      document.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('pointermove', onPointerMove);
+      window.removeEventListener('pointerup', onPointerUp);
+      window.removeEventListener('pointercancel', onPointerUp);
       if (renderer.domElement) {
+        renderer.domElement.removeEventListener('pointerdown', onPointerDown);
+        renderer.domElement.removeEventListener('wheel', onWheel);
         renderer.domElement.removeEventListener('click', handleCanvasClick);
       }
       if (document.pointerLockElement) {
@@ -4640,6 +4978,13 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
 
       triggerSparksRef.current = null;
       triggerScannerBeamRef.current = null;
+      teleportPlayerRef.current = null;
+      surveyorGroupRef.current = null;
+      collectionBeamRef.current = null;
+      if (guidanceSystemRef.current) {
+        guidanceSystemRef.current.dispose();
+        guidanceSystemRef.current = null;
+      }
       renderer.dispose();
       renderer.forceContextLoss();
     };
@@ -4650,30 +4995,41 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
   return (
     <div className="relative h-full w-full overflow-hidden select-none cursor-crosshair font-mono bg-black text-slate-100">
       
-      {!isHqOpen && (
+      {!isHqOpen && !hasReturnedFromHq && (
         <div className="pointer-events-none absolute inset-x-0 top-4 z-20 flex flex-col items-center gap-2 px-4 text-center">
           <div
             role="status"
             className="rounded-xl border border-cyan-400/50 bg-slate-950/90 px-5 py-2.5 text-sm font-black uppercase tracking-[0.18em] text-white shadow-[0_0_24px_rgba(34,211,238,0.28)] backdrop-blur-md"
           >
             <span className="mr-2 text-cyan-300">Mission Task</span>
-            Find Surveyor 5
+            {isSoilAnalysisReady ? 'Conduct Mare Tranquillitatis Soil Analysis' : 'Find Surveyor 5'}
           </div>
           {nearSurveyor && (
-            <button
-              type="button"
-              onClick={openHeadquarters}
-              className="pointer-events-auto flex items-center gap-2 border border-[#7fe3ff]/80 bg-gradient-to-r from-[#06243d]/95 to-[#0b4162]/95 px-5 py-3 text-sm font-black uppercase tracking-wide text-[#d9faff] shadow-[0_0_28px_rgba(34,211,238,0.38)] transition hover:border-[#c5f8ff] hover:shadow-[0_0_34px_rgba(34,211,238,0.6)] active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7fe3ff]"
-              style={{ clipPath: 'polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px)' }}
-            >
-              <Building2 className="h-4 w-4" aria-hidden="true" />
-              Click E to retrieve Surveyor 5
-            </button>
+            <div className="pointer-events-auto flex flex-col sm:flex-row items-center gap-2.5">
+              <button
+                type="button"
+                onClick={handleConductSoilAnalysis}
+                className="group relative flex items-center gap-2.5 border-2 border-cyan-400/90 bg-gradient-to-r from-[#03243d]/95 via-[#083a5e]/95 to-[#0b4b72]/95 px-6 py-3 text-sm font-black uppercase tracking-widest text-[#d9faff] shadow-[0_0_35px_rgba(34,211,238,0.6)] backdrop-blur-md transition hover:border-[#c5f8ff] hover:text-white hover:shadow-[0_0_50px_rgba(34,211,238,0.85)] hover:scale-105 active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7fe3ff] cursor-pointer"
+                style={{ clipPath: 'polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px)' }}
+              >
+                <Atom className="h-4 w-4 text-cyan-300 animate-spin" style={{ animationDuration: '6s' }} aria-hidden="true" />
+                <span>Conduct Soil Analysis [E]</span>
+              </button>
+              <button
+                type="button"
+                onClick={openHeadquarters}
+                className="flex items-center gap-1.5 border border-[#7fe3ff]/50 bg-[#041627]/90 px-3.5 py-2.5 text-xs font-bold uppercase tracking-wider text-[#b8e5ff] shadow-md transition hover:border-[#7fe3ff] hover:text-white active:scale-95"
+                style={{ clipPath: 'polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px)' }}
+              >
+                <Building2 className="h-3.5 w-3.5" aria-hidden="true" />
+                NASA HQ Firing Room
+              </button>
+            </div>
           )}
         </div>
       )}
 
-      {!isHqOpen && (
+      {!isHqOpen && !hasReturnedFromHq && (
         <button
           type="button"
           onClick={openHeadquarters}
@@ -4684,6 +5040,61 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
           Skip to NASA HQ
           <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
         </button>
+      )}
+
+      {/* GLOWING SCI-FI "COLLECT SURVEYOR 5" BUTTON ON SURVEYOR 5 IN THE CENTER */}
+      {hasReturnedFromHq && !isSurveyorCollected && (
+        <div
+          className="pointer-events-auto absolute z-40 flex flex-col items-center select-none"
+          style={{
+            left: surveyorScreenCoords.visible ? `${surveyorScreenCoords.x}px` : '50%',
+            top: surveyorScreenCoords.visible ? `${surveyorScreenCoords.y}px` : '50%',
+            transform: 'translate(-50%, -50%)',
+          }}
+        >
+          {/* Holographic Targeting Reticle */}
+          <div className="relative flex items-center justify-center p-3">
+            {/* Pulsing Glow Rings */}
+            <div className="absolute inset-0 rounded-full border border-cyan-400/40 animate-ping opacity-30 pointer-events-none" />
+            <div className="absolute -inset-4 rounded-full border border-cyan-500/25 animate-pulse pointer-events-none" />
+            
+            {/* Tech Corner Brackets */}
+            <div className="absolute -inset-3 pointer-events-none">
+              <span className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-cyan-300 drop-shadow-[0_0_8px_#22d3ee]" />
+              <span className="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-cyan-300 drop-shadow-[0_0_8px_#22d3ee]" />
+              <span className="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-cyan-300 drop-shadow-[0_0_8px_#22d3ee]" />
+              <span className="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-cyan-300 drop-shadow-[0_0_8px_#22d3ee]" />
+            </div>
+
+            {/* Target Telemetry Lock Indicator */}
+            <div className="absolute -top-7 px-3 py-0.5 rounded-full bg-slate-950/90 border border-cyan-400/60 text-[10px] font-black tracking-widest text-cyan-300 uppercase shadow-[0_0_15px_rgba(34,211,238,0.5)] whitespace-nowrap">
+              TARGET LOCKED · SURVEYOR 5 LANDER
+            </div>
+
+            {/* The Main Glowing Sci-Fi Button */}
+            <button
+              type="button"
+              onClick={handleCollectSurveyor}
+              className="group relative flex items-center gap-3.5 px-8 py-4 rounded-xl border-2 border-cyan-300 bg-gradient-to-r from-[#021f35]/95 via-[#08426d]/95 to-[#052b47]/95 text-white font-black text-sm uppercase tracking-[0.24em] shadow-[0_0_40px_rgba(34,211,238,0.85)] backdrop-blur-md transition-all duration-300 hover:border-white hover:text-white hover:shadow-[0_0_70px_rgba(34,211,238,1)] hover:scale-105 active:scale-95 focus:outline-none focus-visible:ring-4 focus-visible:ring-cyan-400 cursor-pointer"
+              style={{
+                clipPath: 'polygon(14px 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%, 0 14px)',
+              }}
+            >
+              {/* Internal Shimmer Scanline */}
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-cyan-400/25 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out pointer-events-none" />
+
+              <Sparkles className="h-5 w-5 text-cyan-300 animate-spin flex-shrink-0 drop-shadow-[0_0_8px_#22d3ee]" style={{ animationDuration: '4s' }} aria-hidden="true" />
+              <span className="drop-shadow-[0_0_12px_rgba(34,211,238,0.95)]">
+                Collect Surveyor 5
+              </span>
+              <ArrowDownToLine className="h-5 w-5 text-cyan-300 animate-bounce flex-shrink-0" aria-hidden="true" />
+            </button>
+          </div>
+
+          <span className="mt-2 text-[10px] font-mono tracking-widest text-cyan-300/80 uppercase bg-black/70 px-2.5 py-0.5 rounded border border-cyan-500/30 shadow-md">
+            [PRESS E OR CLICK TO COLLECT INTO SPACECRAFT]
+          </span>
+        </div>
       )}
 
       {/* 3D WebGL Canvas */}
@@ -4910,11 +5321,11 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
             {nearSurveyor && (
               <button
                 type="button"
-                onClick={openHeadquarters}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 via-blue-600 to-indigo-600 text-white font-bold text-xs uppercase tracking-wider border border-cyan-400 shadow-xl shadow-cyan-500/40 hover:scale-105 active:scale-95 animate-bounce"
+                onClick={handleConductSoilAnalysis}
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 via-blue-600 to-indigo-600 text-white font-bold text-xs uppercase tracking-wider border border-cyan-400 shadow-xl shadow-cyan-500/40 hover:scale-105 active:scale-95 animate-bounce cursor-pointer"
               >
-                <Crosshair className="w-4 h-4 text-cyan-200" />
-                <span>Click E to retrieve Surveyor 5</span>
+                <Atom className="w-4 h-4 text-cyan-200 animate-spin" style={{ animationDuration: '6s' }} />
+                <span>Conduct Soil Analysis [E]</span>
               </button>
             )}
           </div>
@@ -5153,7 +5564,120 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
         </div>
       )}
 
-      <NasaHeadquartersModal isOpen={isHqOpen} onClose={closeHeadquarters} />
+      <NasaHeadquartersModal
+        isOpen={isHqOpen}
+        onClose={closeHeadquarters}
+        onSoilAnalysis={handleSoilAnalysisFromHq}
+      />
+
+      <LunarSoilAnalysisModal
+        isOpen={soilAnalysisModalOpen}
+        mode={soilAnalysisMode}
+        onClose={() => setSoilAnalysisModalOpen(false)}
+        onReturnMenu={onReturnMenu}
+      />
+
+      {/* POPUP MODAL: SURVEYOR 5 SUCCESSFULLY RETRIEVED */}
+      {showRetrievalModal && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="retrieval-success-title"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/90 backdrop-blur-xl animate-fade-in font-mono select-none"
+        >
+          {/* Radiant Cosmic Backlight */}
+          <div
+            className="pointer-events-none absolute inset-0"
+            style={{
+              background: 'radial-gradient(circle at center, rgba(34,211,238,0.25) 0%, rgba(10,30,60,0.5) 45%, rgba(0,0,0,0.95) 100%)',
+            }}
+          />
+
+          <div
+            className="relative w-full max-w-lg rounded-2xl border-2 border-cyan-400/80 bg-gradient-to-b from-[#081a2f] via-[#040e1c] to-[#02070e] p-7 sm:p-9 text-center shadow-[0_0_90px_rgba(34,211,238,0.5)] space-y-6"
+            style={{
+              clipPath: 'polygon(18px 0, 100% 0, 100% calc(100% - 18px), calc(100% - 18px) 100%, 0 100%, 0 18px)',
+            }}
+          >
+            {/* Tech Corner Brackets */}
+            <span className="absolute top-2 left-2 w-6 h-6 border-t-2 border-l-2 border-cyan-400/60 pointer-events-none" />
+            <span className="absolute top-2 right-2 w-6 h-6 border-t-2 border-r-2 border-cyan-400/60 pointer-events-none" />
+            <span className="absolute bottom-2 left-2 w-6 h-6 border-b-2 border-l-2 border-cyan-400/60 pointer-events-none" />
+            <span className="absolute bottom-2 right-2 w-6 h-6 border-b-2 border-r-2 border-cyan-400/60 pointer-events-none" />
+
+            {/* Top Crest / Trophy */}
+            <div className="relative mx-auto flex h-20 w-20 items-center justify-center rounded-2xl border-2 border-cyan-400/80 bg-gradient-to-tr from-[#032038] via-[#083b63] to-[#041c30] shadow-[0_0_40px_rgba(34,211,238,0.6)]">
+              <Trophy className="h-10 w-10 text-amber-300 animate-bounce" aria-hidden="true" />
+              <Sparkles className="absolute -top-1.5 -right-1.5 h-6 w-6 text-cyan-300 animate-spin" style={{ animationDuration: '5s' }} />
+            </div>
+
+            {/* Header / Message */}
+            <div className="space-y-2">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-cyan-950/80 border border-cyan-400/40 text-[10px] font-black tracking-widest text-cyan-300 uppercase shadow-inner">
+                <CheckCircle2 className="w-3.5 h-3.5 text-cyan-400" />
+                <span>SPACECRAFT RETRIEVAL CONFIRMED</span>
+              </div>
+
+              <h2
+                id="retrieval-success-title"
+                className="text-2xl sm:text-3xl font-black uppercase tracking-[0.16em] text-white drop-shadow-[0_0_20px_rgba(34,211,238,0.8)]"
+              >
+                Surveyor 5 Successfully Retrieved
+              </h2>
+
+              <p className="text-xs sm:text-sm font-sans text-cyan-100/90 leading-relaxed max-w-md mx-auto">
+                Surveyor 5 has been safely retrieved and secured in your spacecraft. The historic 1967 lunar lander, Alpha-Scattering soil analysis instrument, and archival telemetry have been collected.
+              </p>
+            </div>
+
+            {/* Mission Telemetry Summary Card */}
+            <div className="rounded-xl border border-cyan-500/30 bg-black/50 p-4 text-left text-xs font-mono space-y-2">
+              <div className="flex justify-between text-slate-400">
+                <span>LOCATION:</span>
+                <span className="text-cyan-300 font-bold">Mare Tranquillitatis (Moon)</span>
+              </div>
+              <div className="flex justify-between text-slate-400">
+                <span>SPECIMEN:</span>
+                <span className="text-amber-300 font-bold">Surveyor 5 Lander (1967)</span>
+              </div>
+              <div className="flex justify-between text-slate-400">
+                <span>STATUS:</span>
+                <span className="text-emerald-400 font-bold">Collected in Spacecraft Cargo Bay</span>
+              </div>
+            </div>
+
+            {/* TWO BUTTONS UNDER THE MESSAGE */}
+            <div className="flex flex-col sm:flex-row gap-3 pt-2">
+              {/* Button 1: Next Level */}
+              <button
+                type="button"
+                autoFocus
+                onClick={handleNextLevel}
+                className="group relative flex-1 flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-xl border-2 border-cyan-400 bg-gradient-to-r from-cyan-600 via-sky-600 to-blue-600 text-white font-black text-xs sm:text-sm uppercase tracking-[0.18em] shadow-[0_0_35px_rgba(34,211,238,0.6)] hover:shadow-[0_0_55px_rgba(34,211,238,0.95)] hover:border-white hover:scale-105 active:scale-95 transition-all duration-300 cursor-pointer"
+                style={{
+                  clipPath: 'polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px)',
+                }}
+              >
+                <span>Next Level</span>
+                <ChevronRight className="w-4 h-4 text-cyan-200 transition-transform group-hover:translate-x-1" />
+              </button>
+
+              {/* Button 2: Replay Game */}
+              <button
+                type="button"
+                onClick={handleReplayGame}
+                className="group flex-1 flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl border border-white/20 bg-slate-900/90 hover:bg-slate-800 text-slate-200 hover:text-white font-bold text-xs sm:text-sm uppercase tracking-[0.16em] hover:border-cyan-400/60 shadow-lg hover:scale-105 active:scale-95 transition-all duration-300 cursor-pointer"
+                style={{
+                  clipPath: 'polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px)',
+                }}
+              >
+                <RotateCcw className="w-4 h-4 text-slate-300 group-hover:rotate-180 transition-transform duration-500" />
+                <span>Replay Game</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

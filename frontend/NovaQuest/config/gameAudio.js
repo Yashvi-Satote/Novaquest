@@ -658,6 +658,145 @@ class GameAudioEngine {
       } catch (e) {}
     }
   }
+
+  /**
+   * Helper to play an external audio asset with volume control, mute check, and Web Audio fallback
+   */
+  playAudioFile(path, fallbackSynthFn = null, volumeMultiplier = 1.0) {
+    if (this.isMuted) return null;
+    this.ensureUnlocked();
+
+    if (typeof Audio !== 'undefined') {
+      try {
+        const audio = new Audio(path);
+        audio.volume = Math.max(0, Math.min(1, this.volume * volumeMultiplier));
+        if (!this.activeLaunchSounds) this.activeLaunchSounds = new Set();
+        this.activeLaunchSounds.add(audio);
+        audio.onended = () => {
+          this.activeLaunchSounds?.delete(audio);
+        };
+        const playPromise = audio.play();
+        if (playPromise !== undefined) {
+          playPromise.catch((err) => {
+            console.warn(`[GameAudioEngine] Audio file (${path}) playback error:`, err);
+            this.activeLaunchSounds?.delete(audio);
+            if (fallbackSynthFn) fallbackSynthFn.call(this);
+          });
+        }
+        return audio;
+      } catch (err) {
+        if (fallbackSynthFn) fallbackSynthFn.call(this);
+        return null;
+      }
+    } else if (fallbackSynthFn) {
+      fallbackSynthFn.call(this);
+    }
+    return null;
+  }
+
+  stopLaunchAudio() {
+    if (this.activeLaunchSounds) {
+      this.activeLaunchSounds.forEach((audio) => {
+        try {
+          audio.pause();
+          audio.currentTime = 0;
+        } catch (_) {}
+      });
+      this.activeLaunchSounds.clear();
+    }
+  }
+
+  /**
+   * 1. Countdown + ambience bed (3 sec)
+   * Vintage 1960s NASA radio voice quickly counting "three, two, one" with slight crackle,
+   * faint mission control murmur and teletype in the background, tense, 3 seconds.
+   */
+  playLaunchCountdown() {
+    return this.playAudioFile('/audio/launch/01_countdown_ambience.mp3', () => {
+      this.playQuindarBeep();
+      this.playCountdownBeep(false);
+      setTimeout(() => this.playCountdownBeep(false), 1000);
+      setTimeout(() => this.playCountdownBeep(true), 2000);
+    }, 1.0);
+  }
+
+  /**
+   * 2. Ignition (0.5 sec)
+   * Sharp rocket engine ignition burst, sudden crackling whoosh with deep thump, 0.5 seconds.
+   */
+  playLaunchIgnition() {
+    return this.playAudioFile('/audio/launch/02_ignition.mp3', () => {
+      this.playAttachSnap();
+    }, 1.0);
+  }
+
+  /**
+   * 3. Liftoff roar (3.5 sec)
+   * Powerful rocket liftoff roar that builds rapidly from a deep rumble to a thunderous peak,
+   * heavy bass, rattling vibration, cinematic, 3.5 seconds.
+   */
+  playLaunchRoar() {
+    return this.playAudioFile('/audio/launch/03_liftoff_roar.mp3', () => {
+      this.playThruster(3.5);
+    }, 1.0);
+  }
+
+  /**
+   * 4. Stage separation (0.5 sec)
+   * Short metallic clunk with a quick pneumatic hiss and whoosh, 0.5 seconds.
+   */
+  playStageSeparation() {
+    return this.playAudioFile('/audio/launch/04_stage_separation.mp3', () => {
+      this.playHatchClose();
+    }, 0.95);
+  }
+
+  /**
+   * 5. Celebration (2 sec)
+   * Mission control team cheering and applauding with a few whoops, room echo,
+   * plus a bright retro success chime at the start, 2 seconds.
+   */
+  playLaunchCelebration() {
+    return this.playAudioFile('/audio/launch/05_celebration.mp3', () => {
+      this.playVictory();
+    }, 1.0);
+  }
+
+  /**
+   * Optional single-file version (9.5 sec)
+   * 9.5 second rocket launch sequence: countdown, ignition, liftoff roar,
+   * metallic stage separation clunk, mission control cheers with bright retro chime.
+   */
+  playFullLaunchSequence() {
+    return this.playAudioFile('/audio/launch/launch_sequence_9_5s.mp3', () => {
+      this.playLaunchCountdown();
+      setTimeout(() => this.playLaunchIgnition(), 3000);
+      setTimeout(() => this.playLaunchRoar(), 3500);
+      setTimeout(() => this.playStageSeparation(), 7000);
+      setTimeout(() => this.playLaunchCelebration(), 7500);
+    }, 1.0);
+  }
+
+  /**
+   * Emergency Anomaly Alarm Siren (2.2 sec loopable)
+   * Alternating 1967 NASA telemetry hazard alarm.
+   */
+  playEmergencyAlarm() {
+    return this.playAudioFile('/audio/launch/emergency_alarm.mp3', () => {
+      this.playAlarm();
+    }, 0.9);
+  }
+
+  /**
+   * Successful Lunar Landing Touchdown (3.5 sec)
+   * Quindar cue, touchdown crunch, and grand victory fanfare.
+   */
+  playLandingTouchdown() {
+    return this.playAudioFile('/audio/launch/landing_touchdown.mp3', () => {
+      this.playQuindarBeep();
+      this.playVictory();
+    }, 1.0);
+  }
 }
 
 export const gameAudio = new GameAudioEngine();

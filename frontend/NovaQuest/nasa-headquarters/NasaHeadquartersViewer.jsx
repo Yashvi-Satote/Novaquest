@@ -238,6 +238,8 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer(
     // Prime the video element immediately in the user interaction gesture to unlock browser media playback!
     const video = firingRoomScreenRef.current?.getVideoElement?.();
     if (video) {
+      video.muted = true;
+      video.volume = 0;
       try {
         video.currentTime = 71; // Part 2 liftoff start
         const p = video.play();
@@ -271,7 +273,13 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer(
         setTimeout(() => {
           setCountdownNumber(null);
           setFiringRoomLaunchState('launching');
-          // Play Part 2 on the big 3D screen (1:11 -> HELIUM_T)
+          // Play Part 2 on the big 3D screen (1:11 -> HELIUM_T) with audio strictly muted
+          const vid = firingRoomScreenRef.current?.getVideoElement?.();
+          if (vid) {
+            vid.muted = true;
+            vid.volume = 0;
+          }
+          firingRoomScreenRef.current?.mute?.();
           firingRoomScreenRef.current?.playSegment?.('part2');
         }, 800);
       }
@@ -295,8 +303,15 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer(
     setIsEmergencyActive(false);
     headquartersRef.current?.corridor.firingRoom.setEmergency?.(false);
     setFiringRoomLaunchState('resolved');
-    // Resumes Part 3 on the 3D screen from HELIUM_T to end
-    firingRoomScreenRef.current?.resume?.();
+    // Ensure video is muted and resumes Part 3 on the 3D screen, stopping 3s before end
+    const vid = firingRoomScreenRef.current?.getVideoElement?.();
+    if (vid) {
+      vid.muted = true;
+      vid.volume = 0;
+    }
+    firingRoomScreenRef.current?.mute?.();
+    const dur = vid?.duration || 105.72;
+    firingRoomScreenRef.current?.resume?.(Math.max(0, dur - 3));
     showMissionToast(
       'Emergency resolved! Resuming Surveyor 5 flight telemetry.',
       'success',
@@ -308,7 +323,7 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer(
       if (callbacksRef.current.onMissionComplete) {
         callbacksRef.current.onMissionComplete();
       }
-      showMissionToast('Surveyor 5 is on its way to the Moon!', 'success');
+      showMissionToast('Surveyor 5 has landed on the Moon!', 'success');
     }
   }, [showMissionToast]);
 
@@ -322,7 +337,15 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer(
     openDoor: () => doorHolderRef.current && doorHolderRef.current.setOpen(true),
     closeDoor: () => doorHolderRef.current && doorHolderRef.current.setOpen(false),
     toggleFirstPerson: () => doorHolderRef.current && doorHolderRef.current.toggleFirstPerson(),
-    teleportToFiringRoom: () => doorHolderRef.current && doorHolderRef.current.teleportToFiringRoom(),
+    teleportToFiringRoom: () => {
+      const vid = firingRoomScreenRef.current?.getVideoElement?.();
+      if (vid) {
+        vid.muted = true;
+        vid.volume = 0;
+      }
+      firingRoomScreenRef.current?.mute?.();
+      doorHolderRef.current && doorHolderRef.current.teleportToFiringRoom();
+    },
     setEmergency: (active) => {
       setIsEmergencyActive(Boolean(active));
       headquartersRef.current?.corridor.firingRoom.setEmergency?.(active);
@@ -672,10 +695,11 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer(
         const yawOffset = Math.atan2(dx, dz);
         const pitch = Math.atan2(dy, Math.hypot(dx, dz));
 
+        const charPos = corridor.localToWorld(new THREE.Vector3(2.4, 0, 58.8));
+        headquarters.character.position.copy(headquarters.root.worldToLocal(charPos));
+        headquarters.character.rotation.y = airlockAngle;
+
         if (characterControlActive) {
-          const charPos = corridor.localToWorld(new THREE.Vector3(2.4, 0, 58.8));
-          headquarters.character.position.copy(headquarters.root.worldToLocal(charPos));
-          headquarters.character.rotation.y = airlockAngle;
           controls.target.copy(firingLook);
           camera.position.copy(firingPos);
           controls.update();
@@ -684,7 +708,7 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer(
           setIsFirstPerson(true);
           camera.position.copy(firingPos);
           camera.rotation.order = 'YXZ';
-          camera.rotation.set(pitch, airlockAngle + yawOffset, 0);
+          camera.rotation.set(pitch, airlockAngle + yawOffset + Math.PI, 0);
         }
 
         inFiringRoomRef.current = true;
@@ -1413,6 +1437,14 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer(
       if (inFiringRoomRef.current !== inFiring) {
         inFiringRoomRef.current = inFiring;
         setIsInFiringRoom(inFiring);
+        if (inFiring) {
+          const vid = firingRoomScreenRef.current?.getVideoElement?.();
+          if (vid) {
+            vid.muted = true;
+            vid.volume = 0;
+          }
+          firingRoomScreenRef.current?.mute?.();
+        }
       }
 
       headquarters.update(delta, elapsed, renderer);

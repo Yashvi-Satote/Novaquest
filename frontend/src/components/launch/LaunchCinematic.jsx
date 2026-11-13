@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { Radio, Loader2, Sparkles, ShieldAlert } from 'lucide-react';
-import { LAUNCH_VIDEO } from '../../config/launchVideo.js';
+import { Radio, Loader2, Sparkles, ShieldAlert, SkipForward } from 'lucide-react';
+import { LAUNCH_VIDEO, LAUNCH_VIDEO_CAPTIONS } from '../../config/launchVideo.js';
 import { useLaunchVideo } from '../../hooks/useLaunchVideo.js';
 
 /**
@@ -8,13 +8,14 @@ import { useLaunchVideo } from '../../hooks/useLaunchVideo.js';
  * 
  * Part 1 Full-screen letterboxed cinematic overlay for Surveyor 5.
  * Plays 0:00 -> 1:11 (stops right before liftoff).
- * Skip-less, handles loading state ("Establishing link to Cape Kennedy..."),
- * automatically pauses at 1:11 and fades out smoothly.
+ * Includes skip button and closed captions of archival narration.
+ * Automatically pauses at 1:11 and fades out smoothly.
  */
 export default function LaunchCinematic({ isOpen, onComplete }) {
   const videoRef = useRef(null);
   const [isFading, setIsFading] = useState(false);
   const [hasStarted, setHasStarted] = useState(false);
+  const [showCaptions, setShowCaptions] = useState(true);
 
   const handleSegmentEnd = useCallback(() => {
     setIsFading(true);
@@ -22,6 +23,32 @@ export default function LaunchCinematic({ isOpen, onComplete }) {
       onComplete?.();
     }, 700);
   }, [onComplete]);
+
+  const handleSkip = useCallback(() => {
+    setIsFading(true);
+    const video = videoRef.current;
+    if (video) {
+      try {
+        video.pause();
+      } catch (_) {}
+    }
+    setTimeout(() => {
+      onComplete?.();
+    }, 250);
+  }, [onComplete]);
+
+  // Keyboard shortcut: Esc or Space to skip
+  useEffect(() => {
+    if (!isOpen) return undefined;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' || (e.key === ' ' && e.target === document.body)) {
+        e.preventDefault();
+        handleSkip();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, handleSkip]);
 
   const {
     isLoading,
@@ -55,6 +82,11 @@ export default function LaunchCinematic({ isOpen, onComplete }) {
   const timeStr = `${String(min).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
   const targetStr = '01:11';
 
+  // Find active caption based on video playback currentTime
+  const activeCaption = LAUNCH_VIDEO_CAPTIONS.find(
+    (c) => currentTime >= c.start && currentTime <= c.end,
+  );
+
   return (
     <div
       className={`fixed inset-0 z-[350] flex flex-col justify-between bg-black overflow-hidden select-none transition-opacity duration-700 ease-out ${
@@ -80,8 +112,8 @@ export default function LaunchCinematic({ isOpen, onComplete }) {
           </div>
         </div>
 
-        <div className="flex items-center gap-4 text-right">
-          <div className="hidden sm:block">
+        <div className="flex items-center gap-3 sm:gap-4 text-right">
+          <div className="hidden md:block">
             <span className="block text-[8px] font-bold tracking-[0.25em] text-[#69a7c7] uppercase">
               PART 1 · PRE-LAUNCH VERIFICATION
             </span>
@@ -89,9 +121,37 @@ export default function LaunchCinematic({ isOpen, onComplete }) {
               T − 00:{String(remainingSec).padStart(2, '0')}
             </span>
           </div>
-          <div className="px-2.5 py-1 rounded border border-[#00f0ff]/30 bg-[#061e33]/60 font-mono text-xs font-bold tracking-widest text-[#00f0ff] shadow-[0_0_12px_rgba(0,240,255,0.3)]">
+
+          {/* Subtitles / CC Toggle */}
+          <button
+            type="button"
+            onClick={() => setShowCaptions((prev) => !prev)}
+            className={`pointer-events-auto px-2.5 py-1 rounded border text-[10px] font-mono font-bold tracking-wider transition ${
+              showCaptions
+                ? 'border-[#00f0ff]/60 bg-[#00f0ff]/20 text-[#8ef4ff] shadow-[0_0_10px_rgba(0,240,255,0.3)]'
+                : 'border-slate-700 bg-black/40 text-slate-400 hover:text-slate-200'
+            }`}
+            title={showCaptions ? 'Captions ON (click to hide)' : 'Captions OFF (click to show)'}
+            aria-label={showCaptions ? 'Disable captions' : 'Enable captions'}
+          >
+            CC
+          </button>
+
+          <div className="hidden sm:block px-2.5 py-1 rounded border border-[#00f0ff]/30 bg-[#061e33]/60 font-mono text-xs font-bold tracking-widest text-[#00f0ff] shadow-[0_0_12px_rgba(0,240,255,0.3)]">
             REC ●
           </div>
+
+          {/* Skip Button */}
+          <button
+            type="button"
+            onClick={handleSkip}
+            className="pointer-events-auto group flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg border border-[#00f0ff]/70 bg-gradient-to-r from-[#07253d] to-[#0c3f64] hover:from-[#0a385c] hover:to-[#13588a] hover:border-[#5ee7ff] text-[#8ef4ff] hover:text-white font-mono text-[11px] font-bold uppercase tracking-[0.2em] shadow-[0_0_16px_rgba(0,240,255,0.35)] hover:shadow-[0_0_24px_rgba(0,240,255,0.65)] transition-all cursor-pointer active:scale-95"
+            title="Skip transmission (or press Esc/Space)"
+            aria-label="Skip video"
+          >
+            <span>Skip</span>
+            <SkipForward className="w-3.5 h-3.5 text-[#00f0ff] group-hover:translate-x-0.5 transition-transform" />
+          </button>
         </div>
       </div>
 
@@ -117,6 +177,23 @@ export default function LaunchCinematic({ isOpen, onComplete }) {
         >
           <source src={LAUNCH_VIDEO.src} type={LAUNCH_VIDEO.type} />
         </video>
+
+        {/* Closed Captions Subtitle Box */}
+        {showCaptions && activeCaption && (
+          <div className="pointer-events-none absolute bottom-12 inset-x-4 sm:inset-x-12 z-20 flex justify-center">
+            <div className="max-w-2xl px-5 py-2.5 rounded-xl bg-black/85 border border-[#00f0ff]/50 shadow-[0_0_25px_rgba(0,240,255,0.3)] backdrop-blur-md text-center transition-all animate-fade-in">
+              <div className="flex items-center justify-center gap-2 mb-1">
+                <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#00f0ff] animate-ping" />
+                <span className="text-[9px] font-mono font-bold uppercase tracking-[0.25em] text-[#5ee7ff]/90">
+                  ARCHIVAL TRANSMISSION · {activeCaption.speaker || 'NARRATOR'}
+                </span>
+              </div>
+              <p className="text-xs sm:text-sm md:text-base font-medium tracking-wide text-[#f0fdff] drop-shadow-[0_1px_4px_rgba(0,0,0,0.9)] leading-relaxed">
+                "{activeCaption.text}"
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* Loading State: Establishing link to Cape Kennedy... */}
         {isLoading && (

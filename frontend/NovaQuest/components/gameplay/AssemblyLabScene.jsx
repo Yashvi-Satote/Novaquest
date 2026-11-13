@@ -113,29 +113,69 @@ export default function AssemblyLabScene({ onComplete }) {
     const partsGroup = new THREE.Group();
     lander.add(partsGroup);
 
-    // Rotation dragging state
+    // 1-Finger Touch / Pointer Dragging state (NASA Headquarters style)
     let isDragging = false;
-    let prevMouseX = 0;
+    let prevPointerX = 0;
+    let prevPointerY = 0;
+    const TRACKPAD_LOOK_SENSITIVITY = 0.0032;
 
-    const onMouseDown = (e) => {
+    const onPointerDown = (e) => {
+      if (e.button !== 0 && e.pointerType === 'mouse') return;
       isDragging = true;
-      prevMouseX = e.clientX;
+      prevPointerX = e.clientX;
+      prevPointerY = e.clientY;
     };
 
-    const onMouseMove = (e) => {
+    const onPointerMove = (e) => {
       if (!isDragging) return;
-      const deltaX = e.clientX - prevMouseX;
-      lander.rotation.y += deltaX * 0.01;
-      prevMouseX = e.clientX;
+      const deltaX = e.clientX - prevPointerX;
+      const deltaY = e.clientY - prevPointerY;
+      lander.rotation.y += deltaX * 0.008;
+      lander.rotation.x = Math.max(-0.45, Math.min(0.45, lander.rotation.x + deltaY * 0.006));
+      prevPointerX = e.clientX;
+      prevPointerY = e.clientY;
     };
 
-    const onMouseUp = () => {
+    const onPointerUp = () => {
       isDragging = false;
     };
 
-    container.addEventListener('mousedown', onMouseDown);
-    window.addEventListener('mousemove', onMouseMove);
-    window.addEventListener('mouseup', onMouseUp);
+    // 2-Finger Laptop Touchpad Swipe & Pinch Zoom
+    const handleWheel = (e) => {
+      const deltaMultiplier = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? 100 : 1;
+      const deltaX = e.deltaX * deltaMultiplier;
+      const deltaY = e.deltaY * deltaMultiplier;
+      if (deltaX === 0 && deltaY === 0) return;
+      if (e.cancelable) e.preventDefault();
+
+      if (e.ctrlKey) {
+        camera.position.z = Math.max(3.5, Math.min(10.0, camera.position.z + deltaY * 0.005));
+        return;
+      }
+
+      lander.rotation.y += deltaX * TRACKPAD_LOOK_SENSITIVITY;
+      lander.rotation.x = Math.max(-0.45, Math.min(0.45, lander.rotation.x + deltaY * TRACKPAD_LOOK_SENSITIVITY));
+    };
+
+    // WASD + Arrow Keys controls
+    const handleKeyDown = (e) => {
+      const key = e.key.toLowerCase();
+      if (['w', 'a', 's', 'd', 'arrowup', 'arrowleft', 'arrowdown', 'arrowright'].includes(key)) {
+        e.preventDefault();
+        const step = 0.08;
+        if (key === 'a' || key === 'arrowleft') lander.rotation.y -= step;
+        if (key === 'd' || key === 'arrowright') lander.rotation.y += step;
+        if (key === 'w' || key === 'arrowup') lander.rotation.x = Math.max(-0.45, lander.rotation.x - step * 0.6);
+        if (key === 's' || key === 'arrowdown') lander.rotation.x = Math.min(0.45, lander.rotation.x + step * 0.6);
+      }
+    };
+
+    container.addEventListener('pointerdown', onPointerDown);
+    window.addEventListener('pointermove', onPointerMove);
+    window.addEventListener('pointerup', onPointerUp);
+    window.addEventListener('pointercancel', onPointerUp);
+    container.addEventListener('wheel', handleWheel, { passive: false });
+    window.addEventListener('keydown', handleKeyDown);
 
     // Animation Loop
     let animId = null;
@@ -162,9 +202,12 @@ export default function AssemblyLabScene({ onComplete }) {
     window.addEventListener('resize', handleResize);
 
     return () => {
-      container.removeEventListener('mousedown', onMouseDown);
-      window.removeEventListener('mousemove', onMouseMove);
-      window.removeEventListener('mouseup', onMouseUp);
+      container.removeEventListener('pointerdown', onPointerDown);
+      window.removeEventListener('pointermove', onPointerMove);
+      window.removeEventListener('pointerup', onPointerUp);
+      window.removeEventListener('pointercancel', onPointerUp);
+      container.removeEventListener('wheel', handleWheel);
+      window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('resize', handleResize);
       if (animId) cancelAnimationFrame(animId);
 
