@@ -25,6 +25,7 @@ import { createAtlasCentaurVehicle } from '../components/gameplay/three/AtlasCen
 import { createCapeCanaveralEnvironment } from '../components/gameplay/three/CapeCanaveralEnvironment';
 import { createLaunchSmokeSystem } from '../components/gameplay/three/RocketLaunchpadModel';
 import { createThirdPersonController } from '../components/gameplay/three/ThirdPersonPlayerController';
+import { disposeObject3D } from '../../Shared/three/gltfModelLoader';
 import { gameAudio } from '../config/gameAudio';
 import { USE_OLD_LUNAR_MAP } from '../config/lunarMapConfig';
 import { saveGame } from '../game/saveManager';
@@ -164,6 +165,9 @@ export default function Level1Surveyor5Page() {
   const [hasStartedIntro, setHasStartedIntro] = useState(false);
   const [isAutoplayBlocked, setIsAutoplayBlocked] = useState(false);
   const [isIntroVideoFading, setIsIntroVideoFading] = useState(false);
+  const [isIntroVideoLoading, setIsIntroVideoLoading] = useState(true);
+  const [introVideoError, setIntroVideoError] = useState(false);
+  const [introPlaybackBlocked, setIntroPlaybackBlocked] = useState(false);
   const isOldLunarMapActive = USE_OLD_LUNAR_MAP && gamePhase === 'phase4_open_world';
 
   // Inventory & Component Recovery Tracking
@@ -217,9 +221,17 @@ export default function Level1Surveyor5Page() {
     setIsIntroVideoFading(true);
   }, []);
 
-  const handleIntroVideoCanPlayThrough = useCallback(() => {
-    const video = introVideoRef.current;
-    if (!video || introPlaybackStartedRef.current) return;
+    const fadeAudio = now => {
+      const progress = Math.min((now - startTime) / fadeDuration, 1);
+      if (video) {
+        video.volume = Math.min(1, Math.max(0, startVolume * (1 - progress)));
+      }
+      if (progress < 1) {
+        introFadeFrameRef.current = requestAnimationFrame(fadeAudio);
+      } else {
+        introFadeFrameRef.current = null;
+      }
+    };
 
     introPlaybackStartedRef.current = true;
     setCanPlayThrough(true);
@@ -235,15 +247,20 @@ export default function Level1Surveyor5Page() {
     const video = introVideoRef.current;
     if (!video) return;
 
+    introFadeStartedRef.current = false;
+    setIsIntroVideoFading(false);
+    setIsIntroVideoLoading(true);
+    setHasStartedIntro(true);
     video.muted = false;
     video.volume = 1;
     video.play()
       .then(() => {
-        setHasStartedIntro(true);
-        setIsAutoplayBlocked(false);
+        setIntroPlaybackBlocked(false);
       })
-      .catch((error) => {
-        console.warn('Intro playback with sound was blocked.', error);
+      .catch(() => {
+        setHasStartedIntro(false);
+        setIsIntroVideoLoading(false);
+        setIntroPlaybackBlocked(true);
       });
   }, []);
 
@@ -388,8 +405,9 @@ export default function Level1Surveyor5Page() {
       surveyorLander,
       lostComponents,
       getTerrainHeight,
+      releaseModels: releaseOpenWorldModels,
       positions
-    } = createLunarOpenWorldEnvironment();
+    } = createLunarOpenWorldEnvironment(null, renderer);
     openWorldGroup.add(lunarTerrainRoot);
 
     // Astronaut Hero Characters: Cute Cyan Alien Explorer (Default) & Human Apollo Suit
@@ -889,24 +907,8 @@ export default function Level1Surveyor5Page() {
       if (renderer.domElement && container.contains(renderer.domElement)) {
         container.removeChild(renderer.domElement);
       }
-      const geometries = new Set();
-      const materials = new Set();
-      const textures = new Set();
-      scene.traverse((object) => {
-        if (object.geometry) geometries.add(object.geometry);
-        const objectMaterials = Array.isArray(object.material)
-          ? object.material
-          : object.material ? [object.material] : [];
-        objectMaterials.forEach((material) => materials.add(material));
-      });
-      materials.forEach((material) => {
-        Object.values(material).forEach((value) => {
-          if (value?.isTexture) textures.add(value);
-        });
-      });
-      textures.forEach((texture) => texture.dispose());
-      materials.forEach((material) => material.dispose());
-      geometries.forEach((geometry) => geometry.dispose());
+      releaseOpenWorldModels();
+      disposeObject3D(scene, { skipSharedAssets: true });
       renderer.dispose();
       renderer.forceContextLoss();
     };
@@ -968,6 +970,103 @@ export default function Level1Surveyor5Page() {
     <div className={`relative w-screen h-screen overflow-hidden bg-slate-950 font-sans text-slate-100 select-none${USE_OLD_LUNAR_MAP && gamePhase === 'phase4_open_world' ? ' hidden' : ''}`}>
       {/* Master 3D Viewport */}
       <div ref={canvasContainerRef} className="w-full h-full cursor-crosshair" />
+
+      {openingStage === 'video' && (
+        <div className="absolute inset-0 z-50 overflow-hidden bg-black">
+          <IntroVideoPlayer
+            videoRef={introVideoRef}
+            isFading={isIntroVideoFading}
+            onEnded={fadeOutIntro}
+            onError={handleIntroVideoError}
+            onTransitionEnd={handleIntroVideoTransitionEnd}
+          />
+          {!hasStartedIntro && !introVideoError && (
+            <button
+              type="button"
+              onClick={startIntroVideo}
+              className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-black/50 text-white transition hover:bg-black/35"
+            >
+              {isIntroVideoLoading ? (
+                <>
+                  <span
+                    className="h-12 w-12 animate-spin rounded-full border-2 border-[#14d7df]/25 border-t-[#14d7df] shadow-[0_0_20px_rgba(20,215,223,0.3)] motion-reduce:animate-none"
+                    aria-hidden="true"
+                  />
+                  <span className="text-sm font-bold uppercase tracking-[0.3em]" role="status">
+                    Loading intro video · click to start
+                  </span>
+                </>
+              ) : (
+                <>
+                  <span className="flex h-20 w-20 items-center justify-center rounded-full border border-white/60 bg-white/10 text-3xl backdrop-blur">
+                    ▶
+                  </span>
+                  <span className="text-sm font-bold uppercase tracking-[0.3em]">
+                    Play intro with sound
+                  </span>
+                </>
+              )}
+              {introPlaybackBlocked && (
+                <span className="text-sm text-red-200">
+                  Playback was blocked. Click to try again.
+                </span>
+              )}
+            </button>
+          )}
+          {hasStartedIntro && isIntroVideoLoading && !introVideoError && (
+            <div
+              className="pointer-events-none absolute inset-0 z-10 flex flex-col items-center justify-center gap-4 bg-black/35 text-center text-white"
+              role="status"
+              aria-live="polite"
+            >
+              <span
+                className="h-12 w-12 animate-spin rounded-full border-2 border-[#14d7df]/25 border-t-[#14d7df] shadow-[0_0_20px_rgba(20,215,223,0.3)] motion-reduce:animate-none"
+                aria-hidden="true"
+              />
+              <span className="text-xs font-bold uppercase tracking-[0.3em]">
+                Buffering intro video
+              </span>
+            </div>
+          )}
+          {introVideoError && (
+            <div className="absolute inset-x-0 bottom-20 mx-auto w-fit rounded-xl border border-red-400/40 bg-slate-950/90 px-5 py-3 text-center text-sm text-red-200">
+              <p>The intro video could not be played.</p>
+              <button
+                type="button"
+                onClick={fadeOutIntro}
+                className="mt-2 font-bold text-white underline underline-offset-4"
+              >
+                Continue to launch
+              </button>
+            </div>
+          )}
+          {hasStartedIntro && !introVideoError && (
+            <button
+              type="button"
+              onClick={fadeOutIntro}
+              className="absolute bottom-8 right-8 rounded-full border border-white/30 bg-black/50 px-5 py-2 text-sm font-bold text-white/80 backdrop-blur transition hover:bg-black/80 hover:text-white"
+            >
+              Skip intro
+            </button>
+          )}
+        </div>
+      )}
+
+      {openingStage === 'date' && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black animate-fade-in">
+          <div className="text-center">
+            <p className="mb-4 text-xs font-semibold uppercase tracking-[0.5em] text-slate-400">
+              Cape Canaveral • Earth
+            </p>
+            <h2 className="text-4xl font-light tracking-[0.28em] text-white sm:text-6xl">
+              29 JUNE 2126
+            </h2>
+            <p className="mt-5 text-sm uppercase tracking-[0.35em] text-sky-300">
+              Lunar Transfer Mission
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* ----------------------------------------------------------- */}
       {/* TOP HUD BAR: Mission Status, Radar, Inventory, Skip Controls */}
