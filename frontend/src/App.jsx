@@ -18,18 +18,18 @@ import { GuestOnly } from '../NovaUser/components/RouteGuards';
 import { ArrowLeft, AlertCircle } from 'lucide-react';
 import ApiLoadingIndicator from '../Shared/components/layout/ApiLoadingIndicator.jsx';
 
-const ExplorerPage = lazy(() => import('../NovaBase/pages/ExplorerPage'));
-const HardwareDetailPage = lazy(() => import('../NovaBase/pages/HardwareDetailPage'));
-const SpacecraftDetailPage = lazy(() => import('../NovaMap/pages/SpacecraftDetailPage'));
-const SolarSystemPage = lazy(() => import('../NovaMap/pages/SolarSystemPage'));
-const TimeTravelersHomePage = lazy(() => import('../NovaQuest/pages/TimeTravelersHomePage'));
-const MissionSelectPage = lazy(() => import('../NovaQuest/pages/MissionSelectPage'));
-const Level1Surveyor5Page = lazy(() => import('../NovaQuest/pages/Level1Surveyor5Page'));
-const OldLunarMapPage = lazy(() => import('../NovaQuest/pages/OldLunarMapPage'));
-const SignInPage = lazy(() => import('../NovaUser/pages/SignInPage'));
-const RegisterPage = lazy(() => import('../NovaUser/pages/RegisterPage'));
-const LegalPage = lazy(() => import('../NovaUser/pages/LegalPage'));
-const SettingsPage = lazy(() => import('../NovaUser/settings/SettingsPage'));
+// const ExplorerPage = lazy(() => import('../NovaBase/pages/ExplorerPage'));
+// const HardwareDetailPage = lazy(() => import('../NovaBase/pages/HardwareDetailPage'));
+// const SpacecraftDetailPage = lazy(() => import('../NovaMap/pages/SpacecraftDetailPage'));
+// const SolarSystemPage = lazy(() => import('../NovaMap/pages/SolarSystemPage'));
+// const TimeTravelersHomePage = lazy(() => import('../NovaQuest/pages/TimeTravelersHomePage'));
+// const MissionSelectPage = lazy(() => import('../NovaQuest/pages/MissionSelectPage'));
+// const Level1Surveyor5Page = lazy(() => import('../NovaQuest/pages/Level1Surveyor5Page'));
+// const OldLunarMapPage = lazy(() => import('../NovaQuest/pages/OldLunarMapPage'));
+// const SignInPage = lazy(() => import('../NovaUser/pages/SignInPage'));
+// const RegisterPage = lazy(() => import('../NovaUser/pages/RegisterPage'));
+// const LegalPage = lazy(() => import('../NovaUser/pages/LegalPage'));
+// const SettingsPage = lazy(() => import('../NovaUser/settings/SettingsPage'));
 
 function NotFoundPage() {
   return (
@@ -123,6 +123,5 @@ export default function App() {
       <Route path="/hardware/:slug" element={<HardwareDetailPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
-    </>
   );
 }
