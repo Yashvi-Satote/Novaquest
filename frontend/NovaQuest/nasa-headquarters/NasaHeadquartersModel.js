@@ -1756,6 +1756,20 @@ export function createNasaHeadquarters() {
   hologram.add(surveyorHologram.root);
   dynamic.surveyor = surveyorHologram;
 
+  // Invisible pick volume so the whole projection can be clicked in the viewer.
+  const hologramHitTarget = new THREE.Mesh(
+    new THREE.SphereGeometry(1.72, 16, 12),
+    new THREE.MeshBasicMaterial({
+      transparent: true,
+      opacity: 0,
+      colorWrite: false,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+    }),
+  );
+  hologramHitTarget.userData.noCollision = true;
+  hologram.add(hologramHitTarget);
+
   const hologramGlow = new THREE.Sprite(materials.holoGlow);
   hologramGlow.scale.set(3.8, 3.8, 1);
   hologramGlow.position.y = 0.15;
@@ -1764,6 +1778,7 @@ export function createNasaHeadquarters() {
   const hologramLight = new THREE.PointLight(0x53cfff, 28, 10, 2);
   hologramLight.position.set(0, 3.45, 0);
   root.add(hologramLight);
+  dynamic.hologramLight = hologramLight;
 
   // --------------------------------------------------------- ceiling details
   const centralCeiling = new THREE.Mesh(
@@ -1871,9 +1886,9 @@ export function createNasaHeadquarters() {
   podLight.position.set(0, 2.2, 5.6);
   root.add(podLight);
 
-  const update = (delta, elapsed) => {
+  const update = (delta, elapsed, renderer) => {
     corridor.storageRoom.update(delta);
-    corridor.firingRoom.update(delta);
+    corridor.firingRoom.update(delta, elapsed, renderer);
     dynamic.doorOpenAmount +=
       (dynamic.doorTarget - dynamic.doorOpenAmount) * Math.min(1, delta * 4.5);
     dynamic.doorPanels.forEach(({ panel, side }) => {
@@ -1882,10 +1897,23 @@ export function createNasaHeadquarters() {
       panel.position.z = 0.02 + openAmount * 0.58;
     });
 
-    if (dynamic.surveyor) {
+    let targetHoloScale = hologramDisappeared ? 0 : 1;
+    if (Math.abs(hologramScale - targetHoloScale) > 0.001) {
+      hologramScale += (targetHoloScale - hologramScale) * Math.min(1, delta * 4);
+      if (dynamic.hologram) {
+        dynamic.hologram.scale.setScalar(Math.max(0.0001, hologramScale));
+        dynamic.hologram.visible = hologramScale > 0.01;
+      }
+      if (dynamic.hologramLight) {
+        dynamic.hologramLight.intensity = 28 * hologramScale;
+        dynamic.hologramLight.visible = hologramScale > 0.01;
+      }
+    }
+
+    if (dynamic.surveyor && (!hologramDisappeared || hologramScale > 0.01)) {
       dynamic.surveyor.update(delta, elapsed);
     }
-    if (dynamic.hologram) {
+    if (dynamic.hologram && dynamic.hologram.visible) {
       dynamic.hologram.position.y = 3.45 + Math.sin(elapsed * 0.9) * 0.03;
     }
     if (dynamic.dust) {
@@ -1929,9 +1957,39 @@ export function createNasaHeadquarters() {
 
   const interactionTargets = [
     { target: doorHitTarget, toggle: () => door.setOpen(!door.isOpen()) },
+    { target: hologramHitTarget, action: 'hologram' },
     ...corridor.storageRoom.interactionTargets,
     ...corridor.firingRoom.interactionTargets,
   ];
 
-  return { root, update, dispose, door, doorHitTarget, character, corridor, interactionTargets };
+  let hologramDisappeared = false;
+  let hologramScale = 1;
+
+  const setHologramMaterialized = (value) => {
+    surveyorHologram.setMaterialized(Boolean(value));
+  };
+
+  const setHologramDisappeared = (disappeared) => {
+    hologramDisappeared = Boolean(disappeared);
+    hologramHitTarget.userData.disabled = hologramDisappeared;
+    if (!hologramDisappeared) {
+      if (dynamic.hologram) dynamic.hologram.visible = true;
+      if (dynamic.hologramLight) dynamic.hologramLight.visible = true;
+    }
+  };
+
+  return {
+    root,
+    update,
+    dispose,
+    door,
+    doorHitTarget,
+    character,
+    corridor,
+    interactionTargets,
+    hologramHitTarget,
+    setHologramMaterialized,
+    setHologramDisappeared,
+    isHologramDisappeared: () => hologramDisappeared,
+  };
 }

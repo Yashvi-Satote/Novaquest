@@ -403,7 +403,48 @@ export function createSurveyor5Hologram() {
   root.add(holoDisc);
 
   // ------------------------------------------------------------ animation
+  // Once the player has collected the full Surveyor 5 manifest, the projection
+  // is materialised: additive wireframe blends switch to solid rendering and
+  // the shared material opacities ramp up for a convincing "becomes real" beat.
+  const holoMaterialSet = new Set();
+  root.traverse((object) => {
+    if (!object.material) return;
+    const list = Array.isArray(object.material) ? object.material : [object.material];
+    list.forEach((material) => holoMaterialSet.add(material));
+  });
+  const materialStates = Array.from(holoMaterialSet).map((material) => ({
+    material,
+    opacity: material.opacity,
+    blending: material.blending,
+    color: material.color ? material.color.clone() : null,
+  }));
+  const solidColor = new THREE.Color(0xd9fbff);
+  let materialization = 0;
+  let materializationTarget = 0;
+
+  const setMaterialized = (value) => {
+    materializationTarget = value ? 1 : 0;
+    materialStates.forEach(({ material, blending }) => {
+      const nextBlending = value ? THREE.NormalBlending : blending;
+      if (material.blending !== nextBlending) {
+        material.blending = nextBlending;
+        material.needsUpdate = true;
+      }
+    });
+  };
+
   const update = (delta, elapsed) => {
+    if (materialization !== materializationTarget) {
+      materialization +=
+        (materializationTarget - materialization) * Math.min(1, delta * 1.8);
+      materialStates.forEach(({ material, opacity, color }) => {
+        material.opacity = opacity + (Math.min(1, opacity * 2.6 + 0.12) - opacity) * materialization;
+        if (color && material.color) {
+          material.color.copy(color).lerp(solidColor, materialization * 0.55);
+        }
+      });
+    }
+
     model.rotation.y += delta * 0.1;
     cameraTurret.rotation.y = elapsed * 0.48;
     antennaPanel.rotation.z = 0.12 + Math.sin(elapsed * 0.55) * 0.055;
@@ -415,5 +456,5 @@ export function createSurveyor5Hologram() {
     scanRingMaterial.opacity = 0.1 + Math.sin((scanT / 2.2) * Math.PI) * 0.5;
   };
 
-  return { root, update };
+  return { root, update, setMaterialized };
 }

@@ -1,45 +1,336 @@
-import React, { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
+import React, {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  useState,
+} from 'react';
 import * as THREE from 'three';
-import { Box, MousePointerClick, X } from 'lucide-react';
+import {
+  AlertTriangle,
+  Box,
+  Check,
+  CheckCircle2,
+  ChevronRight,
+  ClipboardList,
+  Eye,
+  EyeOff,
+  ListChecks,
+  Lock,
+  MousePointerClick,
+  Package,
+  PackageCheck,
+  Rocket,
+  RotateCcw,
+  ShoppingCart,
+  Target,
+  Wrench,
+  X,
+  XCircle,
+} from 'lucide-react';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls.js';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { createNasaHeadquarters } from './NasaHeadquartersModel';
+import FiringRoomScreen from './FiringRoomScreen';
+import MissionProgressBar from './MissionProgressBar';
+import { gameAudio } from '../config/gameAudio';
+import {
+  SURVEYOR5_CART_LIMIT,
+  SURVEYOR5_MANIFEST,
+  SURVEYOR5_MANIFEST_IDS,
+  SURVEYOR5_MANIFEST_TOTAL,
+} from './surveyor5Mission';
+import { STORAGE_ROOM_COMPONENTS } from './storageRoomComponents';
 
 const HEADQUARTERS_ROOM_RADIUS = 12.5;
 const PLAYER_COLLISION_RADIUS = 0.34;
 const PLAYER_COLLISION_HEIGHT = 1.82;
+const PLAYER_WALK_SPEED = 4.6;
+const PLAYER_SPRINT_SPEED = 8.4;
+const TRACKPAD_LOOK_SENSITIVITY = 0.0032;
 
 /**
  * NasaHeadquartersViewer
  *
  * Reusable three.js viewport for the NASA Headquarters base, adjoining corridor,
  * and first-person exploration. The wall airlock can be clicked, opened with
- * the D key, or controlled via the imperative handle.
+ * the E key (nearest door), or controlled via the imperative handle.
+ *
+ * It also runs the Surveyor 5 build mission: parts are collected from the
+ * storage room, the central hologram materialises the lander once the manifest
+ * is complete, and the firing-room console launches it.
  */
-const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer({ className = '' }, ref) {
+const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer(
+  {
+    className = '',
+    manifestIds = SURVEYOR5_MANIFEST_IDS,
+    collectedIds = [],
+    cartIds = [],
+    cartLimit = SURVEYOR5_CART_LIMIT,
+    hologramConverted = false,
+    hologramDisappeared = false,
+    launchUnlocked = false,
+    launchReady = false,
+    task3Solved = false,
+    missionSolved = false,
+    launched = false,
+    overlayOpen = false,
+    onCollectPart,
+    onDepositCart,
+    onConvertHologram,
+    onLaunchMission,
+    onOpenTask,
+    onOpenTask2,
+    onOpenTask3,
+    onMissionComplete,
+    onTeleportToFiringRoom,
+    onAutoCompleteTask,
+    onEmergencyTriggered,
+  },
+  ref,
+) {
   const mountRef = useRef(null);
+  const cameraRef = useRef(null);
   const [ready, setReady] = useState(false);
   const [webglFailed, setWebglFailed] = useState(false);
-  const [doorOpen, setDoorOpen] = useState(false);
-  const [storageDoorOpen, setStorageDoorOpen] = useState(false);
-  const [firingRoomDoorOpen, setFiringRoomDoorOpen] = useState(false);
-  const [firstPersonMode, setFirstPersonMode] = useState(false);
-  const [characterControlMode, setCharacterControlMode] = useState(false);
-  const [pointerLocked, setPointerLocked] = useState(false);
   const [selectedComponent, setSelectedComponent] = useState(null);
+  const [partListOpen, setPartListOpen] = useState(false);
+  const [assemblyResult, setAssemblyResult] = useState(null);
+  const [missionToast, setMissionToast] = useState(null);
+  const [isFirstPerson, setIsFirstPerson] = useState(false);
+  const [isInFiringRoom, setIsInFiringRoom] = useState(false);
+  const [firingRoomLaunchState, setFiringRoomLaunchState] = useState('standby');
+  const [isEmergencyActive, setIsEmergencyActive] = useState(false);
+  const inFiringRoomRef = useRef(false);
+  const firingRoomScreenRef = useRef(null);
+  const [countdownNumber, setCountdownNumber] = useState(null);
+  const cameraShakeRef = useRef(0);
+  const launchReadyRef = useRef(launchReady);
   const doorHolderRef = useRef(null);
   const selectedComponentRef = useRef(null);
+  const headquartersRef = useRef(null);
+  const assembleRef = useRef(null);
+  const progressAnchorRef = useRef(null);
+  const localOverlayOpenRef = useRef(false);
+  const collectedIdsRef = useRef(new Set(collectedIds));
+  const cartIdsRef = useRef([...cartIds]);
+  const cartLimitRef = useRef(cartLimit);
+  const manifestIdsRef = useRef(new Set(manifestIds));
+  const hologramConvertedRef = useRef(hologramConverted);
+  const hologramDisappearedRef = useRef(hologramDisappeared);
+  const launchUnlockedRef = useRef(launchUnlocked);
+  const missionSolvedRef = useRef(missionSolved);
+  const launchedRef = useRef(launched);
+  const overlayOpenRef = useRef(overlayOpen);
+  const callbacksRef = useRef({});
+  const toastTimerRef = useRef(null);
 
   useEffect(() => {
     selectedComponentRef.current = selectedComponent;
   }, [selectedComponent]);
+
+  useEffect(() => {
+    localOverlayOpenRef.current = partListOpen || Boolean(assemblyResult);
+  }, [partListOpen, assemblyResult]);
+
+  useEffect(() => {
+    collectedIdsRef.current = new Set(collectedIds);
+  }, [collectedIds]);
+
+  useEffect(() => {
+    cartIdsRef.current = [...cartIds];
+  }, [cartIds]);
+
+  useEffect(() => {
+    cartLimitRef.current = cartLimit;
+  }, [cartLimit]);
+
+  useEffect(() => {
+    manifestIdsRef.current = new Set(manifestIds);
+  }, [manifestIds]);
+
+  useEffect(() => {
+    hologramConvertedRef.current = hologramConverted;
+  }, [hologramConverted]);
+
+  useEffect(() => {
+    hologramDisappearedRef.current = hologramDisappeared;
+  }, [hologramDisappeared]);
+
+  useEffect(() => {
+    launchUnlockedRef.current = launchUnlocked;
+  }, [launchUnlocked]);
+
+  useEffect(() => {
+    launchReadyRef.current = launchReady;
+  }, [launchReady]);
+
+  useEffect(() => {
+    missionSolvedRef.current = missionSolved;
+  }, [missionSolved]);
+
+  useEffect(() => {
+    launchedRef.current = launched;
+  }, [launched]);
+
+  useEffect(() => {
+    callbacksRef.current = {
+      onCollectPart,
+      onDepositCart,
+      onConvertHologram,
+      onLaunchMission,
+      onOpenTask,
+      onOpenTask2,
+      onOpenTask3,
+      onMissionComplete,
+      onTeleportToFiringRoom,
+      onAutoCompleteTask,
+      onEmergencyTriggered,
+    };
+  }, [
+    onCollectPart,
+    onDepositCart,
+    onConvertHologram,
+    onLaunchMission,
+    onOpenTask,
+    onOpenTask2,
+    onOpenTask3,
+    onMissionComplete,
+    onTeleportToFiringRoom,
+    onAutoCompleteTask,
+    onEmergencyTriggered,
+  ]);
+
+  useEffect(() => {
+    overlayOpenRef.current = overlayOpen;
+    if (overlayOpen) doorHolderRef.current?.pauseForOverlay?.();
+  }, [overlayOpen]);
+
+  const showMissionToast = useCallback((message, tone = 'info') => {
+    setMissionToast({ message, tone, at: Date.now() });
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    toastTimerRef.current = setTimeout(() => setMissionToast(null), 4200);
+  }, []);
+
+  useEffect(
+    () => () => {
+      if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    },
+    [],
+  );
+
+  const handleAutoComplete = useCallback(() => {
+    onAutoCompleteTask?.();
+    showMissionToast('Surveyor 5 manifest auto-completed! 100% parts verified.', 'success');
+  }, [onAutoCompleteTask, showMissionToast]);
+
+  const cachedVideoTextureRef = useRef(null);
+
+  const handleStartLaunchSequence = useCallback(() => {
+    if (!launchReadyRef.current) {
+      showMissionToast('Complete Task 1 first', 'warn');
+      return;
+    }
+    if (firingRoomLaunchState !== 'standby') return;
+
+    // Prime the video element immediately in the user interaction gesture to unlock browser media playback!
+    const video = firingRoomScreenRef.current?.getVideoElement?.();
+    if (video) {
+      try {
+        video.currentTime = 71; // Part 2 liftoff start
+        const p = video.play();
+        if (p !== undefined) {
+          p.then(() => {
+            video.pause();
+          }).catch(() => {});
+        }
+      } catch (e) {}
+    }
+
+    setFiringRoomLaunchState('countdown');
+    setCountdownNumber(3);
+    gameAudio.ensureUnlocked?.();
+    gameAudio.playCountdownBeep?.(false);
+
+    let count = 3;
+    const timer = setInterval(() => {
+      count -= 1;
+      if (count > 0) {
+        setCountdownNumber(count);
+        gameAudio.playCountdownBeep?.(count === 1);
+      } else {
+        clearInterval(timer);
+        setCountdownNumber('LIFTOFF');
+        // Subtle camera shake + ambient audio swell at liftoff
+        cameraShakeRef.current = 1.0;
+        gameAudio.playThruster?.(3.8);
+        showMissionToast('LIFTOFF! Pad 36B Atlas-Centaur AC-13 liftoff underway.', 'info');
+
+        setTimeout(() => {
+          setCountdownNumber(null);
+          setFiringRoomLaunchState('launching');
+          // Play Part 2 on the big 3D screen (1:11 -> HELIUM_T)
+          firingRoomScreenRef.current?.playSegment?.('part2');
+        }, 800);
+      }
+    }, 1000);
+  }, [firingRoomLaunchState, showMissionToast]);
+
+  const handleEmergencyAtHeliumT = useCallback(() => {
+    setIsEmergencyActive(true);
+    setFiringRoomLaunchState('emergency');
+    headquartersRef.current?.corridor.firingRoom.setEmergency?.(true);
+    showMissionToast(
+      'WARNING: HELIUM LEAK DETECTED! Mission on hold.',
+      'warning',
+    );
+    if (callbacksRef.current.onEmergencyTriggered) {
+      callbacksRef.current.onEmergencyTriggered();
+    }
+  }, [showMissionToast]);
+
+  const resolveEmergency = useCallback(() => {
+    setIsEmergencyActive(false);
+    headquartersRef.current?.corridor.firingRoom.setEmergency?.(false);
+    setFiringRoomLaunchState('resolved');
+    // Resumes Part 3 on the 3D screen from HELIUM_T to end
+    firingRoomScreenRef.current?.resume?.();
+    showMissionToast(
+      'Emergency resolved! Resuming Surveyor 5 flight telemetry.',
+      'success',
+    );
+  }, [showMissionToast]);
+
+  const handleVideoSegmentEnd = useCallback((segment) => {
+    if (segment === 'part3' || segment === 'ended') {
+      if (callbacksRef.current.onMissionComplete) {
+        callbacksRef.current.onMissionComplete();
+      }
+      showMissionToast('Surveyor 5 is on its way to the Moon!', 'success');
+    }
+  }, [showMissionToast]);
+
+  const handleVideoTextureReady = useCallback((texture) => {
+    cachedVideoTextureRef.current = texture;
+    headquartersRef.current?.corridor.firingRoom.setVideoTexture?.(texture);
+  }, []);
 
   useImperativeHandle(ref, () => ({
     toggleDoor: () => doorHolderRef.current && doorHolderRef.current.toggle(),
     openDoor: () => doorHolderRef.current && doorHolderRef.current.setOpen(true),
     closeDoor: () => doorHolderRef.current && doorHolderRef.current.setOpen(false),
     toggleFirstPerson: () => doorHolderRef.current && doorHolderRef.current.toggleFirstPerson(),
+    teleportToFiringRoom: () => doorHolderRef.current && doorHolderRef.current.teleportToFiringRoom(),
+    setEmergency: (active) => {
+      setIsEmergencyActive(Boolean(active));
+      headquartersRef.current?.corridor.firingRoom.setEmergency?.(active);
+    },
+    resolveEmergency,
+    startLaunch: () => handleStartLaunchSequence(),
+    showMissionToast: (msg, tone) => showMissionToast(msg, tone),
+    autoCompleteSurveyor5: handleAutoComplete,
   }));
 
   useEffect(() => {
@@ -54,6 +345,7 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer({ clas
     scene.fog = new THREE.FogExp2(0x030811, 0.012);
 
     const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 80);
+    cameraRef.current = camera;
     const startAngle = Math.PI / 8;
     camera.position.set(Math.sin(startAngle) * 9.3, 4.9, Math.cos(startAngle) * 9.3);
 
@@ -91,7 +383,26 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer({ clas
     pmrem.dispose();
 
     const headquarters = createNasaHeadquarters();
+    headquartersRef.current = headquarters;
     scene.add(headquarters.root);
+
+    const activeVideoTex = cachedVideoTextureRef.current || firingRoomScreenRef.current?.getVideoTexture?.();
+    if (activeVideoTex) {
+      headquarters.corridor.firingRoom.setVideoTexture?.(activeVideoTex);
+    }
+
+    headquarters.corridor.firingRoom.setOnEmergencyTriggered?.(() => {
+      gameAudio.playAlarm?.();
+      showMissionToast(
+        'CRITICAL IN-FLIGHT ANOMALY: Helium leak detected (280 PSI)! Improvise descent procedure.',
+        'warning',
+      );
+      setIsEmergencyActive(true);
+      setFiringRoomLaunchState('emergency');
+      if (callbacksRef.current.onEmergencyTriggered) {
+        callbacksRef.current.onEmergencyTriggered();
+      }
+    });
     const characterMeshes = new Set();
     headquarters.character.traverse((object) => characterMeshes.add(object));
     const collisionMeshes = [];
@@ -109,7 +420,6 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer({ clas
     // --- Blast door control -------------------------------------------------
     const setDoorState = (open) => {
       headquarters.door.setOpen(open);
-      setDoorOpen(open);
     };
     const doorControl = {
       toggle: () => setDoorState(!headquarters.door.isOpen()),
@@ -117,7 +427,6 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer({ clas
     };
     const setStorageDoorState = (open) => {
       headquarters.corridor.storageRoom.entryDoor.setOpen(open);
-      setStorageDoorOpen(open);
     };
     const storageDoorControl = {
       toggle: () =>
@@ -125,7 +434,6 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer({ clas
     };
     const setFiringRoomDoorState = (open) => {
       headquarters.corridor.firingRoom.door.setOpen(open);
-      setFiringRoomDoorOpen(open);
     };
     const firingRoomDoorControl = {
       toggle: () =>
@@ -142,7 +450,8 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer({ clas
     controls.maxPolarAngle = Math.PI - 0.02;
     controls.target.set(0, 2.9, 0);
     controls.rotateSpeed = 0.55;
-    controls.zoomSpeed = 0.65;
+    // Two-finger trackpad swipes drive the view instead of zooming.
+    controls.enableZoom = false;
 
     const pointerControls = new PointerLockControls(camera, renderer.domElement);
     pointerControls.pointerSpeed = 0.75;
@@ -157,9 +466,9 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer({ clas
     let characterControlActive = false;
     let lookPointer = null;
 
-    const enterFirstPerson = () => {
+    const enterFirstPerson = (lockPointer = false) => {
       if (firstPersonActive) {
-        if (!pointerControls.isLocked) pointerControls.lock();
+        if (lockPointer && !pointerControls.isLocked) pointerControls.lock();
         return;
       }
 
@@ -173,8 +482,8 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer({ clas
       camera.rotation.order = 'YXZ';
       camera.rotation.set(0, airlockAngle - Math.PI, 0);
       movementKeys.clear();
-      setFirstPersonMode(true);
-      pointerControls.lock();
+      // Keep the pointer unlocked so one-finger trackpad input always drives
+      // the cursor. Mouse-look locking stays available from the HUD button.
     };
 
     const exitFirstPerson = () => {
@@ -187,8 +496,6 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer({ clas
       controls.target.copy(orbitTarget);
       controls.update();
       headquarters.character.visible = true;
-      setFirstPersonMode(false);
-      setPointerLocked(false);
     };
 
     const enterCharacterControl = () => {
@@ -202,7 +509,6 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer({ clas
       camera.position.copy(controls.target).add(characterCameraOffset);
       controls.update();
       movementKeys.clear();
-      setCharacterControlMode(true);
     };
 
     const exitCharacterControl = () => {
@@ -212,7 +518,6 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer({ clas
       camera.position.copy(orbitPosition);
       controls.target.copy(orbitTarget);
       controls.update();
-      setCharacterControlMode(false);
     };
 
     const toggleCharacterControl = () => {
@@ -220,38 +525,92 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer({ clas
       else enterCharacterControl();
     };
 
-    const handlePointerLock = (event) => setPointerLocked(event.type === 'lock');
-    pointerControls.addEventListener('lock', handlePointerLock);
-    pointerControls.addEventListener('unlock', handlePointerLock);
+    // One key controls every door. The nearest door to the player (or the
+    // orbit target when not exploring) is toggled.
+    const nearestDoorCandidates = [
+      { name: 'airlock', control: doorControl, target: headquarters.doorHitTarget },
+      {
+        name: 'parts room',
+        control: storageDoorControl,
+        target: headquarters.corridor.storageRoom.entryDoor.hitTarget,
+      },
+      {
+        name: 'firing room',
+        control: firingRoomDoorControl,
+        target: headquarters.corridor.firingRoom.door.hitTarget,
+      },
+    ];
+    const toggleNearestDoor = () => {
+      const userPosition = new THREE.Vector3();
+      if (characterControlActive) {
+        headquarters.character.getWorldPosition(userPosition);
+      } else {
+        userPosition.copy(camera.position);
+      }
+
+      scene.updateMatrixWorld(true);
+      const targetPosition = new THREE.Vector3();
+      let nearest = null;
+      let nearestDistance = Infinity;
+      nearestDoorCandidates.forEach((candidate) => {
+        candidate.target.getWorldPosition(targetPosition);
+        const distance = Math.hypot(
+          targetPosition.x - userPosition.x,
+          targetPosition.z - userPosition.z,
+        );
+        if (distance < nearestDistance) {
+          nearestDistance = distance;
+          nearest = candidate;
+        }
+      });
+
+      if (nearest) nearest.control.toggle();
+    };
 
     const handleKeyDown = (event) => {
+      if (overlayOpenRef.current || localOverlayOpenRef.current) return;
       if (selectedComponentRef.current) return;
       const key = event.key.toLowerCase();
+      if (!event.repeat && key === 'c') {
+        event.preventDefault();
+        toggleCharacterControl();
+        return;
+      }
+      if (!event.repeat && (key === 'v' || key === 'f')) {
+        event.preventDefault();
+        if (firstPersonActive) {
+          exitFirstPerson();
+          setIsFirstPerson(false);
+        } else {
+          if (characterControlActive) exitCharacterControl();
+          enterFirstPerson();
+          setIsFirstPerson(true);
+        }
+        return;
+      }
       if (firstPersonActive || characterControlActive) {
         if (['w', 'a', 's', 'd', 'arrowup', 'arrowleft', 'arrowdown', 'arrowright', 'shift'].includes(key)) {
           event.preventDefault();
           movementKeys.add(key);
         } else if (key === 'e') {
           event.preventDefault();
-          doorControl.toggle();
-        } else if (key === 'f') {
-          event.preventDefault();
-          storageDoorControl.toggle();
-        } else if (key === 'g') {
-          event.preventDefault();
-          firingRoomDoorControl.toggle();
+          if (!event.repeat) toggleNearestDoor();
         }
-      } else if (key === 'f') {
-        storageDoorControl.toggle();
-      } else if (key === 'd' || key === 'e') {
-        doorControl.toggle();
-      } else if (key === 'g') {
-        firingRoomDoorControl.toggle();
+      } else if (key === 'e') {
+        if (!event.repeat) toggleNearestDoor();
       }
     };
     const handleKeyUp = (event) => movementKeys.delete(event.key.toLowerCase());
     const handleEscapeCapture = (event) => {
       if (event.key !== 'Escape') return;
+      if (overlayOpenRef.current) return;
+      if (localOverlayOpenRef.current) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        setPartListOpen(false);
+        setAssemblyResult(null);
+        return;
+      }
       if (selectedComponentRef.current) {
         event.preventDefault();
         event.stopImmediatePropagation();
@@ -276,13 +635,65 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer({ clas
       ...doorControl,
       toggleFirstPerson: () => {
         if (characterControlActive) exitCharacterControl();
-        if (firstPersonActive) exitFirstPerson();
-        else enterFirstPerson();
+        if (firstPersonActive) {
+          exitFirstPerson();
+          setIsFirstPerson(false);
+        } else {
+          enterFirstPerson();
+          setIsFirstPerson(true);
+        }
       },
       toggleCharacterControl,
-      resumeFirstPerson: enterFirstPerson,
+      toggleNearestDoor,
+      resumeFirstPerson: () => enterFirstPerson(true),
       toggleStorageDoor: storageDoorControl.toggle,
       toggleFiringRoomDoor: firingRoomDoorControl.toggle,
+      setEmergency: (active) => {
+        headquarters.corridor.firingRoom.setEmergency?.(active);
+        setIsEmergencyActive(Boolean(active));
+        if (!active && firingRoomLaunchState === 'emergency') {
+          setFiringRoomLaunchState('resolved');
+        }
+      },
+      startLaunch: () => {
+        headquarters.corridor.firingRoom.startLaunch?.();
+        setFiringRoomLaunchState('launching');
+      },
+      teleportToFiringRoom: () => {
+        headquarters.door.setOpen(true);
+        headquarters.corridor.firingRoom.door.setOpen(true);
+        const corridor = headquarters.corridor.root;
+        const firingPos = corridor.localToWorld(new THREE.Vector3(2.4, 2.2, 58.8));
+        const firingLook = corridor.localToWorld(new THREE.Vector3(-0.15, 3.85, 75.5));
+
+        const dx = -0.15 - 2.4;
+        const dz = 75.5 - 58.8;
+        const dy = 3.85 - 2.2;
+        const yawOffset = Math.atan2(dx, dz);
+        const pitch = Math.atan2(dy, Math.hypot(dx, dz));
+
+        if (characterControlActive) {
+          const charPos = corridor.localToWorld(new THREE.Vector3(2.4, 0, 58.8));
+          headquarters.character.position.copy(headquarters.root.worldToLocal(charPos));
+          headquarters.character.rotation.y = airlockAngle;
+          controls.target.copy(firingLook);
+          camera.position.copy(firingPos);
+          controls.update();
+        } else {
+          enterFirstPerson(false);
+          setIsFirstPerson(true);
+          camera.position.copy(firingPos);
+          camera.rotation.order = 'YXZ';
+          camera.rotation.set(pitch, airlockAngle + yawOffset, 0);
+        }
+
+        inFiringRoomRef.current = true;
+        setIsInFiringRoom(true);
+      },
+      pauseForOverlay: () => {
+        movementKeys.clear();
+        if (pointerControls.isLocked) pointerControls.unlock();
+      },
     };
 
     const raycaster = new THREE.Raycaster();
@@ -302,36 +713,117 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer({ clas
       pointer.x = ((event.clientX - bounds.left) / bounds.width) * 2 - 1;
       pointer.y = -((event.clientY - bounds.top) / bounds.height) * 2 + 1;
     };
+    const getAvailableInteractionTargets = () =>
+      interactionTargets.filter(
+        ({ component }) =>
+          !component ||
+          (!collectedIdsRef.current.has(component.id) &&
+            !cartIdsRef.current.includes(component.id)),
+      );
     const getInteractionAtPointer = (event) => {
       updatePointerPosition(event);
       raycaster.setFromCamera(pointer, camera);
+      const targets = getAvailableInteractionTargets();
       const hit = raycaster.intersectObjects(
-        interactionTargets.map(({ target }) => target),
+        targets.map(({ target }) => target),
         false,
       )[0];
       return hit
-        ? interactionTargets.find(({ target }) => target === hit.object) || null
+        ? targets.find(({ target }) => target === hit.object) || null
         : null;
     };
     const handlePointerDown = (event) => {
-      if (event.button !== 0) return;
+      if (overlayOpenRef.current || localOverlayOpenRef.current || event.button !== 0) return;
       pointerDown = { x: event.clientX, y: event.clientY, pointerId: event.pointerId };
       if (firstPersonActive && !pointerControls.isLocked) {
         lookPointer = { x: event.clientX, y: event.clientY };
       }
     };
     const handlePointerUp = (event) => {
+      if (overlayOpenRef.current || localOverlayOpenRef.current) return;
       if (!pointerDown || event.pointerId !== pointerDown.pointerId) return;
       const distance = Math.hypot(event.clientX - pointerDown.x, event.clientY - pointerDown.y);
       pointerDown = null;
       lookPointer = null;
-      if (event.button === 0 && distance < 6) {
-        const interaction = getInteractionAtPointer(event);
-        if (interaction?.component) {
-          if (firstPersonActive && pointerControls.isLocked) pointerControls.unlock();
-          setSelectedComponent(interaction.component);
-        } else if (interaction?.toggle) {
-          interaction.toggle();
+      if (event.button !== 0 || distance >= 6) return;
+
+      const interaction = getInteractionAtPointer(event);
+      if (!interaction) return;
+
+      if (interaction.component) {
+        if (firstPersonActive && pointerControls.isLocked) pointerControls.unlock();
+        setSelectedComponent(interaction.component);
+        return;
+      }
+
+      if (interaction.toggle) {
+        interaction.toggle();
+        return;
+      }
+
+      if (interaction.action === 'hologram') {
+        if (firstPersonActive && pointerControls.isLocked) pointerControls.unlock();
+        const manifest = Array.from(manifestIdsRef.current);
+        const installedCount = manifest.filter((id) => collectedIdsRef.current.has(id)).length;
+        const cart = cartIdsRef.current;
+        const missing = Math.max(0, manifest.length - installedCount - cart.length);
+
+        if (hologramDisappearedRef.current) {
+          showMissionToast('Surveyor 5 has been sent to the launch room. Go to the firing room!', 'info');
+          if (callbacksRef.current.onOpenTask2) callbacksRef.current.onOpenTask2();
+          return;
+        }
+
+        if (hologramConvertedRef.current) {
+          showMissionToast('Surveyor 5 is already materialised. Head to the firing room.', 'info');
+        } else if (cart.length > 0) {
+          assembleRef.current?.();
+        } else if (missing > 0) {
+          showMissionToast(
+            `Hologram unstable — ${missing} manifest part${missing === 1 ? '' : 's'} not installed yet.`,
+            'warn',
+          );
+        } else {
+          callbacksRef.current.onConvertHologram?.();
+          showMissionToast('Manifest complete. Surveyor 5 is materialising!', 'success');
+        }
+        return;
+      }
+
+      if (interaction.action === 'launch') {
+        if (firstPersonActive && pointerControls.isLocked) pointerControls.unlock();
+        if (!launchReadyRef.current) {
+          showMissionToast('Complete Task 1 first to unlock the launch console.', 'warn');
+          return;
+        }
+        if (isEmergencyActive) {
+          callbacksRef.current.onOpenTask3?.();
+          return;
+        }
+        if (firingRoomLaunchState === 'standby') {
+          handleStartLaunchSequence();
+          return;
+        }
+        if (firingRoomLaunchState === 'launching' || firingRoomLaunchState === 'countdown') {
+          showMissionToast('Launch sequence in progress — watch the big screen!', 'info');
+          return;
+        }
+        if (!hologramConvertedRef.current) {
+          showMissionToast(
+            'Launch console locked — materialise Surveyor 5 in mission control first.',
+            'warn',
+          );
+        } else if (!missionSolvedRef.current) {
+          showMissionToast(
+            'Mark the mission solved from the task page to begin the launch phase.',
+            'warn',
+          );
+          callbacksRef.current.onOpenTask?.();
+        } else if (launchedRef.current) {
+          showMissionToast('Surveyor 5 has already left the pad.', 'info');
+        } else {
+          callbacksRef.current.onLaunchMission?.();
+          showMissionToast('Launch sequence engaged. Surveyor 5 is on its way!', 'success');
         }
       }
     };
@@ -340,6 +832,7 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer({ clas
       lookPointer = null;
     };
     const handlePointerMove = (event) => {
+      if (overlayOpenRef.current || localOverlayOpenRef.current) return;
       if (firstPersonActive && !pointerControls.isLocked && lookPointer) {
         camera.rotation.y -= (event.clientX - lookPointer.x) * 0.003;
         camera.rotation.x = THREE.MathUtils.clamp(
@@ -352,10 +845,53 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer({ clas
       }
       renderer.domElement.style.cursor = getInteractionAtPointer(event) ? 'pointer' : '';
     };
+
+    // A two-finger trackpad swipe arrives as a wheel event. Use it to look
+    // around in first person and to orbit around the target in every other
+    // view. One-finger trackpad input is left untouched so the cursor works.
+    const trackpadOffset = new THREE.Vector3();
+    const trackpadSpherical = new THREE.Spherical();
+    const handleWheel = (event) => {
+      if (overlayOpenRef.current || localOverlayOpenRef.current || selectedComponentRef.current) return;
+      const deltaMultiplier =
+        event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? 100 : 1;
+      const deltaX = event.deltaX * deltaMultiplier;
+      const deltaY = event.deltaY * deltaMultiplier;
+      if (deltaX === 0 && deltaY === 0) return;
+
+      event.preventDefault();
+      controls.autoRotate = false;
+
+      if (firstPersonActive) {
+        camera.rotation.order = 'YXZ';
+        camera.rotation.y += deltaX * TRACKPAD_LOOK_SENSITIVITY;
+        camera.rotation.x = THREE.MathUtils.clamp(
+          camera.rotation.x + deltaY * TRACKPAD_LOOK_SENSITIVITY,
+          -Math.PI / 2 + 0.02,
+          Math.PI / 2 - 0.02,
+        );
+        return;
+      }
+
+      trackpadOffset.copy(camera.position).sub(controls.target);
+      trackpadSpherical.setFromVector3(trackpadOffset);
+      trackpadSpherical.theta += deltaX * TRACKPAD_LOOK_SENSITIVITY;
+      trackpadSpherical.phi = THREE.MathUtils.clamp(
+        trackpadSpherical.phi + deltaY * TRACKPAD_LOOK_SENSITIVITY,
+        0.02,
+        Math.PI - 0.02,
+      );
+      trackpadOffset.setFromSpherical(trackpadSpherical);
+      camera.position.copy(controls.target).add(trackpadOffset);
+      camera.lookAt(controls.target);
+      controls.update();
+    };
+
     renderer.domElement.addEventListener('pointerdown', handlePointerDown);
     renderer.domElement.addEventListener('pointerup', handlePointerUp);
     renderer.domElement.addEventListener('pointercancel', handlePointerCancel);
     renderer.domElement.addEventListener('pointermove', handlePointerMove);
+    renderer.domElement.addEventListener('wheel', handleWheel, { passive: false });
 
     const moveForward = new THREE.Vector3();
     const moveRight = new THREE.Vector3();
@@ -380,7 +916,7 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer({ clas
       moveForward.y = 0;
       moveForward.normalize();
       moveRight.set(-moveForward.z, 0, moveForward.x);
-      const speed = movementKeys.has('shift') ? 5 : 2.8;
+      const speed = movementKeys.has('shift') ? PLAYER_SPRINT_SPEED : PLAYER_WALK_SPEED;
       const nextPosition = previousPosition.clone()
         .addScaledVector(moveForward, (forwardInput / inputLength) * speed * delta)
         .addScaledVector(moveRight, (rightInput / inputLength) * speed * delta);
@@ -570,6 +1106,56 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer({ clas
     controls.addEventListener('start', stopAutoRotate);
 
     const clock = new THREE.Clock();
+    const progressAnchorWorld = new THREE.Vector3(0, 5.08, 0);
+    const progressAnchorProjection = new THREE.Vector3();
+    const progressAnchorCameraLocal = new THREE.Vector3();
+    const progressAnchorCharacterLocal = new THREE.Vector3();
+
+    // Keep the mission progress bar pinned above the Surveyor 5 hologram in
+    // world space. It does not follow the camera, and it hides when the
+    // hologram is behind the camera, off-screen, or far away in another room.
+    const updateProgressAnchor = () => {
+      const node = progressAnchorRef.current;
+      if (!node) return;
+
+      if (hologramDisappearedRef.current) {
+        node.style.opacity = '0';
+        node.style.visibility = 'hidden';
+        return;
+      }
+
+      progressAnchorProjection.copy(progressAnchorWorld).project(camera);
+      const width = container.clientWidth || 1;
+      const height = container.clientHeight || 1;
+      const x = (progressAnchorProjection.x * 0.5 + 0.5) * width;
+      const y = (-progressAnchorProjection.y * 0.5 + 0.5) * height;
+      const inFront = progressAnchorProjection.z > -1 && progressAnchorProjection.z < 1;
+      const distance = camera.position.distanceTo(progressAnchorWorld);
+
+      let inMainRoom = true;
+      if (firstPersonActive) {
+        progressAnchorCameraLocal.copy(camera.position);
+        inMainRoom = headquarters.corridor.root.worldToLocal(progressAnchorCameraLocal).z <= 0.3;
+      } else if (characterControlActive) {
+        progressAnchorCharacterLocal.copy(
+          headquarters.character.getWorldPosition(new THREE.Vector3()),
+        );
+        inMainRoom = headquarters.corridor.root.worldToLocal(progressAnchorCharacterLocal).z <= 0.3;
+      }
+
+      const visible =
+        inFront &&
+        inMainRoom &&
+        distance < 14 &&
+        x > -80 &&
+        x < width + 80 &&
+        y > -20 &&
+        y < height + 80;
+
+      node.style.transform = `translate3d(${x}px, ${y}px, 0) translate(-50%, -100%)`;
+      node.style.opacity = visible ? '1' : '0';
+      node.style.visibility = visible ? 'visible' : 'hidden';
+    };
 
     const renderFrame = () => {
       const delta = Math.min(clock.getDelta(), 0.05);
@@ -586,7 +1172,7 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer({ clas
         const inputLength = Math.hypot(forwardInput, rightInput);
 
         if (inputLength > 0) {
-          const speed = movementKeys.has('shift') ? 5 : 2.8;
+          const speed = movementKeys.has('shift') ? PLAYER_SPRINT_SPEED : PLAYER_WALK_SPEED;
           const previousPosition = camera.position.clone();
           camera.getWorldDirection(moveForward);
           moveForward.y = 0;
@@ -812,16 +1398,35 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer({ clas
             tryMoveX();
           }
         }
-        camera.position.y = 1.65;
         const corridorPosition = headquarters.corridor.root.worldToLocal(
           new THREE.Vector3(camera.position.x, 0, camera.position.z),
         );
+        camera.position.y = corridorPosition.z >= 53 ? 2.2 : 1.65;
         scene.fog.density = corridorPosition.z > 0.3 ? 0.0035 : 0.012;
       }
 
-      headquarters.update(delta, elapsed);
+      const playerWorld = characterControlActive
+        ? headquarters.character.getWorldPosition(new THREE.Vector3())
+        : camera.position;
+      const currentCorridorPos = headquarters.corridor.root.worldToLocal(playerWorld.clone());
+      const inFiring = currentCorridorPos.z >= 52.5;
+      if (inFiringRoomRef.current !== inFiring) {
+        inFiringRoomRef.current = inFiring;
+        setIsInFiringRoom(inFiring);
+      }
+
+      headquarters.update(delta, elapsed, renderer);
       if (!firstPersonActive) controls.update();
+
+      if (cameraShakeRef.current > 0.005) {
+        const shake = cameraShakeRef.current;
+        camera.position.x += (Math.random() - 0.5) * 0.08 * shake;
+        camera.position.y += (Math.random() - 0.5) * 0.06 * shake;
+        cameraShakeRef.current *= Math.max(0, 1 - delta * 1.6);
+      }
+
       renderer.render(scene, camera);
+      updateProgressAnchor();
 
       if (!hasRendered && !disposed) {
         hasRendered = true;
@@ -867,8 +1472,6 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer({ clas
       document.removeEventListener('visibilitychange', handleVisibility);
       controls.removeEventListener('start', stopAutoRotate);
       controls.dispose();
-      pointerControls.removeEventListener('lock', handlePointerLock);
-      pointerControls.removeEventListener('unlock', handlePointerLock);
       pointerControls.unlock();
       pointerControls.dispose();
       window.removeEventListener('keydown', handleEscapeCapture, true);
@@ -878,9 +1481,11 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer({ clas
       renderer.domElement.removeEventListener('pointerup', handlePointerUp);
       renderer.domElement.removeEventListener('pointercancel', handlePointerCancel);
       renderer.domElement.removeEventListener('pointermove', handlePointerMove);
+      renderer.domElement.removeEventListener('wheel', handleWheel);
 
       scene.remove(headquarters.root);
       headquarters.dispose();
+      headquartersRef.current = null;
       doorHolderRef.current = null;
 
       scene.environment = null;
@@ -892,23 +1497,145 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer({ clas
         container.removeChild(renderer.domElement);
       }
     };
-  }, []);
+  }, [showMissionToast]);
+
+  // Keep the 3D parts shelves in sync with installed parts and the cart.
+  useEffect(() => {
+    const headquarters = headquartersRef.current;
+    if (!headquarters) return;
+    const taken = new Set([...collectedIds, ...cartIds]);
+    headquarters.corridor.storageRoom.componentSprites.forEach((sprite) => {
+      const id = sprite.userData.component?.id;
+      if (id) sprite.visible = !taken.has(id);
+    });
+  }, [collectedIds, cartIds, ready]);
+
+  // Drive the hologram's "becomes real" transition from mission state.
+  useEffect(() => {
+    headquartersRef.current?.setHologramMaterialized(hologramConverted);
+  }, [hologramConverted, ready]);
+
+  // Drive the hologram's disappearance after unlocking launch.
+  useEffect(() => {
+    headquartersRef.current?.setHologramDisappeared(hologramDisappeared);
+  }, [hologramDisappeared, ready]);
+
+  const installedCount = SURVEYOR5_MANIFEST_IDS.filter((id) => collectedIds.includes(id)).length;
+  const allPartsInstalled = installedCount >= SURVEYOR5_MANIFEST_TOTAL;
+  const cartCount = cartIds.length;
+  const cartIsFull = cartCount >= cartLimit;
+  const cartManifestCount = cartIds.filter((id) => manifestIds.includes(id)).length;
+  const remainingParts = Math.max(
+    0,
+    SURVEYOR5_MANIFEST_TOTAL - installedCount - cartManifestCount,
+  );
+  const collectedIdSet = new Set(collectedIds);
+  const cartIdSet = new Set(cartIds);
+  const componentById = new Map(
+    STORAGE_ROOM_COMPONENTS.map((part) => [part.id, part]),
+  );
+  const missionProgress =
+    (installedCount / Math.max(1, SURVEYOR5_MANIFEST_TOTAL)) * 100;
+  const missionStageLabel = launched
+    ? 'Mission complete'
+    : missionSolved
+      ? 'Launch phase active'
+      : hologramConverted
+        ? 'Next: solve mission'
+      : allPartsInstalled
+        ? 'Next: materialise hologram'
+        : cartIsFull
+          ? 'Cart full: unload at hologram'
+          : cartCount > 0
+            ? 'Next: collect or unload'
+            : 'Next: parts storage room';
+
+  /**
+   * Verify the cart against the Surveyor 5 manifest. Manifest parts are
+   * installed (and crossed off the list); all other parts are returned to the
+   * storage room shelves and reported in the assembly result dialog.
+   */
+  const handleAssemble = useCallback(() => {
+    if (cartIds.length === 0) return;
+    const outcome = onDepositCart?.();
+    if (!outcome) return;
+
+    const componentById = new Map(
+      STORAGE_ROOM_COMPONENTS.map((part) => [part.id, part]),
+    );
+    const resolveParts = (ids = []) =>
+      ids.map((id) => componentById.get(id)).filter(Boolean);
+    const installedParts = resolveParts(outcome.installedIds);
+    const rejectedParts = resolveParts(outcome.rejectedIds);
+
+    setPartListOpen(false);
+    setSelectedComponent(null);
+    setAssemblyResult({
+      deposited: outcome.deposited ?? cartIds.length,
+      installed: outcome.installed ?? installedParts.length,
+      rejected: outcome.rejected ?? rejectedParts.length,
+      installedParts,
+      rejectedParts,
+      remaining: Math.max(
+        0,
+        SURVEYOR5_MANIFEST_TOTAL - installedCount - installedParts.length,
+      ),
+      manifestComplete: Boolean(outcome.manifestComplete),
+    });
+  }, [cartIds, installedCount, onDepositCart]);
+
+  useEffect(() => {
+    assembleRef.current = handleAssemble;
+  }, [handleAssemble]);
+
+  const toastToneClass =
+    missionToast?.tone === 'warn'
+      ? 'border-[#ffc36b]/55 bg-[#2a1c06]/92 text-[#ffd79a]'
+      : missionToast?.tone === 'success'
+        ? 'border-[#5ee7ff]/55 bg-[#062c3f]/92 text-[#b9f4ff]'
+        : 'border-[#7fe3ff]/35 bg-[#071426]/92 text-[#9cd8f2]';
 
   return (
-    <div ref={mountRef} className={`relative h-full w-full overflow-hidden bg-[#030811] ${className}`}>
+    <div
+      ref={mountRef}
+      aria-busy={!ready && !webglFailed}
+      className={`relative h-full w-full overflow-hidden bg-[#030811] ${className}`}
+    >
       <div
         className={`pointer-events-none absolute inset-0 z-10 flex items-center justify-center bg-[#030811] transition-opacity duration-700 ${
           ready ? 'opacity-0' : 'opacity-100'
         }`}
         aria-hidden={ready}
       >
-        <div className="flex flex-col items-center gap-3 text-center">
+        <div
+          className="flex flex-col items-center gap-4 text-center"
+          role="status"
+          aria-live="polite"
+          aria-label="Loading NASA Headquarters"
+        >
           <span className="relative flex h-14 w-14 items-center justify-center">
-            <span className="absolute inset-0 animate-ping rounded-full border border-[#4F79FF]/30" />
-            <span className="h-9 w-9 animate-spin rounded-full border border-[#3D6BFF]/30 border-t-[#7fe3ff]" />
+            <span className="absolute inset-1 rounded-full bg-[#14d7df]/10 blur-md" />
+            <svg
+              aria-hidden="true"
+              viewBox="0 0 40 40"
+              className="relative h-12 w-12 animate-spin drop-shadow-[0_0_8px_rgba(20,215,223,0.65)] motion-reduce:animate-none"
+            >
+              <circle cx="20" cy="4" r="2.2" fill="#14d7df" />
+              <circle cx="28" cy="6.1" r="2.1" fill="#14d7df" opacity=".92" />
+              <circle cx="33.9" cy="12" r="2" fill="#14d7df" opacity=".84" />
+              <circle cx="36" cy="20" r="1.9" fill="#14d7df" opacity=".76" />
+              <circle cx="33.9" cy="28" r="1.8" fill="#14d7df" opacity=".68" />
+              <circle cx="28" cy="33.9" r="1.7" fill="#14d7df" opacity=".6" />
+              <circle cx="20" cy="36" r="1.6" fill="#14d7df" opacity=".52" />
+              <circle cx="12" cy="33.9" r="1.5" fill="#14d7df" opacity=".44" />
+              <circle cx="6.1" cy="28" r="1.4" fill="#14d7df" opacity=".36" />
+              <circle cx="4" cy="20" r="1.3" fill="#14d7df" opacity=".28" />
+              <circle cx="6.1" cy="12" r="1.2" fill="#14d7df" opacity=".2" />
+              <circle cx="12" cy="6.1" r="1.1" fill="#14d7df" opacity=".12" />
+            </svg>
           </span>
-          <span className="text-[9px] font-semibold uppercase tracking-[0.34em] text-[#7fc9e8]">
-            Establishing secure link
+          <span className="text-[9px] font-semibold uppercase tracking-[0.34em] text-[#14d7df]">
+            Preparing mission control
           </span>
         </div>
       </div>
@@ -924,62 +1651,731 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer({ clas
 
       {!webglFailed && (
         <>
-          <div className="absolute right-4 top-24 z-30 flex flex-col items-end gap-2">
-            <button
-              type="button"
-              onClick={() => doorHolderRef.current && doorHolderRef.current.toggle()}
-              aria-pressed={doorOpen}
-              className="rounded-lg border border-[#7fe3ff]/35 bg-[#071426]/85 px-3 py-2 text-[9px] font-semibold uppercase tracking-[0.18em] text-[#9cd8f2] shadow-[0_0_20px_rgba(61,107,255,0.18)] backdrop-blur-md transition-colors hover:border-[#7fe3ff]/70 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7fe3ff]"
+          {/* Mission progress telemetry pinned above the Surveyor 5 hologram (hides when disappeared). */}
+          {!hologramDisappeared && (
+            <div
+              ref={progressAnchorRef}
+              className="pointer-events-none absolute left-0 top-0 z-30 hidden origin-bottom transition-opacity duration-200 will-change-transform sm:block"
+              style={{ width: 'min(320px, 42vw)', opacity: 0 }}
             >
-              {doorOpen
-                ? `Close airlock · Click / ${firstPersonMode || characterControlMode ? 'E' : 'D'}`
-                : `Open airlock · Click / ${firstPersonMode || characterControlMode ? 'E' : 'D'}`}
-            </button>
-            <button
-              type="button"
-              onClick={() => doorHolderRef.current && doorHolderRef.current.toggleStorageDoor()}
-              aria-pressed={storageDoorOpen}
-              className="rounded-lg border border-[#7fe3ff]/35 bg-[#071426]/85 px-3 py-2 text-[9px] font-semibold uppercase tracking-[0.18em] text-[#9cd8f2] shadow-[0_0_20px_rgba(61,107,255,0.18)] backdrop-blur-md transition-colors hover:border-[#7fe3ff]/70 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7fe3ff]"
-            >
-              {storageDoorOpen ? 'Close parts room · Click / F' : 'Open parts room · Click / F'}
-            </button>
-            <button
-              type="button"
-              onClick={() => doorHolderRef.current && doorHolderRef.current.toggleFiringRoomDoor()}
-              aria-pressed={firingRoomDoorOpen}
-              className="rounded-lg border border-[#7fe3ff]/35 bg-[#071426]/85 px-3 py-2 text-[9px] font-semibold uppercase tracking-[0.18em] text-[#9cd8f2] shadow-[0_0_20px_rgba(61,107,255,0.18)] backdrop-blur-md transition-colors hover:border-[#7fe3ff]/70 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7fe3ff]"
-            >
-              {firingRoomDoorOpen ? 'Close firing room · Click / G' : 'Open firing room · Click / G'}
-            </button>
-            <button
-              type="button"
-              onClick={() => doorHolderRef.current && doorHolderRef.current.toggleCharacterControl()}
-              aria-pressed={characterControlMode}
-              className="rounded-lg border border-[#7fe3ff]/35 bg-[#071426]/85 px-3 py-2 text-[9px] font-semibold uppercase tracking-[0.18em] text-[#9cd8f2] shadow-[0_0_20px_rgba(61,107,255,0.14)] backdrop-blur-md transition-colors hover:border-[#7fe3ff]/70 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7fe3ff]"
-            >
-              {characterControlMode ? 'Exit character controls' : 'Control astronaut'}
-            </button>
-            <button
-              type="button"
-              onClick={() => doorHolderRef.current && doorHolderRef.current.toggleFirstPerson()}
-              aria-pressed={firstPersonMode}
-              className="rounded-lg border border-white/20 bg-[#071426]/85 px-3 py-2 text-[9px] font-semibold uppercase tracking-[0.18em] text-white/85 shadow-[0_0_20px_rgba(61,107,255,0.14)] backdrop-blur-md transition-colors hover:border-[#7fe3ff]/65 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7fe3ff]"
-            >
-              {firstPersonMode ? 'Exit first person' : 'Enter first person'}
-            </button>
-            {firstPersonMode && !pointerLocked && (
+              <div className="rounded-xl border border-[#5ee7ff]/15 bg-[#020b14]/55 px-3 pb-1 pt-2 shadow-[0_0_30px_rgba(3,10,20,0.5)] backdrop-blur-[2px]">
+                <MissionProgressBar
+                  progress={missionProgress}
+                  installed={installedCount}
+                  total={SURVEYOR5_MANIFEST_TOTAL}
+                />
+              </div>
+              {cartIsFull && !hologramConverted && (
+                <div className="pointer-events-auto mx-auto mt-2 w-full animate-fade-in rounded-xl border border-[#7fe3ff]/55 bg-[#04182b]/94 px-2.5 py-2 shadow-[0_0_28px_rgba(47,123,255,0.35)] backdrop-blur-md">
+                  <p className="flex items-center gap-1.5 text-[7px] font-bold uppercase tracking-[0.2em] text-[#ffd79a]">
+                    <ShoppingCart className="h-2.5 w-2.5" aria-hidden="true" />
+                    Cart full · {cartCount} / {cartLimit} parts
+                  </p>
+                  <p className="mt-0.5 text-[7px] font-semibold uppercase leading-relaxed tracking-[0.16em] text-[#8fb8ce]">
+                    Verify the load against the Surveyor 5 manifest
+                  </p>
+                  <button
+                    type="button"
+                    onClick={handleAssemble}
+                    className="group mt-1.5 flex w-full items-center justify-center gap-1.5 rounded-lg border border-[#7fe3ff]/70 bg-gradient-to-r from-[#0b3f83] via-[#0d4c9a] to-[#0b356d] px-3 py-2 text-[8px] font-bold uppercase tracking-[0.2em] text-white shadow-[0_0_22px_rgba(47,123,255,0.4)] transition-all hover:border-[#a8f0ff] hover:shadow-[0_0_32px_rgba(94,231,255,0.5)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7fe3ff]"
+                  >
+                    <Wrench className="h-3.5 w-3.5 text-[#9df0ff] transition-transform group-hover:rotate-12" aria-hidden="true" />
+                    Assemble parts
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Sci-Fi Floating Action Button: Launch & Firing Room Control */}
+          {launchUnlocked && (
+            <div className="pointer-events-auto absolute top-20 sm:top-24 left-1/2 -translate-x-1/2 z-30 animate-fade-in">
+              {!isInFiringRoom ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    doorHolderRef.current?.teleportToFiringRoom();
+                  }}
+                  className="group relative flex items-center gap-2.5 sm:gap-3 px-5 sm:px-7 py-2.5 sm:py-3 rounded-full border border-[#00f0ff] bg-gradient-to-r from-[#031326]/95 via-[#062444]/95 to-[#031326]/95 text-[#e6faff] shadow-[0_0_30px_rgba(0,240,255,0.45)] backdrop-blur-md transition-all hover:scale-105 hover:border-[#8ef4ff] hover:shadow-[0_0_42px_rgba(0,240,255,0.7)] active:scale-95"
+                >
+                  <span className="relative flex h-2.5 w-2.5">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#00f0ff] opacity-75" />
+                    <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-[#00f0ff]" />
+                  </span>
+                  <Rocket className="h-4 w-4 text-[#00f0ff] transition-transform group-hover:-rotate-12" />
+                  <span className="text-[11px] sm:text-[13px] font-extrabold uppercase tracking-[0.22em] text-[#dffaff] group-hover:text-white">
+                    Go to launch room
+                  </span>
+                  <span className="hidden sm:inline-block px-2 py-0.5 rounded text-[8.5px] font-black uppercase tracking-wider bg-[#00f0ff]/20 text-[#8ef4ff] border border-[#00f0ff]/40">
+                    TASK 2
+                  </span>
+                  <ChevronRight className="h-4 w-4 text-[#00f0ff] transition-transform group-hover:translate-x-1" />
+                </button>
+              ) : isEmergencyActive ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    gameAudio.playClick();
+                    doorHolderRef.current?.setEmergency(false);
+                    setIsEmergencyActive(false);
+                    setFiringRoomLaunchState('resolved');
+                    gameAudio.playVictory?.();
+                    showMissionToast(
+                      'Anomaly resolved! Surveyor 5 lunar descent retro-burn executed successfully!',
+                      'success',
+                    );
+                    callbacksRef.current.onLaunchMission?.();
+                  }}
+                  className="group relative flex items-center gap-2.5 sm:gap-3 px-5 sm:px-7 py-2.5 sm:py-3 rounded-full border-2 border-[#ff3b4e] bg-gradient-to-r from-[#3f0910]/95 via-[#7a121e]/95 to-[#3f0910]/95 text-white shadow-[0_0_40px_rgba(255,59,78,0.85)] backdrop-blur-md transition-all hover:scale-105 hover:shadow-[0_0_55px_rgba(255,59,78,1)] active:scale-95 animate-pulse"
+                >
+                  <AlertTriangle className="h-4 w-4 text-[#ff808d] animate-bounce" />
+                  <div className="text-left">
+                    <span className="block text-[11px] sm:text-[13px] font-extrabold uppercase tracking-[0.22em] text-white">
+                      Improvise New Descent Procedure (JPL)
+                    </span>
+                    <span className="block text-[7.5px] font-bold uppercase tracking-[0.16em] text-[#ffb3ba]">
+                      Helium Tank Leak · Recalibrate Burn Parameters
+                    </span>
+                  </div>
+                  <Wrench className="h-4 w-4 text-[#ffd1d6] transition-transform group-hover:rotate-45" />
+                </button>
+              ) : firingRoomLaunchState === 'standby' ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!launchReadyRef.current) {
+                      showMissionToast('Complete Task 1 first to unlock launch', 'warn');
+                      return;
+                    }
+                    gameAudio.playClick();
+                    handleStartLaunchSequence();
+                  }}
+                  className="group relative flex items-center gap-2.5 sm:gap-3 px-6 sm:px-8 py-2.5 sm:py-3.5 rounded-full border-2 border-[#00f0ff] bg-gradient-to-r from-[#03203f]/95 via-[#084880]/95 to-[#03203f]/95 text-[#e6faff] shadow-[0_0_36px_rgba(0,240,255,0.7)] backdrop-blur-md transition-all hover:scale-105 hover:border-[#8ef4ff] hover:shadow-[0_0_50px_rgba(0,240,255,0.95)] active:scale-95 ring-2 ring-[#00f0ff]/40"
+                >
+                  <span className="relative flex h-3 w-3">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#00f0ff] opacity-90" />
+                    <span className="relative inline-flex h-3 w-3 rounded-full bg-[#00f0ff]" />
+                  </span>
+                  <Rocket className="h-5 w-5 text-[#00f0ff] transition-transform group-hover:scale-110 group-hover:-rotate-12" />
+                  <div className="text-left">
+                    <span className="block text-[12px] sm:text-[14px] font-black uppercase tracking-[0.24em] text-white drop-shadow-[0_0_12px_rgba(0,240,255,0.8)]">
+                      Start Launch Sequence
+                    </span>
+                    <span className="block text-[7.5px] font-bold uppercase tracking-[0.16em] text-[#8ef4ff]">
+                      Pad 36B · Atlas-Centaur AC-13 · Surveyor 5
+                    </span>
+                  </div>
+                  <ChevronRight className="h-4 w-4 text-[#00f0ff] transition-transform group-hover:translate-x-1" />
+                </button>
+              ) : firingRoomLaunchState === 'resolved' ? (
+                <div className="flex items-center gap-2.5 px-5 py-2 rounded-full border border-[#22c55e]/60 bg-[#042113]/90 text-[#86efac] shadow-[0_0_24px_rgba(34,197,94,0.4)] backdrop-blur-md">
+                  <CheckCircle2 className="h-4 w-4 text-[#4ade80]" />
+                  <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-white">
+                    Surveyor 5 Touchdown Confirmed · Mare Tranquillitatis
+                  </span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2.5 px-5 py-2 rounded-full border border-[#00f0ff]/50 bg-[#03192f]/90 text-[#8ef4ff] shadow-[0_0_24px_rgba(0,240,255,0.35)] backdrop-blur-md">
+                  <span className="relative flex h-2 w-2">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#00f0ff] opacity-80" />
+                    <span className="relative inline-flex h-2 w-2 rounded-full bg-[#00f0ff]" />
+                  </span>
+                  <span className="text-[10px] font-extrabold uppercase tracking-[0.22em] text-[#dffaff]">
+                    Launch Sequence In Progress · Big Screen Live Feed
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Live mission tracker for the Surveyor 5 build. */}
+          <div className="absolute left-4 top-24 z-30 hidden w-[186px] rounded-xl border border-[#7fe3ff]/30 bg-[#071426]/85 p-3 shadow-[0_0_24px_rgba(61,107,255,0.16)] backdrop-blur-md sm:block">
+            <p className="flex items-center gap-1.5 text-[8px] font-semibold uppercase tracking-[0.22em] text-[#7fe3ff]">
+              <Target className="h-3 w-3" aria-hidden="true" />
+              Surveyor 5 task
+            </p>
+            <div className="mt-2 flex items-end justify-between gap-2">
+              <span className="text-xl font-semibold leading-none text-white">
+                {installedCount}
+                <span className="text-[11px] text-[#6f9bb3]"> / {SURVEYOR5_MANIFEST_TOTAL}</span>
+              </span>
+              <span
+                className={`text-[8px] font-semibold uppercase tracking-[0.18em] ${
+                  allPartsInstalled ? 'text-[#7fe3ff]' : 'text-[#6f9bb3]'
+                }`}
+              >
+                {allPartsInstalled ? 'Manifest ready' : 'Installed'}
+              </span>
+            </div>
+            <div className="mt-2 h-1 overflow-hidden rounded-full bg-white/10">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-[#2f7bff] to-[#7fe3ff] transition-all duration-500"
+                style={{ width: `${missionProgress}%` }}
+              />
+            </div>
+            <div className="mt-2.5 rounded-md border border-[#7fe3ff]/20 bg-[#041325]/70 px-2.5 py-2">
+              <div className="flex items-center justify-between text-[8px] font-semibold uppercase tracking-[0.16em]">
+                <span className="inline-flex items-center gap-1.5 text-[#8be9ff]">
+                  <ShoppingCart className="h-2.5 w-2.5" aria-hidden="true" />
+                  Cart
+                </span>
+                <span className={cartIsFull ? 'text-[#ffc36b]' : 'text-[#8fb8ce]'}>
+                  {cartCount} / {cartLimit}
+                </span>
+              </div>
+              <div className="mt-1.5 grid grid-cols-5 gap-1">
+                {Array.from({ length: cartLimit }).map((_, index) => (
+                  <span
+                    key={index}
+                    className={`flex h-4 items-center justify-center rounded border ${
+                      index < cartCount
+                        ? 'border-[#7fe3ff]/60 bg-[#7fe3ff]/20 text-[#b9f4ff]'
+                        : 'border-white/10 bg-white/[0.03] text-[#3d6f95]'
+                    }`}
+                  >
+                    {index < cartCount ? (
+                      <Package className="h-2.5 w-2.5" aria-hidden="true" />
+                    ) : (
+                      <span className="text-[7px] font-semibold">{index + 1}</span>
+                    )}
+                  </span>
+                ))}
+              </div>
+              {cartIsFull && (
+                <p className="mt-1.5 text-[7px] font-semibold uppercase tracking-[0.14em] text-[#ffd79a]">
+                  Cart full · unload at the hologram
+                </p>
+              )}
+            </div>
+            <p className="mt-2 text-[8px] font-semibold uppercase leading-relaxed tracking-[0.18em] text-[#9cd8f2]">
+              {missionStageLabel}
+            </p>
+            {hologramConverted && !launched && !hologramDisappeared && (
+              <p className="mt-1 text-[8px] font-semibold uppercase tracking-[0.16em] text-[#5ee7ff]">
+                Hologram materialised
+              </p>
+            )}
+
+            {launchUnlocked ? (
+              <div className="mt-3 space-y-1.5">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!isInFiringRoom) {
+                      doorHolderRef.current?.teleportToFiringRoom();
+                    } else if (isEmergencyActive) {
+                      gameAudio.playClick();
+                      callbacksRef.current.onOpenTask3?.();
+                    } else if (!launchReady) {
+                      showMissionToast('Complete Task 1 first', 'warn');
+                    } else if (firingRoomLaunchState === 'standby') {
+                      gameAudio.playClick();
+                      handleStartLaunchSequence();
+                    } else {
+                      onOpenTask2?.();
+                    }
+                  }}
+                  title={isInFiringRoom && !launchReady ? 'Complete Task 1 first' : undefined}
+                  className={`group relative flex w-full items-center justify-between overflow-hidden rounded-lg border p-2 text-left transition-all active:scale-95 ${
+                    isEmergencyActive
+                      ? 'border-[#ff3b4e] bg-gradient-to-r from-[#4d0b13] via-[#75111d] to-[#4d0b13] shadow-[0_0_24px_rgba(255,59,78,0.7)] animate-pulse'
+                      : isInFiringRoom && !launchReady
+                      ? 'border-slate-700 bg-slate-900/60 opacity-60 cursor-not-allowed'
+                      : isInFiringRoom && firingRoomLaunchState === 'standby'
+                      ? 'border-[#e8c684] bg-gradient-to-r from-[#1c1810] via-[#2d2414] to-[#1c1810] shadow-[0_0_24px_rgba(232,198,132,0.45)] hover:border-[#f5d085]'
+                      : 'border-[#00f0ff] bg-gradient-to-r from-[#07243e] via-[#0c4371] to-[#07243e] shadow-[0_0_20px_rgba(0,240,255,0.4)] hover:border-[#8ef4ff]'
+                  }`}
+                >
+                  <div className="flex items-center gap-1.5">
+                    {isEmergencyActive ? (
+                      <AlertTriangle className="h-4 w-4 text-[#ff808d] animate-bounce" />
+                    ) : isInFiringRoom && !launchReady ? (
+                      <Lock className="h-4 w-4 text-slate-400" />
+                    ) : (
+                      <Rocket className="h-4 w-4 text-[#e8c684] animate-pulse" />
+                    )}
+                    <div>
+                      <span className="block text-[8.5px] font-black uppercase tracking-[0.18em] text-[#dcf9ff]">
+                        {isEmergencyActive
+                          ? 'WARNING: HELIUM LEAK'
+                          : isInFiringRoom
+                          ? 'START LAUNCH SEQUENCE'
+                          : 'Go to launch room'}
+                      </span>
+                      <span className="block text-[6.5px] font-bold uppercase tracking-[0.14em] text-[#5ee7ff]">
+                        {isEmergencyActive
+                          ? 'Solve Task 3 · Rescue Plan'
+                          : isInFiringRoom && !launchReady
+                          ? 'PAD 36B · Locked (Complete Task 1 first)'
+                          : isInFiringRoom && firingRoomLaunchState === 'standby'
+                          ? 'PAD 36B - ATLAS-CENTAUR AC-13 - SURVEYOR 5'
+                          : isInFiringRoom && firingRoomLaunchState === 'countdown'
+                          ? 'Pad 36B · Countdown T-3'
+                          : isInFiringRoom && firingRoomLaunchState === 'launching'
+                          ? 'Pad 36B · In Flight (3D Feed)'
+                          : isInFiringRoom && firingRoomLaunchState === 'resolved'
+                          ? 'Surveyor 5 Landed'
+                          : 'Task 2 · Flight Ops'}
+                      </span>
+                    </div>
+                  </div>
+                  <ChevronRight className="h-3.5 w-3.5 text-[#00f0ff] transition-transform group-hover:translate-x-0.5" />
+                </button>
+                <div className="grid grid-cols-2 gap-1">
+                  <button
+                    type="button"
+                    onClick={() => setPartListOpen(true)}
+                    className="rounded border border-[#7fe3ff]/30 bg-[#0b2444]/60 py-1 text-[7px] font-semibold uppercase tracking-[0.12em] text-[#9cd8f2] hover:text-white"
+                  >
+                    Manifest
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (isEmergencyActive) {
+                        callbacksRef.current.onOpenTask3?.();
+                      } else if (launchUnlocked) {
+                        callbacksRef.current.onOpenTask2?.();
+                      } else {
+                        callbacksRef.current.onOpenTask?.();
+                      }
+                    }}
+                    className="rounded border border-[#7fe3ff]/30 bg-[#0b2444]/60 py-1 text-[7px] font-semibold uppercase tracking-[0.12em] text-[#9cd8f2] hover:text-white"
+                  >
+                    {isEmergencyActive ? 'Task 3' : launchUnlocked ? 'Task 2' : 'Task 1'}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="mt-3 grid grid-cols-2 gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPartListOpen(true);
+                  }}
+                  className="rounded-md border border-[#7fe3ff]/40 bg-[#0b2444]/80 px-1.5 py-1.5 text-[7px] font-semibold uppercase tracking-[0.14em] text-[#b9ecff] transition-colors hover:border-[#7fe3ff]/80 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7fe3ff]"
+                >
+                  See list
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onOpenTask?.()}
+                  className="rounded-md border border-[#7fe3ff]/40 bg-[#0b2444]/80 px-1.5 py-1.5 text-[7px] font-semibold uppercase tracking-[0.14em] text-[#b9ecff] transition-colors hover:border-[#7fe3ff]/80 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7fe3ff]"
+                >
+                  Open task page
+                </button>
+              </div>
+            )}
+            {!allPartsInstalled && (
               <button
                 type="button"
-                onClick={() => doorHolderRef.current && doorHolderRef.current.resumeFirstPerson()}
-                className="rounded-lg border border-[#7fe3ff]/35 bg-[#071426]/85 px-3 py-2 text-[9px] font-semibold uppercase tracking-[0.18em] text-[#9cd8f2] backdrop-blur-md transition-colors hover:border-[#7fe3ff]/70 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7fe3ff]"
+                onClick={handleAutoComplete}
+                className="group mt-2 flex w-full items-center justify-center gap-1.5 rounded-md border border-[#5ee7ff]/70 bg-gradient-to-r from-[#0a3560] via-[#0f4f93] to-[#0a3560] px-2 py-1.5 text-[7.5px] font-bold uppercase tracking-[0.18em] text-[#e0f7ff] shadow-[0_0_16px_rgba(94,231,255,0.25)] transition-all hover:border-[#8ef4ff] hover:text-white hover:shadow-[0_0_24px_rgba(94,231,255,0.45)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5ee7ff]"
               >
-                Resume controls
+                <CheckCircle2 className="h-3 w-3 text-[#5ee7ff] transition-transform group-hover:scale-110" aria-hidden="true" />
+                <span>Auto-Complete Task</span>
               </button>
             )}
           </div>
-          {(firstPersonMode || characterControlMode) && (
-            <div className="pointer-events-none absolute bottom-6 left-1/2 z-20 -translate-x-1/2 rounded-full border border-[#7fe3ff]/25 bg-[#071426]/80 px-4 py-2 text-center text-[8px] font-semibold uppercase tracking-[0.18em] text-[#b8d8e8] backdrop-blur-md sm:text-[9px]">
-              WASD move · {characterControlMode ? 'Drag to orbit' : '360° mouse look'} · Shift sprint · E airlock · F parts room · G firing room · Esc exit
+          <div className="absolute left-4 top-24 z-30 flex flex-wrap gap-2 sm:hidden">
+            {launchUnlocked ? (
+              <button
+                type="button"
+                onClick={() => onOpenTask2?.()}
+                className="flex items-center gap-1.5 rounded-lg border border-[#00f0ff] bg-gradient-to-r from-[#08294a] to-[#0e487f] px-3 py-2 text-[9px] font-bold uppercase tracking-[0.16em] text-[#e6faff] shadow-[0_0_18px_rgba(0,240,255,0.4)]"
+              >
+                <Rocket className="h-3.5 w-3.5 text-[#00f0ff]" />
+                Go to launch room
+              </button>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setPartListOpen(true)}
+                  className="rounded-lg border border-[#7fe3ff]/40 bg-[#071426]/85 px-3 py-2 text-[9px] font-semibold uppercase tracking-[0.18em] text-[#9cd8f2] backdrop-blur-md transition-colors hover:border-[#7fe3ff]/80 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7fe3ff]"
+                >
+                  See list
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (isEmergencyActive) {
+                      callbacksRef.current.onOpenTask3?.();
+                    } else if (launchUnlocked) {
+                      callbacksRef.current.onOpenTask2?.();
+                    } else {
+                      callbacksRef.current.onOpenTask?.();
+                    }
+                  }}
+                  className="rounded-lg border border-[#7fe3ff]/40 bg-[#071426]/85 px-3 py-2 text-[9px] font-semibold uppercase tracking-[0.18em] text-[#9cd8f2] backdrop-blur-md transition-colors hover:border-[#7fe3ff]/80 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7fe3ff]"
+                >
+                  {isEmergencyActive ? 'Task 3' : launchUnlocked ? 'Task 2' : 'Task'}
+                </button>
+              </>
+            )}
+            {!allPartsInstalled && (
+              <button
+                type="button"
+                onClick={handleAutoComplete}
+                className="rounded-lg border border-[#5ee7ff]/70 bg-gradient-to-r from-[#0a3560] to-[#0f4f93] px-3 py-2 text-[9px] font-bold uppercase tracking-[0.18em] text-[#e0f7ff] backdrop-blur-md transition-all hover:border-[#8ef4ff] hover:text-white"
+              >
+                Auto-Complete
+              </button>
+            )}
+          </div>
+
+          {missionToast && (
+            <div
+              className={`pointer-events-none absolute bottom-24 left-1/2 z-40 max-w-[92%] -translate-x-1/2 animate-fade-in rounded-lg border px-4 py-2 text-center text-[9px] font-semibold uppercase tracking-[0.18em] shadow-[0_0_28px_rgba(61,107,255,0.22)] backdrop-blur-md ${toastToneClass}`}
+              role="status"
+            >
+              {missionToast.message}
+            </div>
+          )}
+
+          {/* ── First-Person Mode HUD Button ── */}
+          <button
+            type="button"
+            title={isFirstPerson ? 'Exit first-person mode (V / F)' : 'Enter first-person mode (V / F)'}
+            onClick={() => doorHolderRef.current?.toggleFirstPerson()}
+            className={`absolute bottom-6 right-4 z-30 flex items-center gap-1.5 rounded-full border px-3 py-2 text-[8px] font-bold uppercase tracking-[0.2em] backdrop-blur-md shadow-lg transition-all duration-300 active:scale-95 ${
+              isFirstPerson
+                ? 'border-[#5ee7ff] bg-[#071e36]/95 text-[#5ee7ff] shadow-[0_0_20px_rgba(94,231,255,0.45)] hover:border-[#9ef5ff] hover:shadow-[0_0_30px_rgba(94,231,255,0.65)]'
+                : 'border-[#7fe3ff]/40 bg-[#071426]/90 text-[#9cd8f2] shadow-[0_0_12px_rgba(61,107,255,0.18)] hover:border-[#7fe3ff]/80 hover:text-white hover:shadow-[0_0_22px_rgba(94,231,255,0.35)]'
+            }`}
+          >
+            {isFirstPerson ? (
+              <EyeOff className="h-3.5 w-3.5 shrink-0" />
+            ) : (
+              <Eye className="h-3.5 w-3.5 shrink-0" />
+            )}
+            <span>{isFirstPerson ? 'Exit FP' : 'First Person'}</span>
+            <kbd className="ml-0.5 rounded bg-white/10 px-1.5 py-0.5 text-[7px] font-mono text-[#7fe3ff]">V</kbd>
+          </button>
+
+          {partListOpen && (
+            <div
+              className="absolute inset-0 z-[55] flex items-center justify-center bg-[#02060d]/80 p-3 backdrop-blur-sm sm:p-6"
+              role="presentation"
+              onClick={(event) => {
+                if (event.target === event.currentTarget) setPartListOpen(false);
+              }}
+            >
+              <div
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="surveyor5-parts-title"
+                className="relative flex max-h-[86vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-[#7fe3ff]/40 bg-[#04101f]/[0.98] shadow-[0_24px_90px_rgba(0,0,0,0.7)]"
+              >
+                <div className="flex items-start justify-between gap-3 border-b border-[#3b82f6]/30 bg-[#061b33]/85 px-4 py-3 sm:px-5">
+                  <div className="min-w-0">
+                    <p className="flex items-center gap-2 text-[8px] font-bold uppercase tracking-[0.28em] text-[#7fe3ff]">
+                      <ListChecks className="h-3.5 w-3.5" aria-hidden="true" />
+                      Surveyor 5 · Flight manifest
+                    </p>
+                    <h3
+                      id="surveyor5-parts-title"
+                      className="mt-1 text-lg font-semibold uppercase tracking-[0.14em] text-[#e6fbff] sm:text-xl"
+                    >
+                      Mission parts list
+                    </h3>
+                    <p className="mt-1 text-[8px] font-semibold uppercase tracking-[0.2em] text-[#4f8cab]">
+                      {installedCount} / {SURVEYOR5_MANIFEST_TOTAL} crossed off · Cart {cartCount} / {cartLimit}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setPartListOpen(false)}
+                    aria-label="Close parts list"
+                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/15 bg-white/5 text-[#bcd0e2] transition-colors hover:border-[#7fe3ff]/60 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7fe3ff]"
+                  >
+                    <X className="h-4 w-4" aria-hidden="true" />
+                  </button>
+                </div>
+
+                <div className="min-h-0 flex-1 space-y-2 overflow-y-auto px-3 py-3 sm:px-4">
+                  {SURVEYOR5_MANIFEST.map((part, index) => {
+                    const isInstalled = collectedIdSet.has(part.id);
+                    const isInCart = cartIdSet.has(part.id);
+                    return (
+                      <div
+                        key={part.id}
+                        className={`flex items-start gap-2.5 rounded-lg border px-2.5 py-2 ${
+                          isInstalled
+                            ? 'border-[#5ee7ff]/35 bg-[#5ee7ff]/[0.06]'
+                            : isInCart
+                              ? 'border-[#ffc36b]/35 bg-[#2a1c06]/25'
+                              : 'border-[#285a82]/35 bg-[#041527]/65'
+                        }`}
+                      >
+                        <span
+                          className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border ${
+                            isInstalled
+                              ? 'border-[#7fe3ff]/70 bg-[#7fe3ff]/15 text-[#9df0ff]'
+                              : isInCart
+                                ? 'border-[#ffc36b]/60 bg-[#ffc36b]/10 text-[#ffd79a]'
+                                : 'border-[#3d6f95]/50 text-[#3d6f95]'
+                          }`}
+                        >
+                          {isInstalled ? (
+                            <Check className="h-3 w-3" aria-hidden="true" />
+                          ) : isInCart ? (
+                            <Package className="h-3 w-3" aria-hidden="true" />
+                          ) : (
+                            <span className="text-[8px] font-semibold">{index + 1}</span>
+                          )}
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-start justify-between gap-2">
+                            <p
+                              className={`text-[10px] font-semibold uppercase leading-relaxed tracking-[0.08em] sm:text-[11px] ${
+                                isInstalled
+                                  ? 'text-[#6fb9cf] line-through decoration-[#7fe3ff]/80 decoration-2'
+                                  : isInCart
+                                    ? 'text-[#ffd79a]'
+                                    : 'text-[#d7edf7]'
+                              }`}
+                            >
+                              {part.name}
+                            </p>
+                            <span
+                              className={`shrink-0 text-[7px] font-bold uppercase tracking-[0.14em] ${
+                                isInstalled
+                                  ? 'text-[#7fe3ff]'
+                                  : isInCart
+                                    ? 'text-[#ffd79a]'
+                                    : 'text-[#397597]'
+                              }`}
+                            >
+                              {isInstalled ? 'Crossed off' : isInCart ? 'In cart' : 'Missing'}
+                            </span>
+                          </div>
+                          <p className="mt-0.5 text-[7px] font-semibold uppercase tracking-[0.18em] text-[#4f8cab]">
+                            {part.category}
+                          </p>
+                          <p
+                            className={`mt-1 text-[10px] leading-relaxed ${
+                              isInstalled ? 'text-[#5f8ea4]' : 'text-[#9db8c8]'
+                            }`}
+                          >
+                            {part.description}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
+
+                  {cartIds.length > 0 && (
+                    <div className="mt-3 rounded-lg border border-[#ffc36b]/30 bg-[#2a1c06]/25 px-3 py-2.5">
+                      <p className="flex items-center justify-between gap-2 text-[8px] font-bold uppercase tracking-[0.22em] text-[#ffd79a]">
+                        <span className="inline-flex items-center gap-1.5">
+                          <ClipboardList className="h-3 w-3" aria-hidden="true" />
+                          Cart verification
+                        </span>
+                        <span>
+                          {cartCount} / {cartLimit}
+                        </span>
+                      </p>
+                      <div className="mt-2 space-y-1">
+                        {cartIds.map((id) => {
+                          const part = componentById.get(id);
+                          const belongs = manifestIds.includes(id);
+                          return (
+                            <div
+                              key={id}
+                              className="flex items-center justify-between gap-2 rounded border border-white/10 bg-black/20 px-2 py-1.5"
+                            >
+                              <span className="min-w-0 truncate text-[9px] font-semibold uppercase tracking-[0.08em] text-[#d7edf7]">
+                                {part?.name ?? id}
+                              </span>
+                              <span
+                                className={`inline-flex shrink-0 items-center gap-1 text-[7px] font-bold uppercase tracking-[0.14em] ${
+                                  belongs ? 'text-[#7fe3ff]' : 'text-[#ffb15e]'
+                                }`}
+                              >
+                                {belongs ? (
+                                  <Check className="h-2.5 w-2.5" aria-hidden="true" />
+                                ) : (
+                                  <AlertTriangle className="h-2.5 w-2.5" aria-hidden="true" />
+                                )}
+                                {belongs ? 'Surveyor 5 part' : 'Not on manifest'}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                      {cartIsFull && !hologramConverted && (
+                        <button
+                          type="button"
+                          onClick={handleAssemble}
+                          className="mt-2.5 flex w-full items-center justify-center gap-2 rounded-md border border-[#7fe3ff]/60 bg-gradient-to-r from-[#0b3f83] via-[#0d4c9a] to-[#0b356d] px-3 py-2 text-[8px] font-bold uppercase tracking-[0.2em] text-white transition-all hover:border-[#a8f0ff] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7fe3ff]"
+                        >
+                          <Wrench className="h-3.5 w-3.5 text-[#9df0ff]" aria-hidden="true" />
+                          Assemble parts
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex flex-wrap items-center justify-between gap-2 border-t border-[#3b82f6]/30 bg-[#06172b]/90 px-3 py-2.5 sm:px-4">
+                  <button
+                    type="button"
+                    onClick={() => setPartListOpen(false)}
+                    className="rounded-md border border-white/15 bg-white/5 px-3 py-2 text-[8px] font-semibold uppercase tracking-[0.18em] text-[#bcd0e2] transition-colors hover:border-[#7fe3ff]/60 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7fe3ff]"
+                  >
+                    Close list
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPartListOpen(false);
+                      onOpenTask?.();
+                    }}
+                    className="inline-flex items-center gap-1.5 rounded-md border border-[#7fe3ff]/50 bg-[#0b2444]/80 px-3 py-2 text-[8px] font-semibold uppercase tracking-[0.18em] text-[#b9ecff] transition-colors hover:border-[#7fe3ff]/90 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7fe3ff]"
+                  >
+                    <ClipboardList className="h-3 w-3" aria-hidden="true" />
+                    Open task page
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {assemblyResult && (
+            <div
+              className="absolute inset-0 z-[56] flex items-center justify-center bg-[#02060d]/82 p-3 backdrop-blur-sm sm:p-6"
+              role="presentation"
+              onClick={(event) => {
+                if (event.target === event.currentTarget) setAssemblyResult(null);
+              }}
+            >
+              <div
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="assembly-result-title"
+                className="relative flex max-h-[86vh] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-[#7fe3ff]/40 bg-[#04101f]/[0.98] shadow-[0_24px_90px_rgba(0,0,0,0.72)]"
+              >
+                <div className="flex items-start justify-between gap-3 border-b border-[#3b82f6]/30 bg-[#061b33]/85 px-4 py-3 sm:px-5">
+                  <div>
+                    <p className="flex items-center gap-2 text-[8px] font-bold uppercase tracking-[0.28em] text-[#7fe3ff]">
+                      <Wrench className="h-3.5 w-3.5" aria-hidden="true" />
+                      Hologram assembly check
+                    </p>
+                    <h3
+                      id="assembly-result-title"
+                      className="mt-1 text-lg font-semibold uppercase tracking-[0.12em] text-[#e6fbff]"
+                    >
+                      {assemblyResult.manifestComplete ? 'Manifest complete' : 'Verification report'}
+                    </h3>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setAssemblyResult(null)}
+                    aria-label="Close assembly report"
+                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/15 bg-white/5 text-[#bcd0e2] transition-colors hover:border-[#7fe3ff]/60 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7fe3ff]"
+                  >
+                    <X className="h-4 w-4" aria-hidden="true" />
+                  </button>
+                </div>
+
+                <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-4 sm:px-5">
+                  <div className="grid grid-cols-3 gap-2 text-center">
+                    {[
+                      { label: 'Verified', value: assemblyResult.installed, tone: 'text-[#7fe3ff]' },
+                      { label: 'Returned', value: assemblyResult.rejected, tone: 'text-[#ffb15e]' },
+                      { label: 'Still missing', value: assemblyResult.remaining, tone: 'text-[#9db8c8]' },
+                    ].map((stat) => (
+                      <div
+                        key={stat.label}
+                        className="rounded-lg border border-white/10 bg-[#03101f]/80 px-2 py-2"
+                      >
+                        <p className={`text-lg font-semibold leading-none ${stat.tone}`}>
+                          {stat.value}
+                        </p>
+                        <p className="mt-1 text-[7px] font-bold uppercase tracking-[0.16em] text-[#4f8cab]">
+                          {stat.label}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+
+                  {(assemblyResult.installedParts ?? []).length > 0 && (
+                    <div className="rounded-lg border border-[#5ee7ff]/30 bg-[#5ee7ff]/[0.05] px-3 py-2.5">
+                      <p className="flex items-center gap-2 text-[8px] font-bold uppercase tracking-[0.2em] text-[#9df0ff]">
+                        <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" />
+                        Installed · crossed off the manifest
+                      </p>
+                      <div className="mt-2 space-y-1">
+                        {(assemblyResult.installedParts ?? []).map((part) => (
+                          <div key={part.id} className="flex items-center gap-2">
+                            <Check className="h-3 w-3 shrink-0 text-[#7fe3ff]" aria-hidden="true" />
+                            <span className="min-w-0 flex-1 truncate text-[10px] font-semibold uppercase tracking-[0.08em] text-[#7fb9cd] line-through decoration-[#7fe3ff]/80 decoration-2">
+                              {part.name}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {(assemblyResult.rejectedParts ?? []).length > 0 && (
+                    <div className="rounded-lg border border-[#ffc36b]/35 bg-[#2a1c06]/30 px-3 py-2.5">
+                      <p className="flex items-center gap-2 text-[8px] font-bold uppercase tracking-[0.2em] text-[#ffd79a]">
+                        <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
+                        Returned to the storage room
+                      </p>
+                      <div className="mt-2 space-y-1">
+                        {(assemblyResult.rejectedParts ?? []).map((part) => (
+                          <div key={part.id} className="flex items-start gap-2">
+                            <XCircle className="mt-0.5 h-3 w-3 shrink-0 text-[#ffb15e]" aria-hidden="true" />
+                            <span className="min-w-0 flex-1 text-[10px] leading-relaxed text-[#e8c89a]">
+                              {part.name}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                      <p className="mt-2 text-[8px] font-semibold uppercase tracking-[0.14em] text-[#bf9a68]">
+                        These parts do not belong on Surveyor 5 and are back on the shelves.
+                      </p>
+                    </div>
+                  )}
+
+                  {assemblyResult.installed === 0 && assemblyResult.rejected === 0 && (
+                    <p className="rounded-lg border border-white/10 bg-white/[0.03] px-3 py-3 text-center text-[10px] font-semibold uppercase tracking-[0.16em] text-[#9db8c8]">
+                      No parts were verified from this cart load.
+                    </p>
+                  )}
+
+                  <p className="text-center text-[8px] font-semibold uppercase leading-relaxed tracking-[0.18em] text-[#5fb9e0]">
+                    {assemblyResult.manifestComplete
+                      ? 'All 15 parts verified — Surveyor 5 is materialising.'
+                      : `${assemblyResult.remaining} manifest part${assemblyResult.remaining === 1 ? '' : 's'} still missing.`}
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap items-center justify-end gap-2 border-t border-[#3b82f6]/30 bg-[#06172b]/90 px-3 py-2.5 sm:px-4">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAssemblyResult(null);
+                      setPartListOpen(true);
+                    }}
+                    className="inline-flex items-center gap-1.5 rounded-md border border-[#7fe3ff]/45 bg-[#0b2444]/80 px-3 py-2 text-[8px] font-semibold uppercase tracking-[0.18em] text-[#b9ecff] transition-colors hover:border-[#7fe3ff]/90 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7fe3ff]"
+                  >
+                    <ListChecks className="h-3 w-3" aria-hidden="true" />
+                    See updated list
+                  </button>
+                  <button
+                    type="button"
+                    autoFocus
+                    onClick={() => setAssemblyResult(null)}
+                    className="rounded-md border border-[#7fe3ff]/60 bg-gradient-to-r from-[#0b3f83] via-[#0d4c9a] to-[#0b356d] px-4 py-2 text-[8px] font-bold uppercase tracking-[0.2em] text-white transition-all hover:border-[#a8f0ff] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7fe3ff]"
+                  >
+                    Continue
+                  </button>
+                </div>
+              </div>
             </div>
           )}
 
@@ -1026,9 +2422,6 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer({ clas
                     >
                       Storage Room · Part Inventory
                     </p>
-                    <p className="mt-1 text-[9px] font-semibold uppercase tracking-[0.22em] text-[#91aabd]">
-                      {selectedComponent.missionName} · {selectedComponent.missionEra}
-                    </p>
                   </div>
                   <button
                     type="button"
@@ -1042,16 +2435,6 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer({ clas
 
                 <div className="px-5 py-5 sm:px-6 sm:py-6">
                   <div className="mb-3 flex flex-wrap items-center gap-2">
-                    <span
-                      className="rounded-full border px-2.5 py-1 text-[8px] font-semibold uppercase tracking-[0.2em]"
-                      style={{
-                        borderColor: `${selectedComponent.accent}55`,
-                        backgroundColor: selectedComponent.accentSoft,
-                        color: selectedComponent.accent,
-                      }}
-                    >
-                      {selectedComponent.missionCode}
-                    </span>
                     <span className="rounded-full border border-white/10 bg-white/[0.035] px-2.5 py-1 text-[8px] font-semibold uppercase tracking-[0.2em] text-[#9db5c8]">
                       {selectedComponent.category}
                     </span>
@@ -1068,17 +2451,93 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer({ clas
                   </p>
                 </div>
 
-                <div className="flex flex-col gap-2 border-t border-white/10 bg-white/[0.025] px-5 py-3 text-[8px] font-semibold uppercase tracking-[0.22em] text-[#7f9bb0] sm:flex-row sm:items-center sm:justify-between sm:px-6">
-                  <span className="inline-flex items-center gap-2">
-                    <MousePointerClick className="h-3.5 w-3.5 text-[#7fe3ff]" aria-hidden="true" />
-                    Click a sprite to inspect it
-                  </span>
-                  <span>50 catalogued components</span>
+                <div className="border-t border-white/10 bg-white/[0.025] px-5 py-4 sm:px-6">
+                  {collectedIdSet.has(selectedComponent.id) ? (
+                    <div className="flex items-center gap-2 rounded-lg border border-[#5ee7ff]/30 bg-[#5ee7ff]/[0.06] px-3 py-2 text-[9px] font-semibold uppercase tracking-[0.2em] text-[#9df0ff]">
+                      <CheckCircle2 className="h-4 w-4 shrink-0" aria-hidden="true" />
+                      Installed on Surveyor 5
+                    </div>
+                  ) : cartIdSet.has(selectedComponent.id) ? (
+                    <div className="flex items-center gap-2 rounded-lg border border-[#7fe3ff]/35 bg-[#0b2444]/70 px-3 py-2 text-[9px] font-semibold uppercase tracking-[0.2em] text-[#b9ecff]">
+                      <Package className="h-4 w-4 shrink-0" aria-hidden="true" />
+                      In cart · {cartCount} / {cartLimit} · unload at the hologram
+                    </div>
+                  ) : cartIsFull ? (
+                    <div className="flex items-start gap-2 rounded-lg border border-[#ffc36b]/35 bg-[#2a1c06]/45 px-3 py-2 text-[9px] leading-relaxed text-[#ffd79a]">
+                      <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-[#ffc36b]" aria-hidden="true" />
+                      <span>
+                        <span className="block font-semibold uppercase tracking-[0.18em]">
+                          Cart full · {cartLimit} / {cartLimit}
+                        </span>
+                        Unload your cart at the central hologram before collecting more parts.
+                      </span>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onCollectPart?.(selectedComponent);
+                        showMissionToast(
+                          `${selectedComponent.name} added to cart — ${cartCount + 1} / ${cartLimit} slots used.`,
+                          'success',
+                        );
+                        setSelectedComponent(null);
+                      }}
+                      className="group flex w-full items-center justify-between gap-3 rounded-lg border border-[#7fe3ff]/60 bg-gradient-to-r from-[#0b3f83] via-[#0d4c9a] to-[#0b356d] px-4 py-2.5 text-left shadow-[0_0_24px_rgba(47,123,255,0.28)] transition-all hover:border-[#a8f0ff] hover:shadow-[0_0_32px_rgba(94,231,255,0.4)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7fe3ff]"
+                    >
+                      <span className="min-w-0">
+                        <span className="block text-[10px] font-bold uppercase tracking-[0.22em] text-white">
+                          Collect part · Add to cart
+                        </span>
+                        <span className="mt-0.5 block text-[8px] font-semibold uppercase tracking-[0.18em] text-[#9fe0f5]">
+                          Cart {cartCount} / {cartLimit} · {remainingParts} manifest part
+                          {remainingParts === 1 ? '' : 's'} left
+                        </span>
+                      </span>
+                      <PackageCheck
+                        className="h-5 w-5 shrink-0 text-[#9df0ff] transition-transform group-hover:scale-110"
+                        aria-hidden="true"
+                      />
+                    </button>
+                  )}
+
+                  <p className="mt-2 flex items-center justify-between gap-2 text-[8px] font-semibold uppercase tracking-[0.22em] text-[#7f9bb0]">
+                    <span className="inline-flex items-center gap-1.5">
+                      <MousePointerClick className="h-3.5 w-3.5 text-[#7fe3ff]" aria-hidden="true" />
+                      Click a sprite to inspect it
+                    </span>
+                    <span>50 catalogued components</span>
+                  </p>
                 </div>
               </div>
             </div>
           )}
         </>
+      )}
+
+      {/* 3D Video Texture Screen in Firing Room */}
+      <FiringRoomScreen
+        ref={firingRoomScreenRef}
+        onVideoTextureReady={handleVideoTextureReady}
+        onEmergencyAtHeliumT={handleEmergencyAtHeliumT}
+        onSegmentEnd={handleVideoSegmentEnd}
+      />
+
+      {/* Short on-screen countdown (3-2-1) before Part 2 starts */}
+      {countdownNumber !== null && (
+        <div className="pointer-events-none absolute inset-0 z-40 flex flex-col items-center justify-center bg-black/45 backdrop-blur-[2px] animate-fade-in select-none">
+          <div className="relative flex flex-col items-center">
+            <span className="text-[11px] sm:text-xs font-bold uppercase tracking-[0.32em] text-[#00f0ff] mb-2 drop-shadow-[0_0_10px_#00f0ff]">
+              LAUNCH SEQUENCE INITIATED
+            </span>
+            <div className="text-6xl sm:text-8xl font-black font-mono text-white tracking-widest drop-shadow-[0_0_30px_#00f0ff] animate-pulse">
+              {countdownNumber}
+            </div>
+            <span className="mt-2 text-[9px] font-semibold uppercase tracking-[0.2em] text-[#8ef4ff]">
+              Atlas-Centaur AC-13 · Pad 36B
+            </span>
+          </div>
+        </div>
       )}
     </div>
   );

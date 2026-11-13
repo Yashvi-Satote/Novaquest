@@ -6,6 +6,8 @@
  * ``credentials: 'include'``.  The JWT is never written to localStorage.
  */
 
+import { trackedFetch } from '../../Shared/services/apiActivity.js';
+
 const API_BASE = '/api/novauser';
 const REQUEST_TIMEOUT_MS = 10000;
 
@@ -25,7 +27,7 @@ async function request(path, { method = 'GET', body } = {}) {
   let response;
 
   try {
-    response = await fetch(`${API_BASE}${path}`, {
+    response = await trackedFetch(`${API_BASE}${path}`, {
       method,
       credentials: 'include',
       signal: controller.signal,

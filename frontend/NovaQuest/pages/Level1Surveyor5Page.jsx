@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import * as THREE from 'three';
 import {
@@ -15,7 +15,8 @@ import {
   ArrowRight,
   Eye,
   Wrench,
-  Zap
+  Zap,
+  Building2,
 } from 'lucide-react';
 import { createAstronautCharacter } from '../components/gameplay/three/AstronautCharacterModel';
 import { createHumanAstronaut } from '../components/gameplay/three/HumanAstronautModel';
@@ -29,6 +30,106 @@ import { gameAudio } from '../config/gameAudio';
 import { USE_OLD_LUNAR_MAP } from '../config/lunarMapConfig';
 import { saveGame } from '../game/saveManager';
 import OldLunarMapPage from './OldLunarMapPage';
+import NasaHeadquartersModal from '../nasa-headquarters/NasaHeadquartersModal';
+
+const INTRO_SESSION_KEY = 'novaquest-level1-intro-seen';
+const INTRO_720P_SRC = '/videos/intro_720p_optimized.mp4';
+const INTRO_480P_SRC = '/videos/intro_480p_light.mp4';
+const INTRO_POSTER_SRC = '/videos/intro-poster.jpg';
+let introSeenInMemory = false;
+
+function shouldUseLiteIntro() {
+  if (typeof window === 'undefined' || typeof navigator === 'undefined') return false;
+
+  const connection = navigator.connection;
+  const isSlowConnection = connection?.saveData
+    || ['slow-2g', '2g', '3g'].includes(connection?.effectiveType);
+  const isSmallScreen = typeof window.matchMedia === 'function'
+    && window.matchMedia('(max-width: 640px)').matches;
+
+  return isSmallScreen || isSlowConnection;
+}
+
+function getInitialOpeningStage() {
+  if (typeof window === 'undefined') return 'complete';
+  if (typeof window.matchMedia === 'function'
+    && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    return 'complete';
+  }
+
+  try {
+    introSeenInMemory = window.sessionStorage.getItem(INTRO_SESSION_KEY) === 'true';
+    return introSeenInMemory ? 'complete' : 'video';
+  } catch (error) {
+    console.warn('Could not read the Level 1 intro session state.', error);
+    return introSeenInMemory ? 'complete' : 'video';
+  }
+}
+
+const IntroVideoPlayer = memo(function IntroVideoPlayer({
+  canPlayThrough,
+  isFading,
+  isVisible,
+  isAutoplayBlocked,
+  preferLite,
+  onEnded,
+  onError,
+  onCanPlayThrough,
+  onTransitionEnd,
+  onPlayWithSound,
+  onSkip,
+  videoRef
+}) {
+  return (
+    <div
+      className={`fixed inset-0 z-[100] overflow-hidden bg-[#070b14] transition-opacity duration-500 ease-out ${
+        isFading ? 'opacity-0' : 'opacity-100'
+      }`}
+      style={{ willChange: 'opacity' }}
+      onTransitionEnd={onTransitionEnd}
+    >
+      <img
+        src={INTRO_POSTER_SRC}
+        alt=""
+        aria-hidden="true"
+        className="absolute inset-0 h-full w-full object-cover"
+      />
+      <video
+        ref={videoRef}
+        autoPlay={canPlayThrough}
+        muted={false}
+        playsInline
+        preload="auto"
+        poster={INTRO_POSTER_SRC}
+        onCanPlayThrough={onCanPlayThrough}
+        onEnded={onEnded}
+        onError={onError}
+        className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-500 ease-out ${
+          isVisible ? 'opacity-100' : 'opacity-0'
+        }`}
+      >
+        <source src={preferLite ? INTRO_480P_SRC : INTRO_720P_SRC} type="video/mp4" />
+        <source src={preferLite ? INTRO_720P_SRC : INTRO_480P_SRC} type="video/mp4" />
+      </video>
+      {isAutoplayBlocked && !isVisible && (
+        <button
+          type="button"
+          onClick={onPlayWithSound}
+          className="absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2 rounded-md bg-black/75 px-5 py-3 text-sm font-bold text-white transition-opacity hover:opacity-80"
+        >
+          Play intro with sound
+        </button>
+      )}
+      <button
+        type="button"
+        onClick={onSkip}
+        className="absolute bottom-6 right-6 z-20 rounded-md bg-black/70 px-4 py-2 text-sm font-bold text-white transition-opacity hover:opacity-80"
+      >
+        Skip
+      </button>
+    </div>
+  );
+});
 
 /**
  * Level1Surveyor5Page.jsx
@@ -40,7 +141,7 @@ import OldLunarMapPage from './OldLunarMapPage';
  *   (Golden Florida sunrise, azure blue sky dome, Atlantic ocean, open red steel lattice gantry,
  *    retracting swing arms, engine ignition, cloud punch, Atlas booster staging, Centaur RL10 burn,
  *    clamshell fairing jettison, and Surveyor 5 leg unfolding in space!)
- * - Phase 2: Post-Landing Malfunction Briefing from Dr. Leonard Jaffe
+ * - Phase 2: Post-Launch Mission Briefing from Dr. Leonard Jaffe
  * - Phase 3: Human Spacecraft Cockpit Flight & Mare Tranquillitatis Touchdown
  * - Phase 4: GTA-Style Third-Person Open-World Lunar Exploration & Component Hunt
  *   (Approved Cute Cyan Alien Astronaut Leo, 4 Physical Scattered Components, Proximity Audio Radar, Vertical Light Beams)
@@ -50,17 +151,22 @@ export default function Level1Surveyor5Page() {
   const navigate = useNavigate();
   const canvasContainerRef = useRef(null);
   const introVideoRef = useRef(null);
-  const introFadeFrameRef = useRef(null);
   const introFadeStartedRef = useRef(false);
+  const introCompletedRef = useRef(false);
+  const introPlaybackStartedRef = useRef(false);
 
   // --- Game Master Phase State ---
   // 'phase0_intro' | 'phase1_launch' | 'phase2_emergency' | 'phase3_cockpit' | 'phase4_open_world' | 'phase5_victory'
-  const [gamePhase, setGamePhase] = useState('phase0_intro');
-  const [openingStage, setOpeningStage] = useState('video');
+  const [openingStage, setOpeningStage] = useState(getInitialOpeningStage);
+  const [gamePhase, setGamePhase] = useState(() => (
+    openingStage === 'video' ? 'phase0_intro' : 'phase1_launch'
+  ));
+  const [preferLiteIntro] = useState(shouldUseLiteIntro);
+  const [canPlayThrough, setCanPlayThrough] = useState(false);
   const [hasStartedIntro, setHasStartedIntro] = useState(false);
+  const [isAutoplayBlocked, setIsAutoplayBlocked] = useState(false);
   const [isIntroVideoFading, setIsIntroVideoFading] = useState(false);
-  const [introVideoError, setIntroVideoError] = useState(false);
-  const [introPlaybackBlocked, setIntroPlaybackBlocked] = useState(false);
+  const [isHqOpen, setIsHqOpen] = useState(false);
   const isOldLunarMapActive = USE_OLD_LUNAR_MAP && gamePhase === 'phase4_open_world';
 
   // Inventory & Component Recovery Tracking
@@ -91,24 +197,6 @@ export default function Level1Surveyor5Page() {
   const installedSlotsRef = useRef(installedSlots);
   installedSlotsRef.current = installedSlots;
 
-  useEffect(() => {
-    if (openingStage !== 'date') return undefined;
-
-    const launchTimeout = window.setTimeout(() => {
-      setOpeningStage('complete');
-      phaseRef.current = 'phase1_launch';
-      setGamePhase('phase1_launch');
-    }, 3500);
-
-    return () => window.clearTimeout(launchTimeout);
-  }, [openingStage]);
-
-  useEffect(() => () => {
-    if (introFadeFrameRef.current !== null) {
-      cancelAnimationFrame(introFadeFrameRef.current);
-    }
-  }, []);
-
   // -------------------------------------------------------------
   // RADIO TEXT HELPER
   // -------------------------------------------------------------
@@ -117,52 +205,82 @@ export default function Level1Surveyor5Page() {
     if (onEnd) onEnd();
   };
 
-  const fadeOutIntro = () => {
-    if (introFadeStartedRef.current) return;
+  const completeIntro = useCallback(() => {
+    if (introCompletedRef.current) return;
+    introCompletedRef.current = true;
+    introVideoRef.current?.pause();
+    phaseRef.current = 'phase1_launch';
+    setGamePhase('phase1_launch');
+    setOpeningStage('complete');
+  }, []);
+
+  const fadeOutIntro = useCallback(() => {
+    if (introCompletedRef.current || introFadeStartedRef.current) return;
     introFadeStartedRef.current = true;
-
-    const video = introVideoRef.current;
-    const startVolume = video?.volume ?? 1;
-    const startTime = performance.now();
-    const fadeDuration = 1000;
     setIsIntroVideoFading(true);
+  }, []);
 
-    const fadeAudio = now => {
-      const progress = Math.min((now - startTime) / fadeDuration, 1);
-      if (video) video.volume = startVolume * (1 - progress);
-      if (progress < 1) {
-        introFadeFrameRef.current = requestAnimationFrame(fadeAudio);
-      } else {
-        introFadeFrameRef.current = null;
-      }
-    };
+  const handleIntroVideoCanPlayThrough = useCallback(() => {
+    const video = introVideoRef.current;
+    if (!video || introPlaybackStartedRef.current) return;
 
-    introFadeFrameRef.current = requestAnimationFrame(fadeAudio);
-  };
+    introPlaybackStartedRef.current = true;
+    setCanPlayThrough(true);
+    video.play()
+      .then(() => setHasStartedIntro(true))
+      .catch((error) => {
+        console.warn('Audible autoplay was blocked; waiting for a user gesture.', error);
+        setIsAutoplayBlocked(true);
+      });
+  }, [completeIntro]);
 
-  const startIntroVideo = () => {
+  const handlePlayIntroWithSound = useCallback(() => {
     const video = introVideoRef.current;
     if (!video) return;
 
-    introFadeStartedRef.current = false;
-    setIsIntroVideoFading(false);
     video.muted = false;
     video.volume = 1;
     video.play()
       .then(() => {
         setHasStartedIntro(true);
-        setIntroPlaybackBlocked(false);
+        setIsAutoplayBlocked(false);
       })
-      .catch(() => {
-        setIntroPlaybackBlocked(true);
+      .catch((error) => {
+        console.warn('Intro playback with sound was blocked.', error);
       });
-  };
+  }, []);
+
+  const handleIntroVideoError = useCallback((event) => {
+    const videoError = event.currentTarget.error;
+    console.error('The intro video could not be played; continuing to the game.', {
+      code: videoError?.code,
+      message: videoError?.message
+    });
+    completeIntro();
+  }, [completeIntro]);
+
+  const handleIntroVideoTransitionEnd = useCallback((event) => {
+    if (event.target === event.currentTarget && event.propertyName === 'opacity' && isIntroVideoFading) {
+      completeIntro();
+    }
+  }, [completeIntro, isIntroVideoFading]);
+
+  useEffect(() => {
+    if (openingStage !== 'video') return undefined;
+
+    introSeenInMemory = true;
+    try {
+      window.sessionStorage.setItem(INTRO_SESSION_KEY, 'true');
+    } catch (error) {
+      console.warn('Could not save the Level 1 intro session state.', error);
+    }
+  }, [openingStage]);
 
   // -------------------------------------------------------------
   // THREE.JS MASTER ENGINE
   // -------------------------------------------------------------
   useEffect(() => {
-    if (isOldLunarMapActive) return undefined;
+    if (openingStage === 'video' || isOldLunarMapActive) return undefined;
 
     const container = canvasContainerRef.current;
     if (!container) return;
@@ -474,21 +592,20 @@ export default function Level1Surveyor5Page() {
           );
           camera.lookAt(0, 22 + rocketY, 0);
         }
-        // 20.0s+: Transition to Phase 2 Emergency Alert
+        // 20.0s+: Transition to Phase 2 Mission Briefing
         else {
           setGamePhase('phase2_emergency');
           phaseTimer = 0;
-          gameAudio.playAlarm();
           playRadioMessage(
             'jaffe',
-            'Dr. Leonard Jaffe • Emergency Broadcast',
-            "Surveyor 5 landed in Mare Tranquillitatis and is waiting to be retrieved. Fly the rescue craft to the probe, recover its four missing science components, and bring Surveyor 5 back online!"
+            'Dr. Leonard Jaffe • Mission Briefing',
+            "Surveyor 5 landed in Mare Tranquillitatis and is waiting to be retrieved. Fly the spacecraft to the probe, recover its four missing science components, and bring Surveyor 5 back online!"
           );
         }
       }
 
       // =========================================================
-      // PHASE 2: EMERGENCY BRIEFING
+      // PHASE 2: MISSION BRIEFING
       // =========================================================
       else if (curPhase === 'phase2_emergency') {
         launchpadGroup.visible = false;
@@ -622,7 +739,7 @@ export default function Level1Surveyor5Page() {
         if (nearbyLost) {
           const compDef = nearbyLost.item;
           const promptObj = {
-            text: `Press [E] to Collect ${compDef.name}`,
+            text: `Click to Collect ${compDef.name}`,
             action: () => {
               gameAudio.playPickup();
               astronautHero.userData.anim.state = 'pickup';
@@ -674,7 +791,7 @@ export default function Level1Surveyor5Page() {
                 : 'Alpha-Scattering Surface Analyzer';
 
             const promptObj = {
-              text: `Press [E] to Install ${slotName}`,
+              text: `Click to Install ${slotName}`,
               action: () => {
                 gameAudio.playAttachSnap();
                 astronautHero.userData.anim.state = 'repair';
@@ -731,7 +848,7 @@ export default function Level1Surveyor5Page() {
             setInteractionPrompt(null);
           } else {
             const scanObj = {
-              text: 'Press [E] to Run Diagnostic Scan',
+              text: 'Click to Run Diagnostic Scan',
               action: () => {
                 gameAudio.playScanner();
                 playRadioMessage(
@@ -749,11 +866,6 @@ export default function Level1Surveyor5Page() {
           setInteractionPrompt(null);
         }
 
-        // Handle physical [E] key trigger with reliable ref check
-        if (controller.keys.e && activeInteractionRef.current) {
-          controller.keys.e = false;
-          activeInteractionRef.current.action();
-        }
       }
 
       renderer.render(scene, camera);
@@ -801,7 +913,7 @@ export default function Level1Surveyor5Page() {
       renderer.dispose();
       renderer.forceContextLoss();
     };
-  }, [isOldLunarMapActive]);
+  }, [openingStage, isOldLunarMapActive]);
 
   // Reference for test / debug mission completion
   useEffect(() => {
@@ -824,7 +936,7 @@ export default function Level1Surveyor5Page() {
     playRadioMessage(
       'jaffe',
       'Dr. Leonard Jaffe • Mission Control',
-      "Surveyor 5 is waiting at Mare Tranquillitatis! Pilot the rescue craft to the probe, locate its four science components, and bring Surveyor 5 back online!"
+      "Surveyor 5 is waiting at Mare Tranquillitatis! Pilot the spacecraft to the probe, locate its four science components, and bring Surveyor 5 back online!"
     );
   };
 
@@ -835,89 +947,30 @@ export default function Level1Surveyor5Page() {
     setInstalledSlots([]);
   };
 
+  if (openingStage === 'video') {
+    return (
+      <IntroVideoPlayer
+        videoRef={introVideoRef}
+        canPlayThrough={canPlayThrough}
+        isFading={isIntroVideoFading}
+        isVisible={hasStartedIntro}
+        isAutoplayBlocked={isAutoplayBlocked}
+        preferLite={preferLiteIntro}
+        onCanPlayThrough={handleIntroVideoCanPlayThrough}
+        onEnded={fadeOutIntro}
+        onError={handleIntroVideoError}
+        onTransitionEnd={handleIntroVideoTransitionEnd}
+        onPlayWithSound={handlePlayIntroWithSound}
+        onSkip={fadeOutIntro}
+      />
+    );
+  }
+
   return (
     <>
     <div className={`relative w-screen h-screen overflow-hidden bg-slate-950 font-sans text-slate-100 select-none${USE_OLD_LUNAR_MAP && gamePhase === 'phase4_open_world' ? ' hidden' : ''}`}>
       {/* Master 3D Viewport */}
       <div ref={canvasContainerRef} className="w-full h-full cursor-crosshair" />
-
-      {openingStage === 'video' && (
-        <div className="absolute inset-0 z-50 overflow-hidden bg-black">
-          <video
-            ref={introVideoRef}
-            playsInline
-            preload="metadata"
-            src="/videos/milky-way-intro.mp4"
-            onEnded={fadeOutIntro}
-            onError={() => setIntroVideoError(true)}
-            onTransitionEnd={event => {
-              if (event.propertyName === 'opacity' && isIntroVideoFading) {
-                introVideoRef.current?.pause();
-                setOpeningStage('date');
-              }
-            }}
-            className={`h-full w-full object-cover transition-opacity duration-1000 ease-in-out ${
-              isIntroVideoFading ? 'opacity-0' : 'opacity-100'
-            }`}
-          />
-          {!hasStartedIntro && !introVideoError && (
-            <button
-              type="button"
-              onClick={startIntroVideo}
-              className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-black/50 text-white transition hover:bg-black/35"
-            >
-              <span className="flex h-20 w-20 items-center justify-center rounded-full border border-white/60 bg-white/10 text-3xl backdrop-blur">
-                ▶
-              </span>
-              <span className="text-sm font-bold uppercase tracking-[0.3em]">
-                Play intro with sound
-              </span>
-              {introPlaybackBlocked && (
-                <span className="text-sm text-red-200">
-                  Playback was blocked. Click to try again.
-                </span>
-              )}
-            </button>
-          )}
-          {introVideoError && (
-            <div className="absolute inset-x-0 bottom-20 mx-auto w-fit rounded-xl border border-red-400/40 bg-slate-950/90 px-5 py-3 text-center text-sm text-red-200">
-              <p>The intro video could not be played.</p>
-              <button
-                type="button"
-                onClick={fadeOutIntro}
-                className="mt-2 font-bold text-white underline underline-offset-4"
-              >
-                Continue to launch
-              </button>
-            </div>
-          )}
-          {hasStartedIntro && !introVideoError && (
-            <button
-              type="button"
-              onClick={fadeOutIntro}
-              className="absolute bottom-8 right-8 rounded-full border border-white/30 bg-black/50 px-5 py-2 text-sm font-bold text-white/80 backdrop-blur transition hover:bg-black/80 hover:text-white"
-            >
-              Skip intro
-            </button>
-          )}
-        </div>
-      )}
-
-      {openingStage === 'date' && (
-        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black animate-fade-in">
-          <div className="text-center">
-            <p className="mb-4 text-xs font-semibold uppercase tracking-[0.5em] text-slate-400">
-              Cape Canaveral • Earth
-            </p>
-            <h2 className="text-4xl font-light tracking-[0.28em] text-white sm:text-6xl">
-              29 JUNE 2126
-            </h2>
-            <p className="mt-5 text-sm uppercase tracking-[0.35em] text-sky-300">
-              Lunar Transfer Mission
-            </p>
-          </div>
-        </div>
-      )}
 
       {/* ----------------------------------------------------------- */}
       {/* TOP HUD BAR: Mission Status, Radar, Inventory, Skip Controls */}
@@ -969,6 +1022,19 @@ export default function Level1Surveyor5Page() {
 
         {/* Right: Suit Switcher & Exit Controls */}
         <div className="flex items-center gap-2 pointer-events-auto">
+          <button
+            id="open-hq-btn"
+            onClick={() => {
+              gameAudio.playClick?.();
+              setIsHqOpen(true);
+            }}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-cyan-600/90 to-blue-700/90 hover:from-cyan-500 hover:to-blue-600 backdrop-blur-md text-white rounded-2xl border border-cyan-400/50 text-xs font-black shadow-lg shadow-cyan-500/25 active:scale-95 transition-all cursor-pointer"
+            title="Open NASA Headquarters & Firing Room"
+          >
+            <Building2 className="w-3.5 h-3.5" />
+            <span>NASA HQ</span>
+          </button>
+
           {gamePhase === 'phase4_open_world' && (
             <button
               id="suit-switch-btn"
@@ -1001,28 +1067,28 @@ export default function Level1Surveyor5Page() {
       </div>
 
       {/* ----------------------------------------------------------- */}
-      {/* PHASE 2 OVERLAY: EMERGENCY ALERT & MISSION BRIEFING         */}
+      {/* PHASE 2 OVERLAY: MISSION BRIEFING                           */}
       {/* ----------------------------------------------------------- */}
       {gamePhase === 'phase2_emergency' && (
-        <div className="absolute inset-0 flex items-center justify-center p-6 bg-slate-950/70 backdrop-blur-sm z-30 animate-fade-in pointer-events-auto">
-          <div className="max-w-xl w-full p-8 rounded-3xl bg-slate-900/95 border-2 border-red-500/60 shadow-[0_0_60px_rgba(239,68,68,0.4)] text-center">
-            {/* Mission Hero & Emergency Dispatch Badge */}
+        <div className="absolute inset-0 flex items-center justify-center p-6 bg-slate-950/60 backdrop-blur-sm z-30 animate-fade-in pointer-events-auto">
+          <div className="max-w-xl w-full p-8 rounded-3xl bg-slate-900/95 border-2 border-sky-400/50 shadow-[0_0_60px_rgba(56,189,248,0.25)] text-center">
+            {/* Mission Specialist & Briefing Badge */}
             <div className="flex items-center justify-center gap-4 mb-4">
               <div className="relative w-16 h-16 rounded-2xl bg-gradient-to-tr from-sky-400 via-cyan-500 to-indigo-600 p-0.5 shadow-xl">
                 <div className="w-full h-full bg-slate-950 rounded-2xl flex items-center justify-center overflow-hidden">
-                  <img src="/images/nova_alien_companion.png" alt="Astronaut Leo" className="w-14 h-14 object-contain drop-shadow" />
+                  <span className="text-4xl" role="img" aria-label="Astronaut Leo">🧑‍🚀</span>
                 </div>
               </div>
               <div className="text-left">
                 <span className="text-[10px] font-black uppercase tracking-widest text-sky-400">
                   Mission Specialist: Leo
                 </span>
-                <p className="text-sm font-bold text-white">Direct Dispatch from Dr. Jaffe</p>
+                <p className="text-sm font-bold text-white">Mission Briefing from Dr. Jaffe</p>
               </div>
             </div>
 
-            <span className="text-xs font-black uppercase tracking-widest text-red-400">
-              PRIORITY ALPHA EMERGENCY • NASA HQ
+            <span className="text-xs font-black uppercase tracking-widest text-sky-400">
+              MISSION BRIEFING • NASA HQ
             </span>
 
             <h2 className="text-2xl sm:text-3xl font-black text-white mt-1 mb-3">
@@ -1030,13 +1096,13 @@ export default function Level1Surveyor5Page() {
             </h2>
 
             <p className="text-sm sm:text-base text-slate-300 mb-6 leading-relaxed">
-              Your rescue craft has reached Mare Tranquillitatis. Land and explore the lunar surface, locate Surveyor 5 and its four science components, then retrieve and restore the probe.
+              Your spacecraft has reached Mare Tranquillitatis. Land and explore the lunar surface, locate Surveyor 5 and its four science components, then retrieve and restore the probe.
             </p>
 
             <button
               id="land-on-moon-btn"
               onClick={handleSkipToOpenWorld}
-              className="flex items-center justify-center gap-3 w-full py-4 rounded-2xl bg-gradient-to-r from-red-600 via-amber-600 to-sky-600 hover:from-red-500 hover:to-sky-500 text-white font-extrabold text-base shadow-xl shadow-red-500/25 active:scale-95 transition-all"
+              className="flex items-center justify-center gap-3 w-full py-4 rounded-2xl bg-gradient-to-r from-sky-500 via-cyan-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 text-white font-extrabold text-base shadow-xl shadow-sky-500/25 active:scale-95 transition-all"
             >
               <Rocket className="w-5 h-5" />
               <span>Land on Moon</span>
@@ -1070,7 +1136,7 @@ export default function Level1Surveyor5Page() {
       )}
 
       {/* ----------------------------------------------------------- */}
-      {/* IN-WORLD 3D INTERACTION PROMPT ([E] Key Float)             */}
+      {/* IN-WORLD 3D INTERACTION PROMPT (Click Action Float)        */}
       {/* ----------------------------------------------------------- */}
       {interactionPrompt && gamePhase === 'phase4_open_world' && (
         <div className="absolute top-28 left-1/2 -translate-x-1/2 z-30 animate-bounce pointer-events-auto">
@@ -1167,7 +1233,7 @@ export default function Level1Surveyor5Page() {
               <span>Orbit Camera</span>
             </div>
             <div className="flex items-center gap-2">
-              <kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 text-amber-400 font-mono">E</kbd>
+              <kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 text-amber-400 font-mono">Click</kbd>
               <span>Collect / Install</span>
             </div>
           </div>
@@ -1278,6 +1344,12 @@ export default function Level1Surveyor5Page() {
         onReturnMenu={() => navigate('/missions')}
       />
     )}
+
+    {/* NASA Headquarters Modal (Full 3D Firing Room, Launch Video & Helium Leak Rescue) */}
+    <NasaHeadquartersModal
+      isOpen={isHqOpen}
+      onClose={() => setIsHqOpen(false)}
+    />
     </>
   );
 }

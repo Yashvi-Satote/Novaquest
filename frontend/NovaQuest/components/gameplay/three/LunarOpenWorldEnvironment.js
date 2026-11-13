@@ -1,6 +1,5 @@
 import * as THREE from 'three';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
+import { acquireGltfModel } from '../../../../Shared/three/gltfModelLoader';
 import { createSurveyor5InteractiveLander } from './Surveyor5InteractiveLander';
 import { createLostComponentsManager } from './LostComponentsManager';
 
@@ -17,7 +16,7 @@ import { createLostComponentsManager } from './LostComponentsManager';
  * - Realistic boulders, scientific comms antenna, and NASA marker flag
  * - Blue glowing Earth in the deep-space starfield
  */
-export function createLunarOpenWorldEnvironment(onLanderLoaded = null) {
+export function createLunarOpenWorldEnvironment(onLanderLoaded = null, renderer = null) {
   const root = new THREE.Group();
   root.name = 'LunarOpenWorld';
 
@@ -114,15 +113,13 @@ export function createLunarOpenWorldEnvironment(onLanderLoaded = null) {
   humanLanderGroup.position.set(0, 0, 18);
   root.add(humanLanderGroup);
 
-  const dracoLoader = new DRACOLoader();
-  dracoLoader.setDecoderPath('/draco/');
+  let isDisposed = false;
+  const landerModelHandle = acquireGltfModel('/models/spacecraft/apollo_lm.glb', renderer);
 
-  const gltfLoader = new GLTFLoader();
-  gltfLoader.setDRACOLoader(dracoLoader);
+  landerModelHandle.promise
+    .then((gltf) => {
+      if (isDisposed) return;
 
-  gltfLoader.load(
-    '/models/spacecraft/apollo_lm.glb',
-    (gltf) => {
       const model = gltf.scene;
       model.scale.set(1.4, 1.4, 1.4);
       model.position.set(0, 0, 0);
@@ -134,17 +131,16 @@ export function createLunarOpenWorldEnvironment(onLanderLoaded = null) {
       });
       humanLanderGroup.add(model);
       if (onLanderLoaded) onLanderLoaded(model);
-    },
-    undefined,
-    (err) => {
+    })
+    .catch((err) => {
+      if (isDisposed) return;
       console.warn('Fallback: Building procedural human spacecraft frame', err);
       const fGeo = new THREE.CylinderGeometry(1.4, 2.0, 2.6, 16);
       const fMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, metalness: 0.6 });
       const fMesh = new THREE.Mesh(fGeo, fMat);
       fMesh.position.y = 1.8;
       humanLanderGroup.add(fMesh);
-    }
-  );
+    });
 
   // Equipment Supply Cargo Crate
   const cargoGroup = new THREE.Group();
@@ -232,6 +228,10 @@ export function createLunarOpenWorldEnvironment(onLanderLoaded = null) {
     getTerrainHeight,
     humanLanderGroup,
     cargoGroup,
+    releaseModels() {
+      isDisposed = true;
+      landerModelHandle.release();
+    },
     positions: {
       humanLander: new THREE.Vector3(0, 0, 18),
       cargoCrate: new THREE.Vector3(-2.8, 0.5, 18.2),

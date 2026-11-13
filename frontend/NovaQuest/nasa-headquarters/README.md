@@ -58,20 +58,22 @@ import NasaHeadquartersViewer from './NasaHeadquartersViewer';
 
 The viewer expects a sized parent element and handles its own renderer lifecycle.
 Drag in the 3D view to orbit freely around the room, including upward and downward;
-click an interactive door or use the on-screen controls. Press **D**
-to toggle the base airlock, **F** to toggle the parts-room entrance, or **G** to toggle
-the firing-room entrance outside first person.
+click an interactive door or use the on-screen controls. Press **E**
+to open or close the door nearest to you (airlock, parts room, or firing room).
 Choose **Control astronaut** to move the visible character with **WASD** or the arrow
-keys, **Shift** to sprint, and drag to orbit the follow camera. Use **E** for the airlock,
-**F** for the parts-room door, **G** for the firing-room door, and **Esc** to stop
-character control. Choose **Enter
+keys, **Shift** to sprint, and drag to orbit the follow camera. Click a door or use
+**E** for the nearest one, and **Esc** to stop character control. Choose **Enter
 first person** to explore the base and walk through the open airlock
-into the exterior corridor, parts room and firing room with **WASD**, unrestricted 360° horizontal
-mouse look, and **Shift** to sprint. The player collides with scene props while moving;
-airlock and cupboard door panels remain passable. Press **E** to operate the airlock,
-**F** to open the parts-room door, and **G** to open the firing-room door. Click any
-cupboard glass panel to swing it open or closed. **Esc** releases the mouse or exits
-first person.
+into the exterior corridor, parts room and firing room with **WASD**, unrestricted
+360° horizontal look, and **Shift** to sprint. The player collides with scene props
+while moving; airlock and cupboard door panels remain passable. Click the airlock to
+operate it, or press **E** to open the nearest door. Click any cupboard glass panel
+to swing it open or closed. **Esc** releases the mouse or exits first person.
+
+On a laptop touchpad, one finger moves the normal cursor (so you can click doors),
+while a two-finger swipe looks around freely in first person and orbits the camera
+in the other views. Use **Enable mouse look** to lock the pointer when you want
+traditional mouse look.
 
 ## Presentation
 

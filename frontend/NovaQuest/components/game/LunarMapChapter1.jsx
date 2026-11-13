@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
+import { acquireGltfModel, disposeObject3D } from '../../../Shared/three/gltfModelLoader';
 import { 
   Compass, 
   Eye, 
@@ -12,9 +11,9 @@ import {
   Activity, 
   Sparkles, 
   Info, 
+  Building2,
   ChevronRight,
   Maximize2,
-  MousePointer,
   Volume2,
   Scan,
   Trophy,
@@ -26,12 +25,10 @@ import {
   Wifi
 } from 'lucide-react';
 import { audio } from '../../game/moonMapAudioManager';
-import InvestigationModal from './InvestigationModal';
 import MissionEchoModal from './MissionEchoModal';
+import NasaHeadquartersModal from '../../nasa-headquarters/NasaHeadquartersModal';
 import { 
   createLunarRegolithTexture,
-  createLunarBumpTexture,
-  createLunarRoughnessTexture,
   createBasaltRockTexture,
   createGoldFoilTexture,
   createSolarPanelTexture,
@@ -44,6 +41,8 @@ import {
   createScannerHUDTexture,
   createSpacesuitFabricTexture
 } from '../../game/moonMapLunarTextures';
+
+const SURVEYOR_RETRIEVAL_RADIUS = 18;
 
 /**
  * 7-Stage Suggested Player Journey Framework
@@ -59,13 +58,7 @@ export const JOURNEY_STAGES = [
     targetCoords: { x: 104, z: 66 },
     waypointLabel: 'Landing Site Terminal',
     objective: 'Player exits the transport vehicle. The mission director explains the recovery objective.',
-    narrative: 'Arin and the recovery team disembark from the Aegis-01 lunar rover. Radio comms verify life support systems and the primary mission objective: recovering Surveyor 1.',
-    instructions: 'Debrief with Specialist Maya Chen and Officer Leo Vance at the mobile mission terminal. Familiarize with EVA movement, camera control, scanning, and objectives.',
-    commsCallout: {
-      callsign: 'GOLDSTONE-COMMS',
-      speaker: 'Flight Director (Aegis Base)',
-      text: 'Commander Arin, recovery team Aegis-01 is boots on the regolith. Surveyor 1 is 100 meters due West across the mare basin. Debrief with Chen and Vance at the mobile terminal, then proceed across the plains.'
-    }
+    instructions: 'Debrief with Specialist Maya Chen and Officer Leo Vance at the mobile mission terminal. Familiarize with EVA movement, camera control, scanning, and objectives.'
   },
   {
     stepIndex: 1,
@@ -76,13 +69,7 @@ export const JOURNEY_STAGES = [
     targetCoords: { x: 0, z: 0 },
     waypointLabel: 'Surveyor 1 Lander',
     objective: 'Player approaches the lander, scans its components and detects the anomalous transmission.',
-    narrative: 'Arin navigates across the cratered lunar basin to Surveyor 1. Scanners audit the historic camera turret, solar array, and crushed footpads, detecting an anomalous 432 Hz carrier humming from beneath the lander.',
-    instructions: 'Follow the rover tracks and footprint trails West to the Surveyor 1 site. Scan the historic Vidicon camera, solar mast, and footpads using [F] Scanner Pulse. Investigate the anomalous 432 Hz frequency detected beneath the spaceframe.',
-    commsCallout: {
-      callsign: 'CHEN-SCIENCE',
-      speaker: 'Specialist Maya Chen',
-      text: 'Arin, there she is. 160 Earth years untouched in the vacuum. Scan the camera turret, solar mast, and footpads. Wait... my suit magnetometer is registering an anomalous 432 Hz carrier humming directly beneath the spaceframe.'
-    }
+    instructions: 'Follow the rover tracks and footprint trails West to the Surveyor 1 site. Scan the historic Vidicon camera, solar mast, and footpads using [F] Scanner Pulse. Investigate the anomalous 432 Hz frequency detected beneath the spaceframe.'
   },
   {
     stepIndex: 2,
@@ -93,13 +80,7 @@ export const JOURNEY_STAGES = [
     targetCoords: { x: -75, z: -50 },
     waypointLabel: 'Crater Investigation Basin',
     objective: 'Player follows the signal and examines three potential signal sources.',
-    narrative: 'Following the 432 Hz carrier and a subtle subterranean conduit, Arin investigates the 24-meter impact crater. Scanning three distinct sites isolates the transmission epicenter.',
-    instructions: 'Follow the 432 Hz signal and the dark cable conduit to the 24m crater. Examine Survey Site Alpha (rim outcrop), Survey Site Beta (inner scree slope), and Survey Site Gamma (buried precursor object) to isolate the harmonic epicenter.',
-    commsCallout: {
-      callsign: 'VANCE-OPS',
-      speaker: 'Officer Leo Vance',
-      text: 'The 432 Hz signal is intensifying toward that 24-meter impact crater at azimuth 295°. Check the rim outcrop, the scree slope, and the buried metallic signature at the crater floor.'
-    }
+    instructions: 'Follow the 432 Hz signal and the dark cable conduit to the 24m crater. Examine Survey Site Alpha (rim outcrop), Survey Site Beta (inner scree slope), and Survey Site Gamma (buried precursor object) to isolate the harmonic epicenter.'
   },
   {
     stepIndex: 3,
@@ -110,13 +91,7 @@ export const JOURNEY_STAGES = [
     targetCoords: { x: -120, z: -75 },
     waypointLabel: 'Precursor Monolith',
     objective: 'Player finds the structure and activates its interface.',
-    narrative: 'Beyond the crater rim along the basalt ridge, Arin discovers a partially buried geometric obsidian structure humming with synthetic vibration and glowing conduit lines.',
-    instructions: 'Follow the exposed conduit northwest toward the basalt ridge to find the partially buried obsidian structure. Feel the bedrock synthetic vibration through your suit boots. Approach the Central Scanning Panel to interface with the array.',
-    commsCallout: {
-      callsign: 'CHEN-SCIENCE',
-      speaker: 'Specialist Maya Chen',
-      text: 'Good lord... Arin, do you see that? An obsidian geometric monolith buried in the lunar regolith. It’s drawing power directly from Surveyor’s landing site. Access the central scanning panel!'
-    }
+    instructions: 'Follow the exposed conduit northwest toward the basalt ridge to find the partially buried obsidian structure. Feel the bedrock synthetic vibration through your suit boots. Approach the Central Scanning Panel to interface with the array.'
   },
   {
     stepIndex: 4,
@@ -127,13 +102,7 @@ export const JOURNEY_STAGES = [
     targetCoords: { x: -116, z: -72 },
     waypointLabel: 'Mission Echo Array',
     objective: 'Player completes the three historical reconstruction puzzles.',
-    narrative: 'Interfacing with the alien array projects a volumetric simulation of Surveyor 1\'s 1966 mission. Arin reconstructs the flight telemetry, optical panorama, and frequency archives.',
-    instructions: 'Interact with the Mission Echo terminal [E]. Calibrate the 1966 Controlled Descent retro-burn, stitch the Vidicon 360° panoramic surface observation, and apply the 432.06 Hz harmonic notch filter to restore the corrupted telemetry archive.',
-    commsCallout: {
-      callsign: 'GOLDSTONE-COMMS',
-      speaker: 'Flight Director (Aegis Base)',
-      text: 'The alien interface is parsing Surveyor’s historical flight records. Complete the descent telemetry, align the Vidicon optics, and apply the 432 Hz notch filter to restore the archive.'
-    }
+    instructions: 'Interact with the Mission Echo terminal. Calibrate the 1966 Controlled Descent retro-burn, stitch the Vidicon 360° panoramic surface observation, and apply the 432.06 Hz harmonic notch filter to restore the corrupted telemetry archive.'
   },
   {
     stepIndex: 5,
@@ -142,15 +111,9 @@ export const JOURNEY_STAGES = [
     durationEst: 'Approx. 3 minutes',
     zoneName: 'ZONE 6 · RECOVERY & EXTRACTION',
     targetCoords: { x: 0, z: 0 },
-    waypointLabel: 'Surveyor 1 Recovery Rig',
+    waypointLabel: 'Surveyor 1 Recovery Site',
     objective: 'Player disconnects the fictional alien feed, secures the archive and prepares the spacecraft for recovery.',
-    narrative: 'With the alien interface solved, the dark conduit powers down. Arin returns to Surveyor 1 to disconnect the alien feed, lock the 11,237 restored frames into the Quantum Archive, and prep the recovery rig.',
-    instructions: 'Return to Surveyor 1 where the recovery team has deployed the heavy robotic rig. Inspect the Recovery Rig to sever the alien feed, lock the 11,237 historic frames into the Quantum Archive Vault, and brace the lander on the extraction sled.',
-    commsCallout: {
-      callsign: 'VANCE-OPS',
-      speaker: 'Officer Leo Vance',
-      text: 'The alien conduit has powered down! Recovery rig is deployed at the landing site. Disconnect the alien link, lock the 11,237 restored frames into the Quantum Archive, and prep the sled.'
-    }
+    instructions: 'Return to Surveyor 1 to disconnect the alien feed, lock the 11,237 historic frames into the Quantum Archive Vault, and prepare the lander for extraction.'
   },
   {
     stepIndex: 6,
@@ -160,45 +123,35 @@ export const JOURNEY_STAGES = [
     zoneName: 'ZONE 6 · RECOVERY & EXTRACTION',
     targetCoords: { x: 3.8, z: -2.6 },
     waypointLabel: 'Secure Extraction Pallet',
-    objective: 'The team discovers a new set of coordinates. Arin decides to continue Project Legacy.',
-    narrative: 'Inspection of the decoded carrier wave reveals coordinates leading deep beneath the lunar surface to "Vault Zero". Arin commits the team to the next expedition of Project Legacy.',
-    instructions: 'Inspect the Mobile Extraction Pallet [E]. Review the decrypted transmission vector, confirm the coordinates to Vault Zero, and commit Arin to the next chapter of Project Legacy.',
-    commsCallout: {
-      callsign: 'CHEN-SCIENCE',
-      speaker: 'Specialist Maya Chen',
-      text: 'Commander Arin... the carrier wave wasn’t random noise. It contained encrypted coordinates to an uncharted facility deep beneath the lunar crust: Vault Zero. We have to continue Project Legacy.'
-    }
+    objective: 'The team discovers a new set of coordinates and prepares to continue Project Legacy.',
+    instructions: 'Inspect the Mobile Extraction Pallet. Review the decrypted transmission vector, confirm the coordinates to Vault Zero, and prepare the team for the next chapter of Project Legacy.'
   }
 ];
 
 export default function LunarMapChapter1({ mcGender = 'male', onComplete, onReturnMenu }) {
   const mountRef = useRef(null);
   const nearInteractableRef = useRef(null);
+  const nearSurveyorRef = useRef(false);
   const isMissionEchoCompletedRef = useRef(false);
   const triggerSparksRef = useRef(null);
   const triggerScannerBeamRef = useRef(null);
 
   // HUD & Game State
-  const [isLocked, setIsLocked] = useState(false);
-  const [activeObjective, setActiveObjective] = useState(JOURNEY_STAGES[0].objective);
+  const activeZoneRef = useRef('ZONE 1 · TEAM LANDING');
   const [activeZone, setActiveZone] = useState('ZONE 1 · TEAM LANDING');
   const [distanceToLanding, setDistanceToLanding] = useState(0);
-  const [distanceToSurveyor, setDistanceToSurveyor] = useState(0);
+  const [distanceToSurveyor, setDistanceToSurveyor] = useState(SURVEYOR_RETRIEVAL_RADIUS + 1);
   const [distanceToCrater, setDistanceToCrater] = useState(0);
   const [distanceToAlienStructure, setDistanceToAlienStructure] = useState(0);
-  const [distanceToAnomaly, setDistanceToAnomaly] = useState(0);
   const [anomalousSignal, setAnomalousSignal] = useState(0); // 0 to 100% signal strength
   const [compassHeading, setCompassHeading] = useState(0); // 0 to 360 deg
-  const [isUnderground, setIsUnderground] = useState(false);
   const [scanPulseActive, setScanPulseActive] = useState(false);
-  const [investigateTarget, setInvestigateTarget] = useState(null);
   const [nearInteractable, setNearInteractable] = useState(null);
-  const [hudNotice, setHudNotice] = useState('Click screen to look • WASD to walk • Space to Jump • [F] Scan • [E] Interact');
+  const [isHqOpen, setIsHqOpen] = useState(false);
+  const isHqOpenRef = useRef(false);
 
-  // 7-Stage Suggested Player Journey State
   const [journeyStageIndex, setJourneyStageIndex] = useState(0);
   const [completedStageIndices, setCompletedStageIndices] = useState([]);
-  const [activeComms, setActiveComms] = useState(null);
   const [showJourneyRoadmap, setShowJourneyRoadmap] = useState(false);
   const [navTargetBearing, setNavTargetBearing] = useState(264);
   const [navTargetDistance, setNavTargetDistance] = useState(105);
@@ -206,55 +159,31 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
   const advanceJourneyStage = (nextIndex) => {
     setJourneyStageIndex((current) => {
       if (nextIndex <= current || nextIndex >= JOURNEY_STAGES.length) return current;
-      const stage = JOURNEY_STAGES[nextIndex];
-      if (stage) {
-        setActiveObjective(stage.objective);
-        if (stage.commsCallout) {
-          setActiveComms(stage.commsCallout);
-          audio.playRadioCommsChatter(stage.commsCallout.speaker.includes('Chen') ? 'chen' : stage.commsCallout.speaker.includes('Vance') ? 'vance' : 'director');
-        }
-      }
-      setCompletedStageIndices(prev => Array.from(new Set([...prev, current])));
+      setCompletedStageIndices((prev) => Array.from(new Set([...prev, current])));
       return nextIndex;
     });
   };
 
-  // Initial Spawn Transmission from Flight Director
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      const initialStage = JOURNEY_STAGES[0];
-      if (initialStage && initialStage.commsCallout) {
-        setActiveComms(initialStage.commsCallout);
-        audio.playRadioCommsChatter('director');
-      }
-    }, 2200);
-    return () => clearTimeout(timer);
-  }, []);
-
-  // Auto-dismiss comms toast after 14 seconds
-  useEffect(() => {
-    if (!activeComms) return;
-    const timer = setTimeout(() => {
-      setActiveComms(null);
-    }, 14000);
-    return () => clearTimeout(timer);
-  }, [activeComms]);
+  const logInvestigation = (target) => {
+    if (target.id === 'poi_extraction_pallet') {
+      setShowChapter1Completion(true);
+    }
+  };
 
   // Mission Echo & Extraction State
   const [isMissionEchoOpen, setIsMissionEchoOpen] = useState(false);
   const [isMissionEchoCompleted, setIsMissionEchoCompleted] = useState(false);
   const [showChapter1Completion, setShowChapter1Completion] = useState(false);
 
-  // Suit Telemetry State
   const [oxygenLevel, setOxygenLevel] = useState(98.6);
   const [suitPower, setSuitPower] = useState(94.2);
   const [heartRate, setHeartRate] = useState(72);
   const [externalTemp, setExternalTemp] = useState(-118);
-  const [sunGlareIntensity, setSunGlareIntensity] = useState(0); // 0 to 1 based on sun angle
+  const [sunGlareIntensity, setSunGlareIntensity] = useState(0);
 
   // Component-scoped triggers accessible both from keydown and HUD buttons
   const triggerScannerPulse = () => {
-    if (activeZone && activeZone.includes('CRATER')) {
+    if (activeZoneRef.current.includes('CRATER')) {
       audio.playCraterScannerPulse();
     } else {
       audio.playScannerPing();
@@ -264,10 +193,23 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
     setTimeout(() => setScanPulseActive(false), 2400);
   };
 
+  const openHeadquarters = () => {
+    isHqOpenRef.current = true;
+    audio.playEquipmentFeedback();
+    setIsHqOpen(true);
+  };
+
+  const closeHeadquarters = () => {
+    isHqOpenRef.current = false;
+    setIsHqOpen(false);
+  };
+
   const triggerInvestigation = () => {
     if (nearInteractableRef.current) {
       const id = nearInteractableRef.current.id;
-      if (id === 'poi_scanning_panel' || id === 'poi_mission_echo_console' || id === 'poi_descent_simulation') {
+      if (id === 'surveyor_5_retrieval') {
+        openHeadquarters();
+      } else if (id === 'poi_scanning_panel' || id === 'poi_mission_echo_console' || id === 'poi_descent_simulation') {
         audio.playMissionEchoActivation();
         setTimeout(() => audio.playMissionEchoArchivalAudio(), 320);
         if (triggerSparksRef.current && nearInteractableRef.current.position) {
@@ -277,31 +219,30 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
       } else if (id && id.startsWith('surveyor_')) {
         audio.playSurveyorScannerBeep();
         setTimeout(() => audio.playSurveyorInterface(), 260);
-        setInvestigateTarget(nearInteractableRef.current);
+        logInvestigation(nearInteractableRef.current);
       } else if (id === 'poi_mission_terminal' || id === 'poi_lunar_transport') {
         audio.playEquipmentFeedback();
         setTimeout(() => audio.playRadioCommsChatter('chen'), 420);
-        setInvestigateTarget(nearInteractableRef.current);
+        logInvestigation(nearInteractableRef.current);
       } else if (id === 'poi_maya_chen') {
         audio.playRadioCommsChatter('chen');
-        setInvestigateTarget(nearInteractableRef.current);
+        logInvestigation(nearInteractableRef.current);
       } else if (id === 'poi_leo_vance') {
         audio.playRadioCommsChatter('vance');
-        setInvestigateTarget(nearInteractableRef.current);
+        logInvestigation(nearInteractableRef.current);
       } else if (id && id.startsWith('poi_crater_')) {
         audio.playCraterInterference(0.9);
         setTimeout(() => audio.playCraterScannerPulse(), 220);
-        setInvestigateTarget(nearInteractableRef.current);
+        logInvestigation(nearInteractableRef.current);
       } else if (id === 'poi_alien_structure' || id === 'poi_data_conduit') {
         audio.playAnomalyHarmonic();
-        setInvestigateTarget(nearInteractableRef.current);
+        logInvestigation(nearInteractableRef.current);
       } else if (id === 'poi_extraction_pallet' && isMissionEchoCompletedRef.current) {
         audio.playEquipmentFeedback();
-        setShowChapter1Completion(true);
-        setInvestigateTarget(nearInteractableRef.current);
+        logInvestigation(nearInteractableRef.current);
       } else {
         audio.playInteract();
-        setInvestigateTarget(nearInteractableRef.current);
+        logInvestigation(nearInteractableRef.current);
       }
     }
   };
@@ -319,16 +260,13 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x000000); // 100% Black deep space, no atmospheric haze
 
-    // GLTF & DRACO Loaders for official NASA 3D Resources
-    const dracoLoader = new DRACOLoader();
-    dracoLoader.setDecoderPath('/draco/');
-    const gltfLoader = new GLTFLoader();
-    gltfLoader.setDRACOLoader(dracoLoader);
+    // Chapter model handles are released in the cleanup below so the shared
+    // loader can dispose their GPU resources when the scene unmounts.
+    const modelHandles = [];
+    let isDisposed = false;
 
-    // 2. PROCEDURAL HIGH-RESOLUTION PBR TEXTURES (GENERATED IN-MEMORY WITHOUT EXTERNAL NETWORK ASSETS)
-    const regolithMap = createLunarRegolithTexture(1024, 1024);
-    const regolithBumpMap = createLunarBumpTexture(512, 512);
-    const regolithRoughnessMap = createLunarRoughnessTexture(512, 512);
+    // 2. PROCEDURAL REGOLITH AND PROP TEXTURES (GENERATED IN-MEMORY)
+    const regolithMap = createLunarRegolithTexture(512, 512);
     const basaltRockMap = createBasaltRockTexture(512, 512);
     const goldFoilMap = createGoldFoilTexture(512, 512);
     const solarPanelMap = createSolarPanelTexture(512, 512);
@@ -448,25 +386,33 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
     // 3. RENDERER WITH HIGH-CONTRAST PBR SHADOWS
     let renderer;
     try {
-      renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+      renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'high-performance' });
     } catch {
-      renderer = new THREE.WebGLRenderer();
+      renderer = new THREE.WebGLRenderer({ antialias: false });
     }
     renderer.setSize(width, height);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFShadowMap; // Sharp shadow edges (authentic vacuum shadows, no atmospheric blur)
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.35; // High dynamic range
     container.appendChild(renderer.domElement);
 
+    // Load chapter models through the shared, cached GLTF loader. The NASA
+    // assets use KTX2/Basis textures so decompressed GPU textures stay small.
+    const loadChapterModel = (url) => {
+      const handle = acquireGltfModel(url, renderer);
+      modelHandles.push(handle);
+      return handle.promise;
+    };
+
     // 4. LOW-ANGLE HARSH LUNAR SUNLIGHT & EARTHSHINE (VACUUM EXPOSURE)
     // One strong directional light representing the Sun at low elevation (~14.4 deg) casting long, sharp, inky shadows
     const sunLight = new THREE.DirectionalLight(0xfffef2, 5.5);
     sunLight.position.set(290, 72, -180);
     sunLight.castShadow = true;
-    sunLight.shadow.mapSize.width = 4096;
-    sunLight.shadow.mapSize.height = 4096;
+    sunLight.shadow.mapSize.width = 1024;
+    sunLight.shadow.mapSize.height = 1024;
     sunLight.shadow.camera.near = 10;
     sunLight.shadow.camera.far = 700;
     const shadowSize = 240;
@@ -573,10 +519,9 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
     const bootprints = [];
     let footStepToggle = false;
 
-    // 7. MEDIUM-POLY 500m x 500m LUNAR TERRAIN & NATURAL BOUNDARY CRATER WALLS
-    // 200x200 resolution = 40,000 vertices, 80,000 faces (crisp medium-poly terrain)
+    // 7. LOW-POLY 500m x 500m LUNAR TERRAIN & NATURAL BOUNDARY CRATER WALLS
     const TERRAIN_SIZE = 500;
-    const terrainGeo = new THREE.PlaneGeometry(TERRAIN_SIZE, TERRAIN_SIZE, 200, 200);
+    const terrainGeo = new THREE.PlaneGeometry(TERRAIN_SIZE, TERRAIN_SIZE, 80, 80);
     terrainGeo.rotateX(-Math.PI / 2);
 
     // THREE DISTINCT CRATER SIZES & IRREGULAR NON-CIRCULAR RIMS
@@ -699,7 +644,7 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
       return h;
     };
 
-    // Evaluate medium-poly vertices and compute geological elevation coloring
+    // Evaluate low-poly vertices and compute geological elevation coloring
     const posAttr = terrainGeo.attributes.position;
     const colors = new Float32Array(posAttr.count * 3);
     for (let i = 0; i < posAttr.count; i++) {
@@ -718,15 +663,13 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
     terrainGeo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
     terrainGeo.computeVertexNormals();
 
-    // Medium-Poly Textured Terrain Material (Authentic Dusty Grey Lunar Regolith)
+    // Flat-shaded regolith keeps the low-poly terrain facets visible.
     const terrainMat = new THREE.MeshStandardMaterial({
       map: regolithMap,
-      bumpMap: regolithBumpMap,
-      bumpScale: 0.28,
-      roughnessMap: regolithRoughnessMap,
       roughness: 0.98,
       metalness: 0.01,
-      vertexColors: true
+      vertexColors: true,
+      flatShading: true,
     });
     const terrainMesh = new THREE.Mesh(terrainGeo, terrainMat);
     terrainMesh.receiveShadow = true;
@@ -787,14 +730,16 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
       const trackMat = new THREE.MeshStandardMaterial({
         map: roverTrackMap,
         transparent: true,
-        opacity: 0.82,
+        opacity: 0.9,
+        color: 0xc3c6ce,
         roughness: 0.98,
         depthWrite: false,
         polygonOffset: true,
         polygonOffsetFactor: -1.0,
         polygonOffsetUnits: -1.0
       });
-      return new THREE.Mesh(ribbonGeo, trackMat);
+      const ribbon = new THREE.Mesh(ribbonGeo, trackMat);
+      return ribbon;
     };
 
     // Track 1: Zone 1 Team Landing Zone (105, 65) -> Zone 2 Surveyor 1 (0, 0)
@@ -805,7 +750,8 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
       new THREE.Vector3(25, 0, 14),
       new THREE.Vector3(3, 0, 2)
     ];
-    scene.add(createTrackRibbon(trackPointsA, 1.8));
+    const surveyorPathRibbon = createTrackRibbon(trackPointsA, 1.8);
+    scene.add(surveyorPathRibbon);
 
     // Track 2: Zone 2 Surveyor 1 (0, 0) -> Zone 3 Crater Investigation Area (-75, -50)
     const trackPointsB = [
@@ -828,7 +774,7 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
     scene.add(createTrackRibbon(trackPointsC, 1.5));
 
     // 9. MEDIUM-POLY BASALT ROCKS: LARGE BOULDERS NEAR CRATER RIMS & SMALL ANGULAR EJECTA STONES
-    // Procedural sculpted rock generator (perturbs icosahedron vertices with angular cleavage)
+    // Low-poly sculpted rocks preserve angular facets with fewer vertices.
     const createMediumPolyRockGeo = (radius, detail = 2, roughnessScale = 0.28) => {
       const geo = new THREE.IcosahedronGeometry(radius, detail);
       const p = geo.attributes.position;
@@ -859,9 +805,9 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
     });
 
     const boulderGroup = new THREE.Group();
-    const rockGeoLarge = createMediumPolyRockGeo(1.8, 2, 0.30);
-    const rockGeoMedium = createMediumPolyRockGeo(1.0, 1, 0.24);
-    const rockGeoSmallStone = createMediumPolyRockGeo(0.28, 1, 0.20); // Small angular ejecta stone
+    const rockGeoLarge = createMediumPolyRockGeo(1.8, 1, 0.30);
+    const rockGeoMedium = createMediumPolyRockGeo(1.0, 0, 0.24);
+    const rockGeoSmallStone = createMediumPolyRockGeo(0.28, 0, 0.20); // Small angular ejecta stone
     const rockGeoC = rockGeoSmallStone; // Backward compatibility alias
 
     // 1. Larger boulders placed along the irregular rims of Medium Craters
@@ -888,7 +834,7 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
     }
 
     // 2. Small angular ejecta stones (0.15m–0.45m) scattered across the terrain
-    for (let s = 0; s < 130; s++) {
+    for (let s = 0; s < 80; s++) {
       const angle = Math.random() * Math.PI * 2;
       const dist = 8 + Math.random() * 155;
       const sx = Math.cos(angle) * dist;
@@ -1668,9 +1614,11 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
     landingZoneGroup.add(transportVehicleGroup);
 
     // Official NASA 3D Resource: Space Exploration Vehicle (SEV)
-    gltfLoader.load(
-      '/models/nasa/Space_Exploration_Vehicle.glb',
-      (gltf) => {
+    const loadNasaVehicle = async () => {
+      try {
+        const gltf = await loadChapterModel('/models/nasa/Space_Exploration_Vehicle.glb');
+        if (isDisposed) return;
+
         const nasaVeh = gltf.scene;
         const initialBox = new THREE.Box3().setFromObject(nasaVeh);
         const size = new THREE.Vector3();
@@ -1700,12 +1648,10 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
         // Seamless swap: hide procedural fallback chassis once official NASA model is loaded
         fallbackVehMeshGroup.visible = false;
         transportVehicleGroup.add(nasaVeh);
-      },
-      undefined,
-      (err) => {
+      } catch (err) {
         console.warn('NASA SEV model failed to load, retaining procedural vehicle:', err);
       }
-    );
+    };
 
     // =========================================================================
     // C. HIGH-DETAIL NASA xEMU ASTRONAUT CREWMATES (MAYA CHEN & LEO VANCE)
@@ -1930,9 +1876,11 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
     landingZoneGroup.add(mayaMesh);
 
     // Official NASA 3D Resource: Maya Chen EMU Astronaut Model
-    gltfLoader.load(
-      '/models/nasa/Astronaut.glb',
-      (gltf) => {
+    const loadMayaAstronaut = async () => {
+      try {
+        const gltf = await loadChapterModel('/models/nasa/Astronaut.glb');
+        if (isDisposed) return;
+
         const mayaModel = gltf.scene;
         const initialBox = new THREE.Box3().setFromObject(mayaModel);
         const size = new THREE.Vector3();
@@ -1966,12 +1914,10 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
           mayaMesh._fallbackGroup.visible = false;
         }
         mayaMesh.add(mayaModel);
-      },
-      undefined,
-      (err) => {
+      } catch (err) {
         console.warn('NASA Maya Astronaut failed to load, retaining procedural astronaut:', err);
       }
-    );
+    };
 
     // Astronaut 2: Officer Leo Vance (Ops Engineer) at (-4.5, 0, -2.5)
     const leoMesh = createAstronautMesh('Officer Leo Vance', 'Surface Operations', 0xf59e0b, false);
@@ -1980,9 +1926,11 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
     landingZoneGroup.add(leoMesh);
 
     // Official NASA 3D Resource: Leo Vance Z2 Spacesuit Model
-    gltfLoader.load(
-      '/models/nasa/Z2_Spacesuit.glb',
-      (gltf) => {
+    const loadLeoAstronaut = async () => {
+      try {
+        const gltf = await loadChapterModel('/models/nasa/Z2_Spacesuit.glb');
+        if (isDisposed) return;
+
         const leoModel = gltf.scene;
         const initialBox = new THREE.Box3().setFromObject(leoModel);
         const size = new THREE.Vector3();
@@ -2025,12 +1973,20 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
           leoMesh._fallbackGroup.visible = false;
         }
         leoMesh.add(leoModel);
-      },
-      undefined,
-      (err) => {
+      } catch (err) {
         console.warn('NASA Leo Vance Z2 Spacesuit failed to load, retaining procedural astronaut:', err);
       }
-    );
+    };
+
+    // Load the chapter's NASA assets one at a time. This avoids decoding three
+    // large GLBs (and their 4K textures) in the same frame on the main thread.
+    (async () => {
+      await loadNasaVehicle();
+      if (isDisposed) return;
+      await loadMayaAstronaut();
+      if (isDisposed) return;
+      await loadLeoAstronaut();
+    })();
 
     // D. Portable High-Gain Satellite Communication Dish on Tripod
     const commsGroup = new THREE.Group();
@@ -2105,7 +2061,7 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
       landingZoneGroup.add(panelGroup);
     }
 
-    // G. Portable Mission Terminal Console ([E] Mission Terminal)
+    // G. Portable Mission Terminal Console (Mission Terminal)
     const terminalGroup = new THREE.Group();
     terminalGroup.position.set(-1.8, 0, 0.5);
 
@@ -3573,6 +3529,23 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
     const sparkParticles = new THREE.Points(sparkGeo, sparkMat);
     scene.add(sparkParticles);
 
+    landingZoneGroup.clear();
+    landingZoneGroup.add(mayaMesh, leoMesh);
+
+    const retainedSceneObjects = new Set([
+      camera,
+      sunLight,
+      earthshineLight,
+      faintAmbient,
+      terrainMesh,
+      surveyorGroup,
+      landingZoneGroup,
+      surveyorPathRibbon
+    ]);
+    for (const object of [...scene.children]) {
+      if (!retainedSceneObjects.has(object)) scene.remove(object);
+    }
+
     triggerSparksRef.current = (pos) => {
       audio.playGlitchBurst();
       const px = pos.x || 0;
@@ -3899,7 +3872,7 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
         sector: 'Zone 4 · Alien Interface',
         artifactAge: 'Interactive Precursor Console',
         integrity: '100% Responsive',
-        telemetryStatus: 'Handshake Ready · [E] to Initiate',
+        telemetryStatus: 'Handshake Ready · Tap to Initiate',
         description: 'A recessed geometric scanning panel emitting a faint blue glow and low-frequency vibration. Placing an EVA sensory probe on this panel initiates the Mission Echo historical simulation.',
         readings: {
           'Interface Protocol': 'Optoelectronic Resonance Handshake',
@@ -3907,7 +3880,7 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
           'Mode': 'Mission Echo Simulation Ready',
           'Access Clearance': 'Human Biometric Recognized'
         },
-        officerNote: 'The panel is responding to my suit sensors! It’s ready to interface. Press [E] to activate Mission Echo.'
+        officerNote: 'The panel is responding to my suit sensors! It’s ready to interface. Tap to activate Mission Echo.'
       },
 
       // ================= ZONE 5: MISSION ECHO INTERFACE =================
@@ -3950,24 +3923,6 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
 
       // ================= ZONE 6: RECOVERY AND EXTRACTION AREA =================
       {
-        id: 'poi_recovery_rig',
-        title: 'Artemis/Aegis Robotic Recovery Rig',
-        position: new THREE.Vector3(1.8, surveyorTerrainY + 1.8, 0.5),
-        radius: 5.2,
-        sector: 'Zone 6 · Surveyor 1 Recovery Site',
-        artifactAge: 'Current Expedition (2126)',
-        integrity: '100% Operational',
-        telemetryStatus: 'Surveyor 1 Braced & Stabilized',
-        description: 'Hydraulic carbon-fiber gantry arms deployed by Leo Vance to brace Surveyor 1. The dark alien conduit has powered down, leaving the historic lander secured for NASA preservation.',
-        readings: {
-          'Stabilizer Load': '294 kg Neutral Support',
-          'Alien Conduit State': 'Dormant (0.0 V Residual)',
-          'Structural Integrity': '100% Protected',
-          'Heritage Tag': 'NASA Permanent Historic Monument'
-        },
-        officerNote: 'The recovery rig is locked in place. Surveyor 1 survived 160 years of cosmic vacuum, and now its place in history is permanently protected.'
-      },
-      {
         id: 'poi_quantum_storage_unit',
         title: 'Quantum Archive Vault (Q-SSD)',
         position: new THREE.Vector3(-1.2, surveyorTerrainY + 1.6, -1.0),
@@ -4001,7 +3956,7 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
           'Next Objective': 'Target Coordinates: Vault Zero (Chapter 2)',
           'Mission Status': 'CHAPTER 1 OBJECTIVES COMPLETE'
         },
-        officerNote: '“Mission accomplished, team! Surveyor 1 is secured, the archive is saved, and we’ve unlocked the exact coordinates to where this signal came from. Arin to Carrier Aegis: prepare for the next phase!”'
+        officerNote: '“Mission accomplished, team! Surveyor 1 is secured, the archive is saved, and we’ve unlocked the exact coordinates to where this signal came from. Recovery team to Carrier Aegis: prepare for the next phase!”'
       },
 
       // Fissure & Cavern (Exploration towards Zones 4-6)
@@ -4060,6 +4015,7 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
     let lastStepTime = 0;
 
     const onKeyDown = (e) => {
+      if (isHqOpenRef.current) return;
       audio.ensureContext();
       audio.startSuitBreathing();
       audio.startAmbience();
@@ -4083,9 +4039,12 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
         triggerScannerPulse();
       }
 
-      // Interaction Trigger [E]
-      if (code === 'KeyE') {
-        triggerInvestigation();
+      if (code === 'KeyE' && !e.repeat) {
+        if (nearSurveyorRef.current) {
+          openHeadquarters();
+          return;
+        }
+        if (nearInteractableRef.current) triggerInvestigation();
       }
     };
 
@@ -4115,18 +4074,6 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
 
     document.addEventListener('mousemove', onMouseMove);
 
-    const onPointerLockChange = () => {
-      const locked = document.pointerLockElement === renderer.domElement;
-      setIsLocked(locked);
-      if (locked) {
-        setHudNotice('Look around with mouse • WASD to walk • Space to Jump • [F] Scan • [E] Interact');
-      } else {
-        setHudNotice('Click screen to activate Astronaut First-Person EVA controls');
-      }
-    };
-
-    document.addEventListener('pointerlockchange', onPointerLockChange);
-
     const handleCanvasClick = () => {
       audio.ensureContext();
       audio.startSuitBreathing();
@@ -4152,11 +4099,21 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
     let lastRadioChatterTime = 0;
     let isAlienVibrating = false;
     let isMachineryRunning = false;
+    let lastMemoryLog = 0;
 
     const animate = () => {
       animId = requestAnimationFrame(animate);
       const delta = Math.min(clock.getDelta(), 0.08);
       const time = clock.getElapsedTime();
+
+      if (import.meta.env && import.meta.env.DEV && time - lastMemoryLog > 5) {
+        lastMemoryLog = time;
+        console.debug('[LunarMapChapter1] renderer.info.memory:', JSON.stringify({
+          textures: renderer.info.memory.textures,
+          geometries: renderer.info.memory.geometries,
+        }));
+      }
+
       // Earth slow planetary rotation
       earthSphere.rotation.y += delta * 0.02;
       earthClouds.rotation.y += delta * 0.028;
@@ -4233,14 +4190,12 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
       if (!underground && distToFissure < 6.5) {
         // Step into fissure -> descend underground
         underground = true;
-        setIsUnderground(true);
         playerPos.set(-95, CAVERN_Y + 1.8, -125);
         playerVelocityY = 0;
         audio.playAnomalyHarmonic();
       } else if (underground && distToFissure < 8.0 && playerPos.z > -105) {
         // Return to surface ramp
         underground = false;
-        setIsUnderground(false);
         playerPos.set(-95, fissureTerrainY + 2.0, -98);
         playerVelocityY = 0;
       }
@@ -4448,11 +4403,12 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
         hudTimer = 0;
 
         const distLanding = Math.round(Math.hypot(playerPos.x - 105, playerPos.z - 65));
-        const distSurveyor = Math.round(Math.hypot(playerPos.x, playerPos.z));
+        const exactSurveyorDistance = Math.hypot(playerPos.x, playerPos.z);
+        const distSurveyor = Math.round(exactSurveyorDistance);
+        nearSurveyorRef.current = exactSurveyorDistance <= SURVEYOR_RETRIEVAL_RADIUS;
         const distCrater = Math.round(Math.hypot(playerPos.x - (-75), playerPos.z - (-50)));
         const distAlien = Math.round(Math.hypot(playerPos.x - (-120), playerPos.z - (-75)));
         const distEcho = Math.round(Math.hypot(playerPos.x - (-116), playerPos.z - (-72)));
-        const distAnomaly = Math.round(Math.hypot(playerPos.x - (-95), playerPos.z - (-110)));
         const distBuried = Math.hypot(playerPos.x - (-78), playerPos.z - (-54));
         let headingDeg = Math.round((THREE.MathUtils.radToDeg(-yaw) % 360 + 360) % 360);
 
@@ -4460,7 +4416,6 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
         setDistanceToSurveyor(distSurveyor);
         setDistanceToCrater(distCrater);
         setDistanceToAlienStructure(distAlien);
-        setDistanceToAnomaly(distAnomaly);
         setCompassHeading(headingDeg);
 
         // 7-Stage Suggested Player Journey Nav-Target calculation
@@ -4529,6 +4484,7 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
           currentZone = 'OCEANUS PROCELLARUM TRAIL';
         }
         setActiveZone(currentZone);
+        activeZoneRef.current = currentZone;
 
         // Dynamic Solar Visor Glare Intensity calculation
         // Sun vector (240, 75, -180) normalized ≈ (0.78, 0.24, -0.58)
@@ -4627,23 +4583,42 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
     const resizeTimer = setTimeout(handleResize, 100);
 
     return () => {
+      isDisposed = true;
+
       audio.stopAllLoops();
       clearTimeout(resizeTimer);
       window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('keyup', onKeyUp);
       window.removeEventListener('resize', handleResize);
       document.removeEventListener('mousemove', onMouseMove);
-      document.removeEventListener('pointerlockchange', onPointerLockChange);
       if (renderer.domElement) {
         renderer.domElement.removeEventListener('click', handleCanvasClick);
+      }
+      if (document.pointerLockElement) {
+        document.exitPointerLock();
       }
       if (animId) cancelAnimationFrame(animId);
       if (renderer.domElement && container.contains(renderer.domElement)) {
         container.removeChild(renderer.domElement);
       }
+
+      if (import.meta.env && import.meta.env.DEV) {
+        console.info('[LunarMapChapter1] GPU resources before teardown:', JSON.stringify(renderer.info.memory));
+      }
+
+      // Release the cached NASA models first. Their shared assets are skipped
+      // by the scene traversal below and disposed by the loader when the last
+      // reference is released.
+      modelHandles.forEach((handle) => handle.release());
+      modelHandles.length = 0;
+
+      // Dispose every geometry/material/texture the chapter created, including
+      // the procedural terrain, props, scanner, particles, and shadow maps.
+      disposeObject3D(scene, { skipSharedAssets: true });
+
+      // Explicitly release procedural map textures that may not be reachable
+      // from a material at teardown (dispose is idempotent).
       regolithMap.dispose();
-      regolithBumpMap.dispose();
-      regolithRoughnessMap.dispose();
       basaltRockMap.dispose();
       goldFoilMap.dispose();
       solarPanelMap.dispose();
@@ -4662,27 +4637,60 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
       sparkMat.dispose();
       sporeGeo.dispose();
       bootprintGeo.dispose();
-      dracoLoader.dispose();
-      surveyorGroup.traverse((object) => {
-        if (!object.isMesh) return;
-        object.geometry.dispose();
-        const materials = Array.isArray(object.material) ? object.material : [object.material];
-        materials.forEach((material) => material.dispose());
-      });
+
       triggerSparksRef.current = null;
       triggerScannerBeamRef.current = null;
       renderer.dispose();
+      renderer.forceContextLoss();
     };
   }, []);
+
+  const nearSurveyor = distanceToSurveyor <= SURVEYOR_RETRIEVAL_RADIUS;
 
   return (
     <div className="relative h-full w-full overflow-hidden select-none cursor-crosshair font-mono bg-black text-slate-100">
       
+      {!isHqOpen && (
+        <div className="pointer-events-none absolute inset-x-0 top-4 z-20 flex flex-col items-center gap-2 px-4 text-center">
+          <div
+            role="status"
+            className="rounded-xl border border-cyan-400/50 bg-slate-950/90 px-5 py-2.5 text-sm font-black uppercase tracking-[0.18em] text-white shadow-[0_0_24px_rgba(34,211,238,0.28)] backdrop-blur-md"
+          >
+            <span className="mr-2 text-cyan-300">Mission Task</span>
+            Find Surveyor 5
+          </div>
+          {nearSurveyor && (
+            <button
+              type="button"
+              onClick={openHeadquarters}
+              className="pointer-events-auto flex items-center gap-2 border border-[#7fe3ff]/80 bg-gradient-to-r from-[#06243d]/95 to-[#0b4162]/95 px-5 py-3 text-sm font-black uppercase tracking-wide text-[#d9faff] shadow-[0_0_28px_rgba(34,211,238,0.38)] transition hover:border-[#c5f8ff] hover:shadow-[0_0_34px_rgba(34,211,238,0.6)] active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7fe3ff]"
+              style={{ clipPath: 'polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px)' }}
+            >
+              <Building2 className="h-4 w-4" aria-hidden="true" />
+              Click E to retrieve Surveyor 5
+            </button>
+          )}
+        </div>
+      )}
+
+      {!isHqOpen && (
+        <button
+          type="button"
+          onClick={openHeadquarters}
+          className="absolute right-4 top-4 z-30 flex items-center gap-2 border border-[#7fe3ff]/45 bg-[#041323]/90 px-3 py-2.5 text-[9px] font-bold uppercase tracking-[0.16em] text-[#b9ecff] shadow-[0_0_20px_rgba(34,211,238,0.14)] backdrop-blur-md transition hover:border-[#7fe3ff]/90 hover:bg-[#08213a] hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7fe3ff] sm:right-6 sm:top-6 sm:px-4 sm:text-[10px]"
+          style={{ clipPath: 'polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px)' }}
+        >
+          <Building2 className="h-3.5 w-3.5 text-[#7fe3ff]" aria-hidden="true" />
+          Skip to NASA HQ
+          <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
+        </button>
+      )}
+
       {/* 3D WebGL Canvas */}
       <div ref={mountRef} className="absolute inset-0 h-full w-full" />
 
       {/* ASTRONAUT HELMET VISOR HUD OVERLAY */}
-      <div className="absolute inset-0 pointer-events-none z-10">
+      <div className="absolute inset-0 pointer-events-none z-10 hidden">
         
         {/* Subtle Visor Curvature Vignette */}
         <div 
@@ -4719,17 +4727,31 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="relative flex items-center justify-center">
             <div className={`transition-all duration-200 rounded-full border ${
-              nearInteractable 
+              nearSurveyor || nearInteractable
                 ? 'w-10 h-10 border-cyan-400 bg-cyan-400/20 scale-125 animate-pulse'
                 : 'w-2 h-2 border-cyan-400/80 bg-cyan-400/40'
             }`} />
-            {nearInteractable && (
+            {(nearSurveyor || nearInteractable) && (
               <div className="absolute -top-6 text-[10px] text-cyan-300 font-bold tracking-widest uppercase bg-black/80 px-2 py-0.5 rounded border border-cyan-400/40">
-                [E] INVESTIGATE
+                {nearSurveyor ? 'PRESS [E] RETRIEVE SURVEYOR 5' : 'INTERACT'}
               </div>
             )}
           </div>
         </div>
+
+        {/* SURVEYOR 5 RETRIEVAL PROMPT */}
+        {nearSurveyor && !isHqOpen && (
+          <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-30 animate-bounce pointer-events-auto">
+            <button
+              type="button"
+              onClick={openHeadquarters}
+              className="flex items-center gap-3 px-6 py-3.5 rounded-full bg-gradient-to-r from-amber-500 via-sky-500 to-indigo-600 text-white font-black text-sm sm:text-base shadow-[0_0_35px_rgba(56,189,248,0.7)] border-2 border-white/60 active:scale-95 transition-all"
+            >
+              <Building2 className="w-5 h-5" />
+              <span>Click E to retrieve Surveyor 5</span>
+            </button>
+          </div>
+        )}
 
         {/* TOP COMPASS TAPE & MISSION OBJECTIVE HUD */}
         <div className="absolute top-4 inset-x-6 flex items-start justify-between">
@@ -4874,25 +4896,28 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
               <span>[F] LIDAR Scanner</span>
             </button>
 
-            {nearInteractable && (
+            {nearInteractable && nearInteractable.id !== 'surveyor_5_retrieval' && (
               <button
                 type="button"
                 onClick={triggerInvestigation}
                 className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 via-blue-600 to-indigo-600 text-white font-bold text-xs uppercase tracking-wider border border-cyan-400 shadow-xl shadow-cyan-500/40 hover:scale-105 active:scale-95 animate-bounce"
               >
                 <Crosshair className="w-4 h-4 text-cyan-200" />
-                <span>[E] {nearInteractable.title}</span>
+                <span>{nearInteractable.title}</span>
+              </button>
+            )}
+
+            {nearSurveyor && (
+              <button
+                type="button"
+                onClick={openHeadquarters}
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 via-blue-600 to-indigo-600 text-white font-bold text-xs uppercase tracking-wider border border-cyan-400 shadow-xl shadow-cyan-500/40 hover:scale-105 active:scale-95 animate-bounce"
+              >
+                <Crosshair className="w-4 h-4 text-cyan-200" />
+                <span>Click E to retrieve Surveyor 5</span>
               </button>
             )}
           </div>
-
-          {/* First-person lock notice */}
-          {!isLocked && (
-            <div className="pointer-events-auto px-4 py-2 rounded-xl bg-black/85 border border-cyan-500/40 text-xs text-slate-300 shadow-xl flex items-center gap-2">
-              <MousePointer className="w-4 h-4 text-cyan-400 animate-pulse" />
-              <span>Click screen to lock mouse for First-Person Look</span>
-            </div>
-          )}
 
           {/* Low-G Jump Notice */}
           <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-black/75 border border-white/10 text-[10px] text-slate-400">
@@ -4906,7 +4931,7 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
       {/* SUBTLE SCANLINE & CHROMATIC ABERRATION SCREEN DISTORTION NEAR ANOMALOUS SIGNAL */}
       {anomalousSignal > 0 && (
         <div 
-          className="absolute inset-0 pointer-events-none z-10 transition-opacity duration-300 overflow-hidden"
+          className="absolute inset-0 pointer-events-none z-10 transition-opacity duration-300 overflow-hidden hidden"
           style={{ opacity: Math.min(0.65, (anomalousSignal / 100) * 0.75) }}
         >
           {/* Subtle horizontal scanline raster */}
@@ -4933,47 +4958,6 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
           {/* Subtle electromagnetic static indicator */}
           <div className="absolute top-1/2 left-6 -translate-y-1/2 text-[9px] font-mono tracking-widest text-purple-300/60 uppercase">
             [EM RESONANCE · 432.06 MHz · SENSOR JITTER]
-          </div>
-        </div>
-      )}
-
-      {/* INCOMING TACTICAL COMMS TRANSMISSION TOAST BANNER */}
-      {activeComms && (
-        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-40 max-w-lg w-[92vw] pointer-events-auto animate-fade-in">
-          <div className="p-3.5 rounded-2xl bg-slate-950/95 border-2 border-cyan-400/80 shadow-[0_0_40px_rgba(6,182,212,0.5)] backdrop-blur-xl flex items-start gap-3">
-            <div className="p-2 rounded-xl bg-cyan-500/20 border border-cyan-400/40 text-cyan-300 flex-shrink-0 mt-0.5">
-              <Radio className="w-4 h-4 text-cyan-400 animate-pulse" />
-            </div>
-
-            <div className="flex-1 space-y-1">
-              <div className="flex items-center justify-between text-[10px] tracking-widest uppercase">
-                <div className="flex items-center gap-2">
-                  <span className="px-1.5 py-0.5 rounded bg-cyan-900/60 text-cyan-300 font-bold font-mono">
-                    {activeComms.callsign}
-                  </span>
-                  <span className="text-cyan-400 font-bold">{activeComms.speaker}</span>
-                </div>
-                {/* Audio visualizer bars */}
-                <div className="flex items-center gap-0.5 h-3">
-                  <span className="w-0.5 h-2 bg-cyan-400 animate-pulse" />
-                  <span className="w-0.5 h-3 bg-cyan-300 animate-pulse delay-75" />
-                  <span className="w-0.5 h-1.5 bg-cyan-400 animate-pulse delay-150" />
-                  <span className="w-0.5 h-2.5 bg-cyan-200 animate-pulse delay-100" />
-                </div>
-              </div>
-              <p className="text-slate-100 text-xs font-sans leading-relaxed">
-                "{activeComms.text}"
-              </p>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => { audio.playClick(); setActiveComms(null); }}
-              className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-white/10 transition-colors"
-              title="Dismiss comms"
-            >
-              <X className="w-4 h-4" />
-            </button>
           </div>
         </div>
       )}
@@ -5074,34 +5058,9 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
 
       {/* SCANNER ACTIVE RADAR RING EFFECT OVERLAY */}
       {scanPulseActive && (
-        <div className="absolute inset-0 pointer-events-none z-20 flex items-center justify-center">
+        <div className="absolute inset-0 pointer-events-none z-20 flex items-center justify-center hidden">
           <div className="w-[85vw] h-[85vw] max-w-[800px] max-h-[800px] rounded-full border-2 border-cyan-400/60 shadow-[0_0_80px_rgba(6,182,212,0.4)] animate-ping" />
         </div>
-      )}
-
-      {/* INVESTIGATION DOSSIER MODAL */}
-      {investigateTarget && (
-        <InvestigationModal
-          target={investigateTarget}
-          onClose={() => setInvestigateTarget(null)}
-          onLogData={(target) => {
-            if (target.id === 'poi_mission_terminal' || target.id === 'poi_maya_chen' || target.id === 'poi_leo_vance' || target.id === 'poi_lunar_transport') {
-              advanceJourneyStage(1);
-            } else if (target.id && target.id.startsWith('surveyor_')) {
-              advanceJourneyStage(2);
-            } else if (target.id === 'poi_crater_site_alpha' || target.id === 'poi_crater_site_beta' || target.id === 'poi_crater_site_gamma') {
-              advanceJourneyStage(3);
-            } else if (target.id === 'poi_alien_structure' || target.id === 'poi_data_conduit') {
-              advanceJourneyStage(4);
-            } else if (target.id === 'poi_recovery_rig' || target.id === 'poi_quantum_storage_unit') {
-              advanceJourneyStage(6);
-            } else if (target.id === 'poi_extraction_pallet') {
-              setShowChapter1Completion(true);
-            } else {
-              setActiveObjective(`Cataloged: ${target.title}. Continue exploring the sector.`);
-            }
-          }}
-        />
       )}
 
       {/* ZONE 5 — MISSION ECHO INTERFACE MODAL */}
@@ -5164,12 +5123,8 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
               </div>
               <div className="flex justify-between text-slate-400">
                 <span>Phase 7 — End Next Signal:</span>
-                <span className="text-amber-300 font-bold">Arin Commits to Project Legacy</span>
+                <span className="text-amber-300 font-bold">Project Legacy Continues</span>
               </div>
-            </div>
-
-            <div className="p-3 rounded-xl bg-cyan-950/30 border border-cyan-500/30 text-left text-xs font-sans text-cyan-200">
-              <strong className="text-cyan-300 font-mono">Captain Arin Rao:</strong> "We came to recover our past... but whoever built this left an invitation to what comes next. Project Legacy continues."
             </div>
 
             <div className="flex justify-center gap-4 pt-2">
@@ -5197,6 +5152,8 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
           </div>
         </div>
       )}
+
+      <NasaHeadquartersModal isOpen={isHqOpen} onClose={closeHeadquarters} />
 
     </div>
   );

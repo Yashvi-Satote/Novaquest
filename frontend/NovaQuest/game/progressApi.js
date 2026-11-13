@@ -4,6 +4,8 @@
  * Only signed-in users call these endpoints; guests never touch them.
  */
 
+import { trackedFetch } from '../../Shared/services/apiActivity.js';
+
 const API_BASE = '/api/novauser/progress';
 const REQUEST_TIMEOUT_MS = 10000;
 
@@ -22,7 +24,7 @@ async function request(path = '/game', { method = 'GET', body } = {}) {
   let response;
 
   try {
-    response = await fetch(`${API_BASE}${path}`, {
+    response = await trackedFetch(`${API_BASE}${path}`, {
       method,
       credentials: 'include',
       signal: controller.signal,

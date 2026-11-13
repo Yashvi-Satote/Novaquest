@@ -63,9 +63,6 @@ export default function LunarSurfaceScene({ onComplete }) {
         playerPosRef.current.isGrounded = false;
         gameAudio.playClick();
       }
-      if (k === 'e' && isNearLander) {
-        handleInteractSurveyor();
-      }
     };
 
     const handleKeyUp = (e) => {
@@ -433,7 +430,7 @@ export default function LunarSurfaceScene({ onComplete }) {
               icon={Sparkles}
               className="text-slate-950 font-black shadow-[0_0_30px_rgba(250,204,21,0.6)]"
             >
-              {isNearLander ? 'PRESS [E] OR TAP TO INSPECT SURVEYOR 5' : 'APPROACH & INSPECT SURVEYOR 5'}
+              {isNearLander ? 'TAP TO INSPECT SURVEYOR 5' : 'APPROACH & INSPECT SURVEYOR 5'}
             </GameButton>
           </div>
         </div>
