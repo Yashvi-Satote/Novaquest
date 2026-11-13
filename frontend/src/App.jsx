@@ -8,6 +8,7 @@ import SolarSystemPage from '../NovaMap/pages/SolarSystemPage';
 import TimeTravelersHomePage from '../NovaQuest/pages/TimeTravelersHomePage';
 import MissionSelectPage from '../NovaQuest/pages/MissionSelectPage';
 import Level1Surveyor5Page from '../NovaQuest/pages/Level1Surveyor5Page';
+import Level2MessageOfEarthPage from '../NovaQuest/pages/Level2MessageOfEarthPage';
 import MemoirPage from '../NovaQuest/pages/MemoirPage';
 import OldLunarMapPage from '../NovaQuest/pages/OldLunarMapPage';
 import SignInPage from '../NovaUser/pages/SignInPage';
@@ -95,8 +96,13 @@ export default function App() {
       <Route path="/missions" element={<MissionSelectPage />} />
       <Route path="/play" element={<Level1Surveyor5Page />} />
       <Route path="/play/surveyor-5" element={<Level1Surveyor5Page />} />
+      <Route path="/play/level-1" element={<Level1Surveyor5Page />} />
+      <Route path="/play/message-of-earth" element={<Level2MessageOfEarthPage />} />
+      <Route path="/play/voyager-1" element={<Level2MessageOfEarthPage />} />
       <Route path="/old-lunar-map" element={<OldLunarMapPage />} />
       <Route path="/level/surveyor-5" element={<Navigate to="/play/surveyor-5" replace />} />
+      <Route path="/level/message-of-earth" element={<Navigate to="/play/message-of-earth" replace />} />
+      <Route path="/level-2" element={<Navigate to="/play/message-of-earth" replace />} />
       <Route path="/prologue" element={<Navigate to="/play" replace />} />
       <Route path="/mission-echo" element={<Navigate to="/play" replace />} />
       <Route path="/stage-5" element={<Navigate to="/play" replace />} />

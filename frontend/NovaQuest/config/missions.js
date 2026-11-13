@@ -26,8 +26,26 @@ export const ALL_MISSIONS = [
     data: SURVEYOR_5_MISSION
   },
   {
-    id: 'apollo-11',
+    id: 'voyager-1',
     levelNumber: 2,
+    title: 'Message of Earth — Voyager 1',
+    subtitle: 'Journey into Empty Interstellar Space',
+    year: 1977,
+    destination: 'Interstellar Space',
+    difficulty: 'Beginner Friendly',
+    estimatedDuration: '5 Minutes',
+    status: 'unlocked',
+    heroImage: '/textures/planets/milky_way.jpg',
+    badge: 'Golden Record Star',
+    tags: ['Voyager 1', 'Interstellar', '1977', 'Golden Record'],
+    data: {
+      summary: 'Inspect NASA\'s Voyager 1 spacecraft drifting in the quiet void of interstellar space, carrying humanity\'s Golden Record — the Message of Earth.',
+      scenes: []
+    }
+  },
+  {
+    id: 'apollo-11',
+    levelNumber: 3,
     title: 'Apollo 11 — One Giant Leap',
     subtitle: 'Humanity Touches Another World',
     year: 1969,
@@ -38,11 +56,11 @@ export const ALL_MISSIONS = [
     heroImage: '/images/moon_close_up_telescope.jpg',
     badge: 'Tranquility Base Medal',
     tags: ['Apollo', 'Crewed', '1969', 'Moonwalkers'],
-    lockReason: 'Complete Level 1: Surveyor 5 to unlock Apollo 11'
+    lockReason: 'Complete Level 2: Message of Earth to unlock Apollo 11'
   },
   {
     id: 'viking-1',
-    levelNumber: 3,
+    levelNumber: 4,
     title: 'Viking 1 — The Red Planet',
     subtitle: 'First Long-Term Mars Lander',
     year: 1976,
@@ -53,22 +71,7 @@ export const ALL_MISSIONS = [
     heroImage: '/textures/planets/mars.jpg',
     badge: 'Martian Explorer Ribbon',
     tags: ['Mars', 'Lander', '1976', 'Astrobiology'],
-    lockReason: 'Complete Level 2 to unlock Viking 1'
-  },
-  {
-    id: 'voyager-1',
-    levelNumber: 4,
-    title: 'Voyager 1 — The Grand Tour',
-    subtitle: 'Journey into Interstellar Space',
-    year: 1977,
-    destination: 'Jupiter, Saturn & The Stars',
-    difficulty: 'Advanced',
-    estimatedDuration: '10 Minutes',
-    status: 'locked',
-    heroImage: '/textures/planets/jupiter.jpg',
-    badge: 'Golden Record Star',
-    tags: ['Outer Planets', 'Flyby', '1977', 'Interstellar'],
-    lockReason: 'Complete Level 3 to unlock Voyager 1'
+    lockReason: 'Complete Level 3 to unlock Viking 1'
   },
   {
     id: 'cassini-huygens',
