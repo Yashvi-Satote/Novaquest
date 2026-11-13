@@ -16,6 +16,7 @@ import LegalPage from '../NovaUser/pages/LegalPage';
 import SettingsPage from '../NovaUser/settings/SettingsPage';
 import { GuestOnly } from '../NovaUser/components/RouteGuards';
 import { ArrowLeft, AlertCircle } from 'lucide-react';
+import ApiLoadingIndicator from '../Shared/components/layout/ApiLoadingIndicator.jsx';
 
 function NotFoundPage() {
   return (
@@ -56,9 +57,11 @@ export default function App() {
   // account-backed settings and progress.
 
   return (
-    <Routes>
-      {/* The app opens directly on the NovaQuest hub for guests and members. */}
-      <Route path="/" element={<Navigate to="/app" replace />} />
+    <>
+      <ApiLoadingIndicator />
+      <Routes>
+        {/* The app opens directly on the NovaQuest hub for guests and members. */}
+        <Route path="/" element={<Navigate to="/app" replace />} />
 
       {/* Optional NovaUser destinations. Nothing redirects here automatically. */}
       <Route path="/register" element={<Navigate to="/novauser/register" replace />} />
@@ -107,7 +110,8 @@ export default function App() {
       <Route path="/settings" element={<SettingsPage />} />
       <Route path="/spacecraft/:slug" element={<SpacecraftDetailPage />} />
       <Route path="/hardware/:slug" element={<HardwareDetailPage />} />
-      <Route path="*" element={<NotFoundPage />} />
-    </Routes>
+        <Route path="*" element={<NotFoundPage />} />
+      </Routes>
+    </>
   );
 }

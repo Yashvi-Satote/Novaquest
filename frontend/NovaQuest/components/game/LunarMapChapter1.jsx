@@ -15,7 +15,6 @@ import {
   Building2,
   ChevronRight,
   Maximize2,
-  MousePointer,
   Volume2,
   Scan,
   Trophy,
@@ -27,7 +26,6 @@ import {
   Wifi
 } from 'lucide-react';
 import { audio } from '../../game/moonMapAudioManager';
-import InvestigationModal from './InvestigationModal';
 import MissionEchoModal from './MissionEchoModal';
 import NasaHeadquartersModal from '../../nasa-headquarters/NasaHeadquartersModal';
 import { 
@@ -136,31 +134,25 @@ export const JOURNEY_STAGES = [
 export default function LunarMapChapter1({ mcGender = 'male', onComplete, onReturnMenu }) {
   const mountRef = useRef(null);
   const nearInteractableRef = useRef(null);
-  const surveyorDistanceRef = useRef(Infinity);
+  const nearSurveyorRef = useRef(false);
   const isMissionEchoCompletedRef = useRef(false);
   const triggerSparksRef = useRef(null);
   const triggerScannerBeamRef = useRef(null);
 
   // HUD & Game State
-  const [isLocked, setIsLocked] = useState(false);
-  const [activeObjective, setActiveObjective] = useState(JOURNEY_STAGES[0].objective);
+  const activeZoneRef = useRef('ZONE 1 · TEAM LANDING');
   const [activeZone, setActiveZone] = useState('ZONE 1 · TEAM LANDING');
   const [distanceToLanding, setDistanceToLanding] = useState(0);
   const [distanceToSurveyor, setDistanceToSurveyor] = useState(SURVEYOR_RETRIEVAL_RADIUS + 1);
   const [distanceToCrater, setDistanceToCrater] = useState(0);
   const [distanceToAlienStructure, setDistanceToAlienStructure] = useState(0);
-  const [distanceToAnomaly, setDistanceToAnomaly] = useState(0);
   const [anomalousSignal, setAnomalousSignal] = useState(0); // 0 to 100% signal strength
   const [compassHeading, setCompassHeading] = useState(0); // 0 to 360 deg
-  const [isUnderground, setIsUnderground] = useState(false);
   const [scanPulseActive, setScanPulseActive] = useState(false);
-  const [investigateTarget, setInvestigateTarget] = useState(null);
   const [nearInteractable, setNearInteractable] = useState(null);
   const [isHqOpen, setIsHqOpen] = useState(false);
   const isHqOpenRef = useRef(false);
-  const [hudNotice, setHudNotice] = useState('Click screen to look • WASD to walk • Space to Jump • [F] Scan • Click interactables');
 
-  // 7-Stage Suggested Player Journey State
   const [journeyStageIndex, setJourneyStageIndex] = useState(0);
   const [completedStageIndices, setCompletedStageIndices] = useState([]);
   const [showJourneyRoadmap, setShowJourneyRoadmap] = useState(false);
@@ -170,13 +162,15 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
   const advanceJourneyStage = (nextIndex) => {
     setJourneyStageIndex((current) => {
       if (nextIndex <= current || nextIndex >= JOURNEY_STAGES.length) return current;
-      const stage = JOURNEY_STAGES[nextIndex];
-      if (stage) {
-        setActiveObjective(stage.objective);
-      }
-      setCompletedStageIndices(prev => Array.from(new Set([...prev, current])));
+      setCompletedStageIndices((prev) => Array.from(new Set([...prev, current])));
       return nextIndex;
     });
+  };
+
+  const logInvestigation = (target) => {
+    if (target.id === 'poi_extraction_pallet') {
+      setShowChapter1Completion(true);
+    }
   };
 
   // Mission Echo & Extraction State
@@ -184,16 +178,15 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
   const [isMissionEchoCompleted, setIsMissionEchoCompleted] = useState(false);
   const [showChapter1Completion, setShowChapter1Completion] = useState(false);
 
-  // Suit Telemetry State
   const [oxygenLevel, setOxygenLevel] = useState(98.6);
   const [suitPower, setSuitPower] = useState(94.2);
   const [heartRate, setHeartRate] = useState(72);
   const [externalTemp, setExternalTemp] = useState(-118);
-  const [sunGlareIntensity, setSunGlareIntensity] = useState(0); // 0 to 1 based on sun angle
+  const [sunGlareIntensity, setSunGlareIntensity] = useState(0);
 
   // Component-scoped triggers accessible both from keydown and HUD buttons
   const triggerScannerPulse = () => {
-    if (activeZone && activeZone.includes('CRATER')) {
+    if (activeZoneRef.current.includes('CRATER')) {
       audio.playCraterScannerPulse();
     } else {
       audio.playScannerPing();
@@ -229,31 +222,30 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
       } else if (id && id.startsWith('surveyor_')) {
         audio.playSurveyorScannerBeep();
         setTimeout(() => audio.playSurveyorInterface(), 260);
-        setInvestigateTarget(nearInteractableRef.current);
+        logInvestigation(nearInteractableRef.current);
       } else if (id === 'poi_mission_terminal' || id === 'poi_lunar_transport') {
         audio.playEquipmentFeedback();
         setTimeout(() => audio.playRadioCommsChatter('chen'), 420);
-        setInvestigateTarget(nearInteractableRef.current);
+        logInvestigation(nearInteractableRef.current);
       } else if (id === 'poi_maya_chen') {
         audio.playRadioCommsChatter('chen');
-        setInvestigateTarget(nearInteractableRef.current);
+        logInvestigation(nearInteractableRef.current);
       } else if (id === 'poi_leo_vance') {
         audio.playRadioCommsChatter('vance');
-        setInvestigateTarget(nearInteractableRef.current);
+        logInvestigation(nearInteractableRef.current);
       } else if (id && id.startsWith('poi_crater_')) {
         audio.playCraterInterference(0.9);
         setTimeout(() => audio.playCraterScannerPulse(), 220);
-        setInvestigateTarget(nearInteractableRef.current);
+        logInvestigation(nearInteractableRef.current);
       } else if (id === 'poi_alien_structure' || id === 'poi_data_conduit') {
         audio.playAnomalyHarmonic();
-        setInvestigateTarget(nearInteractableRef.current);
+        logInvestigation(nearInteractableRef.current);
       } else if (id === 'poi_extraction_pallet' && isMissionEchoCompletedRef.current) {
         audio.playEquipmentFeedback();
-        setShowChapter1Completion(true);
-        setInvestigateTarget(nearInteractableRef.current);
+        logInvestigation(nearInteractableRef.current);
       } else {
         audio.playInteract();
-        setInvestigateTarget(nearInteractableRef.current);
+        logInvestigation(nearInteractableRef.current);
       }
     }
   };
@@ -739,14 +731,16 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
       const trackMat = new THREE.MeshStandardMaterial({
         map: roverTrackMap,
         transparent: true,
-        opacity: 0.82,
+        opacity: 0.9,
+        color: 0xc3c6ce,
         roughness: 0.98,
         depthWrite: false,
         polygonOffset: true,
         polygonOffsetFactor: -1.0,
         polygonOffsetUnits: -1.0
       });
-      return new THREE.Mesh(ribbonGeo, trackMat);
+      const ribbon = new THREE.Mesh(ribbonGeo, trackMat);
+      return ribbon;
     };
 
     // Track 1: Zone 1 Team Landing Zone (105, 65) -> Zone 2 Surveyor 1 (0, 0)
@@ -757,7 +751,8 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
       new THREE.Vector3(25, 0, 14),
       new THREE.Vector3(3, 0, 2)
     ];
-    scene.add(createTrackRibbon(trackPointsA, 1.8));
+    const surveyorPathRibbon = createTrackRibbon(trackPointsA, 1.8);
+    scene.add(surveyorPathRibbon);
 
     // Track 2: Zone 2 Surveyor 1 (0, 0) -> Zone 3 Crater Investigation Area (-75, -50)
     const trackPointsB = [
@@ -3525,6 +3520,23 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
     const sparkParticles = new THREE.Points(sparkGeo, sparkMat);
     scene.add(sparkParticles);
 
+    landingZoneGroup.clear();
+    landingZoneGroup.add(mayaMesh, leoMesh);
+
+    const retainedSceneObjects = new Set([
+      camera,
+      sunLight,
+      earthshineLight,
+      faintAmbient,
+      terrainMesh,
+      surveyorGroup,
+      landingZoneGroup,
+      surveyorPathRibbon
+    ]);
+    for (const object of [...scene.children]) {
+      if (!retainedSceneObjects.has(object)) scene.remove(object);
+    }
+
     triggerSparksRef.current = (pos) => {
       audio.playGlitchBurst();
       const px = pos.x || 0;
@@ -4018,9 +4030,12 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
         triggerScannerPulse();
       }
 
-      // Surveyor 5 retrieval: open NASA Headquarters
-      if (code === 'KeyE' && surveyorDistanceRef.current <= SURVEYOR_RETRIEVAL_RADIUS) {
-        openHeadquarters();
+      if (code === 'KeyE' && !e.repeat) {
+        if (nearSurveyorRef.current) {
+          openHeadquarters();
+          return;
+        }
+        if (nearInteractableRef.current) triggerInvestigation();
       }
     };
 
@@ -4049,18 +4064,6 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
     };
 
     document.addEventListener('mousemove', onMouseMove);
-
-    const onPointerLockChange = () => {
-      const locked = document.pointerLockElement === renderer.domElement;
-      setIsLocked(locked);
-      if (locked) {
-        setHudNotice('Look around with mouse • WASD to walk • Space to Jump • [F] Scan • Click interactables');
-      } else {
-        setHudNotice('Click screen to activate Astronaut First-Person EVA controls');
-      }
-    };
-
-    document.addEventListener('pointerlockchange', onPointerLockChange);
 
     const handleCanvasClick = () => {
       audio.ensureContext();
@@ -4168,14 +4171,12 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
       if (!underground && distToFissure < 6.5) {
         // Step into fissure -> descend underground
         underground = true;
-        setIsUnderground(true);
         playerPos.set(-95, CAVERN_Y + 1.8, -125);
         playerVelocityY = 0;
         audio.playAnomalyHarmonic();
       } else if (underground && distToFissure < 8.0 && playerPos.z > -105) {
         // Return to surface ramp
         underground = false;
-        setIsUnderground(false);
         playerPos.set(-95, fissureTerrainY + 2.0, -98);
         playerVelocityY = 0;
       }
@@ -4383,20 +4384,19 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
         hudTimer = 0;
 
         const distLanding = Math.round(Math.hypot(playerPos.x - 105, playerPos.z - 65));
-        const distSurveyor = Math.round(Math.hypot(playerPos.x, playerPos.z));
+        const exactSurveyorDistance = Math.hypot(playerPos.x, playerPos.z);
+        const distSurveyor = Math.round(exactSurveyorDistance);
+        nearSurveyorRef.current = exactSurveyorDistance <= SURVEYOR_RETRIEVAL_RADIUS;
         const distCrater = Math.round(Math.hypot(playerPos.x - (-75), playerPos.z - (-50)));
         const distAlien = Math.round(Math.hypot(playerPos.x - (-120), playerPos.z - (-75)));
         const distEcho = Math.round(Math.hypot(playerPos.x - (-116), playerPos.z - (-72)));
-        const distAnomaly = Math.round(Math.hypot(playerPos.x - (-95), playerPos.z - (-110)));
         const distBuried = Math.hypot(playerPos.x - (-78), playerPos.z - (-54));
         let headingDeg = Math.round((THREE.MathUtils.radToDeg(-yaw) % 360 + 360) % 360);
 
         setDistanceToLanding(distLanding);
         setDistanceToSurveyor(distSurveyor);
-        surveyorDistanceRef.current = distSurveyor;
         setDistanceToCrater(distCrater);
         setDistanceToAlienStructure(distAlien);
-        setDistanceToAnomaly(distAnomaly);
         setCompassHeading(headingDeg);
 
         // 7-Stage Suggested Player Journey Nav-Target calculation
@@ -4465,6 +4465,7 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
           currentZone = 'OCEANUS PROCELLARUM TRAIL';
         }
         setActiveZone(currentZone);
+        activeZoneRef.current = currentZone;
 
         // Dynamic Solar Visor Glare Intensity calculation
         // Sun vector (240, 75, -180) normalized ≈ (0.78, 0.24, -0.58)
@@ -4569,7 +4570,6 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
       window.removeEventListener('keyup', onKeyUp);
       window.removeEventListener('resize', handleResize);
       document.removeEventListener('mousemove', onMouseMove);
-      document.removeEventListener('pointerlockchange', onPointerLockChange);
       if (renderer.domElement) {
         renderer.domElement.removeEventListener('click', handleCanvasClick);
       }
@@ -4577,6 +4577,8 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
       if (renderer.domElement && container.contains(renderer.domElement)) {
         container.removeChild(renderer.domElement);
       }
+        surveyorPathRibbon.geometry.dispose();
+        surveyorPathRibbon.material.dispose();
       regolithMap.dispose();
       regolithBumpMap.dispose();
       regolithRoughnessMap.dispose();
@@ -4616,11 +4618,47 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
   return (
     <div className="relative h-full w-full overflow-hidden select-none cursor-crosshair font-mono bg-black text-slate-100">
       
+      {!isHqOpen && (
+        <div className="pointer-events-none absolute inset-x-0 top-4 z-20 flex flex-col items-center gap-2 px-4 text-center">
+          <div
+            role="status"
+            className="rounded-xl border border-cyan-400/50 bg-slate-950/90 px-5 py-2.5 text-sm font-black uppercase tracking-[0.18em] text-white shadow-[0_0_24px_rgba(34,211,238,0.28)] backdrop-blur-md"
+          >
+            <span className="mr-2 text-cyan-300">Mission Task</span>
+            Find Surveyor 5
+          </div>
+          {nearSurveyor && (
+            <button
+              type="button"
+              onClick={openHeadquarters}
+              className="pointer-events-auto flex items-center gap-2 border border-[#7fe3ff]/80 bg-gradient-to-r from-[#06243d]/95 to-[#0b4162]/95 px-5 py-3 text-sm font-black uppercase tracking-wide text-[#d9faff] shadow-[0_0_28px_rgba(34,211,238,0.38)] transition hover:border-[#c5f8ff] hover:shadow-[0_0_34px_rgba(34,211,238,0.6)] active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7fe3ff]"
+              style={{ clipPath: 'polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px)' }}
+            >
+              <Building2 className="h-4 w-4" aria-hidden="true" />
+              Click E to retrieve Surveyor 5
+            </button>
+          )}
+        </div>
+      )}
+
+      {!isHqOpen && (
+        <button
+          type="button"
+          onClick={openHeadquarters}
+          className="absolute right-4 top-4 z-30 flex items-center gap-2 border border-[#7fe3ff]/45 bg-[#041323]/90 px-3 py-2.5 text-[9px] font-bold uppercase tracking-[0.16em] text-[#b9ecff] shadow-[0_0_20px_rgba(34,211,238,0.14)] backdrop-blur-md transition hover:border-[#7fe3ff]/90 hover:bg-[#08213a] hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7fe3ff] sm:right-6 sm:top-6 sm:px-4 sm:text-[10px]"
+          style={{ clipPath: 'polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px)' }}
+        >
+          <Building2 className="h-3.5 w-3.5 text-[#7fe3ff]" aria-hidden="true" />
+          Skip to NASA HQ
+          <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
+        </button>
+      )}
+
       {/* 3D WebGL Canvas */}
       <div ref={mountRef} className="absolute inset-0 h-full w-full" />
 
       {/* ASTRONAUT HELMET VISOR HUD OVERLAY */}
-      <div className="absolute inset-0 pointer-events-none z-10">
+      <div className="absolute inset-0 pointer-events-none z-10 hidden">
         
         {/* Subtle Visor Curvature Vignette */}
         <div 
@@ -4678,7 +4716,7 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
               className="flex items-center gap-3 px-6 py-3.5 rounded-full bg-gradient-to-r from-amber-500 via-sky-500 to-indigo-600 text-white font-black text-sm sm:text-base shadow-[0_0_35px_rgba(56,189,248,0.7)] border-2 border-white/60 active:scale-95 transition-all"
             >
               <Building2 className="w-5 h-5" />
-              <span>Press [E] to Retrieve Surveyor 5</span>
+              <span>Click E to retrieve Surveyor 5</span>
             </button>
           </div>
         )}
@@ -4844,18 +4882,10 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
                 className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 via-blue-600 to-indigo-600 text-white font-bold text-xs uppercase tracking-wider border border-cyan-400 shadow-xl shadow-cyan-500/40 hover:scale-105 active:scale-95 animate-bounce"
               >
                 <Crosshair className="w-4 h-4 text-cyan-200" />
-                <span>[E] Retrieve Surveyor 5</span>
+                <span>Click E to retrieve Surveyor 5</span>
               </button>
             )}
           </div>
-
-          {/* First-person lock notice */}
-          {!isLocked && (
-            <div className="pointer-events-auto px-4 py-2 rounded-xl bg-black/85 border border-cyan-500/40 text-xs text-slate-300 shadow-xl flex items-center gap-2">
-              <MousePointer className="w-4 h-4 text-cyan-400 animate-pulse" />
-              <span>Click screen to lock mouse for First-Person Look</span>
-            </div>
-          )}
 
           {/* Low-G Jump Notice */}
           <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-black/75 border border-white/10 text-[10px] text-slate-400">
@@ -4869,7 +4899,7 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
       {/* SUBTLE SCANLINE & CHROMATIC ABERRATION SCREEN DISTORTION NEAR ANOMALOUS SIGNAL */}
       {anomalousSignal > 0 && (
         <div 
-          className="absolute inset-0 pointer-events-none z-10 transition-opacity duration-300 overflow-hidden"
+          className="absolute inset-0 pointer-events-none z-10 transition-opacity duration-300 overflow-hidden hidden"
           style={{ opacity: Math.min(0.65, (anomalousSignal / 100) * 0.75) }}
         >
           {/* Subtle horizontal scanline raster */}
@@ -4996,34 +5026,9 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
 
       {/* SCANNER ACTIVE RADAR RING EFFECT OVERLAY */}
       {scanPulseActive && (
-        <div className="absolute inset-0 pointer-events-none z-20 flex items-center justify-center">
+        <div className="absolute inset-0 pointer-events-none z-20 flex items-center justify-center hidden">
           <div className="w-[85vw] h-[85vw] max-w-[800px] max-h-[800px] rounded-full border-2 border-cyan-400/60 shadow-[0_0_80px_rgba(6,182,212,0.4)] animate-ping" />
         </div>
-      )}
-
-      {/* INVESTIGATION DOSSIER MODAL */}
-      {investigateTarget && (
-        <InvestigationModal
-          target={investigateTarget}
-          onClose={() => setInvestigateTarget(null)}
-          onLogData={(target) => {
-            if (target.id === 'poi_mission_terminal' || target.id === 'poi_maya_chen' || target.id === 'poi_leo_vance' || target.id === 'poi_lunar_transport') {
-              advanceJourneyStage(1);
-            } else if (target.id && target.id.startsWith('surveyor_')) {
-              advanceJourneyStage(2);
-            } else if (target.id === 'poi_crater_site_alpha' || target.id === 'poi_crater_site_beta' || target.id === 'poi_crater_site_gamma') {
-              advanceJourneyStage(3);
-            } else if (target.id === 'poi_alien_structure' || target.id === 'poi_data_conduit') {
-              advanceJourneyStage(4);
-            } else if (target.id === 'poi_quantum_storage_unit') {
-              advanceJourneyStage(6);
-            } else if (target.id === 'poi_extraction_pallet') {
-              setShowChapter1Completion(true);
-            } else {
-              setActiveObjective(`Cataloged: ${target.title}. Continue exploring the sector.`);
-            }
-          }}
-        />
       )}
 
       {/* ZONE 5 — MISSION ECHO INTERFACE MODAL */}

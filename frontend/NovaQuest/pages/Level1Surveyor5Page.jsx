@@ -30,26 +30,102 @@ import { USE_OLD_LUNAR_MAP } from '../config/lunarMapConfig';
 import { saveGame } from '../game/saveManager';
 import OldLunarMapPage from './OldLunarMapPage';
 
+const INTRO_SESSION_KEY = 'novaquest-level1-intro-seen';
+const INTRO_720P_SRC = '/videos/intro_720p_optimized.mp4';
+const INTRO_480P_SRC = '/videos/intro_480p_light.mp4';
+const INTRO_POSTER_SRC = '/videos/intro-poster.jpg';
+let introSeenInMemory = false;
+
+function shouldUseLiteIntro() {
+  if (typeof window === 'undefined' || typeof navigator === 'undefined') return false;
+
+  const connection = navigator.connection;
+  const isSlowConnection = connection?.saveData
+    || ['slow-2g', '2g', '3g'].includes(connection?.effectiveType);
+  const isSmallScreen = typeof window.matchMedia === 'function'
+    && window.matchMedia('(max-width: 640px)').matches;
+
+  return isSmallScreen || isSlowConnection;
+}
+
+function getInitialOpeningStage() {
+  if (typeof window === 'undefined') return 'complete';
+  if (typeof window.matchMedia === 'function'
+    && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    return 'complete';
+  }
+
+  try {
+    introSeenInMemory = window.sessionStorage.getItem(INTRO_SESSION_KEY) === 'true';
+    return introSeenInMemory ? 'complete' : 'video';
+  } catch (error) {
+    console.warn('Could not read the Level 1 intro session state.', error);
+    return introSeenInMemory ? 'complete' : 'video';
+  }
+}
+
 const IntroVideoPlayer = memo(function IntroVideoPlayer({
+  canPlayThrough,
   isFading,
+  isVisible,
+  isAutoplayBlocked,
+  preferLite,
   onEnded,
   onError,
+  onCanPlayThrough,
   onTransitionEnd,
+  onPlayWithSound,
+  onSkip,
   videoRef
 }) {
   return (
-    <video
-      ref={videoRef}
-      playsInline
-      preload="auto"
-      src="/videos/milky-way-intro.mp4"
-      onEnded={onEnded}
-      onError={onError}
-      onTransitionEnd={onTransitionEnd}
-      className={`h-full w-full object-cover transition-opacity duration-1000 ease-in-out ${
+    <div
+      className={`fixed inset-0 z-[100] overflow-hidden bg-[#070b14] transition-opacity duration-500 ease-out ${
         isFading ? 'opacity-0' : 'opacity-100'
       }`}
-    />
+      style={{ willChange: 'opacity' }}
+      onTransitionEnd={onTransitionEnd}
+    >
+      <img
+        src={INTRO_POSTER_SRC}
+        alt=""
+        aria-hidden="true"
+        className="absolute inset-0 h-full w-full object-cover"
+      />
+      <video
+        ref={videoRef}
+        autoPlay={canPlayThrough}
+        muted={false}
+        playsInline
+        preload="auto"
+        poster={INTRO_POSTER_SRC}
+        onCanPlayThrough={onCanPlayThrough}
+        onEnded={onEnded}
+        onError={onError}
+        className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-500 ease-out ${
+          isVisible ? 'opacity-100' : 'opacity-0'
+        }`}
+      >
+        <source src={preferLite ? INTRO_480P_SRC : INTRO_720P_SRC} type="video/mp4" />
+        <source src={preferLite ? INTRO_720P_SRC : INTRO_480P_SRC} type="video/mp4" />
+      </video>
+      {isAutoplayBlocked && !isVisible && (
+        <button
+          type="button"
+          onClick={onPlayWithSound}
+          className="absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2 rounded-md bg-black/75 px-5 py-3 text-sm font-bold text-white transition-opacity hover:opacity-80"
+        >
+          Play intro with sound
+        </button>
+      )}
+      <button
+        type="button"
+        onClick={onSkip}
+        className="absolute bottom-6 right-6 z-20 rounded-md bg-black/70 px-4 py-2 text-sm font-bold text-white transition-opacity hover:opacity-80"
+      >
+        Skip
+      </button>
+    </div>
   );
 });
 
@@ -73,17 +149,21 @@ export default function Level1Surveyor5Page() {
   const navigate = useNavigate();
   const canvasContainerRef = useRef(null);
   const introVideoRef = useRef(null);
-  const introFadeFrameRef = useRef(null);
   const introFadeStartedRef = useRef(false);
+  const introCompletedRef = useRef(false);
+  const introPlaybackStartedRef = useRef(false);
 
   // --- Game Master Phase State ---
   // 'phase0_intro' | 'phase1_launch' | 'phase2_emergency' | 'phase3_cockpit' | 'phase4_open_world' | 'phase5_victory'
-  const [gamePhase, setGamePhase] = useState('phase0_intro');
-  const [openingStage, setOpeningStage] = useState('video');
+  const [openingStage, setOpeningStage] = useState(getInitialOpeningStage);
+  const [gamePhase, setGamePhase] = useState(() => (
+    openingStage === 'video' ? 'phase0_intro' : 'phase1_launch'
+  ));
+  const [preferLiteIntro] = useState(shouldUseLiteIntro);
+  const [canPlayThrough, setCanPlayThrough] = useState(false);
   const [hasStartedIntro, setHasStartedIntro] = useState(false);
+  const [isAutoplayBlocked, setIsAutoplayBlocked] = useState(false);
   const [isIntroVideoFading, setIsIntroVideoFading] = useState(false);
-  const [introVideoError, setIntroVideoError] = useState(false);
-  const [introPlaybackBlocked, setIntroPlaybackBlocked] = useState(false);
   const isOldLunarMapActive = USE_OLD_LUNAR_MAP && gamePhase === 'phase4_open_world';
 
   // Inventory & Component Recovery Tracking
@@ -114,24 +194,6 @@ export default function Level1Surveyor5Page() {
   const installedSlotsRef = useRef(installedSlots);
   installedSlotsRef.current = installedSlots;
 
-  useEffect(() => {
-    if (openingStage !== 'date') return undefined;
-
-    const launchTimeout = window.setTimeout(() => {
-      setOpeningStage('complete');
-      phaseRef.current = 'phase1_launch';
-      setGamePhase('phase1_launch');
-    }, 3500);
-
-    return () => window.clearTimeout(launchTimeout);
-  }, [openingStage]);
-
-  useEffect(() => () => {
-    if (introFadeFrameRef.current !== null) {
-      cancelAnimationFrame(introFadeFrameRef.current);
-    }
-  }, []);
-
   // -------------------------------------------------------------
   // RADIO TEXT HELPER
   // -------------------------------------------------------------
@@ -140,63 +202,82 @@ export default function Level1Surveyor5Page() {
     if (onEnd) onEnd();
   };
 
-  const fadeOutIntro = useCallback(() => {
-    if (introFadeStartedRef.current) return;
-    introFadeStartedRef.current = true;
-
-    const video = introVideoRef.current;
-    const startVolume = video?.volume ?? 1;
-    const startTime = performance.now();
-    const fadeDuration = 1000;
-    setIsIntroVideoFading(true);
-
-    const fadeAudio = now => {
-      const progress = Math.min((now - startTime) / fadeDuration, 1);
-      if (video) video.volume = startVolume * (1 - progress);
-      if (progress < 1) {
-        introFadeFrameRef.current = requestAnimationFrame(fadeAudio);
-      } else {
-        introFadeFrameRef.current = null;
-      }
-    };
-
-    introFadeFrameRef.current = requestAnimationFrame(fadeAudio);
+  const completeIntro = useCallback(() => {
+    if (introCompletedRef.current) return;
+    introCompletedRef.current = true;
+    introVideoRef.current?.pause();
+    phaseRef.current = 'phase1_launch';
+    setGamePhase('phase1_launch');
+    setOpeningStage('complete');
   }, []);
 
-  const startIntroVideo = useCallback(() => {
+  const fadeOutIntro = useCallback(() => {
+    if (introCompletedRef.current || introFadeStartedRef.current) return;
+    introFadeStartedRef.current = true;
+    setIsIntroVideoFading(true);
+  }, []);
+
+  const handleIntroVideoCanPlayThrough = useCallback(() => {
+    const video = introVideoRef.current;
+    if (!video || introPlaybackStartedRef.current) return;
+
+    introPlaybackStartedRef.current = true;
+    setCanPlayThrough(true);
+    video.play()
+      .then(() => setHasStartedIntro(true))
+      .catch((error) => {
+        console.warn('Audible autoplay was blocked; waiting for a user gesture.', error);
+        setIsAutoplayBlocked(true);
+      });
+  }, [completeIntro]);
+
+  const handlePlayIntroWithSound = useCallback(() => {
     const video = introVideoRef.current;
     if (!video) return;
 
-    introFadeStartedRef.current = false;
-    setIsIntroVideoFading(false);
     video.muted = false;
     video.volume = 1;
     video.play()
       .then(() => {
         setHasStartedIntro(true);
-        setIntroPlaybackBlocked(false);
+        setIsAutoplayBlocked(false);
       })
-      .catch(() => {
-        setIntroPlaybackBlocked(true);
+      .catch((error) => {
+        console.warn('Intro playback with sound was blocked.', error);
       });
   }, []);
 
-  const handleIntroVideoError = useCallback(() => {
-    setIntroVideoError(true);
-  }, []);
+  const handleIntroVideoError = useCallback((event) => {
+    const videoError = event.currentTarget.error;
+    console.error('The intro video could not be played; continuing to the game.', {
+      code: videoError?.code,
+      message: videoError?.message
+    });
+    completeIntro();
+  }, [completeIntro]);
 
-  const handleIntroVideoTransitionEnd = useCallback(event => {
-    if (event.propertyName === 'opacity' && isIntroVideoFading) {
-      introVideoRef.current?.pause();
-      setOpeningStage('date');
+  const handleIntroVideoTransitionEnd = useCallback((event) => {
+    if (event.target === event.currentTarget && event.propertyName === 'opacity' && isIntroVideoFading) {
+      completeIntro();
     }
-  }, [isIntroVideoFading]);
+  }, [completeIntro, isIntroVideoFading]);
+
+  useEffect(() => {
+    if (openingStage !== 'video') return undefined;
+
+    introSeenInMemory = true;
+    try {
+      window.sessionStorage.setItem(INTRO_SESSION_KEY, 'true');
+    } catch (error) {
+      console.warn('Could not save the Level 1 intro session state.', error);
+    }
+  }, [openingStage]);
 
   // -------------------------------------------------------------
   // THREE.JS MASTER ENGINE
   // -------------------------------------------------------------
   useEffect(() => {
-    if (isOldLunarMapActive) return undefined;
+    if (openingStage === 'video' || isOldLunarMapActive) return undefined;
 
     const container = canvasContainerRef.current;
     if (!container) return;
@@ -829,7 +910,7 @@ export default function Level1Surveyor5Page() {
       renderer.dispose();
       renderer.forceContextLoss();
     };
-  }, [isOldLunarMapActive]);
+  }, [openingStage, isOldLunarMapActive]);
 
   // Reference for test / debug mission completion
   useEffect(() => {
@@ -863,79 +944,30 @@ export default function Level1Surveyor5Page() {
     setInstalledSlots([]);
   };
 
+  if (openingStage === 'video') {
+    return (
+      <IntroVideoPlayer
+        videoRef={introVideoRef}
+        canPlayThrough={canPlayThrough}
+        isFading={isIntroVideoFading}
+        isVisible={hasStartedIntro}
+        isAutoplayBlocked={isAutoplayBlocked}
+        preferLite={preferLiteIntro}
+        onCanPlayThrough={handleIntroVideoCanPlayThrough}
+        onEnded={fadeOutIntro}
+        onError={handleIntroVideoError}
+        onTransitionEnd={handleIntroVideoTransitionEnd}
+        onPlayWithSound={handlePlayIntroWithSound}
+        onSkip={fadeOutIntro}
+      />
+    );
+  }
+
   return (
     <>
     <div className={`relative w-screen h-screen overflow-hidden bg-slate-950 font-sans text-slate-100 select-none${USE_OLD_LUNAR_MAP && gamePhase === 'phase4_open_world' ? ' hidden' : ''}`}>
       {/* Master 3D Viewport */}
       <div ref={canvasContainerRef} className="w-full h-full cursor-crosshair" />
-
-      {openingStage === 'video' && (
-        <div className="absolute inset-0 z-50 overflow-hidden bg-black">
-          <IntroVideoPlayer
-            videoRef={introVideoRef}
-            isFading={isIntroVideoFading}
-            onEnded={fadeOutIntro}
-            onError={handleIntroVideoError}
-            onTransitionEnd={handleIntroVideoTransitionEnd}
-          />
-          {!hasStartedIntro && !introVideoError && (
-            <button
-              type="button"
-              onClick={startIntroVideo}
-              className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-black/50 text-white transition hover:bg-black/35"
-            >
-              <span className="flex h-20 w-20 items-center justify-center rounded-full border border-white/60 bg-white/10 text-3xl backdrop-blur">
-                ▶
-              </span>
-              <span className="text-sm font-bold uppercase tracking-[0.3em]">
-                Play intro with sound
-              </span>
-              {introPlaybackBlocked && (
-                <span className="text-sm text-red-200">
-                  Playback was blocked. Click to try again.
-                </span>
-              )}
-            </button>
-          )}
-          {introVideoError && (
-            <div className="absolute inset-x-0 bottom-20 mx-auto w-fit rounded-xl border border-red-400/40 bg-slate-950/90 px-5 py-3 text-center text-sm text-red-200">
-              <p>The intro video could not be played.</p>
-              <button
-                type="button"
-                onClick={fadeOutIntro}
-                className="mt-2 font-bold text-white underline underline-offset-4"
-              >
-                Continue to launch
-              </button>
-            </div>
-          )}
-          {hasStartedIntro && !introVideoError && (
-            <button
-              type="button"
-              onClick={fadeOutIntro}
-              className="absolute bottom-8 right-8 rounded-full border border-white/30 bg-black/50 px-5 py-2 text-sm font-bold text-white/80 backdrop-blur transition hover:bg-black/80 hover:text-white"
-            >
-              Skip intro
-            </button>
-          )}
-        </div>
-      )}
-
-      {openingStage === 'date' && (
-        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black animate-fade-in">
-          <div className="text-center">
-            <p className="mb-4 text-xs font-semibold uppercase tracking-[0.5em] text-slate-400">
-              Cape Canaveral • Earth
-            </p>
-            <h2 className="text-4xl font-light tracking-[0.28em] text-white sm:text-6xl">
-              29 JUNE 2126
-            </h2>
-            <p className="mt-5 text-sm uppercase tracking-[0.35em] text-sky-300">
-              Lunar Transfer Mission
-            </p>
-          </div>
-        </div>
-      )}
 
       {/* ----------------------------------------------------------- */}
       {/* TOP HUD BAR: Mission Status, Radar, Inventory, Skip Controls */}

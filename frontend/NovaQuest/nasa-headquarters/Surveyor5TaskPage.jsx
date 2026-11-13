@@ -134,7 +134,10 @@ export default function Surveyor5TaskPage({
   cartIds = [],
   cartLimit = SURVEYOR5_CART_LIMIT,
   hologramConverted = false,
+  missionSolved = false,
   launched = false,
+  onSolvedMission,
+  onAutoCompleteTask,
   onClose,
 }) {
   const [showList, setShowList] = useState(false);
@@ -157,7 +160,7 @@ export default function Surveyor5TaskPage({
   const stageStates = [
     allInstalled ? 'complete' : 'active',
     !allInstalled ? 'locked' : hologramConverted ? 'complete' : 'active',
-    !hologramConverted ? 'locked' : launched ? 'complete' : 'active',
+    !missionSolved ? 'locked' : launched ? 'complete' : 'active',
   ];
 
   const handleClose = () => {
@@ -172,26 +175,30 @@ export default function Surveyor5TaskPage({
 
   const primaryLabel = launched
     ? 'Close mission feed'
-    : hologramConverted
-      ? 'Return to headquarters'
-      : allInstalled
-        ? 'Return to the hologram'
-        : cartIsFull
+    : hologramConverted && !missionSolved
+      ? 'Solved Mission'
+      : missionSolved
+        ? 'Return to headquarters'
+        : allInstalled
           ? 'Return to the hologram'
-          : cartCount > 0
-            ? 'Continue the search'
-            : 'Begin the search';
+          : cartIsFull
+            ? 'Return to the hologram'
+            : cartCount > 0
+              ? 'Continue the search'
+              : 'Begin the search';
   const primaryHint = launched
     ? 'Mission complete'
-    : hologramConverted
-      ? 'Surveyor 5 is real — reach the firing room'
-      : allInstalled
-        ? 'Manifest complete — materialise the lander'
-        : cartIsFull
-          ? `Cart full — unload ${cartLimit} parts at the hologram`
-          : cartCount > 0
-            ? `${cartCount} / ${cartLimit} in cart · ${remainingToCollect} parts still missing`
-            : 'Storage room · mid-corridor';
+    : hologramConverted && !missionSolved
+      ? 'Spacecraft complete — begin the launch phase'
+      : missionSolved
+        ? 'Launch phase active — reach the firing room'
+        : allInstalled
+          ? 'Manifest complete — materialise the lander'
+          : cartIsFull
+            ? `Cart full — unload ${cartLimit} parts at the hologram`
+            : cartCount > 0
+              ? `${cartCount} / ${cartLimit} in cart · ${remainingToCollect} parts still missing`
+              : 'Storage room · mid-corridor';
 
   return (
     <div
@@ -611,16 +618,22 @@ export default function Surveyor5TaskPage({
                   <span className="text-[#7fe3ff]">
                     {launched
                       ? 'Launch confirmed'
-                      : hologramConverted
-                        ? 'Lander materialised'
-                        : allInstalled
-                          ? 'Manifest complete'
-                          : `${remainingToInstall} part${remainingToInstall === 1 ? '' : 's'} left to install`}
+                      : missionSolved
+                        ? 'Launch phase active'
+                        : hologramConverted
+                          ? 'Lander materialised'
+                          : allInstalled
+                            ? 'Manifest complete'
+                            : `${remainingToInstall} part${remainingToInstall === 1 ? '' : 's'} left to install`}
                   </span>
                 </div>
                 <button
                   type="button"
-                  onClick={handleClose}
+                  onClick={
+                    hologramConverted && !missionSolved
+                      ? onSolvedMission
+                      : handleClose
+                  }
                   autoFocus
                   className="group flex w-full items-center justify-between gap-3 rounded-lg border border-[#7fe3ff]/60 bg-gradient-to-r from-[#0b3f83] via-[#0d4c9a] to-[#0b356d] px-4 py-2.5 text-left shadow-[0_0_24px_rgba(47,123,255,0.28)] transition-all hover:border-[#a8f0ff] hover:shadow-[0_0_32px_rgba(94,231,255,0.4)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7fe3ff]"
                 >
@@ -638,6 +651,20 @@ export default function Surveyor5TaskPage({
                     <ChevronRight className="h-5 w-5 shrink-0 text-[#9df0ff] transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
                   )}
                 </button>
+
+                {!allInstalled && onAutoCompleteTask && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      gameAudio.playClick();
+                      onAutoCompleteTask();
+                    }}
+                    className="group mt-2 flex w-full items-center justify-center gap-2 rounded-lg border border-[#5ee7ff]/60 bg-gradient-to-r from-[#08294a] via-[#0a3e75] to-[#08294a] px-3 py-2 text-[9px] font-bold uppercase tracking-[0.2em] text-[#d6f7ff] shadow-[0_0_18px_rgba(94,231,255,0.2)] transition-all hover:border-[#8ef4ff] hover:text-white hover:shadow-[0_0_24px_rgba(94,231,255,0.4)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5ee7ff]"
+                  >
+                    <CheckCircle2 className="h-3.5 w-3.5 text-[#5ee7ff] transition-transform group-hover:scale-110" aria-hidden="true" />
+                    <span>Auto-Complete Task (100%)</span>
+                  </button>
+                )}
               </div>
             </aside>
           </div>

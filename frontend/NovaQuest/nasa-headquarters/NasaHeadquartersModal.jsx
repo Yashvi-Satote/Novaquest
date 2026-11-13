@@ -1,8 +1,9 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Box, Building2, MousePointer2, Rocket, ScanLine, Sparkles, X } from 'lucide-react';
+import { Building2, X } from 'lucide-react';
 import NasaHeadquartersViewer from './NasaHeadquartersViewer';
 import Surveyor5TaskPage from './Surveyor5TaskPage';
+import Surveyor5UnlockedModal from './Surveyor5UnlockedModal';
 import { SURVEYOR5_CART_LIMIT, SURVEYOR5_MANIFEST_IDS } from './surveyor5Mission';
 import { gameAudio } from '../config/gameAudio';
 
@@ -21,7 +22,9 @@ export default function NasaHeadquartersModal({ isOpen, onClose }) {
   const [collectedPartIds, setCollectedPartIds] = useState([]);
   const [cartPartIds, setCartPartIds] = useState([]);
   const [hologramConverted, setHologramConverted] = useState(false);
+  const [missionSolved, setMissionSolved] = useState(false);
   const [launched, setLaunched] = useState(false);
+  const [unlockedModalOpen, setUnlockedModalOpen] = useState(false);
 
   useEffect(() => {
     if (isOpen) setTaskOpen(true);
@@ -97,7 +100,8 @@ export default function NasaHeadquartersModal({ isOpen, onClose }) {
 
     if (manifestComplete) {
       setHologramConverted(true);
-      gameAudio.playPowerUp();
+      setUnlockedModalOpen(true);
+      gameAudio.playVictory();
     } else if (installedIds.length > 0) {
       gameAudio.playPickup();
     } else {
@@ -121,11 +125,32 @@ export default function NasaHeadquartersModal({ isOpen, onClose }) {
   }, [collectedPartIds]);
 
   const handleLaunchMission = useCallback(() => {
-    if (!hologramConverted || launched) return;
+    if (!missionSolved || !hologramConverted || launched) return;
     setLaunched(true);
     gameAudio.playVictory();
     setTaskOpen(true);
-  }, [hologramConverted, launched]);
+  }, [hologramConverted, launched, missionSolved]);
+
+  const handleSolveMission = useCallback(() => {
+    if (!hologramConverted || missionSolved) return;
+    setMissionSolved(true);
+    setTaskOpen(false);
+    gameAudio.playVictory();
+  }, [hologramConverted, missionSolved]);
+
+  const handleAutoCompleteTask = useCallback(() => {
+    setCollectedPartIds([...SURVEYOR5_MANIFEST_IDS]);
+    setCartPartIds([]);
+    setHologramConverted(true);
+    setUnlockedModalOpen(true);
+    gameAudio.playVictory();
+  }, []);
+
+  const handleUnlockLaunch = useCallback(() => {
+    setUnlockedModalOpen(false);
+    setMissionSolved(true);
+    gameAudio.playPowerUp();
+  }, []);
 
   const handleOpenTask = useCallback(() => {
     gameAudio.playClick();
@@ -161,13 +186,15 @@ export default function NasaHeadquartersModal({ isOpen, onClose }) {
           cartIds={cartPartIds}
           cartLimit={SURVEYOR5_CART_LIMIT}
           hologramConverted={hologramConverted}
+          missionSolved={missionSolved}
           launched={launched}
-          overlayOpen={taskOpen}
+          overlayOpen={taskOpen || unlockedModalOpen}
           onCollectPart={handleCollectPart}
           onDepositCart={handleDepositCart}
           onConvertHologram={handleConvertHologram}
           onLaunchMission={handleLaunchMission}
           onOpenTask={handleOpenTask}
+          onAutoCompleteTask={handleAutoCompleteTask}
         />
 
         {/* Cinematic vignette + scan lines over the live 3D feed. */}
@@ -226,41 +253,6 @@ export default function NasaHeadquartersModal({ isOpen, onClose }) {
           </button>
         </div>
 
-        {/* HUD bottom bar */}
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 bg-gradient-to-t from-[#02060d]/95 via-[#02060d]/45 to-transparent px-4 pb-4 pt-16 sm:px-6 sm:pb-6">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-[#4F79FF]/30 bg-[#071426]/80 px-3 py-1.5 text-[8px] font-semibold uppercase tracking-[0.22em] text-[#9cd8f2] sm:text-[9px]">
-                <ScanLine className="h-3 w-3 text-[#7fe3ff]" aria-hidden="true" />
-                Medium-poly base
-              </span>
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-[#4F79FF]/30 bg-[#071426]/80 px-3 py-1.5 text-[8px] font-semibold uppercase tracking-[0.22em] text-[#9cd8f2] sm:text-[9px]">
-                <Rocket className="h-3 w-3 text-[#7fe3ff]" aria-hidden="true" />
-                Surveyor 5 hologram
-              </span>
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-[#4F79FF]/30 bg-[#071426]/80 px-3 py-1.5 text-[8px] font-semibold uppercase tracking-[0.22em] text-[#9cd8f2] sm:text-[9px]">
-                <Box className="h-3 w-3 text-[#7fe3ff]" aria-hidden="true" />
-                50 clickable parts
-              </span>
-              <span className="hidden items-center gap-1.5 rounded-full border border-[#4F79FF]/30 bg-[#071426]/80 px-3 py-1.5 text-[9px] font-semibold uppercase tracking-[0.22em] text-[#9cd8f2] sm:inline-flex">
-                <Sparkles className="h-3 w-3 text-[#7fe3ff]" aria-hidden="true" />
-                7 operator bays
-              </span>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-[8px] font-semibold uppercase tracking-[0.24em] text-[#8fa8bd] sm:text-[9px]">
-              <span className="inline-flex items-center gap-2">
-                <MousePointer2 className="h-3.5 w-3.5 text-[#7fe3ff]" aria-hidden="true" />
-                Drag to orbit
-              </span>
-              <span className="hidden h-px w-6 bg-white/20 sm:block" aria-hidden="true" />
-              <span>Scroll to zoom</span>
-              <span className="hidden h-px w-6 bg-white/20 sm:block" aria-hidden="true" />
-              <span className="text-[#4F79FF]">ESC to exit</span>
-            </div>
-          </div>
-        </div>
-
         {/* Framing brackets keep the viewport feeling like a mission feed. */}
         <div className="pointer-events-none absolute inset-3 z-20 hidden sm:block" aria-hidden="true">
           <span className="absolute left-0 top-0 h-8 w-8 border-l border-t border-[#4F79FF]/35" />
@@ -275,8 +267,16 @@ export default function NasaHeadquartersModal({ isOpen, onClose }) {
           cartIds={cartPartIds}
           cartLimit={SURVEYOR5_CART_LIMIT}
           hologramConverted={hologramConverted}
+          missionSolved={missionSolved}
           launched={launched}
+          onSolvedMission={handleSolveMission}
+          onAutoCompleteTask={handleAutoCompleteTask}
           onClose={handleCloseTask}
+        />
+
+        <Surveyor5UnlockedModal
+          isOpen={unlockedModalOpen}
+          onUnlockLaunch={handleUnlockLaunch}
         />
       </section>
     </div>,
