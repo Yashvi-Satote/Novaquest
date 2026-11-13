@@ -12,11 +12,16 @@ import {
   Box,
   Check,
   CheckCircle2,
+  ChevronRight,
   ClipboardList,
+  Eye,
+  EyeOff,
   ListChecks,
+  Lock,
   MousePointerClick,
   Package,
   PackageCheck,
+  Rocket,
   RotateCcw,
   ShoppingCart,
   Target,
@@ -28,7 +33,9 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls.js';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { createNasaHeadquarters } from './NasaHeadquartersModel';
+import FiringRoomScreen from './FiringRoomScreen';
 import MissionProgressBar from './MissionProgressBar';
+import { gameAudio } from '../config/gameAudio';
 import {
   SURVEYOR5_CART_LIMIT,
   SURVEYOR5_MANIFEST,
@@ -63,6 +70,10 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer(
     cartIds = [],
     cartLimit = SURVEYOR5_CART_LIMIT,
     hologramConverted = false,
+    hologramDisappeared = false,
+    launchUnlocked = false,
+    launchReady = false,
+    task3Solved = false,
     missionSolved = false,
     launched = false,
     overlayOpen = false,
@@ -71,17 +82,32 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer(
     onConvertHologram,
     onLaunchMission,
     onOpenTask,
+    onOpenTask2,
+    onOpenTask3,
+    onMissionComplete,
+    onTeleportToFiringRoom,
     onAutoCompleteTask,
+    onEmergencyTriggered,
   },
   ref,
 ) {
   const mountRef = useRef(null);
+  const cameraRef = useRef(null);
   const [ready, setReady] = useState(false);
   const [webglFailed, setWebglFailed] = useState(false);
   const [selectedComponent, setSelectedComponent] = useState(null);
   const [partListOpen, setPartListOpen] = useState(false);
   const [assemblyResult, setAssemblyResult] = useState(null);
   const [missionToast, setMissionToast] = useState(null);
+  const [isFirstPerson, setIsFirstPerson] = useState(false);
+  const [isInFiringRoom, setIsInFiringRoom] = useState(false);
+  const [firingRoomLaunchState, setFiringRoomLaunchState] = useState('standby');
+  const [isEmergencyActive, setIsEmergencyActive] = useState(false);
+  const inFiringRoomRef = useRef(false);
+  const firingRoomScreenRef = useRef(null);
+  const [countdownNumber, setCountdownNumber] = useState(null);
+  const cameraShakeRef = useRef(0);
+  const launchReadyRef = useRef(launchReady);
   const doorHolderRef = useRef(null);
   const selectedComponentRef = useRef(null);
   const headquartersRef = useRef(null);
@@ -93,6 +119,8 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer(
   const cartLimitRef = useRef(cartLimit);
   const manifestIdsRef = useRef(new Set(manifestIds));
   const hologramConvertedRef = useRef(hologramConverted);
+  const hologramDisappearedRef = useRef(hologramDisappeared);
+  const launchUnlockedRef = useRef(launchUnlocked);
   const missionSolvedRef = useRef(missionSolved);
   const launchedRef = useRef(launched);
   const overlayOpenRef = useRef(overlayOpen);
@@ -128,6 +156,18 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer(
   }, [hologramConverted]);
 
   useEffect(() => {
+    hologramDisappearedRef.current = hologramDisappeared;
+  }, [hologramDisappeared]);
+
+  useEffect(() => {
+    launchUnlockedRef.current = launchUnlocked;
+  }, [launchUnlocked]);
+
+  useEffect(() => {
+    launchReadyRef.current = launchReady;
+  }, [launchReady]);
+
+  useEffect(() => {
     missionSolvedRef.current = missionSolved;
   }, [missionSolved]);
 
@@ -142,9 +182,26 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer(
       onConvertHologram,
       onLaunchMission,
       onOpenTask,
+      onOpenTask2,
+      onOpenTask3,
+      onMissionComplete,
+      onTeleportToFiringRoom,
       onAutoCompleteTask,
+      onEmergencyTriggered,
     };
-  }, [onCollectPart, onDepositCart, onConvertHologram, onLaunchMission, onOpenTask, onAutoCompleteTask]);
+  }, [
+    onCollectPart,
+    onDepositCart,
+    onConvertHologram,
+    onLaunchMission,
+    onOpenTask,
+    onOpenTask2,
+    onOpenTask3,
+    onMissionComplete,
+    onTeleportToFiringRoom,
+    onAutoCompleteTask,
+    onEmergencyTriggered,
+  ]);
 
   useEffect(() => {
     overlayOpenRef.current = overlayOpen;
@@ -169,11 +226,110 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer(
     showMissionToast('Surveyor 5 manifest auto-completed! 100% parts verified.', 'success');
   }, [onAutoCompleteTask, showMissionToast]);
 
+  const cachedVideoTextureRef = useRef(null);
+
+  const handleStartLaunchSequence = useCallback(() => {
+    if (!launchReadyRef.current) {
+      showMissionToast('Complete Task 1 first', 'warn');
+      return;
+    }
+    if (firingRoomLaunchState !== 'standby') return;
+
+    // Prime the video element immediately in the user interaction gesture to unlock browser media playback!
+    const video = firingRoomScreenRef.current?.getVideoElement?.();
+    if (video) {
+      try {
+        video.currentTime = 71; // Part 2 liftoff start
+        const p = video.play();
+        if (p !== undefined) {
+          p.then(() => {
+            video.pause();
+          }).catch(() => {});
+        }
+      } catch (e) {}
+    }
+
+    setFiringRoomLaunchState('countdown');
+    setCountdownNumber(3);
+    gameAudio.ensureUnlocked?.();
+    gameAudio.playCountdownBeep?.(false);
+
+    let count = 3;
+    const timer = setInterval(() => {
+      count -= 1;
+      if (count > 0) {
+        setCountdownNumber(count);
+        gameAudio.playCountdownBeep?.(count === 1);
+      } else {
+        clearInterval(timer);
+        setCountdownNumber('LIFTOFF');
+        // Subtle camera shake + ambient audio swell at liftoff
+        cameraShakeRef.current = 1.0;
+        gameAudio.playThruster?.(3.8);
+        showMissionToast('LIFTOFF! Pad 36B Atlas-Centaur AC-13 liftoff underway.', 'info');
+
+        setTimeout(() => {
+          setCountdownNumber(null);
+          setFiringRoomLaunchState('launching');
+          // Play Part 2 on the big 3D screen (1:11 -> HELIUM_T)
+          firingRoomScreenRef.current?.playSegment?.('part2');
+        }, 800);
+      }
+    }, 1000);
+  }, [firingRoomLaunchState, showMissionToast]);
+
+  const handleEmergencyAtHeliumT = useCallback(() => {
+    setIsEmergencyActive(true);
+    setFiringRoomLaunchState('emergency');
+    headquartersRef.current?.corridor.firingRoom.setEmergency?.(true);
+    showMissionToast(
+      'WARNING: HELIUM LEAK DETECTED! Mission on hold.',
+      'warning',
+    );
+    if (callbacksRef.current.onEmergencyTriggered) {
+      callbacksRef.current.onEmergencyTriggered();
+    }
+  }, [showMissionToast]);
+
+  const resolveEmergency = useCallback(() => {
+    setIsEmergencyActive(false);
+    headquartersRef.current?.corridor.firingRoom.setEmergency?.(false);
+    setFiringRoomLaunchState('resolved');
+    // Resumes Part 3 on the 3D screen from HELIUM_T to end
+    firingRoomScreenRef.current?.resume?.();
+    showMissionToast(
+      'Emergency resolved! Resuming Surveyor 5 flight telemetry.',
+      'success',
+    );
+  }, [showMissionToast]);
+
+  const handleVideoSegmentEnd = useCallback((segment) => {
+    if (segment === 'part3' || segment === 'ended') {
+      if (callbacksRef.current.onMissionComplete) {
+        callbacksRef.current.onMissionComplete();
+      }
+      showMissionToast('Surveyor 5 is on its way to the Moon!', 'success');
+    }
+  }, [showMissionToast]);
+
+  const handleVideoTextureReady = useCallback((texture) => {
+    cachedVideoTextureRef.current = texture;
+    headquartersRef.current?.corridor.firingRoom.setVideoTexture?.(texture);
+  }, []);
+
   useImperativeHandle(ref, () => ({
     toggleDoor: () => doorHolderRef.current && doorHolderRef.current.toggle(),
     openDoor: () => doorHolderRef.current && doorHolderRef.current.setOpen(true),
     closeDoor: () => doorHolderRef.current && doorHolderRef.current.setOpen(false),
     toggleFirstPerson: () => doorHolderRef.current && doorHolderRef.current.toggleFirstPerson(),
+    teleportToFiringRoom: () => doorHolderRef.current && doorHolderRef.current.teleportToFiringRoom(),
+    setEmergency: (active) => {
+      setIsEmergencyActive(Boolean(active));
+      headquartersRef.current?.corridor.firingRoom.setEmergency?.(active);
+    },
+    resolveEmergency,
+    startLaunch: () => handleStartLaunchSequence(),
+    showMissionToast: (msg, tone) => showMissionToast(msg, tone),
     autoCompleteSurveyor5: handleAutoComplete,
   }));
 
@@ -189,6 +345,7 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer(
     scene.fog = new THREE.FogExp2(0x030811, 0.012);
 
     const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 80);
+    cameraRef.current = camera;
     const startAngle = Math.PI / 8;
     camera.position.set(Math.sin(startAngle) * 9.3, 4.9, Math.cos(startAngle) * 9.3);
 
@@ -228,6 +385,24 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer(
     const headquarters = createNasaHeadquarters();
     headquartersRef.current = headquarters;
     scene.add(headquarters.root);
+
+    const activeVideoTex = cachedVideoTextureRef.current || firingRoomScreenRef.current?.getVideoTexture?.();
+    if (activeVideoTex) {
+      headquarters.corridor.firingRoom.setVideoTexture?.(activeVideoTex);
+    }
+
+    headquarters.corridor.firingRoom.setOnEmergencyTriggered?.(() => {
+      gameAudio.playAlarm?.();
+      showMissionToast(
+        'CRITICAL IN-FLIGHT ANOMALY: Helium leak detected (280 PSI)! Improvise descent procedure.',
+        'warning',
+      );
+      setIsEmergencyActive(true);
+      setFiringRoomLaunchState('emergency');
+      if (callbacksRef.current.onEmergencyTriggered) {
+        callbacksRef.current.onEmergencyTriggered();
+      }
+    });
     const characterMeshes = new Set();
     headquarters.character.traverse((object) => characterMeshes.add(object));
     const collisionMeshes = [];
@@ -401,13 +576,15 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer(
         toggleCharacterControl();
         return;
       }
-      if (!event.repeat && key === 'v') {
+      if (!event.repeat && (key === 'v' || key === 'f')) {
         event.preventDefault();
         if (firstPersonActive) {
           exitFirstPerson();
+          setIsFirstPerson(false);
         } else {
           if (characterControlActive) exitCharacterControl();
           enterFirstPerson();
+          setIsFirstPerson(true);
         }
         return;
       }
@@ -458,14 +635,61 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer(
       ...doorControl,
       toggleFirstPerson: () => {
         if (characterControlActive) exitCharacterControl();
-        if (firstPersonActive) exitFirstPerson();
-        else enterFirstPerson();
+        if (firstPersonActive) {
+          exitFirstPerson();
+          setIsFirstPerson(false);
+        } else {
+          enterFirstPerson();
+          setIsFirstPerson(true);
+        }
       },
       toggleCharacterControl,
       toggleNearestDoor,
       resumeFirstPerson: () => enterFirstPerson(true),
       toggleStorageDoor: storageDoorControl.toggle,
       toggleFiringRoomDoor: firingRoomDoorControl.toggle,
+      setEmergency: (active) => {
+        headquarters.corridor.firingRoom.setEmergency?.(active);
+        setIsEmergencyActive(Boolean(active));
+        if (!active && firingRoomLaunchState === 'emergency') {
+          setFiringRoomLaunchState('resolved');
+        }
+      },
+      startLaunch: () => {
+        headquarters.corridor.firingRoom.startLaunch?.();
+        setFiringRoomLaunchState('launching');
+      },
+      teleportToFiringRoom: () => {
+        headquarters.door.setOpen(true);
+        headquarters.corridor.firingRoom.door.setOpen(true);
+        const corridor = headquarters.corridor.root;
+        const firingPos = corridor.localToWorld(new THREE.Vector3(2.4, 2.2, 58.8));
+        const firingLook = corridor.localToWorld(new THREE.Vector3(-0.15, 3.85, 75.5));
+
+        const dx = -0.15 - 2.4;
+        const dz = 75.5 - 58.8;
+        const dy = 3.85 - 2.2;
+        const yawOffset = Math.atan2(dx, dz);
+        const pitch = Math.atan2(dy, Math.hypot(dx, dz));
+
+        if (characterControlActive) {
+          const charPos = corridor.localToWorld(new THREE.Vector3(2.4, 0, 58.8));
+          headquarters.character.position.copy(headquarters.root.worldToLocal(charPos));
+          headquarters.character.rotation.y = airlockAngle;
+          controls.target.copy(firingLook);
+          camera.position.copy(firingPos);
+          controls.update();
+        } else {
+          enterFirstPerson(false);
+          setIsFirstPerson(true);
+          camera.position.copy(firingPos);
+          camera.rotation.order = 'YXZ';
+          camera.rotation.set(pitch, airlockAngle + yawOffset, 0);
+        }
+
+        inFiringRoomRef.current = true;
+        setIsInFiringRoom(true);
+      },
       pauseForOverlay: () => {
         movementKeys.clear();
         if (pointerControls.isLocked) pointerControls.unlock();
@@ -544,6 +768,12 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer(
         const cart = cartIdsRef.current;
         const missing = Math.max(0, manifest.length - installedCount - cart.length);
 
+        if (hologramDisappearedRef.current) {
+          showMissionToast('Surveyor 5 has been sent to the launch room. Go to the firing room!', 'info');
+          if (callbacksRef.current.onOpenTask2) callbacksRef.current.onOpenTask2();
+          return;
+        }
+
         if (hologramConvertedRef.current) {
           showMissionToast('Surveyor 5 is already materialised. Head to the firing room.', 'info');
         } else if (cart.length > 0) {
@@ -562,6 +792,22 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer(
 
       if (interaction.action === 'launch') {
         if (firstPersonActive && pointerControls.isLocked) pointerControls.unlock();
+        if (!launchReadyRef.current) {
+          showMissionToast('Complete Task 1 first to unlock the launch console.', 'warn');
+          return;
+        }
+        if (isEmergencyActive) {
+          callbacksRef.current.onOpenTask3?.();
+          return;
+        }
+        if (firingRoomLaunchState === 'standby') {
+          handleStartLaunchSequence();
+          return;
+        }
+        if (firingRoomLaunchState === 'launching' || firingRoomLaunchState === 'countdown') {
+          showMissionToast('Launch sequence in progress — watch the big screen!', 'info');
+          return;
+        }
         if (!hologramConvertedRef.current) {
           showMissionToast(
             'Launch console locked — materialise Surveyor 5 in mission control first.',
@@ -872,6 +1118,12 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer(
       const node = progressAnchorRef.current;
       if (!node) return;
 
+      if (hologramDisappearedRef.current) {
+        node.style.opacity = '0';
+        node.style.visibility = 'hidden';
+        return;
+      }
+
       progressAnchorProjection.copy(progressAnchorWorld).project(camera);
       const width = container.clientWidth || 1;
       const height = container.clientHeight || 1;
@@ -1146,15 +1398,33 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer(
             tryMoveX();
           }
         }
-        camera.position.y = 1.65;
         const corridorPosition = headquarters.corridor.root.worldToLocal(
           new THREE.Vector3(camera.position.x, 0, camera.position.z),
         );
+        camera.position.y = corridorPosition.z >= 53 ? 2.2 : 1.65;
         scene.fog.density = corridorPosition.z > 0.3 ? 0.0035 : 0.012;
       }
 
-      headquarters.update(delta, elapsed);
+      const playerWorld = characterControlActive
+        ? headquarters.character.getWorldPosition(new THREE.Vector3())
+        : camera.position;
+      const currentCorridorPos = headquarters.corridor.root.worldToLocal(playerWorld.clone());
+      const inFiring = currentCorridorPos.z >= 52.5;
+      if (inFiringRoomRef.current !== inFiring) {
+        inFiringRoomRef.current = inFiring;
+        setIsInFiringRoom(inFiring);
+      }
+
+      headquarters.update(delta, elapsed, renderer);
       if (!firstPersonActive) controls.update();
+
+      if (cameraShakeRef.current > 0.005) {
+        const shake = cameraShakeRef.current;
+        camera.position.x += (Math.random() - 0.5) * 0.08 * shake;
+        camera.position.y += (Math.random() - 0.5) * 0.06 * shake;
+        cameraShakeRef.current *= Math.max(0, 1 - delta * 1.6);
+      }
+
       renderer.render(scene, camera);
       updateProgressAnchor();
 
@@ -1244,6 +1514,11 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer(
   useEffect(() => {
     headquartersRef.current?.setHologramMaterialized(hologramConverted);
   }, [hologramConverted, ready]);
+
+  // Drive the hologram's disappearance after unlocking launch.
+  useEffect(() => {
+    headquartersRef.current?.setHologramDisappeared(hologramDisappeared);
+  }, [hologramDisappeared, ready]);
 
   const installedCount = SURVEYOR5_MANIFEST_IDS.filter((id) => collectedIds.includes(id)).length;
   const allPartsInstalled = installedCount >= SURVEYOR5_MANIFEST_TOTAL;
@@ -1350,39 +1625,142 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer(
 
       {!webglFailed && (
         <>
-          {/* Mission progress telemetry pinned above the Surveyor 5 hologram. */}
-          <div
-            ref={progressAnchorRef}
-            className="pointer-events-none absolute left-0 top-0 z-30 hidden origin-bottom transition-opacity duration-200 will-change-transform sm:block"
-            style={{ width: 'min(320px, 42vw)', opacity: 0 }}
-          >
-            <div className="rounded-xl border border-[#5ee7ff]/15 bg-[#020b14]/55 px-3 pb-1 pt-2 shadow-[0_0_30px_rgba(3,10,20,0.5)] backdrop-blur-[2px]">
-              <MissionProgressBar
-                progress={missionProgress}
-                installed={installedCount}
-                total={SURVEYOR5_MANIFEST_TOTAL}
-              />
+          {/* Mission progress telemetry pinned above the Surveyor 5 hologram (hides when disappeared). */}
+          {!hologramDisappeared && (
+            <div
+              ref={progressAnchorRef}
+              className="pointer-events-none absolute left-0 top-0 z-30 hidden origin-bottom transition-opacity duration-200 will-change-transform sm:block"
+              style={{ width: 'min(320px, 42vw)', opacity: 0 }}
+            >
+              <div className="rounded-xl border border-[#5ee7ff]/15 bg-[#020b14]/55 px-3 pb-1 pt-2 shadow-[0_0_30px_rgba(3,10,20,0.5)] backdrop-blur-[2px]">
+                <MissionProgressBar
+                  progress={missionProgress}
+                  installed={installedCount}
+                  total={SURVEYOR5_MANIFEST_TOTAL}
+                />
+              </div>
+              {cartIsFull && !hologramConverted && (
+                <div className="pointer-events-auto mx-auto mt-2 w-full animate-fade-in rounded-xl border border-[#7fe3ff]/55 bg-[#04182b]/94 px-2.5 py-2 shadow-[0_0_28px_rgba(47,123,255,0.35)] backdrop-blur-md">
+                  <p className="flex items-center gap-1.5 text-[7px] font-bold uppercase tracking-[0.2em] text-[#ffd79a]">
+                    <ShoppingCart className="h-2.5 w-2.5" aria-hidden="true" />
+                    Cart full · {cartCount} / {cartLimit} parts
+                  </p>
+                  <p className="mt-0.5 text-[7px] font-semibold uppercase leading-relaxed tracking-[0.16em] text-[#8fb8ce]">
+                    Verify the load against the Surveyor 5 manifest
+                  </p>
+                  <button
+                    type="button"
+                    onClick={handleAssemble}
+                    className="group mt-1.5 flex w-full items-center justify-center gap-1.5 rounded-lg border border-[#7fe3ff]/70 bg-gradient-to-r from-[#0b3f83] via-[#0d4c9a] to-[#0b356d] px-3 py-2 text-[8px] font-bold uppercase tracking-[0.2em] text-white shadow-[0_0_22px_rgba(47,123,255,0.4)] transition-all hover:border-[#a8f0ff] hover:shadow-[0_0_32px_rgba(94,231,255,0.5)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7fe3ff]"
+                  >
+                    <Wrench className="h-3.5 w-3.5 text-[#9df0ff] transition-transform group-hover:rotate-12" aria-hidden="true" />
+                    Assemble parts
+                  </button>
+                </div>
+              )}
             </div>
-            {cartIsFull && !hologramConverted && (
-              <div className="pointer-events-auto mx-auto mt-2 w-full animate-fade-in rounded-xl border border-[#7fe3ff]/55 bg-[#04182b]/94 px-2.5 py-2 shadow-[0_0_28px_rgba(47,123,255,0.35)] backdrop-blur-md">
-                <p className="flex items-center gap-1.5 text-[7px] font-bold uppercase tracking-[0.2em] text-[#ffd79a]">
-                  <ShoppingCart className="h-2.5 w-2.5" aria-hidden="true" />
-                  Cart full · {cartCount} / {cartLimit} parts
-                </p>
-                <p className="mt-0.5 text-[7px] font-semibold uppercase leading-relaxed tracking-[0.16em] text-[#8fb8ce]">
-                  Verify the load against the Surveyor 5 manifest
-                </p>
+          )}
+
+          {/* Sci-Fi Floating Action Button: Launch & Firing Room Control */}
+          {launchUnlocked && (
+            <div className="pointer-events-auto absolute top-20 sm:top-24 left-1/2 -translate-x-1/2 z-30 animate-fade-in">
+              {!isInFiringRoom ? (
                 <button
                   type="button"
-                  onClick={handleAssemble}
-                  className="group mt-1.5 flex w-full items-center justify-center gap-1.5 rounded-lg border border-[#7fe3ff]/70 bg-gradient-to-r from-[#0b3f83] via-[#0d4c9a] to-[#0b356d] px-3 py-2 text-[8px] font-bold uppercase tracking-[0.2em] text-white shadow-[0_0_22px_rgba(47,123,255,0.4)] transition-all hover:border-[#a8f0ff] hover:shadow-[0_0_32px_rgba(94,231,255,0.5)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7fe3ff]"
+                  onClick={() => {
+                    doorHolderRef.current?.teleportToFiringRoom();
+                  }}
+                  className="group relative flex items-center gap-2.5 sm:gap-3 px-5 sm:px-7 py-2.5 sm:py-3 rounded-full border border-[#00f0ff] bg-gradient-to-r from-[#031326]/95 via-[#062444]/95 to-[#031326]/95 text-[#e6faff] shadow-[0_0_30px_rgba(0,240,255,0.45)] backdrop-blur-md transition-all hover:scale-105 hover:border-[#8ef4ff] hover:shadow-[0_0_42px_rgba(0,240,255,0.7)] active:scale-95"
                 >
-                  <Wrench className="h-3.5 w-3.5 text-[#9df0ff] transition-transform group-hover:rotate-12" aria-hidden="true" />
-                  Assemble parts
+                  <span className="relative flex h-2.5 w-2.5">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#00f0ff] opacity-75" />
+                    <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-[#00f0ff]" />
+                  </span>
+                  <Rocket className="h-4 w-4 text-[#00f0ff] transition-transform group-hover:-rotate-12" />
+                  <span className="text-[11px] sm:text-[13px] font-extrabold uppercase tracking-[0.22em] text-[#dffaff] group-hover:text-white">
+                    Go to launch room
+                  </span>
+                  <span className="hidden sm:inline-block px-2 py-0.5 rounded text-[8.5px] font-black uppercase tracking-wider bg-[#00f0ff]/20 text-[#8ef4ff] border border-[#00f0ff]/40">
+                    TASK 2
+                  </span>
+                  <ChevronRight className="h-4 w-4 text-[#00f0ff] transition-transform group-hover:translate-x-1" />
                 </button>
-              </div>
-            )}
-          </div>
+              ) : isEmergencyActive ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    gameAudio.playClick();
+                    doorHolderRef.current?.setEmergency(false);
+                    setIsEmergencyActive(false);
+                    setFiringRoomLaunchState('resolved');
+                    gameAudio.playVictory?.();
+                    showMissionToast(
+                      'Anomaly resolved! Surveyor 5 lunar descent retro-burn executed successfully!',
+                      'success',
+                    );
+                    callbacksRef.current.onLaunchMission?.();
+                  }}
+                  className="group relative flex items-center gap-2.5 sm:gap-3 px-5 sm:px-7 py-2.5 sm:py-3 rounded-full border-2 border-[#ff3b4e] bg-gradient-to-r from-[#3f0910]/95 via-[#7a121e]/95 to-[#3f0910]/95 text-white shadow-[0_0_40px_rgba(255,59,78,0.85)] backdrop-blur-md transition-all hover:scale-105 hover:shadow-[0_0_55px_rgba(255,59,78,1)] active:scale-95 animate-pulse"
+                >
+                  <AlertTriangle className="h-4 w-4 text-[#ff808d] animate-bounce" />
+                  <div className="text-left">
+                    <span className="block text-[11px] sm:text-[13px] font-extrabold uppercase tracking-[0.22em] text-white">
+                      Improvise New Descent Procedure (JPL)
+                    </span>
+                    <span className="block text-[7.5px] font-bold uppercase tracking-[0.16em] text-[#ffb3ba]">
+                      Helium Tank Leak · Recalibrate Burn Parameters
+                    </span>
+                  </div>
+                  <Wrench className="h-4 w-4 text-[#ffd1d6] transition-transform group-hover:rotate-45" />
+                </button>
+              ) : firingRoomLaunchState === 'standby' ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!launchReadyRef.current) {
+                      showMissionToast('Complete Task 1 first to unlock launch', 'warn');
+                      return;
+                    }
+                    gameAudio.playClick();
+                    handleStartLaunchSequence();
+                  }}
+                  className="group relative flex items-center gap-2.5 sm:gap-3 px-6 sm:px-8 py-2.5 sm:py-3.5 rounded-full border-2 border-[#00f0ff] bg-gradient-to-r from-[#03203f]/95 via-[#084880]/95 to-[#03203f]/95 text-[#e6faff] shadow-[0_0_36px_rgba(0,240,255,0.7)] backdrop-blur-md transition-all hover:scale-105 hover:border-[#8ef4ff] hover:shadow-[0_0_50px_rgba(0,240,255,0.95)] active:scale-95 ring-2 ring-[#00f0ff]/40"
+                >
+                  <span className="relative flex h-3 w-3">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#00f0ff] opacity-90" />
+                    <span className="relative inline-flex h-3 w-3 rounded-full bg-[#00f0ff]" />
+                  </span>
+                  <Rocket className="h-5 w-5 text-[#00f0ff] transition-transform group-hover:scale-110 group-hover:-rotate-12" />
+                  <div className="text-left">
+                    <span className="block text-[12px] sm:text-[14px] font-black uppercase tracking-[0.24em] text-white drop-shadow-[0_0_12px_rgba(0,240,255,0.8)]">
+                      Start Launch Sequence
+                    </span>
+                    <span className="block text-[7.5px] font-bold uppercase tracking-[0.16em] text-[#8ef4ff]">
+                      Pad 36B · Atlas-Centaur AC-13 · Surveyor 5
+                    </span>
+                  </div>
+                  <ChevronRight className="h-4 w-4 text-[#00f0ff] transition-transform group-hover:translate-x-1" />
+                </button>
+              ) : firingRoomLaunchState === 'resolved' ? (
+                <div className="flex items-center gap-2.5 px-5 py-2 rounded-full border border-[#22c55e]/60 bg-[#042113]/90 text-[#86efac] shadow-[0_0_24px_rgba(34,197,94,0.4)] backdrop-blur-md">
+                  <CheckCircle2 className="h-4 w-4 text-[#4ade80]" />
+                  <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-white">
+                    Surveyor 5 Touchdown Confirmed · Mare Tranquillitatis
+                  </span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2.5 px-5 py-2 rounded-full border border-[#00f0ff]/50 bg-[#03192f]/90 text-[#8ef4ff] shadow-[0_0_24px_rgba(0,240,255,0.35)] backdrop-blur-md">
+                  <span className="relative flex h-2 w-2">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#00f0ff] opacity-80" />
+                    <span className="relative inline-flex h-2 w-2 rounded-full bg-[#00f0ff]" />
+                  </span>
+                  <span className="text-[10px] font-extrabold uppercase tracking-[0.22em] text-[#dffaff]">
+                    Launch Sequence In Progress · Big Screen Live Feed
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Live mission tracker for the Surveyor 5 build. */}
           <div className="absolute left-4 top-24 z-30 hidden w-[186px] rounded-xl border border-[#7fe3ff]/30 bg-[#071426]/85 p-3 shadow-[0_0_24px_rgba(61,107,255,0.16)] backdrop-blur-md sm:block">
@@ -1446,29 +1824,122 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer(
             <p className="mt-2 text-[8px] font-semibold uppercase leading-relaxed tracking-[0.18em] text-[#9cd8f2]">
               {missionStageLabel}
             </p>
-            {hologramConverted && !launched && (
+            {hologramConverted && !launched && !hologramDisappeared && (
               <p className="mt-1 text-[8px] font-semibold uppercase tracking-[0.16em] text-[#5ee7ff]">
                 Hologram materialised
               </p>
             )}
-            <div className="mt-3 grid grid-cols-2 gap-1.5">
-              <button
-                type="button"
-                onClick={() => {
-                  setPartListOpen(true);
-                }}
-                className="rounded-md border border-[#7fe3ff]/40 bg-[#0b2444]/80 px-1.5 py-1.5 text-[7px] font-semibold uppercase tracking-[0.14em] text-[#b9ecff] transition-colors hover:border-[#7fe3ff]/80 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7fe3ff]"
-              >
-                See list
-              </button>
-              <button
-                type="button"
-                onClick={() => onOpenTask?.()}
-                className="rounded-md border border-[#7fe3ff]/40 bg-[#0b2444]/80 px-1.5 py-1.5 text-[7px] font-semibold uppercase tracking-[0.14em] text-[#b9ecff] transition-colors hover:border-[#7fe3ff]/80 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7fe3ff]"
-              >
-                Open task page
-              </button>
-            </div>
+
+            {launchUnlocked ? (
+              <div className="mt-3 space-y-1.5">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!isInFiringRoom) {
+                      doorHolderRef.current?.teleportToFiringRoom();
+                    } else if (isEmergencyActive) {
+                      gameAudio.playClick();
+                      callbacksRef.current.onOpenTask3?.();
+                    } else if (!launchReady) {
+                      showMissionToast('Complete Task 1 first', 'warn');
+                    } else if (firingRoomLaunchState === 'standby') {
+                      gameAudio.playClick();
+                      handleStartLaunchSequence();
+                    } else {
+                      onOpenTask2?.();
+                    }
+                  }}
+                  title={isInFiringRoom && !launchReady ? 'Complete Task 1 first' : undefined}
+                  className={`group relative flex w-full items-center justify-between overflow-hidden rounded-lg border p-2 text-left transition-all active:scale-95 ${
+                    isEmergencyActive
+                      ? 'border-[#ff3b4e] bg-gradient-to-r from-[#4d0b13] via-[#75111d] to-[#4d0b13] shadow-[0_0_24px_rgba(255,59,78,0.7)] animate-pulse'
+                      : isInFiringRoom && !launchReady
+                      ? 'border-slate-700 bg-slate-900/60 opacity-60 cursor-not-allowed'
+                      : isInFiringRoom && firingRoomLaunchState === 'standby'
+                      ? 'border-[#e8c684] bg-gradient-to-r from-[#1c1810] via-[#2d2414] to-[#1c1810] shadow-[0_0_24px_rgba(232,198,132,0.45)] hover:border-[#f5d085]'
+                      : 'border-[#00f0ff] bg-gradient-to-r from-[#07243e] via-[#0c4371] to-[#07243e] shadow-[0_0_20px_rgba(0,240,255,0.4)] hover:border-[#8ef4ff]'
+                  }`}
+                >
+                  <div className="flex items-center gap-1.5">
+                    {isEmergencyActive ? (
+                      <AlertTriangle className="h-4 w-4 text-[#ff808d] animate-bounce" />
+                    ) : isInFiringRoom && !launchReady ? (
+                      <Lock className="h-4 w-4 text-slate-400" />
+                    ) : (
+                      <Rocket className="h-4 w-4 text-[#e8c684] animate-pulse" />
+                    )}
+                    <div>
+                      <span className="block text-[8.5px] font-black uppercase tracking-[0.18em] text-[#dcf9ff]">
+                        {isEmergencyActive
+                          ? 'WARNING: HELIUM LEAK'
+                          : isInFiringRoom
+                          ? 'START LAUNCH SEQUENCE'
+                          : 'Go to launch room'}
+                      </span>
+                      <span className="block text-[6.5px] font-bold uppercase tracking-[0.14em] text-[#5ee7ff]">
+                        {isEmergencyActive
+                          ? 'Solve Task 3 · Rescue Plan'
+                          : isInFiringRoom && !launchReady
+                          ? 'PAD 36B · Locked (Complete Task 1 first)'
+                          : isInFiringRoom && firingRoomLaunchState === 'standby'
+                          ? 'PAD 36B - ATLAS-CENTAUR AC-13 - SURVEYOR 5'
+                          : isInFiringRoom && firingRoomLaunchState === 'countdown'
+                          ? 'Pad 36B · Countdown T-3'
+                          : isInFiringRoom && firingRoomLaunchState === 'launching'
+                          ? 'Pad 36B · In Flight (3D Feed)'
+                          : isInFiringRoom && firingRoomLaunchState === 'resolved'
+                          ? 'Surveyor 5 Landed'
+                          : 'Task 2 · Flight Ops'}
+                      </span>
+                    </div>
+                  </div>
+                  <ChevronRight className="h-3.5 w-3.5 text-[#00f0ff] transition-transform group-hover:translate-x-0.5" />
+                </button>
+                <div className="grid grid-cols-2 gap-1">
+                  <button
+                    type="button"
+                    onClick={() => setPartListOpen(true)}
+                    className="rounded border border-[#7fe3ff]/30 bg-[#0b2444]/60 py-1 text-[7px] font-semibold uppercase tracking-[0.12em] text-[#9cd8f2] hover:text-white"
+                  >
+                    Manifest
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (isEmergencyActive) {
+                        callbacksRef.current.onOpenTask3?.();
+                      } else if (launchUnlocked) {
+                        callbacksRef.current.onOpenTask2?.();
+                      } else {
+                        callbacksRef.current.onOpenTask?.();
+                      }
+                    }}
+                    className="rounded border border-[#7fe3ff]/30 bg-[#0b2444]/60 py-1 text-[7px] font-semibold uppercase tracking-[0.12em] text-[#9cd8f2] hover:text-white"
+                  >
+                    {isEmergencyActive ? 'Task 3' : launchUnlocked ? 'Task 2' : 'Task 1'}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="mt-3 grid grid-cols-2 gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPartListOpen(true);
+                  }}
+                  className="rounded-md border border-[#7fe3ff]/40 bg-[#0b2444]/80 px-1.5 py-1.5 text-[7px] font-semibold uppercase tracking-[0.14em] text-[#b9ecff] transition-colors hover:border-[#7fe3ff]/80 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7fe3ff]"
+                >
+                  See list
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onOpenTask?.()}
+                  className="rounded-md border border-[#7fe3ff]/40 bg-[#0b2444]/80 px-1.5 py-1.5 text-[7px] font-semibold uppercase tracking-[0.14em] text-[#b9ecff] transition-colors hover:border-[#7fe3ff]/80 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7fe3ff]"
+                >
+                  Open task page
+                </button>
+              </div>
+            )}
             {!allPartsInstalled && (
               <button
                 type="button"
@@ -1481,20 +1952,41 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer(
             )}
           </div>
           <div className="absolute left-4 top-24 z-30 flex flex-wrap gap-2 sm:hidden">
-            <button
-              type="button"
-              onClick={() => setPartListOpen(true)}
-              className="rounded-lg border border-[#7fe3ff]/40 bg-[#071426]/85 px-3 py-2 text-[9px] font-semibold uppercase tracking-[0.18em] text-[#9cd8f2] backdrop-blur-md transition-colors hover:border-[#7fe3ff]/80 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7fe3ff]"
-            >
-              See list
-            </button>
-            <button
-              type="button"
-              onClick={() => onOpenTask?.()}
-              className="rounded-lg border border-[#7fe3ff]/40 bg-[#071426]/85 px-3 py-2 text-[9px] font-semibold uppercase tracking-[0.18em] text-[#9cd8f2] backdrop-blur-md transition-colors hover:border-[#7fe3ff]/80 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7fe3ff]"
-            >
-              Task
-            </button>
+            {launchUnlocked ? (
+              <button
+                type="button"
+                onClick={() => onOpenTask2?.()}
+                className="flex items-center gap-1.5 rounded-lg border border-[#00f0ff] bg-gradient-to-r from-[#08294a] to-[#0e487f] px-3 py-2 text-[9px] font-bold uppercase tracking-[0.16em] text-[#e6faff] shadow-[0_0_18px_rgba(0,240,255,0.4)]"
+              >
+                <Rocket className="h-3.5 w-3.5 text-[#00f0ff]" />
+                Go to launch room
+              </button>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setPartListOpen(true)}
+                  className="rounded-lg border border-[#7fe3ff]/40 bg-[#071426]/85 px-3 py-2 text-[9px] font-semibold uppercase tracking-[0.18em] text-[#9cd8f2] backdrop-blur-md transition-colors hover:border-[#7fe3ff]/80 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7fe3ff]"
+                >
+                  See list
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (isEmergencyActive) {
+                      callbacksRef.current.onOpenTask3?.();
+                    } else if (launchUnlocked) {
+                      callbacksRef.current.onOpenTask2?.();
+                    } else {
+                      callbacksRef.current.onOpenTask?.();
+                    }
+                  }}
+                  className="rounded-lg border border-[#7fe3ff]/40 bg-[#071426]/85 px-3 py-2 text-[9px] font-semibold uppercase tracking-[0.18em] text-[#9cd8f2] backdrop-blur-md transition-colors hover:border-[#7fe3ff]/80 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7fe3ff]"
+                >
+                  {isEmergencyActive ? 'Task 3' : launchUnlocked ? 'Task 2' : 'Task'}
+                </button>
+              </>
+            )}
             {!allPartsInstalled && (
               <button
                 type="button"
@@ -1514,6 +2006,26 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer(
               {missionToast.message}
             </div>
           )}
+
+          {/* ── First-Person Mode HUD Button ── */}
+          <button
+            type="button"
+            title={isFirstPerson ? 'Exit first-person mode (V / F)' : 'Enter first-person mode (V / F)'}
+            onClick={() => doorHolderRef.current?.toggleFirstPerson()}
+            className={`absolute bottom-6 right-4 z-30 flex items-center gap-1.5 rounded-full border px-3 py-2 text-[8px] font-bold uppercase tracking-[0.2em] backdrop-blur-md shadow-lg transition-all duration-300 active:scale-95 ${
+              isFirstPerson
+                ? 'border-[#5ee7ff] bg-[#071e36]/95 text-[#5ee7ff] shadow-[0_0_20px_rgba(94,231,255,0.45)] hover:border-[#9ef5ff] hover:shadow-[0_0_30px_rgba(94,231,255,0.65)]'
+                : 'border-[#7fe3ff]/40 bg-[#071426]/90 text-[#9cd8f2] shadow-[0_0_12px_rgba(61,107,255,0.18)] hover:border-[#7fe3ff]/80 hover:text-white hover:shadow-[0_0_22px_rgba(94,231,255,0.35)]'
+            }`}
+          >
+            {isFirstPerson ? (
+              <EyeOff className="h-3.5 w-3.5 shrink-0" />
+            ) : (
+              <Eye className="h-3.5 w-3.5 shrink-0" />
+            )}
+            <span>{isFirstPerson ? 'Exit FP' : 'First Person'}</span>
+            <kbd className="ml-0.5 rounded bg-white/10 px-1.5 py-0.5 text-[7px] font-mono text-[#7fe3ff]">V</kbd>
+          </button>
 
           {partListOpen && (
             <div
@@ -1975,6 +2487,31 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer(
             </div>
           )}
         </>
+      )}
+
+      {/* 3D Video Texture Screen in Firing Room */}
+      <FiringRoomScreen
+        ref={firingRoomScreenRef}
+        onVideoTextureReady={handleVideoTextureReady}
+        onEmergencyAtHeliumT={handleEmergencyAtHeliumT}
+        onSegmentEnd={handleVideoSegmentEnd}
+      />
+
+      {/* Short on-screen countdown (3-2-1) before Part 2 starts */}
+      {countdownNumber !== null && (
+        <div className="pointer-events-none absolute inset-0 z-40 flex flex-col items-center justify-center bg-black/45 backdrop-blur-[2px] animate-fade-in select-none">
+          <div className="relative flex flex-col items-center">
+            <span className="text-[11px] sm:text-xs font-bold uppercase tracking-[0.32em] text-[#00f0ff] mb-2 drop-shadow-[0_0_10px_#00f0ff]">
+              LAUNCH SEQUENCE INITIATED
+            </span>
+            <div className="text-6xl sm:text-8xl font-black font-mono text-white tracking-widest drop-shadow-[0_0_30px_#00f0ff] animate-pulse">
+              {countdownNumber}
+            </div>
+            <span className="mt-2 text-[9px] font-semibold uppercase tracking-[0.2em] text-[#8ef4ff]">
+              Atlas-Centaur AC-13 · Pad 36B
+            </span>
+          </div>
+        </div>
       )}
     </div>
   );

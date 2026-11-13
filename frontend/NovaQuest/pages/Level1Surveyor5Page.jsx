@@ -15,7 +15,8 @@ import {
   ArrowRight,
   Eye,
   Wrench,
-  Zap
+  Zap,
+  Building2,
 } from 'lucide-react';
 import { createAstronautCharacter } from '../components/gameplay/three/AstronautCharacterModel';
 import { createHumanAstronaut } from '../components/gameplay/three/HumanAstronautModel';
@@ -29,6 +30,7 @@ import { gameAudio } from '../config/gameAudio';
 import { USE_OLD_LUNAR_MAP } from '../config/lunarMapConfig';
 import { saveGame } from '../game/saveManager';
 import OldLunarMapPage from './OldLunarMapPage';
+import NasaHeadquartersModal from '../nasa-headquarters/NasaHeadquartersModal';
 
 const INTRO_SESSION_KEY = 'novaquest-level1-intro-seen';
 const INTRO_720P_SRC = '/videos/intro_720p_optimized.mp4';
@@ -164,6 +166,7 @@ export default function Level1Surveyor5Page() {
   const [hasStartedIntro, setHasStartedIntro] = useState(false);
   const [isAutoplayBlocked, setIsAutoplayBlocked] = useState(false);
   const [isIntroVideoFading, setIsIntroVideoFading] = useState(false);
+  const [isHqOpen, setIsHqOpen] = useState(false);
   const isOldLunarMapActive = USE_OLD_LUNAR_MAP && gamePhase === 'phase4_open_world';
 
   // Inventory & Component Recovery Tracking
@@ -1019,6 +1022,19 @@ export default function Level1Surveyor5Page() {
 
         {/* Right: Suit Switcher & Exit Controls */}
         <div className="flex items-center gap-2 pointer-events-auto">
+          <button
+            id="open-hq-btn"
+            onClick={() => {
+              gameAudio.playClick?.();
+              setIsHqOpen(true);
+            }}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-cyan-600/90 to-blue-700/90 hover:from-cyan-500 hover:to-blue-600 backdrop-blur-md text-white rounded-2xl border border-cyan-400/50 text-xs font-black shadow-lg shadow-cyan-500/25 active:scale-95 transition-all cursor-pointer"
+            title="Open NASA Headquarters & Firing Room"
+          >
+            <Building2 className="w-3.5 h-3.5" />
+            <span>NASA HQ</span>
+          </button>
+
           {gamePhase === 'phase4_open_world' && (
             <button
               id="suit-switch-btn"
@@ -1328,6 +1344,12 @@ export default function Level1Surveyor5Page() {
         onReturnMenu={() => navigate('/missions')}
       />
     )}
+
+    {/* NASA Headquarters Modal (Full 3D Firing Room, Launch Video & Helium Leak Rescue) */}
+    <NasaHeadquartersModal
+      isOpen={isHqOpen}
+      onClose={() => setIsHqOpen(false)}
+    />
     </>
   );
 }

@@ -1,9 +1,14 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Building2, X } from 'lucide-react';
 import NasaHeadquartersViewer from './NasaHeadquartersViewer';
 import Surveyor5TaskPage from './Surveyor5TaskPage';
+import Surveyor5Task2Page from './Surveyor5Task2Page';
 import Surveyor5UnlockedModal from './Surveyor5UnlockedModal';
+import LaunchCinematic from './LaunchCinematic';
+import HeliumEmergency from './HeliumEmergency';
+import Task3 from './Task3';
+import MissionSuccessModal from '../../src/components/launch/MissionSuccessModal';
 import { SURVEYOR5_CART_LIMIT, SURVEYOR5_MANIFEST_IDS } from './surveyor5Mission';
 import { gameAudio } from '../config/gameAudio';
 
@@ -18,13 +23,24 @@ import { gameAudio } from '../config/gameAudio';
  * launches the lander from the firing room.
  */
 export default function NasaHeadquartersModal({ isOpen, onClose }) {
+  const viewerRef = useRef(null);
   const [taskOpen, setTaskOpen] = useState(false);
+  const [task2Open, setTask2Open] = useState(false);
   const [collectedPartIds, setCollectedPartIds] = useState([]);
   const [cartPartIds, setCartPartIds] = useState([]);
   const [hologramConverted, setHologramConverted] = useState(false);
+  const [hologramDisappeared, setHologramDisappeared] = useState(false);
+  const [launchUnlocked, setLaunchUnlocked] = useState(false);
+  const [launchReady, setLaunchReady] = useState(false);
+  const [task3Solved, setTask3Solved] = useState(false);
+  const [missionComplete, setMissionComplete] = useState(false);
+  const [cinematicOpen, setCinematicOpen] = useState(false);
+  const [task3Open, setTask3Open] = useState(false);
+  const [score, setScore] = useState(100);
   const [missionSolved, setMissionSolved] = useState(false);
   const [launched, setLaunched] = useState(false);
   const [unlockedModalOpen, setUnlockedModalOpen] = useState(false);
+  const [isEmergency, setIsEmergency] = useState(false);
 
   useEffect(() => {
     if (isOpen) setTaskOpen(true);
@@ -38,6 +54,22 @@ export default function NasaHeadquartersModal({ isOpen, onClose }) {
 
     const handleKeyDown = (event) => {
       if (event.key !== 'Escape') return;
+      if (task3Open) {
+        setTask3Open(false);
+        return;
+      }
+      if (missionComplete) {
+        setMissionComplete(false);
+        return;
+      }
+      if (cinematicOpen) {
+        return; // skip-less Part 1 playback
+      }
+      if (task2Open) {
+        gameAudio.playClick();
+        setTask2Open(false);
+        return;
+      }
       if (taskOpen) {
         gameAudio.playClick();
         setTaskOpen(false);
@@ -52,7 +84,7 @@ export default function NasaHeadquartersModal({ isOpen, onClose }) {
       document.body.style.overflow = previousOverflow;
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [isOpen, onClose, taskOpen]);
+  }, [isOpen, onClose, taskOpen, task2Open, cinematicOpen, task3Open, missionComplete]);
 
   const handleCollectPart = useCallback(
     (component) => {
@@ -128,13 +160,13 @@ export default function NasaHeadquartersModal({ isOpen, onClose }) {
     if (!missionSolved || !hologramConverted || launched) return;
     setLaunched(true);
     gameAudio.playVictory();
-    setTaskOpen(true);
+    // Do NOT reopen Task 1 — the launch video on the 3D screen is the experience now
   }, [hologramConverted, launched, missionSolved]);
 
   const handleSolveMission = useCallback(() => {
     if (!hologramConverted || missionSolved) return;
     setMissionSolved(true);
-    setTaskOpen(false);
+    setTaskOpen(false); // close Task 1 page once mission is solved — Task 2 takes over
     gameAudio.playVictory();
   }, [hologramConverted, missionSolved]);
 
@@ -149,16 +181,80 @@ export default function NasaHeadquartersModal({ isOpen, onClose }) {
   const handleUnlockLaunch = useCallback(() => {
     setUnlockedModalOpen(false);
     setMissionSolved(true);
+    setLaunchUnlocked(true);
+    setHologramDisappeared(true);
+    setTaskOpen(false); // Task 1 completed upon unlock launch click
     gameAudio.playPowerUp();
+    // Play Part 1 full-screen cinematic overlay
+    setCinematicOpen(true);
   }, []);
+
+  const handleCinematicComplete = useCallback(() => {
+    setCinematicOpen(false);
+    setLaunchReady(true);
+    // Task 1 completed, replace with Task 2:
+    setTaskOpen(false);
+    setTask2Open(true);
+    viewerRef.current?.showMissionToast?.(
+      'Liftoff is minutes away. Head to the Firing Room at the end of the corridor.',
+      'info',
+    );
+  }, []);
+
+  const handleEmergencyTriggered = useCallback(() => {
+    // Task 2 is completed as soon as emergency task 3 starts!
+    setTask2Open(false);
+    setTaskOpen(false);
+    setIsEmergency(true);
+    setTask3Open(true);
+  }, []);
+
+  const handleSolveTask3 = useCallback(() => {
+    setTask3Solved(true);
+    setIsEmergency(false);
+    setTask3Open(false);
+    viewerRef.current?.resolveEmergency?.();
+  }, []);
+
+  const handleMissionComplete = useCallback(() => {
+    setLaunched(true);
+    setMissionComplete(true);
+    // Close all task pages so only the success modal shows
+    setTaskOpen(false);
+    setTask2Open(false);
+    setTask3Open(false);
+  }, []);
+
+  const handleEmergencyResolved = useCallback(() => {
+    handleSolveTask3();
+  }, [handleSolveTask3]);
 
   const handleOpenTask = useCallback(() => {
     gameAudio.playClick();
-    setTaskOpen(true);
-  }, []);
+    if (isEmergency || task3Open) {
+      setTask3Open(true);
+    } else if (launchUnlocked || launchReady) {
+      setTask2Open(true);
+    } else {
+      setTaskOpen(true);
+    }
+  }, [isEmergency, task3Open, launchUnlocked, launchReady]);
 
   const handleCloseTask = useCallback(() => {
     setTaskOpen(false);
+  }, []);
+
+  const handleOpenTask2 = useCallback(() => {
+    gameAudio.playClick();
+    setTask2Open(true);
+  }, []);
+
+  const handleCloseTask2 = useCallback(() => {
+    setTask2Open(false);
+  }, []);
+
+  const handleTeleportToFiringRoom = useCallback(() => {
+    viewerRef.current?.teleportToFiringRoom?.();
   }, []);
 
   if (!isOpen) return null;
@@ -182,19 +278,29 @@ export default function NasaHeadquartersModal({ isOpen, onClose }) {
         className="relative flex h-full w-full flex-col overflow-hidden rounded-2xl border border-[#3D6BFF]/35 bg-[#040911] shadow-[0_0_80px_rgba(28,88,255,0.22)]"
       >
         <NasaHeadquartersViewer
+          ref={viewerRef}
           collectedIds={collectedPartIds}
           cartIds={cartPartIds}
           cartLimit={SURVEYOR5_CART_LIMIT}
           hologramConverted={hologramConverted}
+          hologramDisappeared={hologramDisappeared}
+          launchUnlocked={launchUnlocked}
+          launchReady={launchReady}
+          task3Solved={task3Solved}
           missionSolved={missionSolved}
           launched={launched}
-          overlayOpen={taskOpen || unlockedModalOpen}
+          overlayOpen={taskOpen || unlockedModalOpen || task2Open || cinematicOpen || task3Open || missionComplete}
           onCollectPart={handleCollectPart}
           onDepositCart={handleDepositCart}
           onConvertHologram={handleConvertHologram}
           onLaunchMission={handleLaunchMission}
           onOpenTask={handleOpenTask}
+          onOpenTask2={handleOpenTask2}
+          onOpenTask3={() => setTask3Open(true)}
+          onMissionComplete={handleMissionComplete}
+          onTeleportToFiringRoom={handleTeleportToFiringRoom}
           onAutoCompleteTask={handleAutoCompleteTask}
+          onEmergencyTriggered={handleEmergencyTriggered}
         />
 
         {/* Cinematic vignette + scan lines over the live 3D feed. */}
@@ -277,6 +383,44 @@ export default function NasaHeadquartersModal({ isOpen, onClose }) {
         <Surveyor5UnlockedModal
           isOpen={unlockedModalOpen}
           onUnlockLaunch={handleUnlockLaunch}
+        />
+
+        {/* Part 1 Full-screen Cinematic Overlay */}
+        <LaunchCinematic
+          isOpen={cinematicOpen}
+          onComplete={handleCinematicComplete}
+        />
+
+        {/* Emergency Anomaly Red HUD alert & Siren */}
+        <HeliumEmergency
+          isActive={isEmergency}
+          onOpenTask3={() => setTask3Open(true)}
+        />
+
+        {/* Task 3: Helium Emergency Kid-Friendly Solution Challenge */}
+        <Task3
+          isOpen={task3Open}
+          score={score}
+          onDeductScore={(amount) => setScore((s) => Math.max(0, s - amount))}
+          onSolve={handleSolveTask3}
+          onClose={() => setTask3Open(false)}
+        />
+
+        {/* Mission Complete Success Screen */}
+        <MissionSuccessModal
+          isOpen={missionComplete}
+          score={score}
+          onClose={() => setMissionComplete(false)}
+          onReturnHub={handleClose}
+        />
+
+        <Surveyor5Task2Page
+          isOpen={task2Open}
+          isEmergency={isEmergency}
+          onEmergencyResolved={handleEmergencyResolved}
+          onClose={handleCloseTask2}
+          onTeleportToFiringRoom={handleTeleportToFiringRoom}
+          onLaunchCompleted={() => setLaunched(true)}
         />
       </section>
     </div>,
