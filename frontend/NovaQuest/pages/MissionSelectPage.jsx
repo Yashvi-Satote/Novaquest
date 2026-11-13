@@ -39,8 +39,12 @@ export default function MissionSelectPage() {
     gameAudio.playClick();
     if (mission.id === 'surveyor-5') {
       navigate('/play');
+    } else if (mission.id === 'voyager-1') {
+      navigate('/play/message-of-earth');
     }
   };
+
+  const unlockedCount = ALL_MISSIONS.filter((m) => m.status !== 'locked').length;
 
   return (
     <div className="relative min-h-screen w-full bg-[#070b19] font-sans text-slate-100 select-none flex flex-col justify-between">
@@ -87,7 +91,7 @@ export default function MissionSelectPage() {
           <div className="flex items-center gap-3 bg-slate-900/80 p-2.5 rounded-2xl border border-sky-500/30 backdrop-blur-md">
             <div className="px-3 py-1.5 rounded-xl bg-sky-950/80 border border-sky-400/40 text-center">
               <span className="block text-xs font-bold text-slate-400">UNLOCKED</span>
-              <span className="text-sm font-black text-sky-400">1 / 6</span>
+              <span className="text-sm font-black text-sky-400">{unlockedCount} / {ALL_MISSIONS.length}</span>
             </div>
             <div className="px-3 py-1.5 rounded-xl bg-slate-950/80 border border-slate-700 text-center">
               <span className="block text-xs font-bold text-slate-400">BADGES</span>
@@ -125,15 +129,26 @@ export default function MissionSelectPage() {
               </p>
             </div>
           </div>
-          <GameButton
-            size="md"
-            variant="accent"
-            onClick={() => handlePlayMission(ALL_MISSIONS[0])}
-            icon={Sparkles}
-            className="shrink-0 text-xs font-black uppercase"
-          >
-            Play Level 1 Now
-          </GameButton>
+          <div className="flex flex-wrap items-center justify-center gap-3 shrink-0">
+            <GameButton
+              size="md"
+              variant="secondary"
+              onClick={() => handlePlayMission(ALL_MISSIONS[0])}
+              icon={Sparkles}
+              className="text-xs font-black uppercase"
+            >
+              Play Level 1
+            </GameButton>
+            <GameButton
+              size="md"
+              variant="accent"
+              onClick={() => handlePlayMission(ALL_MISSIONS[1])}
+              icon={Rocket}
+              className="text-xs font-black uppercase"
+            >
+              Play Level 2
+            </GameButton>
+          </div>
         </div>
       </main>
 

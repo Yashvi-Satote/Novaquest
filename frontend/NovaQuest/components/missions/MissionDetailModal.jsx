@@ -79,9 +79,11 @@ export default function MissionDetailModal({
             <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent" />
             <div className="absolute bottom-3 left-3 text-xs font-bold text-white flex items-center gap-2">
               <span className="px-2 py-0.5 rounded bg-sky-950/80 border border-sky-400/40 text-sky-300">
-                Mare Tranquillitatis
+                {mission.destination || 'Mare Tranquillitatis'}
               </span>
-              <span className="text-slate-300 font-mono text-[10px]">1.41° N, 23.18° E</span>
+              {mission.id === 'surveyor-5' && (
+                <span className="text-slate-300 font-mono text-[10px]">1.41° N, 23.18° E</span>
+              )}
             </div>
           </div>
 
@@ -90,19 +92,19 @@ export default function MissionDetailModal({
             <div>
               <span className="text-slate-400 font-medium block">Launch Year</span>
               <span className="text-base font-black text-sky-400 flex items-center gap-1">
-                <Calendar className="w-4 h-4" /> 1967
+                <Calendar className="w-4 h-4" /> {mission.year}
               </span>
             </div>
             <div>
               <span className="text-slate-400 font-medium block">Estimated Time</span>
               <span className="text-base font-black text-amber-400 flex items-center gap-1">
-                <Clock className="w-4 h-4" /> 5 Minutes
+                <Clock className="w-4 h-4" /> {mission.estimatedDuration || '5 Minutes'}
               </span>
             </div>
             <div>
               <span className="text-slate-400 font-medium block">Difficulty</span>
               <span className="text-base font-black text-emerald-400">
-                Beginner Friendly
+                {mission.difficulty || 'Beginner Friendly'}
               </span>
             </div>
             <div>
@@ -119,32 +121,34 @@ export default function MissionDetailModal({
           <p>{data?.summary || mission.subtitle}</p>
         </div>
 
-        {/* Mission Objectives Breakdown (6 Scenes) */}
-        <div className="space-y-3">
-          <span className="text-xs font-black uppercase tracking-wider text-sky-400 flex items-center gap-2">
-            <Target className="w-4 h-4 text-orange-400" />
-            Mission Objectives
-          </span>
-          <div className="space-y-2">
-            {(data?.scenes || []).map((scene, idx) => (
-              <div 
-                key={scene.id}
-                className="flex items-start gap-3 p-2.5 rounded-xl bg-slate-800/50 border border-slate-700/60 text-xs"
-              >
-                <span className="flex items-center justify-center w-5 h-5 rounded-lg bg-sky-500/20 text-sky-300 font-bold shrink-0 text-[11px]">
-                  {idx + 1}
-                </span>
-                <div className="flex-1">
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-white">{scene.title}</span>
-                    <span className="text-[10px] text-slate-400 font-mono">{scene.timeRange}</span>
+        {/* Mission Objectives Breakdown */}
+        {(data?.scenes?.length ?? 0) > 0 && (
+          <div className="space-y-3">
+            <span className="text-xs font-black uppercase tracking-wider text-sky-400 flex items-center gap-2">
+              <Target className="w-4 h-4 text-orange-400" />
+              Mission Objectives
+            </span>
+            <div className="space-y-2">
+              {data.scenes.map((scene, idx) => (
+                <div 
+                  key={scene.id}
+                  className="flex items-start gap-3 p-2.5 rounded-xl bg-slate-800/50 border border-slate-700/60 text-xs"
+                >
+                  <span className="flex items-center justify-center w-5 h-5 rounded-lg bg-sky-500/20 text-sky-300 font-bold shrink-0 text-[11px]">
+                    {idx + 1}
+                  </span>
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-white">{scene.title}</span>
+                      <span className="text-[10px] text-slate-400 font-mono">{scene.timeRange}</span>
+                    </div>
+                    <p className="text-slate-300 text-[11px] mt-0.5">{scene.objective}</p>
                   </div>
-                  <p className="text-slate-300 text-[11px] mt-0.5">{scene.objective}</p>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Launch Button Action */}
         <div className="flex items-center justify-between pt-4 border-t border-sky-500/20">
@@ -164,7 +168,7 @@ export default function MissionDetailModal({
             icon={Play}
             className="text-base font-black px-8"
           >
-            START MISSION 1
+            START MISSION {mission.levelNumber}
           </GameButton>
         </div>
       </div>
