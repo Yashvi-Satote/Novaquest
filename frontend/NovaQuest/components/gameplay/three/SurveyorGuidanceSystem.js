@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { guidanceAudio } from '../../game/guidanceAudio';
+import { guidanceAudio } from '../../../game/guidanceAudio';
 
 /**
  * SurveyorGuidanceSystem.js

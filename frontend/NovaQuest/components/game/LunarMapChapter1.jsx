@@ -28,7 +28,8 @@ import {
   ArrowDownToLine,
   ChevronUp,
   VolumeX,
-  Target
+  Target,
+  Atom
 } from 'lucide-react';
 import { audio } from '../../game/moonMapAudioManager';
 import { createSurveyorGuidanceSystem, GUIDANCE_CONFIG } from '../gameplay/three/SurveyorGuidanceSystem';
