@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { lazy } from 'react';
 import { Routes, Route, Link, Navigate } from 'react-router-dom';
 import AppNavbar from '../Shared/components/layout/AppNavbar';
 import ExplorerPage from '../NovaBase/pages/ExplorerPage';
@@ -17,6 +17,19 @@ import SettingsPage from '../NovaUser/settings/SettingsPage';
 import { GuestOnly } from '../NovaUser/components/RouteGuards';
 import { ArrowLeft, AlertCircle } from 'lucide-react';
 import ApiLoadingIndicator from '../Shared/components/layout/ApiLoadingIndicator.jsx';
+
+const ExplorerPage = lazy(() => import('../NovaBase/pages/ExplorerPage'));
+const HardwareDetailPage = lazy(() => import('../NovaBase/pages/HardwareDetailPage'));
+const SpacecraftDetailPage = lazy(() => import('../NovaMap/pages/SpacecraftDetailPage'));
+const SolarSystemPage = lazy(() => import('../NovaMap/pages/SolarSystemPage'));
+const TimeTravelersHomePage = lazy(() => import('../NovaQuest/pages/TimeTravelersHomePage'));
+const MissionSelectPage = lazy(() => import('../NovaQuest/pages/MissionSelectPage'));
+const Level1Surveyor5Page = lazy(() => import('../NovaQuest/pages/Level1Surveyor5Page'));
+const OldLunarMapPage = lazy(() => import('../NovaQuest/pages/OldLunarMapPage'));
+const SignInPage = lazy(() => import('../NovaUser/pages/SignInPage'));
+const RegisterPage = lazy(() => import('../NovaUser/pages/RegisterPage'));
+const LegalPage = lazy(() => import('../NovaUser/pages/LegalPage'));
+const SettingsPage = lazy(() => import('../NovaUser/settings/SettingsPage'));
 
 function NotFoundPage() {
   return (
@@ -57,40 +70,38 @@ export default function App() {
   // account-backed settings and progress.
 
   return (
-    <>
-      <ApiLoadingIndicator />
       <Routes>
         {/* The app opens directly on the NovaQuest hub for guests and members. */}
         <Route path="/" element={<Navigate to="/app" replace />} />
 
-      {/* Optional NovaUser destinations. Nothing redirects here automatically. */}
-      <Route path="/register" element={<Navigate to="/novauser/register" replace />} />
-      <Route path="/signup" element={<Navigate to="/novauser/register" replace />} />
-      <Route path="/novauser" element={<Navigate to="/novauser/signin" replace />} />
-      <Route path="/novauser/auth" element={<Navigate to="/novauser/signin" replace />} />
-      <Route
-        path="/novauser/register"
-        element={
-          <GuestOnly>
-            <RegisterPage />
-          </GuestOnly>
-        }
-      />
-      <Route path="/novauser/signup" element={<Navigate to="/novauser/register" replace />} />
-      <Route
-        path="/novauser/signin"
-        element={
-          <GuestOnly>
-            <SignInPage />
-          </GuestOnly>
-        }
-      />
-      <Route path="/novauser/login" element={<Navigate to="/novauser/signin" replace />} />
-      <Route path="/login" element={<Navigate to="/novauser/signin" replace />} />
+        {/* Optional NovaUser destinations. Nothing redirects here automatically. */}
+        <Route path="/register" element={<Navigate to="/novauser/register" replace />} />
+        <Route path="/signup" element={<Navigate to="/novauser/register" replace />} />
+        <Route path="/novauser" element={<Navigate to="/novauser/signin" replace />} />
+        <Route path="/novauser/auth" element={<Navigate to="/novauser/signin" replace />} />
+        <Route
+          path="/novauser/register"
+          element={
+            <GuestOnly>
+              <RegisterPage />
+            </GuestOnly>
+          }
+        />
+        <Route path="/novauser/signup" element={<Navigate to="/novauser/register" replace />} />
+        <Route
+          path="/novauser/signin"
+          element={
+            <GuestOnly>
+              <SignInPage />
+            </GuestOnly>
+          }
+        />
+        <Route path="/novauser/login" element={<Navigate to="/novauser/signin" replace />} />
+        <Route path="/login" element={<Navigate to="/novauser/signin" replace />} />
 
-      {/* Public legal documents linked from the auth screens. */}
-      <Route path="/novauser/terms" element={<LegalPage kind="terms" />} />
-      <Route path="/novauser/privacy" element={<LegalPage kind="privacy" />} />
+        {/* Public legal documents linked from the auth screens. */}
+        <Route path="/novauser/terms" element={<LegalPage kind="terms" />} />
+        <Route path="/novauser/privacy" element={<LegalPage kind="privacy" />} />
 
       {/* Public application routes: guests have full access. */}
       <Route path="/app" element={<TimeTravelersHomePage />} />
