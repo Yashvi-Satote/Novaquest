@@ -3,11 +3,13 @@
  * Handles communication with Flask REST backend
  */
 
+import { trackedFetch } from './apiActivity.js';
+
 const API_BASE = '/api';
 
 export async function fetchHealth() {
   try {
-    const res = await fetch(`${API_BASE}/health`);
+    const res = await trackedFetch(`${API_BASE}/health`);
     if (!res.ok) throw new Error(`HTTP error ${res.status}`);
     return await res.json();
   } catch (err) {
@@ -25,7 +27,7 @@ export async function fetchHealth() {
 
 export async function fetchNovaBaseHealth() {
   try {
-    const res = await fetch(`${API_BASE}/novabase/health`);
+    const res = await trackedFetch(`${API_BASE}/novabase/health`);
     if (!res.ok) throw new Error(`HTTP error ${res.status}`);
     return await res.json();
   } catch (err) {
@@ -43,7 +45,7 @@ export async function fetchNovaBaseHealth() {
 }
 
 export async function fetchFilters() {
-  const res = await fetch(`${API_BASE}/filters`);
+  const res = await trackedFetch(`${API_BASE}/filters`);
   if (!res.ok) throw new Error(`Failed to fetch filters: ${res.statusText}`);
   return await res.json();
 }
@@ -61,19 +63,19 @@ export async function fetchHardware(params = {}) {
   if (params.page) query.set('page', params.page);
   if (params.limit) query.set('limit', params.limit);
 
-  const res = await fetch(`${API_BASE}/hardware?${query.toString()}`);
+  const res = await trackedFetch(`${API_BASE}/hardware?${query.toString()}`);
   if (!res.ok) throw new Error(`Failed to fetch hardware: ${res.statusText}`);
   return await res.json();
 }
 
 export async function fetchHardwareDetail(idOrSlug) {
-  const res = await fetch(`${API_BASE}/hardware/${encodeURIComponent(idOrSlug)}`);
+  const res = await trackedFetch(`${API_BASE}/hardware/${encodeURIComponent(idOrSlug)}`);
   if (!res.ok) throw new Error(`Failed to fetch hardware detail for "${idOrSlug}": ${res.statusText}`);
   return await res.json();
 }
 
 export async function fetchHardwareImages(id) {
-  const res = await fetch(`${API_BASE}/hardware/${id}/images`);
+  const res = await trackedFetch(`${API_BASE}/hardware/${id}/images`);
   if (!res.ok) throw new Error(`Failed to fetch images for ID ${id}: ${res.statusText}`);
   return await res.json();
 }
@@ -81,13 +83,13 @@ export async function fetchHardwareImages(id) {
 export async function fetchMissions(params = {}) {
   const query = new URLSearchParams();
   if (params.destination && params.destination !== 'All') query.set('destination', params.destination);
-  const res = await fetch(`${API_BASE}/missions?${query.toString()}`);
+  const res = await trackedFetch(`${API_BASE}/missions?${query.toString()}`);
   if (!res.ok) throw new Error(`Failed to fetch missions: ${res.statusText}`);
   return await res.json();
 }
 
 export async function fetchMissionDetail(missionId) {
-  const res = await fetch(`${API_BASE}/missions/${missionId}`);
+  const res = await trackedFetch(`${API_BASE}/missions/${missionId}`);
   if (!res.ok) throw new Error(`Failed to fetch mission ${missionId}: ${res.statusText}`);
   return await res.json();
 }
@@ -107,43 +109,43 @@ export async function fetchMapObjects(params = {}) {
   if (params.parent && params.parent !== 'all') query.set('parent', params.parent);
   if (params.q) query.set('q', params.q);
 
-  const res = await fetch(`${API_BASE}/map/objects?${query.toString()}`);
+  const res = await trackedFetch(`${API_BASE}/map/objects?${query.toString()}`);
   if (!res.ok) throw new Error(`Failed to fetch map objects: ${res.statusText}`);
   return await res.json();
 }
 
 export async function fetchMapFilters() {
-  const res = await fetch(`${API_BASE}/map/filters`);
+  const res = await trackedFetch(`${API_BASE}/map/filters`);
   if (!res.ok) throw new Error(`Failed to fetch map filters: ${res.statusText}`);
   return await res.json();
 }
 
 export async function fetchSpacecraftMissions(idOrSlug) {
-  const res = await fetch(`${API_BASE}/spacecraft/${encodeURIComponent(idOrSlug)}/missions`);
+  const res = await trackedFetch(`${API_BASE}/spacecraft/${encodeURIComponent(idOrSlug)}/missions`);
   if (!res.ok) throw new Error(`Failed to fetch missions for ${idOrSlug}: ${res.statusText}`);
   return await res.json();
 }
 
 export async function fetchSpacecraftModel(idOrSlug) {
-  const res = await fetch(`${API_BASE}/spacecraft/${encodeURIComponent(idOrSlug)}/model`);
+  const res = await trackedFetch(`${API_BASE}/spacecraft/${encodeURIComponent(idOrSlug)}/model`);
   if (!res.ok) throw new Error(`Failed to fetch model for ${idOrSlug}: ${res.statusText}`);
   return await res.json();
 }
 
 export async function fetchMissionSpacecraft(idOrSlug) {
-  const res = await fetch(`${API_BASE}/missions/${encodeURIComponent(idOrSlug)}/spacecraft`);
+  const res = await trackedFetch(`${API_BASE}/missions/${encodeURIComponent(idOrSlug)}/spacecraft`);
   if (!res.ok) throw new Error(`Failed to fetch spacecraft for mission ${idOrSlug}: ${res.statusText}`);
   return await res.json();
 }
 
 export async function fetchModels() {
-  const res = await fetch(`${API_BASE}/models`);
+  const res = await trackedFetch(`${API_BASE}/models`);
   if (!res.ok) throw new Error(`Failed to fetch 3D models: ${res.statusText}`);
   return await res.json();
 }
 
 export async function fetchModelDetail(modelName) {
-  const res = await fetch(`${API_BASE}/models/${encodeURIComponent(modelName)}`);
+  const res = await trackedFetch(`${API_BASE}/models/${encodeURIComponent(modelName)}`);
   if (!res.ok) throw new Error(`Failed to fetch model "${modelName}": ${res.statusText}`);
   return await res.json();
 }

@@ -31,26 +31,102 @@ import { USE_OLD_LUNAR_MAP } from '../config/lunarMapConfig';
 import { saveGame } from '../game/saveManager';
 import OldLunarMapPage from './OldLunarMapPage';
 
+const INTRO_SESSION_KEY = 'novaquest-level1-intro-seen';
+const INTRO_720P_SRC = '/videos/intro_720p_optimized.mp4';
+const INTRO_480P_SRC = '/videos/intro_480p_light.mp4';
+const INTRO_POSTER_SRC = '/videos/intro-poster.jpg';
+let introSeenInMemory = false;
+
+function shouldUseLiteIntro() {
+  if (typeof window === 'undefined' || typeof navigator === 'undefined') return false;
+
+  const connection = navigator.connection;
+  const isSlowConnection = connection?.saveData
+    || ['slow-2g', '2g', '3g'].includes(connection?.effectiveType);
+  const isSmallScreen = typeof window.matchMedia === 'function'
+    && window.matchMedia('(max-width: 640px)').matches;
+
+  return isSmallScreen || isSlowConnection;
+}
+
+function getInitialOpeningStage() {
+  if (typeof window === 'undefined') return 'complete';
+  if (typeof window.matchMedia === 'function'
+    && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    return 'complete';
+  }
+
+  try {
+    introSeenInMemory = window.sessionStorage.getItem(INTRO_SESSION_KEY) === 'true';
+    return introSeenInMemory ? 'complete' : 'video';
+  } catch (error) {
+    console.warn('Could not read the Level 1 intro session state.', error);
+    return introSeenInMemory ? 'complete' : 'video';
+  }
+}
+
 const IntroVideoPlayer = memo(function IntroVideoPlayer({
+  canPlayThrough,
   isFading,
+  isVisible,
+  isAutoplayBlocked,
+  preferLite,
   onEnded,
   onError,
+  onCanPlayThrough,
   onTransitionEnd,
+  onPlayWithSound,
+  onSkip,
   videoRef
 }) {
   return (
-    <video
-      ref={videoRef}
-      playsInline
-      preload="auto"
-      src="/videos/milky-way-intro.mp4"
-      onEnded={onEnded}
-      onError={onError}
-      onTransitionEnd={onTransitionEnd}
-      className={`h-full w-full object-cover transition-opacity duration-1000 ease-in-out ${
+    <div
+      className={`fixed inset-0 z-[100] overflow-hidden bg-[#070b14] transition-opacity duration-500 ease-out ${
         isFading ? 'opacity-0' : 'opacity-100'
       }`}
-    />
+      style={{ willChange: 'opacity' }}
+      onTransitionEnd={onTransitionEnd}
+    >
+      <img
+        src={INTRO_POSTER_SRC}
+        alt=""
+        aria-hidden="true"
+        className="absolute inset-0 h-full w-full object-cover"
+      />
+      <video
+        ref={videoRef}
+        autoPlay={canPlayThrough}
+        muted={false}
+        playsInline
+        preload="auto"
+        poster={INTRO_POSTER_SRC}
+        onCanPlayThrough={onCanPlayThrough}
+        onEnded={onEnded}
+        onError={onError}
+        className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-500 ease-out ${
+          isVisible ? 'opacity-100' : 'opacity-0'
+        }`}
+      >
+        <source src={preferLite ? INTRO_480P_SRC : INTRO_720P_SRC} type="video/mp4" />
+        <source src={preferLite ? INTRO_720P_SRC : INTRO_480P_SRC} type="video/mp4" />
+      </video>
+      {isAutoplayBlocked && !isVisible && (
+        <button
+          type="button"
+          onClick={onPlayWithSound}
+          className="absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2 rounded-md bg-black/75 px-5 py-3 text-sm font-bold text-white transition-opacity hover:opacity-80"
+        >
+          Play intro with sound
+        </button>
+      )}
+      <button
+        type="button"
+        onClick={onSkip}
+        className="absolute bottom-6 right-6 z-20 rounded-md bg-black/70 px-4 py-2 text-sm font-bold text-white transition-opacity hover:opacity-80"
+      >
+        Skip
+      </button>
+    </div>
   );
 });
 
@@ -74,14 +150,20 @@ export default function Level1Surveyor5Page() {
   const navigate = useNavigate();
   const canvasContainerRef = useRef(null);
   const introVideoRef = useRef(null);
-  const introFadeFrameRef = useRef(null);
   const introFadeStartedRef = useRef(false);
+  const introCompletedRef = useRef(false);
+  const introPlaybackStartedRef = useRef(false);
 
   // --- Game Master Phase State ---
   // 'phase0_intro' | 'phase1_launch' | 'phase2_emergency' | 'phase3_cockpit' | 'phase4_open_world' | 'phase5_victory'
-  const [gamePhase, setGamePhase] = useState('phase0_intro');
-  const [openingStage, setOpeningStage] = useState('video');
+  const [openingStage, setOpeningStage] = useState(getInitialOpeningStage);
+  const [gamePhase, setGamePhase] = useState(() => (
+    openingStage === 'video' ? 'phase0_intro' : 'phase1_launch'
+  ));
+  const [preferLiteIntro] = useState(shouldUseLiteIntro);
+  const [canPlayThrough, setCanPlayThrough] = useState(false);
   const [hasStartedIntro, setHasStartedIntro] = useState(false);
+  const [isAutoplayBlocked, setIsAutoplayBlocked] = useState(false);
   const [isIntroVideoFading, setIsIntroVideoFading] = useState(false);
   const [isIntroVideoLoading, setIsIntroVideoLoading] = useState(true);
   const [introVideoError, setIntroVideoError] = useState(false);
@@ -116,24 +198,6 @@ export default function Level1Surveyor5Page() {
   const installedSlotsRef = useRef(installedSlots);
   installedSlotsRef.current = installedSlots;
 
-  useEffect(() => {
-    if (openingStage !== 'date') return undefined;
-
-    const launchTimeout = window.setTimeout(() => {
-      setOpeningStage('complete');
-      phaseRef.current = 'phase1_launch';
-      setGamePhase('phase1_launch');
-    }, 3500);
-
-    return () => window.clearTimeout(launchTimeout);
-  }, [openingStage]);
-
-  useEffect(() => () => {
-    if (introFadeFrameRef.current !== null) {
-      cancelAnimationFrame(introFadeFrameRef.current);
-    }
-  }, []);
-
   // -------------------------------------------------------------
   // RADIO TEXT HELPER
   // -------------------------------------------------------------
@@ -142,15 +206,20 @@ export default function Level1Surveyor5Page() {
     if (onEnd) onEnd();
   };
 
-  const fadeOutIntro = useCallback(() => {
-    if (introFadeStartedRef.current) return;
-    introFadeStartedRef.current = true;
+  const completeIntro = useCallback(() => {
+    if (introCompletedRef.current) return;
+    introCompletedRef.current = true;
+    introVideoRef.current?.pause();
+    phaseRef.current = 'phase1_launch';
+    setGamePhase('phase1_launch');
+    setOpeningStage('complete');
+  }, []);
 
-    const video = introVideoRef.current;
-    const startVolume = video?.volume ?? 1;
-    const startTime = performance.now();
-    const fadeDuration = 1000;
+  const fadeOutIntro = useCallback(() => {
+    if (introCompletedRef.current || introFadeStartedRef.current) return;
+    introFadeStartedRef.current = true;
     setIsIntroVideoFading(true);
+  }, []);
 
     const fadeAudio = now => {
       const progress = Math.min((now - startTime) / fadeDuration, 1);
@@ -164,10 +233,17 @@ export default function Level1Surveyor5Page() {
       }
     };
 
-    introFadeFrameRef.current = requestAnimationFrame(fadeAudio);
-  }, []);
+    introPlaybackStartedRef.current = true;
+    setCanPlayThrough(true);
+    video.play()
+      .then(() => setHasStartedIntro(true))
+      .catch((error) => {
+        console.warn('Audible autoplay was blocked; waiting for a user gesture.', error);
+        setIsAutoplayBlocked(true);
+      });
+  }, [completeIntro]);
 
-  const startIntroVideo = useCallback(() => {
+  const handlePlayIntroWithSound = useCallback(() => {
     const video = introVideoRef.current;
     if (!video) return;
 
@@ -188,22 +264,37 @@ export default function Level1Surveyor5Page() {
       });
   }, []);
 
-  const handleIntroVideoError = useCallback(() => {
-    setIntroVideoError(true);
-  }, []);
+  const handleIntroVideoError = useCallback((event) => {
+    const videoError = event.currentTarget.error;
+    console.error('The intro video could not be played; continuing to the game.', {
+      code: videoError?.code,
+      message: videoError?.message
+    });
+    completeIntro();
+  }, [completeIntro]);
 
-  const handleIntroVideoTransitionEnd = useCallback(event => {
-    if (event.propertyName === 'opacity' && isIntroVideoFading) {
-      introVideoRef.current?.pause();
-      setOpeningStage('date');
+  const handleIntroVideoTransitionEnd = useCallback((event) => {
+    if (event.target === event.currentTarget && event.propertyName === 'opacity' && isIntroVideoFading) {
+      completeIntro();
     }
-  }, [isIntroVideoFading]);
+  }, [completeIntro, isIntroVideoFading]);
+
+  useEffect(() => {
+    if (openingStage !== 'video') return undefined;
+
+    introSeenInMemory = true;
+    try {
+      window.sessionStorage.setItem(INTRO_SESSION_KEY, 'true');
+    } catch (error) {
+      console.warn('Could not save the Level 1 intro session state.', error);
+    }
+  }, [openingStage]);
 
   // -------------------------------------------------------------
   // THREE.JS MASTER ENGINE
   // -------------------------------------------------------------
   useEffect(() => {
-    if (isOldLunarMapActive) return undefined;
+    if (openingStage === 'video' || isOldLunarMapActive) return undefined;
 
     const container = canvasContainerRef.current;
     if (!container) return;
@@ -821,7 +912,7 @@ export default function Level1Surveyor5Page() {
       renderer.dispose();
       renderer.forceContextLoss();
     };
-  }, [isOldLunarMapActive]);
+  }, [openingStage, isOldLunarMapActive]);
 
   // Reference for test / debug mission completion
   useEffect(() => {
@@ -854,6 +945,25 @@ export default function Level1Surveyor5Page() {
     setInventory([]);
     setInstalledSlots([]);
   };
+
+  if (openingStage === 'video') {
+    return (
+      <IntroVideoPlayer
+        videoRef={introVideoRef}
+        canPlayThrough={canPlayThrough}
+        isFading={isIntroVideoFading}
+        isVisible={hasStartedIntro}
+        isAutoplayBlocked={isAutoplayBlocked}
+        preferLite={preferLiteIntro}
+        onCanPlayThrough={handleIntroVideoCanPlayThrough}
+        onEnded={fadeOutIntro}
+        onError={handleIntroVideoError}
+        onTransitionEnd={handleIntroVideoTransitionEnd}
+        onPlayWithSound={handlePlayIntroWithSound}
+        onSkip={fadeOutIntro}
+      />
+    );
+  }
 
   return (
     <>

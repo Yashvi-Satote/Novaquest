@@ -318,7 +318,7 @@ export function createNasaHeadquartersStorageRoom() {
         width: 2.48,
         height: 3.92,
         hingeSide,
-        open: true,
+        open: false,
         side,
         materials,
       });

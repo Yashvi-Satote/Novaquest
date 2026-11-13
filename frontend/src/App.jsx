@@ -16,6 +16,7 @@ import LegalPage from '../NovaUser/pages/LegalPage';
 import SettingsPage from '../NovaUser/settings/SettingsPage';
 import { GuestOnly } from '../NovaUser/components/RouteGuards';
 import { ArrowLeft, AlertCircle } from 'lucide-react';
+import ApiLoadingIndicator from '../Shared/components/layout/ApiLoadingIndicator.jsx';
 
 const ExplorerPage = lazy(() => import('../NovaBase/pages/ExplorerPage'));
 const HardwareDetailPage = lazy(() => import('../NovaBase/pages/HardwareDetailPage'));
@@ -120,7 +121,8 @@ export default function App() {
       <Route path="/settings" element={<SettingsPage />} />
       <Route path="/spacecraft/:slug" element={<SpacecraftDetailPage />} />
       <Route path="/hardware/:slug" element={<HardwareDetailPage />} />
-      <Route path="*" element={<NotFoundPage />} />
-    </Routes>
+        <Route path="*" element={<NotFoundPage />} />
+      </Routes>
+    </>
   );
 }

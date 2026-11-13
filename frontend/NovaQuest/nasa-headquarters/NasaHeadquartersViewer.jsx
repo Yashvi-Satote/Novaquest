@@ -40,13 +40,16 @@ import { STORAGE_ROOM_COMPONENTS } from './storageRoomComponents';
 const HEADQUARTERS_ROOM_RADIUS = 12.5;
 const PLAYER_COLLISION_RADIUS = 0.34;
 const PLAYER_COLLISION_HEIGHT = 1.82;
+const PLAYER_WALK_SPEED = 4.6;
+const PLAYER_SPRINT_SPEED = 8.4;
+const TRACKPAD_LOOK_SENSITIVITY = 0.0032;
 
 /**
  * NasaHeadquartersViewer
  *
  * Reusable three.js viewport for the NASA Headquarters base, adjoining corridor,
  * and first-person exploration. The wall airlock can be clicked, opened with
- * the D key, or controlled via the imperative handle.
+ * the E key (nearest door), or controlled via the imperative handle.
  *
  * It also runs the Surveyor 5 build mission: parts are collected from the
  * storage room, the central hologram materialises the lander once the manifest
@@ -60,6 +63,7 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer(
     cartIds = [],
     cartLimit = SURVEYOR5_CART_LIMIT,
     hologramConverted = false,
+    missionSolved = false,
     launched = false,
     overlayOpen = false,
     onCollectPart,
@@ -67,18 +71,13 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer(
     onConvertHologram,
     onLaunchMission,
     onOpenTask,
+    onAutoCompleteTask,
   },
   ref,
 ) {
   const mountRef = useRef(null);
   const [ready, setReady] = useState(false);
   const [webglFailed, setWebglFailed] = useState(false);
-  const [doorOpen, setDoorOpen] = useState(false);
-  const [storageDoorOpen, setStorageDoorOpen] = useState(false);
-  const [firingRoomDoorOpen, setFiringRoomDoorOpen] = useState(false);
-  const [firstPersonMode, setFirstPersonMode] = useState(false);
-  const [characterControlMode, setCharacterControlMode] = useState(false);
-  const [pointerLocked, setPointerLocked] = useState(false);
   const [selectedComponent, setSelectedComponent] = useState(null);
   const [partListOpen, setPartListOpen] = useState(false);
   const [assemblyResult, setAssemblyResult] = useState(null);
@@ -94,6 +93,7 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer(
   const cartLimitRef = useRef(cartLimit);
   const manifestIdsRef = useRef(new Set(manifestIds));
   const hologramConvertedRef = useRef(hologramConverted);
+  const missionSolvedRef = useRef(missionSolved);
   const launchedRef = useRef(launched);
   const overlayOpenRef = useRef(overlayOpen);
   const callbacksRef = useRef({});
@@ -128,6 +128,10 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer(
   }, [hologramConverted]);
 
   useEffect(() => {
+    missionSolvedRef.current = missionSolved;
+  }, [missionSolved]);
+
+  useEffect(() => {
     launchedRef.current = launched;
   }, [launched]);
 
@@ -138,8 +142,9 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer(
       onConvertHologram,
       onLaunchMission,
       onOpenTask,
+      onAutoCompleteTask,
     };
-  }, [onCollectPart, onDepositCart, onConvertHologram, onLaunchMission, onOpenTask]);
+  }, [onCollectPart, onDepositCart, onConvertHologram, onLaunchMission, onOpenTask, onAutoCompleteTask]);
 
   useEffect(() => {
     overlayOpenRef.current = overlayOpen;
@@ -159,11 +164,17 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer(
     [],
   );
 
+  const handleAutoComplete = useCallback(() => {
+    onAutoCompleteTask?.();
+    showMissionToast('Surveyor 5 manifest auto-completed! 100% parts verified.', 'success');
+  }, [onAutoCompleteTask, showMissionToast]);
+
   useImperativeHandle(ref, () => ({
     toggleDoor: () => doorHolderRef.current && doorHolderRef.current.toggle(),
     openDoor: () => doorHolderRef.current && doorHolderRef.current.setOpen(true),
     closeDoor: () => doorHolderRef.current && doorHolderRef.current.setOpen(false),
     toggleFirstPerson: () => doorHolderRef.current && doorHolderRef.current.toggleFirstPerson(),
+    autoCompleteSurveyor5: handleAutoComplete,
   }));
 
   useEffect(() => {
@@ -234,7 +245,6 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer(
     // --- Blast door control -------------------------------------------------
     const setDoorState = (open) => {
       headquarters.door.setOpen(open);
-      setDoorOpen(open);
     };
     const doorControl = {
       toggle: () => setDoorState(!headquarters.door.isOpen()),
@@ -242,7 +252,6 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer(
     };
     const setStorageDoorState = (open) => {
       headquarters.corridor.storageRoom.entryDoor.setOpen(open);
-      setStorageDoorOpen(open);
     };
     const storageDoorControl = {
       toggle: () =>
@@ -250,7 +259,6 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer(
     };
     const setFiringRoomDoorState = (open) => {
       headquarters.corridor.firingRoom.door.setOpen(open);
-      setFiringRoomDoorOpen(open);
     };
     const firingRoomDoorControl = {
       toggle: () =>
@@ -267,7 +275,8 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer(
     controls.maxPolarAngle = Math.PI - 0.02;
     controls.target.set(0, 2.9, 0);
     controls.rotateSpeed = 0.55;
-    controls.zoomSpeed = 0.65;
+    // Two-finger trackpad swipes drive the view instead of zooming.
+    controls.enableZoom = false;
 
     const pointerControls = new PointerLockControls(camera, renderer.domElement);
     pointerControls.pointerSpeed = 0.75;
@@ -282,9 +291,9 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer(
     let characterControlActive = false;
     let lookPointer = null;
 
-    const enterFirstPerson = () => {
+    const enterFirstPerson = (lockPointer = false) => {
       if (firstPersonActive) {
-        if (!pointerControls.isLocked) pointerControls.lock();
+        if (lockPointer && !pointerControls.isLocked) pointerControls.lock();
         return;
       }
 
@@ -298,8 +307,8 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer(
       camera.rotation.order = 'YXZ';
       camera.rotation.set(0, airlockAngle - Math.PI, 0);
       movementKeys.clear();
-      setFirstPersonMode(true);
-      pointerControls.lock();
+      // Keep the pointer unlocked so one-finger trackpad input always drives
+      // the cursor. Mouse-look locking stays available from the HUD button.
     };
 
     const exitFirstPerson = () => {
@@ -312,8 +321,6 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer(
       controls.target.copy(orbitTarget);
       controls.update();
       headquarters.character.visible = true;
-      setFirstPersonMode(false);
-      setPointerLocked(false);
     };
 
     const enterCharacterControl = () => {
@@ -327,7 +334,6 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer(
       camera.position.copy(controls.target).add(characterCameraOffset);
       controls.update();
       movementKeys.clear();
-      setCharacterControlMode(true);
     };
 
     const exitCharacterControl = () => {
@@ -337,7 +343,6 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer(
       camera.position.copy(orbitPosition);
       controls.target.copy(orbitTarget);
       controls.update();
-      setCharacterControlMode(false);
     };
 
     const toggleCharacterControl = () => {
@@ -345,31 +350,77 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer(
       else enterCharacterControl();
     };
 
-    const handlePointerLock = (event) => setPointerLocked(event.type === 'lock');
-    pointerControls.addEventListener('lock', handlePointerLock);
-    pointerControls.addEventListener('unlock', handlePointerLock);
+    // One key controls every door. The nearest door to the player (or the
+    // orbit target when not exploring) is toggled.
+    const nearestDoorCandidates = [
+      { name: 'airlock', control: doorControl, target: headquarters.doorHitTarget },
+      {
+        name: 'parts room',
+        control: storageDoorControl,
+        target: headquarters.corridor.storageRoom.entryDoor.hitTarget,
+      },
+      {
+        name: 'firing room',
+        control: firingRoomDoorControl,
+        target: headquarters.corridor.firingRoom.door.hitTarget,
+      },
+    ];
+    const toggleNearestDoor = () => {
+      const userPosition = new THREE.Vector3();
+      if (characterControlActive) {
+        headquarters.character.getWorldPosition(userPosition);
+      } else {
+        userPosition.copy(camera.position);
+      }
+
+      scene.updateMatrixWorld(true);
+      const targetPosition = new THREE.Vector3();
+      let nearest = null;
+      let nearestDistance = Infinity;
+      nearestDoorCandidates.forEach((candidate) => {
+        candidate.target.getWorldPosition(targetPosition);
+        const distance = Math.hypot(
+          targetPosition.x - userPosition.x,
+          targetPosition.z - userPosition.z,
+        );
+        if (distance < nearestDistance) {
+          nearestDistance = distance;
+          nearest = candidate;
+        }
+      });
+
+      if (nearest) nearest.control.toggle();
+    };
 
     const handleKeyDown = (event) => {
       if (overlayOpenRef.current || localOverlayOpenRef.current) return;
       if (selectedComponentRef.current) return;
       const key = event.key.toLowerCase();
+      if (!event.repeat && key === 'c') {
+        event.preventDefault();
+        toggleCharacterControl();
+        return;
+      }
+      if (!event.repeat && key === 'v') {
+        event.preventDefault();
+        if (firstPersonActive) {
+          exitFirstPerson();
+        } else {
+          if (characterControlActive) exitCharacterControl();
+          enterFirstPerson();
+        }
+        return;
+      }
       if (firstPersonActive || characterControlActive) {
         if (['w', 'a', 's', 'd', 'arrowup', 'arrowleft', 'arrowdown', 'arrowright', 'shift'].includes(key)) {
           event.preventDefault();
           movementKeys.add(key);
-        } else if (key === 'f') {
+        } else if (key === 'e') {
           event.preventDefault();
-          storageDoorControl.toggle();
-        } else if (key === 'g') {
-          event.preventDefault();
-          firingRoomDoorControl.toggle();
+          if (!event.repeat) toggleNearestDoor();
         }
-      } else if (key === 'f') {
-        storageDoorControl.toggle();
-      } else if (key === 'd') {
-        doorControl.toggle();
-      } else if (key === 'g') {
-        firingRoomDoorControl.toggle();
+      } else if (key === 'e') {
+        if (!event.repeat) toggleNearestDoor();
       }
     };
     const handleKeyUp = (event) => movementKeys.delete(event.key.toLowerCase());
@@ -411,7 +462,8 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer(
         else enterFirstPerson();
       },
       toggleCharacterControl,
-      resumeFirstPerson: enterFirstPerson,
+      toggleNearestDoor,
+      resumeFirstPerson: () => enterFirstPerson(true),
       toggleStorageDoor: storageDoorControl.toggle,
       toggleFiringRoomDoor: firingRoomDoorControl.toggle,
       pauseForOverlay: () => {
@@ -515,6 +567,12 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer(
             'Launch console locked — materialise Surveyor 5 in mission control first.',
             'warn',
           );
+        } else if (!missionSolvedRef.current) {
+          showMissionToast(
+            'Mark the mission solved from the task page to begin the launch phase.',
+            'warn',
+          );
+          callbacksRef.current.onOpenTask?.();
         } else if (launchedRef.current) {
           showMissionToast('Surveyor 5 has already left the pad.', 'info');
         } else {
@@ -541,10 +599,53 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer(
       }
       renderer.domElement.style.cursor = getInteractionAtPointer(event) ? 'pointer' : '';
     };
+
+    // A two-finger trackpad swipe arrives as a wheel event. Use it to look
+    // around in first person and to orbit around the target in every other
+    // view. One-finger trackpad input is left untouched so the cursor works.
+    const trackpadOffset = new THREE.Vector3();
+    const trackpadSpherical = new THREE.Spherical();
+    const handleWheel = (event) => {
+      if (overlayOpenRef.current || localOverlayOpenRef.current || selectedComponentRef.current) return;
+      const deltaMultiplier =
+        event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? 100 : 1;
+      const deltaX = event.deltaX * deltaMultiplier;
+      const deltaY = event.deltaY * deltaMultiplier;
+      if (deltaX === 0 && deltaY === 0) return;
+
+      event.preventDefault();
+      controls.autoRotate = false;
+
+      if (firstPersonActive) {
+        camera.rotation.order = 'YXZ';
+        camera.rotation.y += deltaX * TRACKPAD_LOOK_SENSITIVITY;
+        camera.rotation.x = THREE.MathUtils.clamp(
+          camera.rotation.x + deltaY * TRACKPAD_LOOK_SENSITIVITY,
+          -Math.PI / 2 + 0.02,
+          Math.PI / 2 - 0.02,
+        );
+        return;
+      }
+
+      trackpadOffset.copy(camera.position).sub(controls.target);
+      trackpadSpherical.setFromVector3(trackpadOffset);
+      trackpadSpherical.theta += deltaX * TRACKPAD_LOOK_SENSITIVITY;
+      trackpadSpherical.phi = THREE.MathUtils.clamp(
+        trackpadSpherical.phi + deltaY * TRACKPAD_LOOK_SENSITIVITY,
+        0.02,
+        Math.PI - 0.02,
+      );
+      trackpadOffset.setFromSpherical(trackpadSpherical);
+      camera.position.copy(controls.target).add(trackpadOffset);
+      camera.lookAt(controls.target);
+      controls.update();
+    };
+
     renderer.domElement.addEventListener('pointerdown', handlePointerDown);
     renderer.domElement.addEventListener('pointerup', handlePointerUp);
     renderer.domElement.addEventListener('pointercancel', handlePointerCancel);
     renderer.domElement.addEventListener('pointermove', handlePointerMove);
+    renderer.domElement.addEventListener('wheel', handleWheel, { passive: false });
 
     const moveForward = new THREE.Vector3();
     const moveRight = new THREE.Vector3();
@@ -569,7 +670,7 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer(
       moveForward.y = 0;
       moveForward.normalize();
       moveRight.set(-moveForward.z, 0, moveForward.x);
-      const speed = movementKeys.has('shift') ? 5 : 2.8;
+      const speed = movementKeys.has('shift') ? PLAYER_SPRINT_SPEED : PLAYER_WALK_SPEED;
       const nextPosition = previousPosition.clone()
         .addScaledVector(moveForward, (forwardInput / inputLength) * speed * delta)
         .addScaledVector(moveRight, (rightInput / inputLength) * speed * delta);
@@ -819,7 +920,7 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer(
         const inputLength = Math.hypot(forwardInput, rightInput);
 
         if (inputLength > 0) {
-          const speed = movementKeys.has('shift') ? 5 : 2.8;
+          const speed = movementKeys.has('shift') ? PLAYER_SPRINT_SPEED : PLAYER_WALK_SPEED;
           const previousPosition = camera.position.clone();
           camera.getWorldDirection(moveForward);
           moveForward.y = 0;
@@ -1101,8 +1202,6 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer(
       document.removeEventListener('visibilitychange', handleVisibility);
       controls.removeEventListener('start', stopAutoRotate);
       controls.dispose();
-      pointerControls.removeEventListener('lock', handlePointerLock);
-      pointerControls.removeEventListener('unlock', handlePointerLock);
       pointerControls.unlock();
       pointerControls.dispose();
       window.removeEventListener('keydown', handleEscapeCapture, true);
@@ -1112,6 +1211,7 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer(
       renderer.domElement.removeEventListener('pointerup', handlePointerUp);
       renderer.domElement.removeEventListener('pointercancel', handlePointerCancel);
       renderer.domElement.removeEventListener('pointermove', handlePointerMove);
+      renderer.domElement.removeEventListener('wheel', handleWheel);
 
       scene.remove(headquarters.root);
       headquarters.dispose();
@@ -1163,8 +1263,10 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer(
     (installedCount / Math.max(1, SURVEYOR5_MANIFEST_TOTAL)) * 100;
   const missionStageLabel = launched
     ? 'Mission complete'
-    : hologramConverted
-      ? 'Next: firing room'
+    : missionSolved
+      ? 'Launch phase active'
+      : hologramConverted
+        ? 'Next: solve mission'
       : allPartsInstalled
         ? 'Next: materialise hologram'
         : cartIsFull
@@ -1393,8 +1495,18 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer(
                 Open task page
               </button>
             </div>
+            {!allPartsInstalled && (
+              <button
+                type="button"
+                onClick={handleAutoComplete}
+                className="group mt-2 flex w-full items-center justify-center gap-1.5 rounded-md border border-[#5ee7ff]/70 bg-gradient-to-r from-[#0a3560] via-[#0f4f93] to-[#0a3560] px-2 py-1.5 text-[7.5px] font-bold uppercase tracking-[0.18em] text-[#e0f7ff] shadow-[0_0_16px_rgba(94,231,255,0.25)] transition-all hover:border-[#8ef4ff] hover:text-white hover:shadow-[0_0_24px_rgba(94,231,255,0.45)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5ee7ff]"
+              >
+                <CheckCircle2 className="h-3 w-3 text-[#5ee7ff] transition-transform group-hover:scale-110" aria-hidden="true" />
+                <span>Auto-Complete Task</span>
+              </button>
+            )}
           </div>
-          <div className="absolute left-4 top-24 z-30 flex gap-2 sm:hidden">
+          <div className="absolute left-4 top-24 z-30 flex flex-wrap gap-2 sm:hidden">
             <button
               type="button"
               onClick={() => setPartListOpen(true)}
@@ -1409,66 +1521,16 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer(
             >
               Task
             </button>
-          </div>
-
-          <div className="absolute right-4 top-24 z-30 flex flex-col items-end gap-2">
-            <button
-              type="button"
-              onClick={() => doorHolderRef.current && doorHolderRef.current.toggle()}
-              aria-pressed={doorOpen}
-              className="rounded-lg border border-[#7fe3ff]/35 bg-[#071426]/85 px-3 py-2 text-[9px] font-semibold uppercase tracking-[0.18em] text-[#9cd8f2] shadow-[0_0_20px_rgba(61,107,255,0.18)] backdrop-blur-md transition-colors hover:border-[#7fe3ff]/70 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7fe3ff]"
-            >
-              {doorOpen
-                ? `Close airlock · Click${firstPersonMode || characterControlMode ? '' : ' / D'}`
-                : `Open airlock · Click${firstPersonMode || characterControlMode ? '' : ' / D'}`}
-            </button>
-            <button
-              type="button"
-              onClick={() => doorHolderRef.current && doorHolderRef.current.toggleStorageDoor()}
-              aria-pressed={storageDoorOpen}
-              className="rounded-lg border border-[#7fe3ff]/35 bg-[#071426]/85 px-3 py-2 text-[9px] font-semibold uppercase tracking-[0.18em] text-[#9cd8f2] shadow-[0_0_20px_rgba(61,107,255,0.18)] backdrop-blur-md transition-colors hover:border-[#7fe3ff]/70 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7fe3ff]"
-            >
-              {storageDoorOpen ? 'Close parts room · Click / F' : 'Open parts room · Click / F'}
-            </button>
-            <button
-              type="button"
-              onClick={() => doorHolderRef.current && doorHolderRef.current.toggleFiringRoomDoor()}
-              aria-pressed={firingRoomDoorOpen}
-              className="rounded-lg border border-[#7fe3ff]/35 bg-[#071426]/85 px-3 py-2 text-[9px] font-semibold uppercase tracking-[0.18em] text-[#9cd8f2] shadow-[0_0_20px_rgba(61,107,255,0.18)] backdrop-blur-md transition-colors hover:border-[#7fe3ff]/70 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7fe3ff]"
-            >
-              {firingRoomDoorOpen ? 'Close firing room · Click / G' : 'Open firing room · Click / G'}
-            </button>
-            <button
-              type="button"
-              onClick={() => doorHolderRef.current && doorHolderRef.current.toggleCharacterControl()}
-              aria-pressed={characterControlMode}
-              className="rounded-lg border border-[#7fe3ff]/35 bg-[#071426]/85 px-3 py-2 text-[9px] font-semibold uppercase tracking-[0.18em] text-[#9cd8f2] shadow-[0_0_20px_rgba(61,107,255,0.14)] backdrop-blur-md transition-colors hover:border-[#7fe3ff]/70 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7fe3ff]"
-            >
-              {characterControlMode ? 'Exit character controls' : 'Control astronaut'}
-            </button>
-            <button
-              type="button"
-              onClick={() => doorHolderRef.current && doorHolderRef.current.toggleFirstPerson()}
-              aria-pressed={firstPersonMode}
-              className="rounded-lg border border-white/20 bg-[#071426]/85 px-3 py-2 text-[9px] font-semibold uppercase tracking-[0.18em] text-white/85 shadow-[0_0_20px_rgba(61,107,255,0.14)] backdrop-blur-md transition-colors hover:border-[#7fe3ff]/65 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7fe3ff]"
-            >
-              {firstPersonMode ? 'Exit first person' : 'Enter first person'}
-            </button>
-            {firstPersonMode && !pointerLocked && (
+            {!allPartsInstalled && (
               <button
                 type="button"
-                onClick={() => doorHolderRef.current && doorHolderRef.current.resumeFirstPerson()}
-                className="rounded-lg border border-[#7fe3ff]/35 bg-[#071426]/85 px-3 py-2 text-[9px] font-semibold uppercase tracking-[0.18em] text-[#9cd8f2] backdrop-blur-md transition-colors hover:border-[#7fe3ff]/70 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7fe3ff]"
+                onClick={handleAutoComplete}
+                className="rounded-lg border border-[#5ee7ff]/70 bg-gradient-to-r from-[#0a3560] to-[#0f4f93] px-3 py-2 text-[9px] font-bold uppercase tracking-[0.18em] text-[#e0f7ff] backdrop-blur-md transition-all hover:border-[#8ef4ff] hover:text-white"
               >
-                Resume controls
+                Auto-Complete
               </button>
             )}
           </div>
-          {(firstPersonMode || characterControlMode) && (
-            <div className="pointer-events-none absolute bottom-6 left-1/2 z-20 -translate-x-1/2 rounded-full border border-[#7fe3ff]/25 bg-[#071426]/80 px-4 py-2 text-center text-[8px] font-semibold uppercase tracking-[0.18em] text-[#b8d8e8] backdrop-blur-md sm:text-[9px]">
-              WASD move · {characterControlMode ? 'Drag to orbit' : '360° mouse look'} · Shift sprint · Click airlock · F parts room · G firing room · Esc exit
-            </div>
-          )}
 
           {missionToast && (
             <div
