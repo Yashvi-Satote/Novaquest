@@ -657,7 +657,81 @@ export default function Level2MessageOfEarthPage() {
     underFillLight.position.set(0, -10, 4);
     scene.add(underFillLight);
 
-    // Load Voyager 1 3D Model at Origin (0, 0, 0)
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.target.set(0, 0, 0);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.06;
+    controls.enablePan = false;
+    controls.minDistance = 2.4;
+    controls.maxDistance = 18;
+    controls.autoRotate = true;
+    controls.autoRotateSpeed = 0.65;
+    controls.update();
+    controlsRef.current = controls;
+
+    const stopAutoRotate = () => {
+      controls.autoRotate = false;
+    };
+    controls.addEventListener('start', stopAutoRotate);
+
+    // NASA Headquarters-style laptop touchpad controls (2-finger swipe & pinch-zoom)
+    const TRACKPAD_LOOK_SENSITIVITY = 0.0032;
+    const trackpadOffset = new THREE.Vector3();
+    const trackpadSpherical = new THREE.Spherical();
+
+    const handleWheel = (event) => {
+      const deltaMultiplier =
+        event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? 100 : 1;
+      const deltaX = event.deltaX * deltaMultiplier;
+      const deltaY = event.deltaY * deltaMultiplier;
+      if (deltaX === 0 && deltaY === 0) return;
+
+      event.preventDefault();
+      controls.autoRotate = false;
+
+      if (event.ctrlKey) {
+        const factor = 1 + deltaY * 0.003;
+        camera.position.sub(controls.target).multiplyScalar(factor).add(controls.target);
+        controls.update();
+        return;
+      }
+
+      trackpadOffset.copy(camera.position).sub(controls.target);
+      trackpadSpherical.setFromVector3(trackpadOffset);
+      trackpadSpherical.theta += deltaX * TRACKPAD_LOOK_SENSITIVITY;
+      trackpadSpherical.phi = THREE.MathUtils.clamp(
+        trackpadSpherical.phi + deltaY * TRACKPAD_LOOK_SENSITIVITY,
+        0.02,
+        Math.PI - 0.02,
+      );
+      trackpadOffset.setFromSpherical(trackpadSpherical);
+      camera.position.copy(controls.target).add(trackpadOffset);
+      camera.lookAt(controls.target);
+      controls.update();
+    };
+    renderer.domElement.addEventListener('wheel', handleWheel, { passive: false });
+
+    // NASA Headquarters-style WASD + Arrow Keys orbit controls
+    const handleKeyDown = (event) => {
+      const key = event.key.toLowerCase();
+      if (['w', 'a', 's', 'd', 'arrowup', 'arrowleft', 'arrowdown', 'arrowright'].includes(key)) {
+        event.preventDefault();
+        controls.autoRotate = false;
+        const step = 0.06;
+        trackpadOffset.copy(camera.position).sub(controls.target);
+        trackpadSpherical.setFromVector3(trackpadOffset);
+        if (key === 'a' || key === 'arrowleft') trackpadSpherical.theta -= step;
+        if (key === 'd' || key === 'arrowright') trackpadSpherical.theta += step;
+        if (key === 'w' || key === 'arrowup') trackpadSpherical.phi = Math.max(0.04, trackpadSpherical.phi - step);
+        if (key === 's' || key === 'arrowdown') trackpadSpherical.phi = Math.min(Math.PI - 0.04, trackpadSpherical.phi + step);
+        trackpadOffset.setFromSpherical(trackpadSpherical);
+        camera.position.copy(controls.target).add(trackpadOffset);
+        camera.lookAt(controls.target);
+        controls.update();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+
     const dracoLoader = new DRACOLoader();
     dracoLoader.setDecoderPath(`${import.meta.env.BASE_URL}draco/`);
 
@@ -954,12 +1028,8 @@ export default function Level2MessageOfEarthPage() {
       disposed = true;
       window.removeEventListener('resize', handleResize);
       window.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('keyup', handleKeyUp);
-      window.removeEventListener('pointerup', handleCanvasPointerUp);
-      if (renderer.domElement) {
-        renderer.domElement.removeEventListener('pointerdown', handleCanvasPointerDown);
-        renderer.domElement.removeEventListener('pointermove', handlePointerMove);
-      }
+      renderer.domElement.removeEventListener('wheel', handleWheel);
+      controls.removeEventListener('start', stopAutoRotate);
       if (frameId !== null) cancelAnimationFrame(frameId);
       dracoLoader.dispose();
       disposeObject3D(starfield);

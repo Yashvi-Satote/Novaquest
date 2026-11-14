@@ -16,6 +16,7 @@ const FiringRoomScreen = forwardRef(function FiringRoomScreen(
     onVideoTextureReady,
     onSegmentEnd,
     onEmergencyAtHeliumT,
+    muted = true,
   },
   ref,
 ) {
@@ -43,16 +44,31 @@ const FiringRoomScreen = forwardRef(function FiringRoomScreen(
     playSegment,
     pauseAt,
     resume,
+    setMuted,
   } = useLaunchVideo({
     videoRef,
     src: LAUNCH_VIDEO.src,
     onSegmentEnd: handleSegmentFinished,
+    muted: true,
+    stopBeforeEndSeconds: 3,
   });
+
+  // Ensure video element audio is strictly muted upon mounting in firing room
+  useEffect(() => {
+    const video = videoRef.current;
+    if (video) {
+      video.muted = true;
+      video.volume = 0;
+    }
+  }, []);
 
   // Create VideoTexture when video element is ready
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return undefined;
+
+    video.muted = true;
+    video.volume = 0;
 
     const texture = new THREE.VideoTexture(video);
     texture.colorSpace = THREE.SRGBColorSpace;
@@ -76,9 +92,30 @@ const FiringRoomScreen = forwardRef(function FiringRoomScreen(
 
   // Imperative API for parent control
   useImperativeHandle(ref, () => ({
-    playSegment: (partName) => playSegment(partName),
+    playSegment: (partName) => {
+      if (videoRef.current) {
+        videoRef.current.muted = true;
+        videoRef.current.volume = 0;
+      }
+      return playSegment(partName);
+    },
     pauseAt: (time) => pauseAt(time),
-    resume: (targetEnd) => resume(targetEnd),
+    resume: (targetEnd) => {
+      if (videoRef.current) {
+        videoRef.current.muted = true;
+        videoRef.current.volume = 0;
+      }
+      const dur = videoRef.current?.duration || 105.72;
+      const earlyStop = typeof targetEnd === 'number' ? targetEnd : Math.max(0, dur - 3);
+      return resume(earlyStop);
+    },
+    mute: () => {
+      if (videoRef.current) {
+        videoRef.current.muted = true;
+        videoRef.current.volume = 0;
+      }
+      setMuted(true);
+    },
     getVideoElement: () => videoRef.current,
     getVideoTexture: () => textureRef.current,
     currentTime,
@@ -93,7 +130,7 @@ const FiringRoomScreen = forwardRef(function FiringRoomScreen(
         ref={videoRef}
         src={LAUNCH_VIDEO.src}
         playsInline
-        muted={false}
+        muted={true}
         preload="auto"
         crossOrigin="anonymous"
         style={{
