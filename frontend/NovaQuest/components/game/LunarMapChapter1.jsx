@@ -141,7 +141,7 @@ export const JOURNEY_STAGES = [
   }
 ];
 
-export default function LunarMapChapter1({ mcGender = 'male', onComplete, onReturnMenu }) {
+export default function LunarMapChapter1({ mcGender = 'male', onComplete, onReturnMenu, retrievalRequestToken = 0 }) {
   const mountRef = useRef(null);
   const nearInteractableRef = useRef(null);
   const navigate = useNavigate();
@@ -166,6 +166,9 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
   const isNearSurveyorRef = useRef(false);
   const [isRetrieving, setIsRetrieving] = useState(false);
   const isRetrievingRef = useRef(false);
+  const [showRetrievalProgress, setShowRetrievalProgress] = useState(false);
+  const [retrievalProgress, setRetrievalProgress] = useState(0);
+  const [retrievalPhaseText, setRetrievalPhaseText] = useState('LOCKING RECOVERY CLAMP ONTO SURVEYOR 5...');
   const triggerRetrievalRef = useRef(null);
 
   // --- Sci-Fi Guidance & Interaction System State ---
@@ -226,6 +229,14 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
     isSurveyorCollectedRef.current = isSurveyorCollected;
   }, [isSurveyorCollected]);
 
+  useEffect(() => {
+    isRetrievingRef.current = isRetrieving;
+  }, [isRetrieving]);
+
+  // HQ always hands control back to the surface by opening the soil analysis
+  // dossier. The actual teleport to Surveyor 5 now happens only after the
+  // player presses "Retrieve Surveyor 5", so they materialise on the Moon
+  // right next to the lander instead of the default landing zone.
   const handleSoilAnalysisFromHq = () => {
     isHqOpenRef.current = false;
     setIsHqOpen(false);
@@ -234,11 +245,8 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
     setHasReturnedFromHq(true);
     hasReturnedFromHqRef.current = true;
 
-    // Teleport player directly into close radius to Surveyor 5 (Surveyor 5 is at 0, 0)
-    // Position (0, 3.8), looking at (0, 0) with yaw = 0, pitch = -0.06
-    if (teleportPlayerRef.current) {
-      teleportPlayerRef.current(0, 3.8, 0);
-    }
+    setSoilAnalysisMode('scanning');
+    setSoilAnalysisModalOpen(true);
     audio.playSurveyorScannerBeep?.();
     setTimeout(() => {
       audio.playEquipmentFeedback?.();
@@ -301,6 +309,87 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
   };
   collectSurveyorRef.current = handleCollectSurveyor;
 
+  // -------------------------------------------------------------
+  // RETRIEVE SURVEYOR 5 — return to the Moon next to the lander and
+  // run the in-world retrieval progress sequence.
+  // -------------------------------------------------------------
+  const handleStartSurveyorRetrieval = () => {
+    if (isSurveyorCollectedRef.current || isRetrievingRef.current) return;
+
+    audio.playClick?.();
+    setSoilAnalysisModalOpen(false);
+    setIsSoilAnalysisReady(false);
+    isSoilAnalysisReadyRef.current = false;
+    setHasReturnedFromHq(true);
+    hasReturnedFromHqRef.current = true;
+
+    // Drop the player back onto the lunar surface inside the retrieval ring,
+    // facing Surveyor 5 (the lander sits at the world origin).
+    if (teleportPlayerRef.current) {
+      teleportPlayerRef.current(0, 4.6, 0);
+    }
+
+    setRetrievalProgress(0);
+    setRetrievalPhaseText('LOCKING RECOVERY CLAMP ONTO SURVEYOR 5...');
+    setShowRetrievalProgress(true);
+    setIsRetrieving(true);
+    isRetrievingRef.current = true;
+
+    audio.playSurveyorScannerBeep?.();
+    setTimeout(() => audio.playEquipmentFeedback?.(), 280);
+  };
+
+  // Drive the "Retrieving Surveyor 5" percentage bar on the lunar map.
+  useEffect(() => {
+    if (!isRetrieving) return undefined;
+
+    const interval = setInterval(() => {
+      setRetrievalProgress((prev) => {
+        const next = Math.min(100, prev + Math.floor(Math.random() * 3) + 2);
+        if (next < 30) {
+          setRetrievalPhaseText('LOCKING RECOVERY CLAMP ONTO SURVEYOR 5...');
+        } else if (next < 60) {
+          setRetrievalPhaseText('SECURING LANDER LEGS & ALPHA-SCATTERING INSTRUMENT...');
+        } else if (next < 85) {
+          setRetrievalPhaseText('STOWING SURVEYOR 5 IN THE SPACECRAFT CARGO BAY...');
+        } else if (next < 100) {
+          setRetrievalPhaseText('CARGO SEAL ENGAGED · FINALISING RETRIEVAL...');
+        } else {
+          setRetrievalPhaseText('RETRIEVAL COMPLETE · SURVEYOR 5 COLLECTED');
+        }
+        return next;
+      });
+    }, 90);
+
+    return () => clearInterval(interval);
+  }, [isRetrieving]);
+
+  // Once the bar is full, collect the lander and present the Level 1 page.
+  useEffect(() => {
+    if (!isRetrieving || retrievalProgress < 100) return undefined;
+
+    const timeout = setTimeout(() => {
+      setShowRetrievalProgress(false);
+      setIsRetrieving(false);
+      isRetrievingRef.current = false;
+      handleCollectSurveyor();
+    }, 700);
+
+    return () => clearTimeout(timeout);
+  }, [isRetrieving, retrievalProgress]);
+
+  // External retrieval requests (e.g. the soil analysis report opened from the
+  // headquarters overlay) reuse this exact teleport + progress sequence.
+  useEffect(() => {
+    if (!retrievalRequestToken) return undefined;
+
+    const timeout = setTimeout(() => {
+      handleStartSurveyorRetrieval();
+    }, 250);
+
+    return () => clearTimeout(timeout);
+  }, [retrievalRequestToken]);
+
   const handleNextLevel = () => {
     audio.playClick?.();
     // Unlock Level 2: Voyager 1 in ALL_MISSIONS
@@ -326,6 +415,14 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
     hasReturnedFromHqRef.current = false;
     setIsSoilAnalysisReady(false);
     isSoilAnalysisReadyRef.current = false;
+
+    // Reset the retrieval bar so the level can be played again from scratch.
+    setShowRetrievalProgress(false);
+    setIsRetrieving(false);
+    isRetrievingRef.current = false;
+    setRetrievalProgress(0);
+    setRetrievalPhaseText('LOCKING RECOVERY CLAMP ONTO SURVEYOR 5...');
+    setShowSecuredAnimation(false);
 
     // Make Surveyor 5 3D model visible again
     if (surveyorGroupRef.current) {
@@ -4258,7 +4355,7 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
     let lastStepTime = 0;
 
     const onKeyDown = (e) => {
-      if (isHqOpenRef.current) return;
+      if (isHqOpenRef.current || isRetrievingRef.current) return;
       // Do not trigger game controls when an input or editable element is focused
       if (
         ['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName) ||
@@ -4447,7 +4544,7 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
       if (keys.a) { moveX -= rightX; moveZ -= rightZ; }
       if (keys.d) { moveX += rightX; moveZ += rightZ; }
 
-      const isMoving = moveX !== 0 || moveZ !== 0;
+      const isMoving = !isRetrievingRef.current && (moveX !== 0 || moveZ !== 0);
 
       if (isMoving) {
         const len = Math.hypot(moveX, moveZ);
@@ -5166,11 +5263,11 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="relative flex items-center justify-center">
             <div className={`transition-all duration-200 rounded-full border ${
-              nearSurveyor || nearInteractable
+              (nearSurveyor || nearInteractable) && !isRetrieving
                 ? 'w-10 h-10 border-cyan-400 bg-cyan-400/20 scale-125 animate-pulse'
                 : 'w-2 h-2 border-cyan-400/80 bg-cyan-400/40'
             }`} />
-            {(nearSurveyor || nearInteractable) && (
+            {(nearSurveyor || nearInteractable) && !isRetrieving && (
               <div className="absolute -top-6 text-[10px] text-cyan-300 font-bold tracking-widest uppercase bg-black/80 px-2 py-0.5 rounded border border-cyan-400/40">
                 {nearSurveyor ? 'PRESS [E] RETRIEVE SURVEYOR 5' : 'INTERACT'}
               </div>
@@ -5479,6 +5576,66 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
         </div>
       )}
 
+      {/* SURVEYOR 5 RETRIEVAL PROGRESS OVERLAY (IN-WORLD RECOVERY) */}
+      {showRetrievalProgress && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="retrieval-progress-title"
+          className="fixed inset-x-0 bottom-6 z-[350] flex justify-center p-4 pointer-events-none font-mono select-none"
+        >
+          <div className="relative w-full max-w-md rounded-2xl border-2 border-cyan-400/70 bg-gradient-to-b from-[#061b2e]/95 via-[#030f1c]/95 to-[#010810]/95 p-5 sm:p-6 text-center shadow-[0_0_80px_rgba(6,182,212,0.55)] backdrop-blur-md space-y-4">
+            <span className="absolute top-2 left-2 w-5 h-5 border-t-2 border-l-2 border-cyan-400/60 pointer-events-none" />
+            <span className="absolute top-2 right-2 w-5 h-5 border-t-2 border-r-2 border-cyan-400/60 pointer-events-none" />
+            <span className="absolute bottom-2 left-2 w-5 h-5 border-b-2 border-l-2 border-cyan-400/60 pointer-events-none" />
+            <span className="absolute bottom-2 right-2 w-5 h-5 border-b-2 border-r-2 border-cyan-400/60 pointer-events-none" />
+
+            <div className="flex items-center justify-center gap-3">
+              <div className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-full border-2 border-cyan-400/80 bg-cyan-950/50 shadow-[0_0_30px_rgba(34,211,238,0.55)]">
+                <ArrowDownToLine className="h-5 w-5 text-cyan-300 animate-bounce" />
+                <span className="absolute inset-0 rounded-full border border-cyan-300/40 animate-ping opacity-60" />
+              </div>
+              <div className="text-left">
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-cyan-950/80 border border-cyan-400/40 text-[9px] font-black tracking-[0.22em] text-cyan-300 uppercase">
+                  <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping" />
+                  <span>Recovery Drone · Magnetic Lock</span>
+                </div>
+                <h2
+                  id="retrieval-progress-title"
+                  className="text-lg sm:text-xl font-black uppercase tracking-[0.16em] text-white drop-shadow-[0_0_16px_rgba(34,211,238,0.9)]"
+                >
+                  Retrieving Surveyor 5
+                </h2>
+                <p className="text-[9px] sm:text-[10px] text-cyan-200/80 tracking-widest uppercase">
+                  Mare Tranquillitatis · Lunar Surface
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-[11px] font-bold text-cyan-300 tracking-widest uppercase">
+                <span>Retrieval Progress</span>
+                <span className="text-amber-300 font-mono text-base">{retrievalProgress}%</span>
+              </div>
+              <div className="h-3.5 w-full rounded-full border border-cyan-500/40 bg-slate-950 p-0.5 overflow-hidden">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-cyan-500 via-sky-400 to-amber-300 shadow-[0_0_18px_#22d3ee] transition-all duration-150"
+                  style={{ width: `${retrievalProgress}%` }}
+                />
+              </div>
+              <p className="text-[10px] font-mono text-cyan-300/90 tracking-wider truncate animate-pulse">
+                {retrievalPhaseText}
+              </p>
+            </div>
+
+            <div className="flex items-center justify-center gap-2 text-[9px] font-mono text-slate-400 uppercase tracking-widest border-t border-cyan-500/20 pt-2.5">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span>Lander mounted in cargo bay when the bar completes</span>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ZONE 5 — MISSION ECHO INTERFACE MODAL */}
       <MissionEchoModal
         isOpen={isMissionEchoOpen}
@@ -5574,7 +5731,10 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
         onClose={closeHeadquarters}
         onSoilAnalysis={handleSoilAnalysisFromHq}
         onMissionSuccess={() => {
-          handleCollectSurveyor();
+          // Mission success in HQ only unlocks the surface soil analysis.
+          // The lander itself is collected later, after the retrieval bar.
+          setIsSoilAnalysisReady(true);
+          isSoilAnalysisReadyRef.current = true;
         }}
       />
 
@@ -5583,6 +5743,7 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
         mode={soilAnalysisMode}
         onClose={() => setSoilAnalysisModalOpen(false)}
         onReturnMenu={onReturnMenu}
+        onRetrieveSurveyor={handleStartSurveyorRetrieval}
       />
 
       {/* POPUP MODAL: SURVEYOR 5 SUCCESSFULLY RETRIEVED */}
@@ -5623,18 +5784,23 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
             <div className="space-y-2">
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-cyan-950/80 border border-cyan-400/40 text-[10px] font-black tracking-widest text-cyan-300 uppercase shadow-inner">
                 <CheckCircle2 className="w-3.5 h-3.5 text-cyan-400" />
-                <span>SPACECRAFT RETRIEVAL CONFIRMED</span>
+                <span>LEVEL 1 · MISSION COMPLETE</span>
               </div>
 
               <h2
                 id="retrieval-success-title"
                 className="text-2xl sm:text-3xl font-black uppercase tracking-[0.16em] text-white drop-shadow-[0_0_20px_rgba(34,211,238,0.8)]"
               >
-                Surveyor 5 Successfully Retrieved
+                Level 1 Completed
               </h2>
 
               <p className="text-xs sm:text-sm font-sans text-cyan-100/90 leading-relaxed max-w-md mx-auto">
-                Surveyor 5 has been safely retrieved and secured in your spacecraft. The historic 1967 lunar lander, Alpha-Scattering soil analysis instrument, and archival telemetry have been collected.
+                Surveyor 5 has been retrieved and secured in your spacecraft. The historic 1967 lunar
+                lander, its Alpha-Scattering soil analysis instrument, and the archived telemetry are
+                safely collected.
+              </p>
+              <p className="text-[10px] sm:text-xs font-mono uppercase tracking-[0.18em] text-amber-300">
+                Next Mission · Level 2 — The Last Message: Voyager 1
               </p>
             </div>
 
@@ -5650,7 +5816,11 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
               </div>
               <div className="flex justify-between text-slate-400">
                 <span>STATUS:</span>
-                <span className="text-emerald-400 font-bold">Collected in Spacecraft Cargo Bay</span>
+                <span className="text-emerald-400 font-bold">Collected · Level 1 Complete</span>
+              </div>
+              <div className="flex justify-between text-slate-400">
+                <span>NEXT LEVEL:</span>
+                <span className="text-cyan-300 font-bold">Level 2 — The Last Message (Voyager 1)</span>
               </div>
             </div>
 
@@ -5680,7 +5850,7 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
                 }}
               >
                 <RotateCcw className="w-4 h-4 text-slate-300 group-hover:rotate-180 transition-transform duration-500" />
-                <span>Replay Game</span>
+                <span>Replay</span>
               </button>
             </div>
           </div>

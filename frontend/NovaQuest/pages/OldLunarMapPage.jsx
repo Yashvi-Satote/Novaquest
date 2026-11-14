@@ -67,7 +67,7 @@ class GameErrorBoundary extends Component {
   }
 }
 
-export default function OldLunarMapPage({ onComplete, onReturnMenu } = {}) {
+export default function OldLunarMapPage({ onComplete, onReturnMenu, retrievalRequestToken = 0 } = {}) {
   const navigate = useNavigate();
 
   // Active Save State
@@ -106,6 +106,7 @@ export default function OldLunarMapPage({ onComplete, onReturnMenu } = {}) {
             mcGender={mcGender}
             onComplete={onComplete}
             onReturnMenu={onReturnMenu || (() => navigate('/missions'))}
+            retrievalRequestToken={retrievalRequestToken}
           />
         </GameErrorBoundary>
       </main>
