@@ -21,11 +21,29 @@ export default function FilterBar({
 
   // Identify non-empty filters
   const activeChips = [];
+  const activityLabels = {
+    inactive: 'Inactive',
+    active: 'Active',
+    planned: 'Planned',
+    unknown: 'Other'
+  };
+  if (activeFilters.activity && activeFilters.activity !== 'All') {
+    activeChips.push({
+      key: 'activity',
+      label: `Missions: ${activityLabels[activeFilters.activity] || activeFilters.activity}`
+    });
+  }
+  if (activeFilters.complete) {
+    activeChips.push({ key: 'complete', label: 'Fully documented only' });
+  }
   if (activeFilters.destination && activeFilters.destination !== 'All') {
     activeChips.push({ key: 'destination', label: `Destination: ${activeFilters.destination}` });
   }
   if (activeFilters.mission && activeFilters.mission !== 'All') {
     activeChips.push({ key: 'mission', label: `Mission: ${activeFilters.mission}` });
+  }
+  if (activeFilters.hardware && activeFilters.hardware !== 'All') {
+    activeChips.push({ key: 'hardware', label: `Hardware: ${activeFilters.hardware}` });
   }
   if (activeFilters.status && activeFilters.status !== 'All') {
     activeChips.push({ key: 'status', label: `Status: ${activeFilters.status}` });

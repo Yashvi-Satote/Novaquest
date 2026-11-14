@@ -8,7 +8,7 @@ from threading import Lock
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
-from sqlalchemy import or_, and_, desc, asc, func
+from sqlalchemy import or_, and_, desc, asc, func, inspect
 from sqlalchemy.orm import joinedload, selectinload
 
 # Ensure the backend package root is available when this module is run directly.
@@ -38,7 +38,7 @@ from NovaBase.models import (
     Person,
     SpacecraftPerson
 )
-from NovaBase.completeness import detail_payload, health_payload
+from NovaBase.completeness import detail_payload, health_payload, spacecraft_completeness
 from NovaBase.ingest import load_registry, registry_slugs
 
 # Setup logging
@@ -193,6 +193,22 @@ def bootstrap_database():
         db.close()
 
 
+def ensure_database_ready():
+    """Create the schema when the database file is new, empty or truncated.
+
+    Without this guard a missing ``spacecraft`` table made every data endpoint
+    return HTTP 500 (``sqlite3.OperationalError: no such table``), which the
+    frontend surfaced as a "Connection Alert".
+    """
+    from Shared.database import engine
+
+    try:
+        if inspect(engine).has_table("spacecraft"):
+            return
+        logger.warning("NovaBase schema is missing; running automatic bootstrap...")
+        bootstrap_database()
+    except Exception as exc:
+        logger.error("Automatic database bootstrap failed: %s", exc)
 
 
 @app.route("/api/novabase/health", methods=["GET"])
@@ -267,7 +283,8 @@ def get_filters():
         # Fetch all spacecraft with joined relations
         records = db.query(Spacecraft).options(
             joinedload(Spacecraft.missions),
-            joinedload(Spacecraft.model_3d)
+            joinedload(Spacecraft.model_3d),
+            *completeness_eager_options()
         ).all()
 
         tree = {dest: {"category": dest, "total_count": 0, "missions": {}} for dest in canonical_destinations}
@@ -275,6 +292,7 @@ def get_filters():
         all_object_types = set()
         all_statuses = set()
         all_org_names = set()
+        activity_counts = {key: 0 for key in ACTIVITY_KEYS}
 
         for sc in records:
             dest = sc.destination_category or "Deep Space"
@@ -288,47 +306,81 @@ def get_filters():
             org_name = sc.agency or sc.manufacturer or "NASA"
             all_org_names.add(org_name)
 
+            activity = classify_activity(sc.operational_status)
+            activity_counts[activity] += 1
+            complete = is_spacecraft_complete(sc)
+
             active_mission = sc.primary_mission
-            mission_name = active_mission.name if active_mission else "Independent Exploration"
-            mission_id = active_mission.id if active_mission else None
+            if active_mission:
+                mission_name = active_mission.name
+                mission_id = active_mission.id
+                mission_key = f"mission-{mission_id}"
+                hardware_slug = None
+            else:
+                # No real mission: show the hardware itself instead of a fake
+                # "Independent Exploration" mission title.
+                mission_name = sc.display_name or sc.name
+                mission_id = None
+                mission_key = f"hardware-{sc.id}"
+                hardware_slug = sc.slug
 
             # Mission level
-            if mission_name not in tree[dest]["missions"]:
-                tree[dest]["missions"][mission_name] = {
+            if mission_key not in tree[dest]["missions"]:
+                tree[dest]["missions"][mission_key] = {
                     "id": mission_id,
+                    "key": mission_key,
                     "name": mission_name,
+                    "hardware_slug": hardware_slug,
+                    "is_independent": active_mission is None,
                     "count": 0,
+                    "activity": activity,
+                    "complete": True,
+                    "complete_count": 0,
                     "statuses": {}
                 }
-            tree[dest]["missions"][mission_name]["count"] += 1
+            mission_node = tree[dest]["missions"][mission_key]
+            mission_node["count"] += 1
+            if ACTIVITY_PRECEDENCE.get(activity, 0) > ACTIVITY_PRECEDENCE.get(mission_node["activity"], 0):
+                mission_node["activity"] = activity
+            if complete:
+                mission_node["complete_count"] += 1
+            else:
+                mission_node["complete"] = False
 
             # Status level
             status_group = sc.operational_status
-            if status_group not in tree[dest]["missions"][mission_name]["statuses"]:
-                tree[dest]["missions"][mission_name]["statuses"][status_group] = {
+            if status_group not in tree[dest]["missions"][mission_key]["statuses"]:
+                tree[dest]["missions"][mission_key]["statuses"][status_group] = {
                     "status": status_group,
                     "count": 0,
                     "organizations": {}
                 }
-            tree[dest]["missions"][mission_name]["statuses"][status_group]["count"] += 1
+            tree[dest]["missions"][mission_key]["statuses"][status_group]["count"] += 1
 
             # Organization level
-            if org_name not in tree[dest]["missions"][mission_name]["statuses"][status_group]["organizations"]:
-                tree[dest]["missions"][mission_name]["statuses"][status_group]["organizations"][org_name] = {
+            if org_name not in tree[dest]["missions"][mission_key]["statuses"][status_group]["organizations"]:
+                tree[dest]["missions"][mission_key]["statuses"][status_group]["organizations"][org_name] = {
                     "name": org_name,
                     "count": 0,
                     "hardware": []
                 }
-            tree[dest]["missions"][mission_name]["statuses"][status_group]["organizations"][org_name]["count"] += 1
-            tree[dest]["missions"][mission_name]["statuses"][status_group]["organizations"][org_name]["hardware"].append({
+            tree[dest]["missions"][mission_key]["statuses"][status_group]["organizations"][org_name]["count"] += 1
+            tree[dest]["missions"][mission_key]["statuses"][status_group]["organizations"][org_name]["hardware"].append({
                 "id": sc.id,
                 "name": sc.display_name or sc.name,
                 "slug": sc.slug,
-                "has_model": sc.model_3d is not None
+                "has_model": sc.model_3d is not None,
+                "activity": activity,
+                "complete": complete
             })
 
         hierarchy = []
-        for dest in canonical_destinations:
+        ordered_destinations = [dest for dest in canonical_destinations if dest in tree and tree[dest]["total_count"] > 0]
+        ordered_destinations += sorted(
+            dest for dest in tree
+            if dest not in canonical_destinations and tree[dest]["total_count"] > 0
+        )
+        for dest in ordered_destinations:
             if dest in tree and tree[dest]["total_count"] > 0:
                 cat_data = tree[dest]
                 missions_list = []
@@ -347,8 +399,14 @@ def get_filters():
                         })
                     missions_list.append({
                         "id": m_data["id"],
-                        "name": m_name,
+                        "key": m_data["key"],
+                        "name": m_data["name"],
+                        "hardware_slug": m_data["hardware_slug"],
+                        "is_independent": m_data["is_independent"],
                         "count": m_data["count"],
+                        "activity": m_data["activity"],
+                        "complete": m_data["complete"],
+                        "complete_count": m_data["complete_count"],
                         "statuses": statuses_list
                     })
                 
@@ -364,7 +422,16 @@ def get_filters():
                 "destinations": [h["category"] for h in hierarchy],
                 "statuses": sorted(list(all_statuses)),
                 "object_types": sorted(list(all_object_types)),
-                "organizations": sorted(list(all_org_names))
+                "organizations": sorted(list(all_org_names)),
+                "activities": [
+                    {
+                        "id": key,
+                        "label": ACTIVITY_LABELS[key],
+                        "count": activity_counts[key],
+                    }
+                    for key in ACTIVITY_KEYS
+                    if activity_counts.get(key)
+                ],
             }
         }), 200
 
@@ -373,6 +440,91 @@ def get_filters():
         return jsonify({"error": str(e)}), 500
     finally:
         db.close()
+
+
+# Relationships required by NovaBase.completeness.spacecraft_completeness().
+COMPLETENESS_RELATIONSHIPS = (
+    "content_blocks",
+    "parts",
+    "images",
+    "sources",
+    "timeline",
+    "stakeholder_links",
+    "models",
+    "people_links",
+)
+
+# Status labels are free-form in the imported catalogue, so activity is derived
+# from the label text instead of relying on a single canonical value.
+INACTIVE_STATUS_MARKERS = (
+    "inactive",
+    "completed",
+    "complete",
+    "ended",
+    "failed",
+    "lost contact",
+    "decommissioned",
+    "retired",
+)
+PLANNED_STATUS_MARKERS = ("planned", "scheduled", "future", "in development")
+ACTIVE_STATUS_MARKERS = ("active", "operational")
+
+ACTIVITY_KEYS = ("inactive", "active", "planned", "unknown")
+ACTIVITY_PRECEDENCE = {"inactive": 0, "unknown": 1, "planned": 2, "active": 3}
+ACTIVITY_LABELS = {
+    "inactive": "Inactive Missions",
+    "active": "Active Missions",
+    "planned": "Planned Missions",
+    "unknown": "Other Missions",
+}
+
+
+def completeness_eager_options():
+    """Eager-load every relationship the completeness contract inspects."""
+    return [selectinload(getattr(Spacecraft, name)) for name in COMPLETENESS_RELATIONSHIPS]
+
+
+def is_spacecraft_complete(spacecraft) -> bool:
+    """True when all 10 NovaBase sections are populated for this spacecraft."""
+    sections = spacecraft_completeness(spacecraft)
+    return all(section["populated"] for section in sections.values())
+
+
+def complete_spacecraft_ids(db) -> set[int]:
+    records = db.query(Spacecraft).options(*completeness_eager_options()).all()
+    return {sc.id for sc in records if is_spacecraft_complete(sc)}
+
+
+def classify_activity(status: str) -> str:
+    """Group a free-form operational status into active/inactive/planned/unknown."""
+    text = (status or "").strip().lower()
+    if not text:
+        return "unknown"
+    if any(marker in text for marker in PLANNED_STATUS_MARKERS):
+        return "planned"
+    if any(marker in text for marker in INACTIVE_STATUS_MARKERS):
+        return "inactive"
+    if any(marker in text for marker in ACTIVE_STATUS_MARKERS):
+        return "active"
+    return "unknown"
+
+
+def activity_filter_condition(activity: str):
+    """SQL condition matching the same buckets as classify_activity()."""
+    activity = (activity or "").strip().lower()
+    if activity == "inactive":
+        return or_(*[Spacecraft.operational_status.ilike(f"%{m}%") for m in INACTIVE_STATUS_MARKERS])
+    if activity == "planned":
+        return or_(*[Spacecraft.operational_status.ilike(f"%{m}%") for m in PLANNED_STATUS_MARKERS])
+    if activity == "active":
+        return and_(
+            or_(*[Spacecraft.operational_status.ilike(f"%{m}%") for m in ACTIVE_STATUS_MARKERS]),
+            ~or_(*[Spacecraft.operational_status.ilike(f"%{m}%") for m in INACTIVE_STATUS_MARKERS + PLANNED_STATUS_MARKERS]),
+        )
+    if activity == "unknown":
+        markers = INACTIVE_STATUS_MARKERS + PLANNED_STATUS_MARKERS + ACTIVE_STATUS_MARKERS
+        return ~or_(*[Spacecraft.operational_status.ilike(f"%{m}%") for m in markers])
+    return None
 
 
 def build_spacecraft_query(db, params):
@@ -439,6 +591,14 @@ def build_spacecraft_query(db, params):
             )
         )
 
+    # 3b. Single hardware filter (used by sidebar entries without a real mission)
+    hardware = (params.get("hardware") or "").strip()
+    if hardware and hardware.lower() != "all":
+        if hardware.isdigit():
+            query = query.filter(or_(Spacecraft.id == int(hardware), Spacecraft.slug == hardware.lower()))
+        else:
+            query = query.filter(Spacecraft.slug == hardware.lower())
+
     # 4. Operational status filter
     status = params.get("status", "").strip()
     if status and status.lower() != "all":
@@ -459,7 +619,19 @@ def build_spacecraft_query(db, params):
     if obj_type and obj_type.lower() != "all":
         query = query.filter(Spacecraft.object_type.ilike(obj_type))
 
-    # 7. Sorting
+    # 7. Activity group (active / inactive / planned)
+    activity = (params.get("activity") or "").strip().lower()
+    if activity and activity != "all":
+        condition = activity_filter_condition(activity)
+        if condition is not None:
+            query = query.filter(condition)
+
+    # 8. Fully documented records only (all 10 NovaBase sections populated)
+    complete_raw = (params.get("complete") or "").strip().lower()
+    if complete_raw in {"1", "true", "yes"}:
+        query = query.filter(Spacecraft.id.in_(complete_spacecraft_ids(db)))
+
+    # 9. Sorting
     sort_by = params.get("sort_by", "name_asc")
     if sort_by == "name_asc":
         query = query.order_by(asc(Spacecraft.display_name))
@@ -525,6 +697,16 @@ def get_spacecraft_list():
         return jsonify({
             "error": f"Invalid 'sort_by' parameter. Allowed values: {', '.join(sorted(ALLOWED_SORTS))}"
         }), 400
+
+    raw_activity = (request.args.get("activity") or "").strip().lower()
+    if raw_activity and raw_activity not in {"all", *ACTIVITY_KEYS}:
+        return jsonify({
+            "error": f"Invalid 'activity' parameter. Allowed values: all, {', '.join(ACTIVITY_KEYS)}"
+        }), 400
+
+    raw_complete = (request.args.get("complete") or "").strip().lower()
+    if raw_complete and raw_complete not in {"1", "0", "true", "false", "yes", "no"}:
+        return jsonify({"error": "Query parameter 'complete' must be a boolean."}), 400
 
     db = SessionLocal()
     try:
@@ -1086,11 +1268,18 @@ def get_map_filters():
         db.close()
 
 def run():
+    ensure_database_ready()
     port = int(os.getenv("PORT", 5000))
     debug_raw = os.getenv("FLASK_DEBUG", "0").strip().lower()
     debug = debug_raw in {"1", "true", "yes"}
     print(f"Starting Novaquest Backend on port {port} (debug={debug})...")
     app.run(host="0.0.0.0", port=port, debug=debug)
+
+
+# Also cover `flask run`, WSGI servers and `python -m backend.app`, which import
+# the module without executing run(). The check is a cheap table lookup when the
+# database is healthy.
+ensure_database_ready()
 
 
 if __name__ == "__main__":

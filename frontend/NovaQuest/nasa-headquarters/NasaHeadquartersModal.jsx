@@ -176,7 +176,23 @@ export default function NasaHeadquartersModal({ isOpen, onClose, onSoilAnalysis,
   }, [hologramConverted, missionSolved]);
 
   const handleAutoCompleteTask = useCallback(() => {
-    // Auto-complete strictly disabled - mission requires manual objective completion
+    // Auto-complete Task 1: install every manifest part and materialise the
+    // spacecraft. The player still drives the launch phase from the hologram.
+    setCollectedPartIds((current) => {
+      const merged = new Set(current);
+      SURVEYOR5_MANIFEST_IDS.forEach((id) => merged.add(id));
+      return [...merged];
+    });
+    setCartPartIds([]);
+    setHologramConverted(true);
+    setHologramDisappeared(false);
+    setTaskOpen(false);
+    setUnlockedModalOpen(true);
+    gameAudio.playVictory();
+    viewerRef.current?.showMissionToast?.(
+      'Task 1 auto-completed — Surveyor 5 has been materialised.',
+      'success',
+    );
   }, []);
 
   const handleUnlockLaunch = useCallback(() => {
