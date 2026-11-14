@@ -5,7 +5,6 @@ import NasaHeadquartersViewer from './NasaHeadquartersViewer';
 import Surveyor5TaskPage from './Surveyor5TaskPage';
 import Surveyor5Task2Page from './Surveyor5Task2Page';
 import Surveyor5UnlockedModal from './Surveyor5UnlockedModal';
-import LaunchCinematic from './LaunchCinematic';
 import HeliumEmergency from './HeliumEmergency';
 import Task3 from './Task3';
 import MissionSuccessModal from '../../src/components/launch/MissionSuccessModal';
@@ -34,7 +33,6 @@ export default function NasaHeadquartersModal({ isOpen, onClose, onSoilAnalysis,
   const [launchReady, setLaunchReady] = useState(false);
   const [task3Solved, setTask3Solved] = useState(false);
   const [missionComplete, setMissionComplete] = useState(false);
-  const [cinematicOpen, setCinematicOpen] = useState(false);
   const [task3Open, setTask3Open] = useState(false);
   const [score, setScore] = useState(100);
   const [missionSolved, setMissionSolved] = useState(false);
@@ -67,9 +65,6 @@ export default function NasaHeadquartersModal({ isOpen, onClose, onSoilAnalysis,
         setMissionComplete(false);
         return;
       }
-      if (cinematicOpen) {
-        return; // skip-less Part 1 playback
-      }
       if (task2Open) {
         gameAudio.playClick();
         setTask2Open(false);
@@ -89,7 +84,7 @@ export default function NasaHeadquartersModal({ isOpen, onClose, onSoilAnalysis,
       document.body.style.overflow = previousOverflow;
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [isOpen, onClose, taskOpen, task2Open, cinematicOpen, task3Open, missionComplete]);
+  }, [isOpen, onClose, taskOpen, task2Open, task3Open, missionComplete]);
 
   const handleCollectPart = useCallback(
     (component) => {
@@ -199,18 +194,13 @@ export default function NasaHeadquartersModal({ isOpen, onClose, onSoilAnalysis,
     setUnlockedModalOpen(false);
     setMissionSolved(true);
     setLaunchUnlocked(true);
+    setLaunchReady(true);
     setHologramDisappeared(true);
     setTaskOpen(false); // Task 1 completed upon unlock launch click
     gameAudio.playPowerUp();
-    // Play Part 1 full-screen cinematic overlay
-    setCinematicOpen(true);
-  }, []);
-
-  const handleCinematicComplete = useCallback(() => {
-    setCinematicOpen(false);
-    setLaunchReady(true);
-    // Task 1 completed, replace with Task 2:
-    setTaskOpen(false);
+    // Skip the Part 1 archival cinematic here and go straight to the Task 2
+    // briefing. The launch video is still played on the Firing Room screen
+    // (parts 2 & 3) once the player starts the launch sequence.
     setTask2Open(true);
     viewerRef.current?.showMissionToast?.(
       'Liftoff is minutes away. Head to the Firing Room at the end of the corridor.',
@@ -306,7 +296,7 @@ export default function NasaHeadquartersModal({ isOpen, onClose, onSoilAnalysis,
           task3Solved={task3Solved}
           missionSolved={missionSolved}
           launched={launched}
-          overlayOpen={taskOpen || unlockedModalOpen || task2Open || cinematicOpen || task3Open || missionComplete}
+          overlayOpen={taskOpen || unlockedModalOpen || task2Open || task3Open || missionComplete}
           onCollectPart={handleCollectPart}
           onDepositCart={handleDepositCart}
           onConvertHologram={handleConvertHologram}
@@ -420,11 +410,8 @@ export default function NasaHeadquartersModal({ isOpen, onClose, onSoilAnalysis,
           onUnlockLaunch={handleUnlockLaunch}
         />
 
-        {/* Part 1 Full-screen Cinematic Overlay */}
-        <LaunchCinematic
-          isOpen={cinematicOpen}
-          onComplete={handleCinematicComplete}
-        />
+        {/* Part 1 archival cinematic is intentionally not part of the flow —
+            the launch video still plays in the 3D Firing Room (Parts 2 & 3). */}
 
         {/* Emergency Anomaly Red HUD alert & Siren */}
         <HeliumEmergency
