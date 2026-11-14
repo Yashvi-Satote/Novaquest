@@ -392,75 +392,9 @@ class AudioManager {
    * Rhythmic, quiet, intimate inhalation (~1.8s) and exhalation (~2.0s) inside the helmet.
    */
   startSuitBreathing() {
-    if (this.isBreathingPlaying) return;
-    const ctx = this.ensureContext();
-    if (!ctx) return;
-    this.isBreathingPlaying = true;
-
-    const runBreathingCycle = () => {
-      if (!this.isBreathingPlaying) return;
-      const { sfx } = this.getVolumes();
-      if (sfx <= 0.001) {
-        this.breathingTimeout = setTimeout(runBreathingCycle, 6200);
-        return;
-      }
-
-      try {
-        const now = ctx.currentTime;
-        const noiseBuf = this.createNoiseBuffer(3.0);
-        if (!noiseBuf) return;
-
-        // Inhalation (~1.8s) — life-support O2 regulator opening
-        const inhaleSrc = ctx.createBufferSource();
-        inhaleSrc.buffer = noiseBuf;
-        const inhaleFilter = ctx.createBiquadFilter();
-        inhaleFilter.type = 'bandpass';
-        inhaleFilter.frequency.setValueAtTime(820, now);
-        inhaleFilter.Q.setValueAtTime(2.4, now);
-        inhaleFilter.frequency.linearRampToValueAtTime(960, now + 1.2);
-
-        const inhaleGain = ctx.createGain();
-        inhaleGain.gain.setValueAtTime(0.0001, now);
-        inhaleGain.gain.linearRampToValueAtTime(sfx * 0.035, now + 0.8);
-        inhaleGain.gain.exponentialRampToValueAtTime(0.0001, now + 1.8);
-
-        inhaleSrc.connect(inhaleFilter);
-        inhaleFilter.connect(inhaleGain);
-        inhaleGain.connect(ctx.destination);
-
-        inhaleSrc.start(now);
-        inhaleSrc.stop(now + 1.85);
-
-        // Exhalation (~2.0s) — smooth air pressure exhaust valve
-        const exhaleTime = now + 2.5;
-        const exhaleSrc = ctx.createBufferSource();
-        exhaleSrc.buffer = noiseBuf;
-        const exhaleFilter = ctx.createBiquadFilter();
-        exhaleFilter.type = 'bandpass';
-        exhaleFilter.frequency.setValueAtTime(680, exhaleTime);
-        exhaleFilter.Q.setValueAtTime(1.9, exhaleTime);
-        exhaleFilter.frequency.linearRampToValueAtTime(520, exhaleTime + 1.4);
-
-        const exhaleGain = ctx.createGain();
-        exhaleGain.gain.setValueAtTime(0.0001, exhaleTime);
-        exhaleGain.gain.linearRampToValueAtTime(sfx * 0.024, exhaleTime + 0.8);
-        exhaleGain.gain.exponentialRampToValueAtTime(0.0001, exhaleTime + 2.0);
-
-        exhaleSrc.connect(exhaleFilter);
-        exhaleFilter.connect(exhaleGain);
-        exhaleGain.connect(ctx.destination);
-
-        exhaleSrc.start(exhaleTime);
-        exhaleSrc.stop(exhaleTime + 2.05);
-
-        // Schedule next breathing cycle (total ~6.6s loop)
-        this.breathingTimeout = setTimeout(runBreathingCycle, 6600);
-      } catch {
-        this.breathingTimeout = setTimeout(runBreathingCycle, 7000);
-      }
-    };
-
-    runBreathingCycle();
+    this.stopSuitBreathing();
+    // Disabled: Unwanted continuous breathing / scanner static noise removed per requirements
+    return;
   }
 
   stopSuitBreathing() {
@@ -659,36 +593,11 @@ class AudioManager {
    * ========================================================================= */
 
   /**
-   * Crater Signal Interference: Electromagnetic RF static crackle through helmet comms
+   * Crater Signal Interference: Disabled to prevent unwanted continuous scanner/static noise
    */
   playCraterInterference(intensity = 0.5) {
-    const ctx = this.ensureContext();
-    if (!ctx) return;
-    const { sfx } = this.getVolumes();
-    if (sfx <= 0.001) return;
-
-    try {
-      const now = ctx.currentTime;
-      const noiseBuf = this.createNoiseBuffer(0.12);
-      if (!noiseBuf) return;
-
-      const noiseSrc = ctx.createBufferSource();
-      noiseSrc.buffer = noiseBuf;
-
-      const filter = ctx.createBiquadFilter();
-      filter.type = 'bandpass';
-      filter.frequency.setValueAtTime(950 + Math.random() * 850, now);
-      filter.Q.setValueAtTime(6.5, now);
-
-      const gain = ctx.createGain();
-      gain.gain.setValueAtTime(sfx * 0.11 * Math.min(Math.max(intensity, 0.1), 1.0), now);
-      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.11);
-
-      noiseSrc.connect(filter);
-      filter.connect(gain);
-      gain.connect(ctx.destination);
-      noiseSrc.start(now);
-    } catch {}
+    // Disabled: Unwanted continuous/periodic scanner/static noise removed per requirements
+    return;
   }
 
   /**

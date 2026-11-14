@@ -712,24 +712,24 @@ export default function Level2MessageOfEarthPage() {
     renderer.domElement.addEventListener('wheel', handleWheel, { passive: false });
 
     // NASA Headquarters-style WASD + Arrow Keys orbit controls
-    const handleKeyDown = (event) => {
-      const key = event.key.toLowerCase();
-      if (['w', 'a', 's', 'd', 'arrowup', 'arrowleft', 'arrowdown', 'arrowright'].includes(key)) {
-        event.preventDefault();
-        controls.autoRotate = false;
-        const step = 0.06;
-        trackpadOffset.copy(camera.position).sub(controls.target);
-        trackpadSpherical.setFromVector3(trackpadOffset);
-        if (key === 'a' || key === 'arrowleft') trackpadSpherical.theta -= step;
-        if (key === 'd' || key === 'arrowright') trackpadSpherical.theta += step;
-        if (key === 'w' || key === 'arrowup') trackpadSpherical.phi = Math.max(0.04, trackpadSpherical.phi - step);
-        if (key === 's' || key === 'arrowdown') trackpadSpherical.phi = Math.min(Math.PI - 0.04, trackpadSpherical.phi + step);
-        trackpadOffset.setFromSpherical(trackpadSpherical);
-        camera.position.copy(controls.target).add(trackpadOffset);
-        camera.lookAt(controls.target);
-        controls.update();
-      }
-    };
+    // const handleKeyDown = (event) => {
+    //   const key = event.key.toLowerCase();
+    //   if (['w', 'a', 's', 'd', 'arrowup', 'arrowleft', 'arrowdown', 'arrowright'].includes(key)) {
+    //     event.preventDefault();
+    //     controls.autoRotate = false;
+    //     const step = 0.06;
+    //     trackpadOffset.copy(camera.position).sub(controls.target);
+    //     trackpadSpherical.setFromVector3(trackpadOffset);
+    //     if (key === 'a' || key === 'arrowleft') trackpadSpherical.theta -= step;
+    //     if (key === 'd' || key === 'arrowright') trackpadSpherical.theta += step;
+    //     if (key === 'w' || key === 'arrowup') trackpadSpherical.phi = Math.max(0.04, trackpadSpherical.phi - step);
+    //     if (key === 's' || key === 'arrowdown') trackpadSpherical.phi = Math.min(Math.PI - 0.04, trackpadSpherical.phi + step);
+    //     trackpadOffset.setFromSpherical(trackpadSpherical);
+    //     camera.position.copy(controls.target).add(trackpadOffset);
+    //     camera.lookAt(controls.target);
+    //     controls.update();
+    //   }
+    // };
     window.addEventListener('keydown', handleKeyDown);
 
     const dracoLoader = new DRACOLoader();
@@ -826,7 +826,7 @@ export default function Level2MessageOfEarthPage() {
     window.addEventListener('pointerup', handleCanvasPointerUp);
 
     // Keyboard Arrow Keys & WASD listener for spacewalk movement
-    const handleKeyDown = (e) => {
+    const handleSpacewalkKeyDown = (e) => {
       if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
         e.preventDefault();
       }
@@ -862,7 +862,7 @@ export default function Level2MessageOfEarthPage() {
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keydown', handleSpacewalkKeyDown);
     window.addEventListener('keyup', handleKeyUp);
 
     const clock = new THREE.Clock();
@@ -1028,6 +1028,8 @@ export default function Level2MessageOfEarthPage() {
       disposed = true;
       window.removeEventListener('resize', handleResize);
       window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keydown', handleSpacewalkKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
       renderer.domElement.removeEventListener('wheel', handleWheel);
       controls.removeEventListener('start', stopAutoRotate);
       if (frameId !== null) cancelAnimationFrame(frameId);

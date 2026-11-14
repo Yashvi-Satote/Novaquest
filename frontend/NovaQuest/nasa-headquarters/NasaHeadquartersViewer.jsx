@@ -222,9 +222,8 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer(
   );
 
   const handleAutoComplete = useCallback(() => {
-    onAutoCompleteTask?.();
-    showMissionToast('Surveyor 5 manifest auto-completed! 100% parts verified.', 'success');
-  }, [onAutoCompleteTask, showMissionToast]);
+    // Auto-complete strictly disabled - mission requires manual objective completion
+  }, []);
 
   const cachedVideoTextureRef = useRef(null);
 
@@ -591,6 +590,12 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer(
     };
 
     const handleKeyDown = (event) => {
+      // Block key 3 strictly to prevent any auto-complete or mission bypass
+      if (event.key === '3' || event.code === 'Digit3' || event.code === 'Numpad3') {
+        event.preventDefault();
+        event.stopPropagation();
+        return;
+      }
       if (overlayOpenRef.current || localOverlayOpenRef.current) return;
       if (selectedComponentRef.current) return;
       const key = event.key.toLowerCase();
@@ -1998,16 +2003,6 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer(
                 </button>
               </div>
             )}
-            {!allPartsInstalled && (
-              <button
-                type="button"
-                onClick={handleAutoComplete}
-                className="group mt-2 flex w-full items-center justify-center gap-1.5 rounded-md border border-[#5ee7ff]/70 bg-gradient-to-r from-[#0a3560] via-[#0f4f93] to-[#0a3560] px-2 py-1.5 text-[7.5px] font-bold uppercase tracking-[0.18em] text-[#e0f7ff] shadow-[0_0_16px_rgba(94,231,255,0.25)] transition-all hover:border-[#8ef4ff] hover:text-white hover:shadow-[0_0_24px_rgba(94,231,255,0.45)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5ee7ff]"
-              >
-                <CheckCircle2 className="h-3 w-3 text-[#5ee7ff] transition-transform group-hover:scale-110" aria-hidden="true" />
-                <span>Auto-Complete Task</span>
-              </button>
-            )}
           </div>
           <div className="absolute left-4 top-24 z-30 flex flex-wrap gap-2 sm:hidden">
             {launchUnlocked ? (
@@ -2044,15 +2039,6 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer(
                   {isEmergencyActive ? 'Task 3' : launchUnlocked ? 'Task 2' : 'Task'}
                 </button>
               </>
-            )}
-            {!allPartsInstalled && (
-              <button
-                type="button"
-                onClick={handleAutoComplete}
-                className="rounded-lg border border-[#5ee7ff]/70 bg-gradient-to-r from-[#0a3560] to-[#0f4f93] px-3 py-2 text-[9px] font-bold uppercase tracking-[0.18em] text-[#e0f7ff] backdrop-blur-md transition-all hover:border-[#8ef4ff] hover:text-white"
-              >
-                Auto-Complete
-              </button>
             )}
           </div>
 

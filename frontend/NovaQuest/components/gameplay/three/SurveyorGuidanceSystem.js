@@ -48,7 +48,7 @@ export const GUIDANCE_CONFIG = {
   
   // Audio Engine Master Settings
   AUDIO_MASTER_VOLUME: 0.65,
-  ENABLE_SPACE_HUM: true
+  ENABLE_SPACE_HUM: false
 };
 
 // Pre-allocated static vectors to eliminate per-frame garbage collection
@@ -230,9 +230,8 @@ export function createSurveyorGuidanceSystem({
 
   // Initialize Audio
   guidanceAudio.setVolume(config.AUDIO_MASTER_VOLUME);
-  if (config.ENABLE_SPACE_HUM) {
-    guidanceAudio.startSpaceHum();
-  }
+  // Unwanted background space hum disabled to ensure clean lunar audio
+  guidanceAudio.stopSpaceHum?.();
 
   // State
   let pingTimer = 0;
@@ -277,28 +276,15 @@ export function createSurveyorGuidanceSystem({
     const distance = Math.hypot(dx, dz);
     const inRange = distance <= config.INTERACT_RANGE;
 
-    // Trigger holographic whoosh & chime on entering interaction range
+    // Proximity audio disabled: Approaching Surveyor 5 must be completely silent
     if (inRange && !hasPlayedEnterChime) {
       hasPlayedEnterChime = true;
-      guidanceAudio.playMarkerAppears();
     } else if (!inRange && distance > config.INTERACT_RANGE + 2.5) {
       hasPlayedEnterChime = false;
     }
 
-    // 5. Proximity Sonar Ping Timing
+    // 5. Proximity Sonar Ping Timing (Disabled to prevent unwanted repetitive sound)
     pingTimer += delta;
-    const distFactor = Math.max(0, Math.min(1, (distance - config.INTERACT_RANGE) / (config.MAX_TRACK_DISTANCE - config.INTERACT_RANGE)));
-    const currentPingInterval = config.PING_INTERVAL_CLOSE + distFactor * (config.PING_INTERVAL_FAR - config.PING_INTERVAL_CLOSE);
-
-    if (pingTimer >= currentPingInterval) {
-      pingTimer = 0;
-      guidanceAudio.playBeaconPing(
-        distance,
-        config.INTERACT_RANGE,
-        config.MAX_TRACK_DISTANCE,
-        config.PING_PITCH_FAR
-      );
-    }
 
     // 6. Floating 3D Holographic Marker Anchor Calculation
     const markerBobY = Math.sin(elapsed * config.BOB_SPEED) * config.BOB_AMPLITUDE;
@@ -391,6 +377,7 @@ export function createSurveyorGuidanceSystem({
     if (scene && root.parent === scene) {
       scene.remove(root);
     }
+    guidanceAudio.stopSpaceHum?.();
   };
 
   return {

@@ -29,7 +29,8 @@ import {
   ChevronUp,
   VolumeX,
   Target,
-  Atom
+  Atom,
+  Rocket
 } from 'lucide-react';
 import { audio } from '../../game/moonMapAudioManager';
 import { createSurveyorGuidanceSystem, GUIDANCE_CONFIG } from '../gameplay/three/SurveyorGuidanceSystem';
@@ -159,6 +160,13 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
   const surveyorGroupRef = useRef(null);
   const collectionBeamRef = useRef(null);
 
+  // Proximity-based Retrieval State & Locks
+  const [isNearSurveyor, setIsNearSurveyor] = useState(false);
+  const isNearSurveyorRef = useRef(false);
+  const [isRetrieving, setIsRetrieving] = useState(false);
+  const isRetrievingRef = useRef(false);
+  const triggerRetrievalRef = useRef(null);
+
   // --- Sci-Fi Guidance & Interaction System State ---
   const guidanceSystemRef = useRef(null);
   const latestGuidanceRef = useRef(null);
@@ -178,7 +186,6 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
   // First-time long-range beacon signal detection alert
   useEffect(() => {
     setShowSignalDetected(true);
-    guidanceAudio.playBeaconActivated();
     const t = setTimeout(() => {
       setShowSignalDetected(false);
     }, 4200);
@@ -243,6 +250,14 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
     setSoilAnalysisModalOpen(true);
   };
   triggerSoilAnalysisRef.current = handleConductSoilAnalysis;
+
+  const handleTriggerRetrieval = () => {
+    if (isHqOpenRef.current || isSurveyorCollectedRef.current) return;
+    if (!isNearSurveyorRef.current) return;
+    audio.playClick?.();
+    openHeadquarters();
+  };
+  triggerRetrievalRef.current = handleTriggerRetrieval;
 
   const handleRetrieveSurveyor = () => {
     if (isSurveyorCollectedRef.current) return;
@@ -4224,7 +4239,12 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
       playerVelocityY = 0;
       underground = false;
       nearSurveyorRef.current = true;
-      setDistanceToSurveyor(Math.round(Math.hypot(targetX, targetZ)));
+      const teleDist = Math.hypot(targetX, targetZ);
+      if (teleDist <= 14) {
+        isNearSurveyorRef.current = true;
+        setIsNearSurveyor(true);
+      }
+      setDistanceToSurveyor(Math.round(teleDist));
       setActiveZone('ZONE 2 · SURVEYOR 5 RETRIEVAL SITE');
     };
     let playerVelocityY = 0;
@@ -4236,10 +4256,24 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
 
     const onKeyDown = (e) => {
       if (isHqOpenRef.current) return;
-      audio.ensureContext();
-      audio.startSuitBreathing();
-      audio.startAmbience();
+      // Do not trigger game controls when an input or editable element is focused
+      if (
+        ['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName) ||
+        document.activeElement?.isContentEditable
+      ) {
+        return;
+      }
+
       const code = e.code;
+      // Block key 3 strictly to prevent any auto-complete or mission bypass
+      if (code === 'Digit3' || code === 'Numpad3' || e.key === '3') {
+        e.preventDefault();
+        e.stopPropagation();
+        return;
+      }
+
+      audio.ensureContext();
+      audio.startAmbience();
       if (['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ArrowUp', 'ArrowLeft', 'ArrowDown', 'ArrowRight', 'Space'].includes(code)) {
         e.preventDefault();
       }
@@ -4263,23 +4297,10 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
       }
 
       if (code === 'KeyE' && !e.repeat) {
-        // Sci-Fi Guidance Interaction: Retrieve Surveyor 5 when within interaction range (8m)
-        const curGDist = latestGuidanceRef.current?.distance ?? Math.hypot(playerPos.x, playerPos.z);
-        if (!isSurveyorCollectedRef.current && (curGDist <= GUIDANCE_CONFIG.INTERACT_RANGE || nearSurveyorRef.current)) {
-          handleRetrieveSurveyor();
-          return;
-        }
-
-        if (hasReturnedFromHqRef.current && !isSurveyorCollectedRef.current) {
-          handleRetrieveSurveyor();
-          return;
-        }
-        if (isSoilAnalysisReadyRef.current && nearSurveyorRef.current) {
-          triggerSoilAnalysisRef.current?.();
-          return;
-        }
-        if (nearSurveyorRef.current) {
-          handleRetrieveSurveyor();
+        // Proximity Retrieval Interaction: Retrieve Surveyor 5 opens mission briefing
+        if (!isSurveyorCollectedRef.current && isNearSurveyorRef.current && !isHqOpenRef.current) {
+          e.preventDefault();
+          triggerRetrievalRef.current?.();
           return;
         }
         if (nearInteractableRef.current) triggerInvestigation();
@@ -4356,7 +4377,6 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
 
     const handleCanvasClick = () => {
       audio.ensureContext();
-      audio.startSuitBreathing();
       audio.startAmbience();
       if (document.pointerLockElement !== renderer.domElement) {
         try {
@@ -4738,9 +4758,24 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
         }
 
         const distLanding = Math.round(Math.hypot(playerPos.x - 105, playerPos.z - 65));
-        const exactSurveyorDistance = Math.hypot(playerPos.x, playerPos.z);
+        const surveyorWorldPos = surveyorGroupRef.current ? surveyorGroupRef.current.position : { x: 0, z: 0 };
+        const exactSurveyorDistance = Math.hypot(playerPos.x - surveyorWorldPos.x, playerPos.z - surveyorWorldPos.z);
         const distSurveyor = Math.round(exactSurveyorDistance);
-        nearSurveyorRef.current = exactSurveyorDistance <= SURVEYOR_RETRIEVAL_RADIUS;
+
+        // Proximity detection with hysteresis margin:
+        // Enter radius: <= 14m, Exit radius: > 17m
+        if (exactSurveyorDistance <= 14) {
+          if (!isNearSurveyorRef.current) {
+            isNearSurveyorRef.current = true;
+            setIsNearSurveyor(true);
+          }
+        } else if (exactSurveyorDistance > 17) {
+          if (isNearSurveyorRef.current) {
+            isNearSurveyorRef.current = false;
+            setIsNearSurveyor(false);
+          }
+        }
+        nearSurveyorRef.current = isNearSurveyorRef.current;
         const distCrater = Math.round(Math.hypot(playerPos.x - (-75), playerPos.z - (-50)));
         const distAlien = Math.round(Math.hypot(playerPos.x - (-120), playerPos.z - (-75)));
         const distEcho = Math.round(Math.hypot(playerPos.x - (-116), playerPos.z - (-72)));
@@ -4887,11 +4922,6 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
           }
         }
 
-        // Zone 3: Crater Signal Interference & Static Crackles through helmet comms
-        if (distCrater < 36 && time - lastInterferenceTime > 5.5) {
-          audio.playCraterInterference(1 - distCrater / 36);
-          lastInterferenceTime = time + (Math.random() * 2.5);
-        }
 
         // Zone 1 & Zone 6: Periodic Radio Comms check-ins (long quiet pauses in between)
         if (distLanding < 32 && time - lastRadioChatterTime > 55.0) {
@@ -5003,30 +5033,8 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
             className="rounded-xl border border-cyan-400/50 bg-slate-950/90 px-5 py-2.5 text-sm font-black uppercase tracking-[0.18em] text-white shadow-[0_0_24px_rgba(34,211,238,0.28)] backdrop-blur-md"
           >
             <span className="mr-2 text-cyan-300">Mission Task</span>
-            {isSoilAnalysisReady ? 'Conduct Mare Tranquillitatis Soil Analysis' : 'Find Surveyor 5'}
+            {isSurveyorCollected ? 'Surveyor 5 Retrieved' : isNearSurveyor ? 'Retrieve Surveyor 5' : 'Find Surveyor 5'}
           </div>
-          {nearSurveyor && (
-            <div className="pointer-events-auto flex flex-col sm:flex-row items-center gap-2.5">
-              <button
-                type="button"
-                onClick={handleConductSoilAnalysis}
-                className="group relative flex items-center gap-2.5 border-2 border-cyan-400/90 bg-gradient-to-r from-[#03243d]/95 via-[#083a5e]/95 to-[#0b4b72]/95 px-6 py-3 text-sm font-black uppercase tracking-widest text-[#d9faff] shadow-[0_0_35px_rgba(34,211,238,0.6)] backdrop-blur-md transition hover:border-[#c5f8ff] hover:text-white hover:shadow-[0_0_50px_rgba(34,211,238,0.85)] hover:scale-105 active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7fe3ff] cursor-pointer"
-                style={{ clipPath: 'polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px)' }}
-              >
-                <Atom className="h-4 w-4 text-cyan-300 animate-spin" style={{ animationDuration: '6s' }} aria-hidden="true" />
-                <span>Conduct Soil Analysis [E]</span>
-              </button>
-              <button
-                type="button"
-                onClick={openHeadquarters}
-                className="flex items-center gap-1.5 border border-[#7fe3ff]/50 bg-[#041627]/90 px-3.5 py-2.5 text-xs font-bold uppercase tracking-wider text-[#b8e5ff] shadow-md transition hover:border-[#7fe3ff] hover:text-white active:scale-95"
-                style={{ clipPath: 'polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px)' }}
-              >
-                <Building2 className="h-3.5 w-3.5" aria-hidden="true" />
-                NASA HQ Firing Room
-              </button>
-            </div>
-          )}
         </div>
       )}
 
@@ -5043,60 +5051,67 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
         </button>
       )}
 
-      {/* GLOWING SCI-FI "COLLECT SURVEYOR 5" BUTTON ON SURVEYOR 5 IN THE CENTER */}
-      {hasReturnedFromHq && !isSurveyorCollected && (
-        <div
-          className="pointer-events-auto absolute z-40 flex flex-col items-center select-none"
-          style={{
-            left: surveyorScreenCoords.visible ? `${surveyorScreenCoords.x}px` : '50%',
-            top: surveyorScreenCoords.visible ? `${surveyorScreenCoords.y}px` : '50%',
-            transform: 'translate(-50%, -50%)',
-          }}
-        >
-          {/* Holographic Targeting Reticle */}
-          <div className="relative flex items-center justify-center p-3">
-            {/* Pulsing Glow Rings */}
-            <div className="absolute inset-0 rounded-full border border-cyan-400/40 animate-ping opacity-30 pointer-events-none" />
-            <div className="absolute -inset-4 rounded-full border border-cyan-500/25 animate-pulse pointer-events-none" />
-            
-            {/* Tech Corner Brackets */}
-            <div className="absolute -inset-3 pointer-events-none">
-              <span className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-cyan-300 drop-shadow-[0_0_8px_#22d3ee]" />
-              <span className="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-cyan-300 drop-shadow-[0_0_8px_#22d3ee]" />
-              <span className="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-cyan-300 drop-shadow-[0_0_8px_#22d3ee]" />
-              <span className="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-cyan-300 drop-shadow-[0_0_8px_#22d3ee]" />
-            </div>
+      {/* PROXIMITY-BASED SCI-FI INTERACTION: RETRIEVE SURVEYOR 5 */}
+      <div
+        className={`pointer-events-none absolute bottom-20 md:bottom-24 left-1/2 -translate-x-1/2 z-30 flex flex-col items-center select-none transition-all duration-500 ease-out ${
+          isNearSurveyor && !isSurveyorCollected && !isHqOpen
+            ? 'opacity-100 scale-100 translate-y-0 pointer-events-auto'
+            : 'opacity-0 scale-95 translate-y-4 pointer-events-none'
+        }`}
+        aria-hidden={!isNearSurveyor || isSurveyorCollected || isHqOpen}
+      >
+        {/* Header Badge: [ RETRIEVAL TARGET ACQUIRED ] */}
+        <div className="flex items-center gap-2 mb-2 px-3.5 py-1 rounded-full bg-slate-950/90 border border-cyan-400/60 shadow-[0_0_15px_rgba(34,211,238,0.4)] backdrop-blur-md">
+          <span className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-300"></span>
+          </span>
+          <span className="text-[10px] md:text-xs font-black tracking-[0.22em] text-cyan-300 uppercase">
+            RETRIEVAL TARGET ACQUIRED
+          </span>
+          <span className="text-[10px] text-cyan-400/70 font-mono">[{distanceToSurveyor}m]</span>
+        </div>
 
-            {/* Target Telemetry Lock Indicator */}
-            <div className="absolute -top-7 px-3 py-0.5 rounded-full bg-slate-950/90 border border-cyan-400/60 text-[10px] font-black tracking-widest text-cyan-300 uppercase shadow-[0_0_15px_rgba(34,211,238,0.5)] whitespace-nowrap">
-              TARGET LOCKED · SURVEYOR 5 LANDER
-            </div>
-
-            {/* The Main Glowing Sci-Fi Button */}
-            <button
-              type="button"
-              onClick={handleCollectSurveyor}
-              className="group relative flex items-center gap-3.5 px-8 py-4 rounded-xl border-2 border-cyan-300 bg-gradient-to-r from-[#021f35]/95 via-[#08426d]/95 to-[#052b47]/95 text-white font-black text-sm uppercase tracking-[0.24em] shadow-[0_0_40px_rgba(34,211,238,0.85)] backdrop-blur-md transition-all duration-300 hover:border-white hover:text-white hover:shadow-[0_0_70px_rgba(34,211,238,1)] hover:scale-105 active:scale-95 focus:outline-none focus-visible:ring-4 focus-visible:ring-cyan-400 cursor-pointer"
-              style={{
-                clipPath: 'polygon(14px 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%, 0 14px)',
-              }}
-            >
-              {/* Internal Shimmer Scanline */}
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-cyan-400/25 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out pointer-events-none" />
-
-              <Sparkles className="h-5 w-5 text-cyan-300 animate-spin flex-shrink-0 drop-shadow-[0_0_8px_#22d3ee]" style={{ animationDuration: '4s' }} aria-hidden="true" />
-              <span className="drop-shadow-[0_0_12px_rgba(34,211,238,0.95)]">
-                Collect Surveyor 5
-              </span>
-              <ArrowDownToLine className="h-5 w-5 text-cyan-300 animate-bounce flex-shrink-0" aria-hidden="true" />
-            </button>
+        {/* Main Holographic Interactive Button */}
+        <div className="relative group">
+          {/* Subtle Outer Cyan Glow & Corner Brackets */}
+          <div className="absolute -inset-1 rounded-2xl bg-cyan-500/20 blur-md group-hover:bg-cyan-400/35 transition duration-500 pointer-events-none" />
+          <div className="absolute -inset-2 pointer-events-none">
+            <span className="absolute top-0 left-0 w-3.5 h-3.5 border-t-2 border-l-2 border-cyan-400 drop-shadow-[0_0_6px_#22d3ee]" />
+            <span className="absolute top-0 right-0 w-3.5 h-3.5 border-t-2 border-r-2 border-cyan-400 drop-shadow-[0_0_6px_#22d3ee]" />
+            <span className="absolute bottom-0 left-0 w-3.5 h-3.5 border-b-2 border-l-2 border-cyan-400 drop-shadow-[0_0_6px_#22d3ee]" />
+            <span className="absolute bottom-0 right-0 w-3.5 h-3.5 border-b-2 border-r-2 border-cyan-400 drop-shadow-[0_0_6px_#22d3ee]" />
           </div>
 
-          <span className="mt-2 text-[10px] font-mono tracking-widest text-cyan-300/80 uppercase bg-black/70 px-2.5 py-0.5 rounded border border-cyan-500/30 shadow-md">
-            [PRESS E OR CLICK TO COLLECT INTO SPACECRAFT]
-          </span>
+          <button
+            type="button"
+            onClick={handleTriggerRetrieval}
+            disabled={isHqOpen || isSurveyorCollected}
+            aria-label="Retrieve Surveyor 5"
+            className="relative flex items-center gap-3.5 px-8 py-3.5 md:py-4 rounded-xl border border-cyan-400/80 bg-gradient-to-r from-slate-950/95 via-[#041a2e]/95 to-slate-950/95 text-white font-black text-sm md:text-base uppercase tracking-[0.24em] shadow-[0_0_30px_rgba(34,211,238,0.5)] backdrop-blur-xl transition-all duration-300 hover:border-cyan-300 hover:shadow-[0_0_45px_rgba(34,211,238,0.8)] hover:scale-[1.02] active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer overflow-hidden"
+          >
+            {/* Animated subtle scanning line */}
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-cyan-400/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out pointer-events-none" />
+
+            {/* Energy indicator / Spacecraft Icon */}
+            <div className="relative flex items-center justify-center">
+              <Rocket className="h-5 w-5 text-cyan-300 drop-shadow-[0_0_8px_#22d3ee] transition-transform duration-300 group-hover:-translate-y-0.5" aria-hidden="true" />
+            </div>
+
+            <span className="drop-shadow-[0_0_12px_rgba(34,211,238,0.9)] text-slate-100 font-extrabold">
+              RETRIEVE SURVEYOR 5
+            </span>
+
+            <Sparkles className="h-4 w-4 text-cyan-300/80 group-hover:text-cyan-200 transition-colors" aria-hidden="true" />
+          </button>
         </div>
-      )}
+
+        {/* Helper Label: [ PRESS E OR CLICK TO INTERACT ] */}
+        <div className="mt-2.5 flex items-center gap-2 px-3 py-1 rounded bg-black/80 border border-cyan-500/30 text-[10px] md:text-xs font-mono tracking-widest text-cyan-300 shadow-md">
+          <span className="px-1.5 py-0.5 rounded bg-cyan-950 border border-cyan-400/50 text-cyan-300 font-bold">PRESS E</span>
+          <span className="text-slate-400">OR CLICK TO INTERACT</span>
+        </div>
+      </div>
 
       {/* 3D WebGL Canvas */}
       <div ref={mountRef} className="absolute inset-0 h-full w-full" />
@@ -5151,19 +5166,6 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
           </div>
         </div>
 
-        {/* SURVEYOR 5 RETRIEVAL PROMPT */}
-        {nearSurveyor && !isHqOpen && (
-          <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-30 animate-bounce pointer-events-auto">
-            <button
-              type="button"
-              onClick={openHeadquarters}
-              className="flex items-center gap-3 px-6 py-3.5 rounded-full bg-gradient-to-r from-amber-500 via-sky-500 to-indigo-600 text-white font-black text-sm sm:text-base shadow-[0_0_35px_rgba(56,189,248,0.7)] border-2 border-white/60 active:scale-95 transition-all"
-            >
-              <Building2 className="w-5 h-5" />
-              <span>Click E to retrieve Surveyor 5</span>
-            </button>
-          </div>
-        )}
 
         {/* TOP COMPASS TAPE & MISSION OBJECTIVE HUD */}
         <div className="absolute top-4 inset-x-6 flex items-start justify-between">
@@ -5319,16 +5321,6 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
               </button>
             )}
 
-            {nearSurveyor && (
-              <button
-                type="button"
-                onClick={handleConductSoilAnalysis}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 via-blue-600 to-indigo-600 text-white font-bold text-xs uppercase tracking-wider border border-cyan-400 shadow-xl shadow-cyan-500/40 hover:scale-105 active:scale-95 animate-bounce cursor-pointer"
-              >
-                <Atom className="w-4 h-4 text-cyan-200 animate-spin" style={{ animationDuration: '6s' }} />
-                <span>Conduct Soil Analysis [E]</span>
-              </button>
-            )}
           </div>
 
           {/* Low-G Jump Notice */}
@@ -5569,6 +5561,9 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
         isOpen={isHqOpen}
         onClose={closeHeadquarters}
         onSoilAnalysis={handleSoilAnalysisFromHq}
+        onMissionSuccess={() => {
+          handleCollectSurveyor();
+        }}
       />
 
       <LunarSoilAnalysisModal
