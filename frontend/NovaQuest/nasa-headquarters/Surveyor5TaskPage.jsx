@@ -185,6 +185,12 @@ export default function Surveyor5TaskPage({
     setShowList((current) => !current);
   };
 
+  const handleAutoCompleteTask = () => {
+    if (allInstalled) return;
+    gameAudio.playClick();
+    onAutoCompleteTask?.();
+  };
+
   const primaryLabel = launched
     ? 'Close mission feed'
     : hologramConverted && !missionSolved
@@ -639,6 +645,29 @@ export default function Surveyor5TaskPage({
                             : `${remainingToInstall} part${remainingToInstall === 1 ? '' : 's'} left to install`}
                   </span>
                 </div>
+                {!allInstalled && onAutoCompleteTask && (
+                  <button
+                    id="surveyor5-auto-complete-btn"
+                    type="button"
+                    onClick={handleAutoCompleteTask}
+                    className="group mb-2 flex w-full items-center justify-between gap-3 rounded-lg border border-dashed border-[#ffc36b]/45 bg-[#2a1c06]/40 px-3 py-2 text-left transition-colors hover:border-[#ffd79a]/80 hover:bg-[#3a2607]/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ffc36b]"
+                  >
+                    <span className="flex min-w-0 items-center gap-2">
+                      <Sparkles className="h-3.5 w-3.5 shrink-0 text-[#ffc36b]" aria-hidden="true" />
+                      <span className="min-w-0">
+                        <span className="block text-[9px] font-bold uppercase tracking-[0.22em] text-[#ffd79a]">
+                          Auto-complete task 1
+                        </span>
+                        <span className="mt-0.5 block truncate text-[8px] font-semibold uppercase tracking-[0.16em] text-[#b08a4f]">
+                          Collect all {SURVEYOR5_MANIFEST_TOTAL} parts &amp; finish the spacecraft
+                        </span>
+                      </span>
+                    </span>
+                    <span className="shrink-0 text-[8px] font-bold uppercase tracking-[0.18em] text-[#ffc36b] transition-transform group-hover:translate-x-0.5">
+                      Skip
+                    </span>
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={

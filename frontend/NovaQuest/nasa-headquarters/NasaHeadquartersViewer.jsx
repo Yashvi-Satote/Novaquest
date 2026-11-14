@@ -16,6 +16,7 @@ import {
   ClipboardList,
   Eye,
   EyeOff,
+  Footprints,
   ListChecks,
   Lock,
   MousePointerClick,
@@ -100,6 +101,7 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer(
   const [assemblyResult, setAssemblyResult] = useState(null);
   const [missionToast, setMissionToast] = useState(null);
   const [isFirstPerson, setIsFirstPerson] = useState(false);
+  const [hasEnteredFirstPerson, setHasEnteredFirstPerson] = useState(false);
   const [isInFiringRoom, setIsInFiringRoom] = useState(false);
   const [firingRoomLaunchState, setFiringRoomLaunchState] = useState('standby');
   const [isEmergencyActive, setIsEmergencyActive] = useState(false);
@@ -130,6 +132,12 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer(
   useEffect(() => {
     selectedComponentRef.current = selectedComponent;
   }, [selectedComponent]);
+
+  // Once the player has stepped into first-person mode, the centre prompt is
+  // no longer needed for the rest of this headquarters visit.
+  useEffect(() => {
+    if (isFirstPerson) setHasEnteredFirstPerson(true);
+  }, [isFirstPerson]);
 
   useEffect(() => {
     localOverlayOpenRef.current = partListOpen || Boolean(assemblyResult);
@@ -222,7 +230,9 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer(
   );
 
   const handleAutoComplete = useCallback(() => {
-    // Auto-complete strictly disabled - mission requires manual objective completion
+    if (callbacksRef.current.onAutoCompleteTask) {
+      callbacksRef.current.onAutoCompleteTask();
+    }
   }, []);
 
   const cachedVideoTextureRef = useRef(null);
@@ -2050,6 +2060,40 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer(
               {missionToast.message}
             </div>
           )}
+
+          {/* ── In-Person Mode Entry Prompt ── */}
+          {ready &&
+            !hasEnteredFirstPerson &&
+            !isFirstPerson &&
+            !overlayOpen &&
+            !partListOpen &&
+            !assemblyResult && (
+              <div className="pointer-events-none absolute inset-0 z-30 flex items-center justify-center px-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    gameAudio.playClick();
+                    doorHolderRef.current?.toggleFirstPerson();
+                  }}
+                  className="group pointer-events-auto relative flex animate-fade-in flex-col items-center gap-1 rounded-2xl border-2 border-[#00f0ff] bg-gradient-to-r from-[#031326]/95 via-[#062444]/95 to-[#031326]/95 px-6 py-3.5 text-center shadow-[0_0_38px_rgba(0,240,255,0.6)] backdrop-blur-md transition-all duration-300 hover:scale-105 hover:border-[#8ef4ff] hover:shadow-[0_0_55px_rgba(0,240,255,0.85)] active:scale-95 sm:px-10 sm:py-5"
+                >
+                  <span className="relative flex items-center gap-2.5">
+                    <span className="relative flex h-2.5 w-2.5">
+                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#00f0ff] opacity-80" />
+                      <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-[#00f0ff]" />
+                    </span>
+                    <Footprints className="h-5 w-5 text-[#00f0ff] transition-transform group-hover:-rotate-12 sm:h-6 sm:w-6" />
+                    <span className="text-[12px] font-black uppercase tracking-[0.2em] text-[#e6faff] drop-shadow-[0_0_12px_rgba(0,240,255,0.7)] group-hover:text-white sm:text-[15px] sm:tracking-[0.24em]">
+                      Enter In-Person Mode
+                    </span>
+                    <ChevronRight className="h-4 w-4 text-[#00f0ff] transition-transform group-hover:translate-x-1" />
+                  </span>
+                  <span className="relative text-[7.5px] font-bold uppercase tracking-[0.18em] text-[#8ef4ff] sm:text-[9px] sm:tracking-[0.22em]">
+                    Step inside NASA Headquarters on foot · Press V
+                  </span>
+                </button>
+              </div>
+            )}
 
           {/* ── First-Person Mode HUD Button ── */}
           <button

@@ -56,9 +56,12 @@ export async function fetchHardware(params = {}) {
   if (params.q) query.set('q', params.q);
   if (params.destination && params.destination !== 'All') query.set('destination', params.destination);
   if (params.mission) query.set('mission', params.mission);
+  if (params.hardware && params.hardware !== 'All') query.set('hardware', params.hardware);
   if (params.status && params.status !== 'All') query.set('status', params.status);
   if (params.organization && params.organization !== 'All') query.set('organization', params.organization);
   if (params.object_type && params.object_type !== 'All') query.set('object_type', params.object_type);
+  if (params.activity && params.activity !== 'All') query.set('activity', params.activity);
+  if (params.complete) query.set('complete', 'true');
   if (params.sort_by) query.set('sort_by', params.sort_by);
   if (params.page) query.set('page', params.page);
   if (params.limit) query.set('limit', params.limit);
