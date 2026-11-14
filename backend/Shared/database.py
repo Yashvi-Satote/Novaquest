@@ -33,7 +33,8 @@ def create_db_engine():
     
     # Check if PostgreSQL URL is provided. Accept driver-qualified URLs too
     # (postgresql+psycopg://, postgresql+psycopg2://).
-    if DATABASE_URL and _is_postgres_url(DATABASE_URL):
+    is_placeholder = any(p in (DATABASE_URL or "").lower() for p in ["your_db_user", "your_db_password", "placeholder"])
+    if DATABASE_URL and _is_postgres_url(DATABASE_URL) and not is_placeholder:
         normalized_url = DATABASE_URL
         if normalized_url.startswith("postgres://"):
             normalized_url = normalized_url.replace("postgres://", "postgresql://", 1)

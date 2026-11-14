@@ -190,7 +190,7 @@ const FiringRoomVideoOverlay = forwardRef(function FiringRoomVideoOverlay(
         onEnded={handleEnded}
         onWaiting={() => setLoading(true)}
         onCanPlay={() => setLoading(false)}
-        className="absolute inset-0 h-full w-full object-cover"
+        className="absolute inset-0 h-full w-full object-contain"
       >
         <source src={LAUNCH_VIDEO.src} type={LAUNCH_VIDEO.type} />
       </video>

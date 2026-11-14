@@ -173,7 +173,7 @@ export default function LaunchCinematic({ isOpen, onComplete }) {
           playsInline
           muted={false}
           preload="auto"
-          className="absolute inset-0 w-full h-full object-cover z-0"
+          className="absolute inset-0 w-full h-full object-contain z-0"
         >
           <source src={LAUNCH_VIDEO.src} type={LAUNCH_VIDEO.type} />
         </video>
