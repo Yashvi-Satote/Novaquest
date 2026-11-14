@@ -175,6 +175,12 @@ export default function Surveyor5TaskPage({
     onClose?.();
   };
 
+  const handleAutoCompleteTask = () => {
+    if (allInstalled) return;
+    gameAudio.playClick();
+    onAutoCompleteTask?.();
+  };
+
   const primaryLabel = launched
     ? 'Close Mission Briefing'
     : hologramConverted && !missionSolved

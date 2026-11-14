@@ -16,10 +16,20 @@ import {
   ChevronLeft, 
   ChevronRight, 
   Compass,
-  Database,
-  CheckCircle2,
-  AlertTriangle
+  Database
 } from 'lucide-react';
+
+// Default landing view: inactive missions whose 10 NovaBase sections are complete.
+const DEFAULT_FILTERS = {
+  activity: 'inactive',
+  complete: true,
+  destination: 'All',
+  mission: 'All',
+  hardware: 'All',
+  status: 'All',
+  organization: 'All',
+  object_type: 'All'
+};
 
 export default function ExplorerPage() {
   // Hierarchy Tree for Sidebar
@@ -28,13 +38,7 @@ export default function ExplorerPage() {
   // Search & Filter State
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
-  const [activeFilters, setActiveFilters] = useState({
-    destination: 'All',
-    mission: 'All',
-    status: 'All',
-    organization: 'All',
-    object_type: 'All'
-  });
+  const [activeFilters, setActiveFilters] = useState(DEFAULT_FILTERS);
   const [sortOption, setSortOption] = useState('launch_date_desc');
 
   // Catalogue Results & Pagination
@@ -82,8 +86,11 @@ export default function ExplorerPage() {
     try {
       const data = await fetchHardware({
         q: debouncedQuery,
+        activity: activeFilters.activity,
+        complete: activeFilters.complete,
         destination: activeFilters.destination,
         mission: activeFilters.mission,
+        hardware: activeFilters.hardware,
         status: activeFilters.status,
         organization: activeFilters.organization,
         object_type: activeFilters.object_type,
@@ -138,19 +145,13 @@ export default function ExplorerPage() {
   const handleRemoveFilter = (filterKey) => {
     setActiveFilters(prev => ({
       ...prev,
-      [filterKey]: 'All'
+      [filterKey]: filterKey === 'complete' ? false : 'All'
     }));
     setCurrentPage(1);
   };
 
   const handleResetFilters = () => {
-    setActiveFilters({
-      destination: 'All',
-      mission: 'All',
-      status: 'All',
-      organization: 'All',
-      object_type: 'All'
-    });
+    setActiveFilters(DEFAULT_FILTERS);
     setSearchQuery('');
     setCurrentPage(1);
     setMobileMenuOpen(false);
@@ -239,24 +240,9 @@ export default function ExplorerPage() {
         {/* Main Content Area (Expands to use all remaining horizontal width) */}
         <main className="flex-1 min-w-0 px-4 sm:px-6 lg:px-8 py-5 space-y-5">
           
-          {/* NovaBase database + 10-section completeness badge */}
+          {/* NovaBase database status badge */}
           {novaHealth && (
             <div className="flex flex-wrap items-center gap-2.5 text-[11px] sm:text-xs">
-              <span
-                className={
-                  novaHealth.all_sections_populated
-                    ? "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-100 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-600/50"
-                    : "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-100 dark:bg-amber-950/70 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-600/50"
-                }
-                title="All 10 NovaBase sections populated for every spacecraft"
-              >
-                {novaHealth.all_sections_populated ? (
-                  <CheckCircle2 className="w-3.5 h-3.5" />
-                ) : (
-                  <AlertTriangle className="w-3.5 h-3.5" />
-                )}
-                {novaHealth.complete_spacecraft}/{novaHealth.total_spacecraft} spacecraft complete
-              </span>
               <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-900/70 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/10">
                 <Database className="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" />
                 {novaHealth.database?.postgres ? 'PostgreSQL' : 'SQLite fallback'}
