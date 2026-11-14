@@ -322,8 +322,19 @@ export default function MemoirPage() {
   const [startTimestamp, setStartTimestamp] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
   const [isMuted, setIsMuted] = useState(false);
+  const [showCaptions, setShowCaptions] = useState(true);
   const [activeTab, setActiveTab] = useState('all'); // 'all', 'authentic', 'dramatized'
   const videoRef = useRef(null);
+
+  const toggleCaptions = () => {
+    setShowCaptions((prev) => {
+      const next = !prev;
+      if (videoRef.current && videoRef.current.textTracks && videoRef.current.textTracks[0]) {
+        videoRef.current.textTracks[0].mode = next ? 'showing' : 'hidden';
+      }
+      return next;
+    });
+  };
 
   const openPlayer = (url, title, timestamp = 0) => {
     setActiveVideo(url);
@@ -988,14 +999,26 @@ export default function MemoirPage() {
                 autoPlay
                 controls
                 playsInline
+                crossOrigin="anonymous"
                 onLoadedMetadata={(e) => {
                   if (startTimestamp > 0) {
                     e.target.currentTime = startTimestamp;
                   }
+                  if (e.target.textTracks && e.target.textTracks[0]) {
+                    e.target.textTracks[0].mode = showCaptions ? 'showing' : 'hidden';
+                  }
                 }}
                 onPlay={() => setIsPlaying(true)}
                 onPause={() => setIsPlaying(false)}
-              />
+              >
+                <track
+                  src="/subtitles/surveyor3_documentary.vtt"
+                  kind="subtitles"
+                  srcLang="en"
+                  label="English"
+                  default={showCaptions}
+                />
+              </video>
             </div>
 
             {/* Modal Controls / Footer */}
@@ -1024,6 +1047,19 @@ export default function MemoirPage() {
                 >
                   {isMuted ? <VolumeX className="h-4 w-4 text-rose-400" /> : <Volume2 className="h-4 w-4" />}
                   <span>{isMuted ? 'Unmute' : 'Mute'}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={toggleCaptions}
+                  className={`inline-flex items-center gap-1.5 rounded px-2.5 py-1 text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer ${
+                    showCaptions
+                      ? 'border border-[#3D6BFF] bg-[#3D6BFF]/25 text-white shadow-[0_0_10px_rgba(61,107,255,0.4)]'
+                      : 'border border-white/20 bg-white/5 text-white/50 hover:text-white'
+                  }`}
+                  title="Toggle Synchronized Captions (English)"
+                >
+                  <span className="font-mono text-[10px] font-black">CC</span>
+                  <span>{showCaptions ? 'ON' : 'OFF'}</span>
                 </button>
               </div>
 

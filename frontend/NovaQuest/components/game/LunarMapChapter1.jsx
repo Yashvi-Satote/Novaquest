@@ -30,7 +30,8 @@ import {
   VolumeX,
   Target,
   Atom,
-  Rocket
+  Rocket,
+  FileText
 } from 'lucide-react';
 import { audio } from '../../game/moonMapAudioManager';
 import { createSurveyorGuidanceSystem, GUIDANCE_CONFIG } from '../gameplay/three/SurveyorGuidanceSystem';
@@ -247,6 +248,11 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
     setSoilAnalysisMode('scanning');
     setSoilAnalysisModalOpen(true);
     audio.playSurveyorScannerBeep?.();
+    setTimeout(() => {
+      audio.playEquipmentFeedback?.();
+      setSoilAnalysisMode('scanning');
+      setSoilAnalysisModalOpen(true);
+    }, 280);
   };
 
   const handleConductSoilAnalysis = () => {
@@ -5132,6 +5138,21 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
         </div>
       )}
 
+      {/* Dedicated View Soil Analysis Report trigger (Only when ready, separate from proximity HUD) */}
+      {isSoilAnalysisReady && !isHqOpen && (
+        <button
+          type="button"
+          onClick={() => {
+            setSoilAnalysisMode('report');
+            setSoilAnalysisModalOpen(true);
+          }}
+          className="absolute left-4 top-4 z-30 flex items-center gap-2 border border-emerald-400/60 bg-emerald-950/85 px-3 py-2 rounded-lg text-[9px] md:text-xs font-bold uppercase tracking-wider text-emerald-300 shadow-[0_0_20px_rgba(16,185,129,0.3)] backdrop-blur-md transition hover:border-emerald-300 hover:bg-emerald-900/90 hover:text-white sm:left-6 sm:top-6 sm:px-4"
+        >
+          <FileText className="h-3.5 w-3.5 text-emerald-300" aria-hidden="true" />
+          View Soil Analysis Report
+        </button>
+      )}
+
       {!isHqOpen && !hasReturnedFromHq && (
         <button
           type="button"
@@ -5181,7 +5202,7 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
             type="button"
             onClick={handleTriggerRetrieval}
             disabled={isHqOpen || isSurveyorCollected}
-            aria-label="Retrieve Surveyor 5"
+            aria-label="Click E to Retrieve Surveyor 5"
             className="relative flex items-center gap-3.5 px-8 py-3.5 md:py-4 rounded-xl border border-cyan-400/80 bg-gradient-to-r from-slate-950/95 via-[#041a2e]/95 to-slate-950/95 text-white font-black text-sm md:text-base uppercase tracking-[0.24em] shadow-[0_0_30px_rgba(34,211,238,0.5)] backdrop-blur-xl transition-all duration-300 hover:border-cyan-300 hover:shadow-[0_0_45px_rgba(34,211,238,0.8)] hover:scale-[1.02] active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer overflow-hidden"
           >
             {/* Animated subtle scanning line */}
@@ -5193,17 +5214,11 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
             </div>
 
             <span className="drop-shadow-[0_0_12px_rgba(34,211,238,0.9)] text-slate-100 font-extrabold">
-              RETRIEVE SURVEYOR 5
+              CLICK E TO RETRIEVE SURVEYOR 5
             </span>
 
             <Sparkles className="h-4 w-4 text-cyan-300/80 group-hover:text-cyan-200 transition-colors" aria-hidden="true" />
           </button>
-        </div>
-
-        {/* Helper Label: [ PRESS E OR CLICK TO INTERACT ] */}
-        <div className="mt-2.5 flex items-center gap-2 px-3 py-1 rounded bg-black/80 border border-cyan-500/30 text-[10px] md:text-xs font-mono tracking-widest text-cyan-300 shadow-md">
-          <span className="px-1.5 py-0.5 rounded bg-cyan-950 border border-cyan-400/50 text-cyan-300 font-bold">PRESS E</span>
-          <span className="text-slate-400">OR CLICK TO INTERACT</span>
         </div>
       </div>
 
