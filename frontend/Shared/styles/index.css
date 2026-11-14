@@ -3,6 +3,7 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+#app-loading-screen,
 .global-loading-screen {
   position: fixed;
   inset: 0;
@@ -10,8 +11,15 @@
   display: grid;
   place-items: center;
   background: #070b14;
+  transition: opacity 200ms ease;
 }
 
+#app-loading-screen.app-loading-screen-hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.app-loading-content,
 .global-loading-content {
   display: flex;
   flex-direction: column;
@@ -25,9 +33,12 @@
   text-transform: uppercase;
 }
 
+.app-loading-content svg,
 .global-loading-spinner {
-  width: 56px;
-  height: 56px;
+  width: 48px;
+  height: 48px;
+  max-width: 48px;
+  max-height: 48px;
   filter: drop-shadow(0 0 8px rgba(20, 215, 223, 0.65));
   animation: global-loading-spin 0.9s linear infinite;
 }

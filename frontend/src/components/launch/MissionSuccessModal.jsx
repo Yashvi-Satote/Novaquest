@@ -1,19 +1,20 @@
 import React from 'react';
-import { Award, CheckCircle, ChevronRight, Moon, Rocket, Sparkles, Trophy } from 'lucide-react';
+import { Award, CheckCircle, ChevronRight, Layers, Moon, Rocket, Sparkles, Trophy } from 'lucide-react';
 import { gameAudio } from '../../../NovaQuest/config/gameAudio.js';
 
 /**
  * MissionSuccessModal
  * 
  * Success celebration screen displayed after Part 3 finishes playing to the end.
- * "Surveyor 5 is on its way to the Moon!"
- * Marks the mission complete.
+ * "Surveyor 5 Has Landed on the Moon!"
+ * Marks the landing complete and offers Soil Analysis on the lunar surface.
  */
 export default function MissionSuccessModal({
   isOpen,
   score = 100,
   onClose,
   onReturnHub,
+  onSoilAnalysis,
 }) {
   if (!isOpen) return null;
 
@@ -52,10 +53,10 @@ export default function MissionSuccessModal({
             id="mission-success-title"
             className="text-2xl sm:text-3xl font-black uppercase tracking-[0.22em] text-[#e8f7ff] mt-1 drop-shadow-[0_0_15px_#00f0ff]"
           >
-            Surveyor 5 is on its way to the Moon!
+            Surveyor 5 Has Landed on the Moon!
           </h2>
           <p className="text-xs sm:text-sm font-semibold tracking-wide text-[#b8e5ff] mt-2">
-            Atlas-Centaur AC-13 trans-lunar injection confirmed nominal.
+            Touchdown confirmed at Mare Tranquillitatis. Spacecraft systems operational.
           </p>
         </div>
 
@@ -81,13 +82,17 @@ export default function MissionSuccessModal({
             autoFocus
             onClick={() => {
               gameAudio.playClick?.();
-              onClose?.();
+              if (onSoilAnalysis) {
+                onSoilAnalysis();
+              } else {
+                onClose?.();
+              }
             }}
-            className="group relative flex-1 inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg border border-[#d6a95c] bg-gradient-to-b from-[#221f1a] via-[#161411] to-[#0c0a08] text-[#e8c684] shadow-[0_0_24px_rgba(214,169,92,0.4)] transition-all hover:border-[#f5d085] hover:text-[#fff0ca] hover:shadow-[0_0_36px_rgba(245,208,133,0.6)] active:scale-95"
+            className="group relative flex-1 inline-flex items-center justify-center gap-2.5 px-6 py-3 rounded-lg border-2 border-cyan-400 bg-gradient-to-r from-cyan-900 via-cyan-800 to-blue-900 text-cyan-200 shadow-[0_0_30px_rgba(34,211,238,0.5)] transition-all hover:border-cyan-300 hover:text-white hover:shadow-[0_0_45px_rgba(34,211,238,0.8)] active:scale-95 cursor-pointer"
           >
-            <Rocket className="w-4 h-4 text-[#e8c684] group-hover:scale-110" />
-            <span className="text-xs font-bold uppercase tracking-[0.24em]">
-              Return to Firing Room
+            <Layers className="w-4 h-4 text-cyan-300 group-hover:scale-110 group-hover:rotate-12 transition-transform" />
+            <span className="text-xs font-extrabold uppercase tracking-[0.24em] drop-shadow-[0_0_8px_rgba(34,211,238,0.8)]">
+              Soil Analysis
             </span>
           </button>
 

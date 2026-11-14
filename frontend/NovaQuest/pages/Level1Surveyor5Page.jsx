@@ -31,6 +31,7 @@ import { USE_OLD_LUNAR_MAP } from '../config/lunarMapConfig';
 import { saveGame } from '../game/saveManager';
 import OldLunarMapPage from './OldLunarMapPage';
 import NasaHeadquartersModal from '../nasa-headquarters/NasaHeadquartersModal';
+import LunarSoilAnalysisModal from '../components/game/LunarSoilAnalysisModal';
 
 const INTRO_SESSION_KEY = 'novaquest-level1-intro-seen';
 const INTRO_720P_SRC = '/videos/intro_720p_optimized.mp4';
@@ -167,6 +168,7 @@ export default function Level1Surveyor5Page() {
   const [isAutoplayBlocked, setIsAutoplayBlocked] = useState(false);
   const [isIntroVideoFading, setIsIntroVideoFading] = useState(false);
   const [isHqOpen, setIsHqOpen] = useState(false);
+  const [soilAnalysisModalOpen, setSoilAnalysisModalOpen] = useState(false);
   const isOldLunarMapActive = USE_OLD_LUNAR_MAP && gamePhase === 'phase4_open_world';
 
   // Inventory & Component Recovery Tracking
@@ -1349,6 +1351,18 @@ export default function Level1Surveyor5Page() {
     <NasaHeadquartersModal
       isOpen={isHqOpen}
       onClose={() => setIsHqOpen(false)}
+      onSoilAnalysis={() => {
+        setIsHqOpen(false);
+        setGamePhase('phase4_open_world');
+        setSoilAnalysisModalOpen(true);
+      }}
+    />
+
+    <LunarSoilAnalysisModal
+      isOpen={soilAnalysisModalOpen}
+      mode="scanning"
+      onClose={() => setSoilAnalysisModalOpen(false)}
+      onReturnMenu={() => navigate('/missions')}
     />
     </>
   );

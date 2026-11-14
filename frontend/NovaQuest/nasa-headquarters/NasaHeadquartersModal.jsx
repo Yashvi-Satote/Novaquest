@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Building2, X } from 'lucide-react';
+import { Building2, Layers, X } from 'lucide-react';
 import NasaHeadquartersViewer from './NasaHeadquartersViewer';
 import Surveyor5TaskPage from './Surveyor5TaskPage';
 import Surveyor5Task2Page from './Surveyor5Task2Page';
@@ -22,7 +22,7 @@ import { gameAudio } from '../config/gameAudio';
  * base where the player collects the manifest, materialises the hologram and
  * launches the lander from the firing room.
  */
-export default function NasaHeadquartersModal({ isOpen, onClose }) {
+export default function NasaHeadquartersModal({ isOpen, onClose, onSoilAnalysis }) {
   const viewerRef = useRef(null);
   const [taskOpen, setTaskOpen] = useState(false);
   const [task2Open, setTask2Open] = useState(false);
@@ -348,15 +348,33 @@ export default function NasaHeadquartersModal({ isOpen, onClose }) {
             </div>
           </div>
 
-          <button
-            type="button"
-            autoFocus
-            onClick={handleClose}
-            aria-label="Close NASA Headquarters"
-            className="pointer-events-auto flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/15 bg-[#07101d]/80 text-[#bcd0e2] backdrop-blur-md transition-colors hover:border-[#4F79FF]/60 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#4F79FF] sm:h-11 sm:w-11"
-          >
-            <X className="h-4 w-4 sm:h-5 sm:w-5" aria-hidden="true" />
-          </button>
+          <div className="pointer-events-auto flex items-center gap-2.5">
+            <button
+              type="button"
+              onClick={() => {
+                gameAudio.playClick();
+                setMissionComplete(false);
+                onClose();
+                onSoilAnalysis?.();
+              }}
+              className="flex items-center gap-2 px-3.5 py-2 rounded-xl border border-cyan-400/60 bg-gradient-to-r from-cyan-950/90 to-blue-950/90 text-cyan-200 text-xs font-bold uppercase tracking-wider shadow-[0_0_20px_rgba(34,211,238,0.3)] hover:border-cyan-300 hover:text-white hover:scale-105 active:scale-95 transition-all cursor-pointer"
+              title="Return to Moon to perform Soil Analysis"
+            >
+              <Layers className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />
+              <span className="hidden sm:inline">Return to Moon · Soil Analysis</span>
+              <span className="sm:hidden">Soil Analysis</span>
+            </button>
+
+            <button
+              type="button"
+              autoFocus
+              onClick={handleClose}
+              aria-label="Close NASA Headquarters"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/15 bg-[#07101d]/80 text-[#bcd0e2] backdrop-blur-md transition-colors hover:border-[#4F79FF]/60 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#4F79FF] sm:h-11 sm:w-11"
+            >
+              <X className="h-4 w-4 sm:h-5 sm:w-5" aria-hidden="true" />
+            </button>
+          </div>
         </div>
 
         {/* Framing brackets keep the viewport feeling like a mission feed. */}
@@ -410,7 +428,16 @@ export default function NasaHeadquartersModal({ isOpen, onClose }) {
         <MissionSuccessModal
           isOpen={missionComplete}
           score={score}
-          onClose={() => setMissionComplete(false)}
+          onClose={() => {
+            setMissionComplete(false);
+            onClose();
+            onSoilAnalysis?.();
+          }}
+          onSoilAnalysis={() => {
+            setMissionComplete(false);
+            onClose();
+            onSoilAnalysis?.();
+          }}
           onReturnHub={handleClose}
         />
 

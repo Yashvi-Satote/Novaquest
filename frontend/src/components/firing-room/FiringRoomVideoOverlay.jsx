@@ -42,20 +42,31 @@ const FiringRoomVideoOverlay = forwardRef(function FiringRoomVideoOverlay(
   const watchFrame = useCallback(() => {
     const video = videoRef.current;
     if (!video) return;
-    const target = targetEndRef.current;
+    const dur = video.duration || 105.72;
+    const earlyStop = Math.max(0, dur - 3);
+    const target = targetEndRef.current ?? earlyStop;
     if (target !== null && video.currentTime >= target - 0.05) {
       video.pause();
       try { video.currentTime = target; } catch (_) {}
       stopWatcher();
-      onEmergencyAtHeliumT?.();
+      if (targetEndRef.current === null || target >= earlyStop - 0.1) {
+        setVisible(false);
+        onVideoEnd?.();
+      } else {
+        onEmergencyAtHeliumT?.();
+      }
       return;
     }
     watcherRef.current = requestAnimationFrame(watchFrame);
-  }, [stopWatcher, onEmergencyAtHeliumT]);
+  }, [stopWatcher, onEmergencyAtHeliumT, onVideoEnd]);
 
   const play = useCallback(async (partName) => {
     const video = videoRef.current;
     if (!video) return;
+
+    // Enforce audio mute when entering firing room / launch overlay
+    video.muted = true;
+    video.volume = 0;
 
     const segment = LAUNCH_VIDEO[partName];
     if (!segment) return;
@@ -71,9 +82,7 @@ const FiringRoomVideoOverlay = forwardRef(function FiringRoomVideoOverlay(
     try {
       await video.play();
       setLoading(false);
-      if (targetEndRef.current !== null) {
-        watcherRef.current = requestAnimationFrame(watchFrame);
-      }
+      watcherRef.current = requestAnimationFrame(watchFrame);
     } catch (err) {
       console.warn('[FiringRoomVideoOverlay] play failed:', err);
       setLoading(false);
@@ -88,15 +97,21 @@ const FiringRoomVideoOverlay = forwardRef(function FiringRoomVideoOverlay(
   const resume = useCallback(async () => {
     const video = videoRef.current;
     if (!video) return;
-    // Part 3: from HELIUM_T to end of video
-    targetEndRef.current = null; // play to natural end
+
+    // Enforce audio mute when resuming in firing room
+    video.muted = true;
+    video.volume = 0;
+
+    // Part 3: stops 3 seconds before end of video
+    const dur = video.duration || 105.72;
+    targetEndRef.current = Math.max(0, dur - 3);
     try {
       await video.play();
-      // No watcher needed — will fire 'ended' event naturally
+      watcherRef.current = requestAnimationFrame(watchFrame);
     } catch (err) {
       console.warn('[FiringRoomVideoOverlay] resume failed:', err);
     }
-  }, []);
+  }, [watchFrame]);
 
   const hide = useCallback(() => {
     stopWatcher();
@@ -169,7 +184,7 @@ const FiringRoomVideoOverlay = forwardRef(function FiringRoomVideoOverlay(
       <video
         ref={videoRef}
         playsInline
-        muted={false}
+        muted={true}
         preload="auto"
         crossOrigin="anonymous"
         onEnded={handleEnded}

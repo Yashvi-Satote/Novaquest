@@ -12,6 +12,8 @@ export function useLaunchVideo({
   videoRef: externalVideoRef,
   src = LAUNCH_VIDEO.src,
   onSegmentEnd: initialOnSegmentEnd,
+  muted: initialMuted = false,
+  stopBeforeEndSeconds = 0,
 } = {}) {
   const internalVideoRef = useRef(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -35,6 +37,10 @@ export function useLaunchVideo({
   // Ensure internal video element if external ref not provided
   const getVideo = useCallback(() => {
     if (externalVideoRef?.current) {
+      if (initialMuted) {
+        externalVideoRef.current.muted = true;
+        externalVideoRef.current.volume = 0;
+      }
       return externalVideoRef.current;
     }
     if (!internalVideoRef.current && typeof document !== 'undefined') {
@@ -42,12 +48,13 @@ export function useLaunchVideo({
       vid.crossOrigin = 'anonymous';
       vid.playsInline = true;
       vid.preload = 'auto';
-      vid.muted = false;
+      vid.muted = Boolean(initialMuted);
+      if (initialMuted) vid.volume = 0;
       vid.src = src;
       internalVideoRef.current = vid;
     }
     return internalVideoRef.current;
-  }, [externalVideoRef, src]);
+  }, [externalVideoRef, src, initialMuted]);
 
   // Precision frame watcher: stops precisely at targetEndTime (~50ms accuracy)
   const stopFrameWatcher = useCallback(() => {
@@ -70,9 +77,17 @@ export function useLaunchVideo({
     const video = getVideo();
     if (!video) return;
 
-    const targetEnd = targetEndTimeRef.current;
+    let targetEnd = targetEndTimeRef.current;
     const curTime = video.currentTime;
     setCurrentTime(curTime);
+
+    // If stopBeforeEndSeconds is active and targetEnd is null or goes past early stop
+    if (stopBeforeEndSeconds > 0 && video.duration && video.duration > stopBeforeEndSeconds) {
+      const earlyStop = video.duration - stopBeforeEndSeconds;
+      if (targetEnd === null || targetEnd > earlyStop) {
+        targetEnd = earlyStop;
+      }
+    }
 
     // If targetEnd is set and we reached within 50ms (or passed it)
     if (targetEnd !== null && curTime >= targetEnd - 0.05) {
@@ -84,7 +99,7 @@ export function useLaunchVideo({
       }
       stopFrameWatcher();
       setIsPlaying(false);
-      const finishedSegment = activeSegmentRef.current;
+      const finishedSegment = activeSegmentRef.current || 'part3';
       targetEndTimeRef.current = null;
       activeSegmentRef.current = null;
       setCurrentSegment(null);
@@ -103,7 +118,7 @@ export function useLaunchVideo({
     } else {
       rafIdRef.current = requestAnimationFrame(checkSegmentEnd);
     }
-  }, [getVideo, stopFrameWatcher]);
+  }, [getVideo, stopFrameWatcher, stopBeforeEndSeconds]);
 
   const startFrameWatcher = useCallback(() => {
     stopFrameWatcher();
@@ -122,8 +137,18 @@ export function useLaunchVideo({
       const video = getVideo();
       if (!video) return;
 
+      if (initialMuted) {
+        video.muted = true;
+        video.volume = 0;
+      }
+
       activeSegmentRef.current = partName;
-      targetEndTimeRef.current = typeof segment.end === 'number' ? segment.end : null;
+      let targetEnd = typeof segment.end === 'number' ? segment.end : null;
+      if (stopBeforeEndSeconds > 0 && targetEnd === null) {
+        const dur = video.duration || 105.72;
+        targetEnd = Math.max(0, dur - stopBeforeEndSeconds);
+      }
+      targetEndTimeRef.current = targetEnd;
       setCurrentSegment(partName);
 
       try {
@@ -185,8 +210,21 @@ export function useLaunchVideo({
       const video = getVideo();
       if (!video) return;
 
+      if (initialMuted) {
+        video.muted = true;
+        video.volume = 0;
+      }
+
+      activeSegmentRef.current = 'part3';
+      setCurrentSegment('part3');
+
       if (typeof newTargetEnd === 'number') {
         targetEndTimeRef.current = newTargetEnd;
+      } else if (stopBeforeEndSeconds > 0) {
+        const dur = video.duration || 105.72;
+        targetEndTimeRef.current = Math.max(0, dur - stopBeforeEndSeconds);
+      } else {
+        targetEndTimeRef.current = null;
       }
 
       try {
@@ -200,6 +238,7 @@ export function useLaunchVideo({
         console.warn('[useLaunchVideo] Resume failed, retrying muted:', err);
         try {
           video.muted = true;
+          video.volume = 0;
           await video.play();
           setIsPlaying(true);
           startFrameWatcher();
@@ -208,7 +247,18 @@ export function useLaunchVideo({
         }
       }
     },
-    [getVideo, startFrameWatcher],
+    [getVideo, startFrameWatcher, initialMuted, stopBeforeEndSeconds],
+  );
+
+  const setMuted = useCallback(
+    (isMuted) => {
+      const video = getVideo();
+      if (video) {
+        video.muted = Boolean(isMuted);
+        if (isMuted) video.volume = 0;
+      }
+    },
+    [getVideo],
   );
 
   // Wire video element events
@@ -284,6 +334,7 @@ export function useLaunchVideo({
     playSegment,
     pauseAt,
     resume,
+    setMuted,
     onSegmentEnd,
   };
 }

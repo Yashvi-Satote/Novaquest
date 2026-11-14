@@ -49,29 +49,30 @@ export function createThirdPersonController({
 
   let isPointerLocked = false;
   let isMouseDown = false;
+  let pointerDown = null;
   let prevMouseX = 0;
   let prevMouseY = 0;
   let footstepTimer = 0;
 
-  // --- Mouse Event Handlers ---
-  const handleMouseDown = (e) => {
+  const TRACKPAD_LOOK_SENSITIVITY = 0.0032;
+
+  // --- 1-Finger Touch / Pointer Look Handlers ---
+  const handlePointerDown = (e) => {
+    if (e.button !== 0 && e.pointerType === 'mouse') return;
+    pointerDown = { x: e.clientX, y: e.clientY, pointerId: e.pointerId };
     isMouseDown = true;
     prevMouseX = e.clientX;
     prevMouseY = e.clientY;
   };
 
-  const handleMouseUp = () => {
-    isMouseDown = false;
-  };
-
-  const handleMouseMove = (e) => {
+  const handlePointerMove = (e) => {
     let deltaX = 0;
     let deltaY = 0;
 
     if (document.pointerLockElement === domElement) {
       deltaX = e.movementX || 0;
       deltaY = e.movementY || 0;
-    } else if (isMouseDown) {
+    } else if (isMouseDown || pointerDown) {
       deltaX = e.clientX - prevMouseX;
       deltaY = e.clientY - prevMouseY;
       prevMouseX = e.clientX;
@@ -85,19 +86,50 @@ export function createThirdPersonController({
     }
   };
 
-  const handleWheel = (e) => {
-    camDistance = Math.max(2.8, Math.min(9.0, camDistance + e.deltaY * 0.003));
+  const handlePointerUp = (e) => {
+    if (pointerDown && e.pointerId !== undefined && e.pointerId !== pointerDown.pointerId) return;
+    isMouseDown = false;
+    pointerDown = null;
   };
 
-  // --- Keyboard Event Handlers ---
+  const handlePointerCancel = () => {
+    isMouseDown = false;
+    pointerDown = null;
+  };
+
+  // --- 2-Finger Laptop Touchpad Swipe & Pinch Zoom ---
+  const handleWheel = (e) => {
+    const deltaMultiplier =
+      e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? 100 : 1;
+    const deltaX = e.deltaX * deltaMultiplier;
+    const deltaY = e.deltaY * deltaMultiplier;
+    if (deltaX === 0 && deltaY === 0) return;
+
+    if (e.cancelable) e.preventDefault();
+
+    if (e.ctrlKey) {
+      // Pinch to zoom on touchpad
+      camDistance = Math.max(2.8, Math.min(9.0, camDistance + deltaY * 0.005));
+      return;
+    }
+
+    // Two-finger trackpad swipe orbits the camera, matching NASA Headquarters
+    camYaw -= deltaX * TRACKPAD_LOOK_SENSITIVITY;
+    camPitch = Math.max(minPitch, Math.min(maxPitch, camPitch + deltaY * TRACKPAD_LOOK_SENSITIVITY));
+  };
+
+  // --- WASD + Arrow Keys Keyboard Event Handlers ---
   const handleKeyDown = (e) => {
     const k = e.key.toLowerCase();
+    if (['w', 'a', 's', 'd', 'arrowup', 'arrowleft', 'arrowdown', 'arrowright', 'shift', ' '].includes(k)) {
+      e.preventDefault();
+    }
     if (k === 'w' || k === 'arrowup') keys.w = true;
     if (k === 'a' || k === 'arrowleft') keys.a = true;
     if (k === 's' || k === 'arrowdown') keys.s = true;
     if (k === 'd' || k === 'arrowright') keys.d = true;
-    if (e.key === 'Shift') keys.shift = true;
-    if (e.key === ' ' && isGrounded) {
+    if (k === 'shift') keys.shift = true;
+    if (k === ' ' && isGrounded) {
       keys.space = true;
       verticalVelocity = jumpImpulse;
       isGrounded = false;
@@ -113,17 +145,18 @@ export function createThirdPersonController({
     if (k === 'a' || k === 'arrowleft') keys.a = false;
     if (k === 's' || k === 'arrowdown') keys.s = false;
     if (k === 'd' || k === 'arrowright') keys.d = false;
-    if (e.key === 'Shift') keys.shift = false;
-    if (e.key === ' ') keys.space = false;
+    if (k === 'shift') keys.shift = false;
+    if (k === ' ') keys.space = false;
   };
 
   // Attach event listeners
   window.addEventListener('keydown', handleKeyDown);
   window.addEventListener('keyup', handleKeyUp);
-  domElement.addEventListener('mousedown', handleMouseDown);
-  window.addEventListener('mouseup', handleMouseUp);
-  window.addEventListener('mousemove', handleMouseMove);
-  domElement.addEventListener('wheel', handleWheel, { passive: true });
+  domElement.addEventListener('pointerdown', handlePointerDown);
+  window.addEventListener('pointermove', handlePointerMove);
+  window.addEventListener('pointerup', handlePointerUp);
+  window.addEventListener('pointercancel', handlePointerCancel);
+  domElement.addEventListener('wheel', handleWheel, { passive: false });
 
   // Optional Pointer Lock on click
   domElement.addEventListener('click', () => {
@@ -255,9 +288,10 @@ export function createThirdPersonController({
   const dispose = () => {
     window.removeEventListener('keydown', handleKeyDown);
     window.removeEventListener('keyup', handleKeyUp);
-    domElement.removeEventListener('mousedown', handleMouseDown);
-    window.removeEventListener('mouseup', handleMouseUp);
-    window.removeEventListener('mousemove', handleMouseMove);
+    domElement.removeEventListener('pointerdown', handlePointerDown);
+    window.removeEventListener('pointermove', handlePointerMove);
+    window.removeEventListener('pointerup', handlePointerUp);
+    window.removeEventListener('pointercancel', handlePointerCancel);
     domElement.removeEventListener('wheel', handleWheel);
     domElement.removeEventListener('touchstart', handleTouchStart);
     domElement.removeEventListener('touchmove', handleTouchMove);

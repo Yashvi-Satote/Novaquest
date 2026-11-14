@@ -53,10 +53,14 @@ export default function LunarSurfaceScene({ onComplete }) {
   useEffect(() => {
     const handleKeyDown = (e) => {
       const k = e.key.toLowerCase();
+      if (['w', 'a', 's', 'd', 'arrowup', 'arrowleft', 'arrowdown', 'arrowright', 'shift', ' '].includes(k)) {
+        e.preventDefault();
+      }
       if (k === 'w' || k === 'arrowup') keysRef.current.w = true;
       if (k === 'a' || k === 'arrowleft') keysRef.current.a = true;
       if (k === 's' || k === 'arrowdown') keysRef.current.s = true;
       if (k === 'd' || k === 'arrowright') keysRef.current.d = true;
+      if (k === 'shift') keysRef.current.shift = true;
       if (k === ' ' && playerPosRef.current.isGrounded) {
         keysRef.current.space = true;
         playerPosRef.current.vy = 0.16; // Lunar low-gravity jump
@@ -71,6 +75,7 @@ export default function LunarSurfaceScene({ onComplete }) {
       if (k === 'a' || k === 'arrowleft') keysRef.current.a = false;
       if (k === 's' || k === 'arrowdown') keysRef.current.s = false;
       if (k === 'd' || k === 'arrowright') keysRef.current.d = false;
+      if (k === 'shift') keysRef.current.shift = false;
       if (k === ' ') keysRef.current.space = false;
     };
 
@@ -272,9 +277,57 @@ export default function LunarSurfaceScene({ onComplete }) {
     const stars = new THREE.Points(starGeo, starMat);
     scene.add(stars);
 
-    // Animation Loop
+    // Animation Loop & Camera Orbit State
     let animId = null;
     let clock = new THREE.Clock();
+    let camYaw = 0;
+    let camPitch = 0.28;
+    let camDistance = 8.0;
+    const TRACKPAD_LOOK_SENSITIVITY = 0.0032;
+
+    // 1-Finger Touch / Pointer Look Handlers
+    let pointerDown = null;
+    let prevPointerX = 0;
+    let prevPointerY = 0;
+    const handlePointerDown = (e) => {
+      if (e.button !== 0 && e.pointerType === 'mouse') return;
+      pointerDown = { x: e.clientX, y: e.clientY, pointerId: e.pointerId };
+      prevPointerX = e.clientX;
+      prevPointerY = e.clientY;
+    };
+    const handlePointerMove = (e) => {
+      if (!pointerDown) return;
+      const deltaX = e.clientX - prevPointerX;
+      const deltaY = e.clientY - prevPointerY;
+      prevPointerX = e.clientX;
+      prevPointerY = e.clientY;
+      camYaw -= deltaX * 0.0035;
+      camPitch = Math.max(-0.15, Math.min(1.2, camPitch + deltaY * 0.0035));
+    };
+    const handlePointerUp = () => { pointerDown = null; };
+
+    // 2-Finger Laptop Touchpad Swipe & Pinch Zoom
+    const handleWheel = (e) => {
+      const deltaMultiplier = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? 100 : 1;
+      const deltaX = e.deltaX * deltaMultiplier;
+      const deltaY = e.deltaY * deltaMultiplier;
+      if (deltaX === 0 && deltaY === 0) return;
+      if (e.cancelable) e.preventDefault();
+
+      if (e.ctrlKey) {
+        camDistance = Math.max(3.5, Math.min(16.0, camDistance + deltaY * 0.005));
+        return;
+      }
+
+      camYaw -= deltaX * TRACKPAD_LOOK_SENSITIVITY;
+      camPitch = Math.max(-0.15, Math.min(1.2, camPitch + deltaY * TRACKPAD_LOOK_SENSITIVITY));
+    };
+
+    container.addEventListener('pointerdown', handlePointerDown);
+    window.addEventListener('pointermove', handlePointerMove);
+    window.addEventListener('pointerup', handlePointerUp);
+    window.addEventListener('pointercancel', handlePointerUp);
+    container.addEventListener('wheel', handleWheel, { passive: false });
 
     const animate = () => {
       animId = requestAnimationFrame(animate);
@@ -286,20 +339,25 @@ export default function LunarSurfaceScene({ onComplete }) {
       // Earth rotation in sky
       earthMesh.rotation.y += delta * 0.05;
 
-      // Handle Player Movement (Lunar Physics)
-      const moveSpeed = 4.5 * delta;
+      // Handle Player Movement (relative to camera yaw)
       const p = playerPosRef.current;
       const k = keysRef.current;
 
-      let dx = 0;
-      let dz = 0;
-      if (k.w) dz -= moveSpeed;
-      if (k.s) dz += moveSpeed;
-      if (k.a) dx -= moveSpeed;
-      if (k.d) dx += moveSpeed;
+      const forward = new THREE.Vector3(-Math.sin(camYaw), 0, -Math.cos(camYaw));
+      const right = new THREE.Vector3(Math.cos(camYaw), 0, -Math.sin(camYaw));
+      const moveDir = new THREE.Vector3();
+      if (k.w) moveDir.add(forward);
+      if (k.s) moveDir.sub(forward);
+      if (k.d) moveDir.add(right);
+      if (k.a) moveDir.sub(right);
 
-      p.x += dx;
-      p.z += dz;
+      if (moveDir.lengthSq() > 0.001) {
+        moveDir.normalize();
+        const speed = (k.shift ? 7.5 : 4.5) * delta;
+        p.x += moveDir.x * speed;
+        p.z += moveDir.z * speed;
+        astronautGroup.rotation.y = Math.atan2(moveDir.x, moveDir.z);
+      }
 
       // Lunar gravity & vertical physics
       p.vy -= 0.35 * delta; // 1/6th gravity
@@ -312,16 +370,18 @@ export default function LunarSurfaceScene({ onComplete }) {
 
       // Update 3D Astronaut mesh position
       astronautGroup.position.set(p.x, p.y, p.z);
-      if (dx !== 0 || dz !== 0) {
-        const targetRot = Math.atan2(dx, dz);
-        astronautGroup.rotation.y = targetRot;
-      }
 
-      // Camera Follow Astronaut smoothly
-      camera.position.x += (p.x - camera.position.x) * 0.08;
-      camera.position.y += (p.y + 3.5 - camera.position.y) * 0.08;
-      camera.position.z += (p.z + 7.5 - camera.position.z) * 0.08;
-      camera.lookAt(p.x, p.y + 1, p.z);
+      // Camera Follow Astronaut with spherical orbit (yaw, pitch, distance)
+      const hDist = camDistance * Math.cos(camPitch);
+      const vDist = camDistance * Math.sin(camPitch);
+      const targetCamX = p.x + Math.sin(camYaw) * hDist;
+      const targetCamY = Math.max(0.5, p.y + 1.2 + vDist);
+      const targetCamZ = p.z + Math.cos(camYaw) * hDist;
+
+      camera.position.x += (targetCamX - camera.position.x) * 0.12;
+      camera.position.y += (targetCamY - camera.position.y) * 0.12;
+      camera.position.z += (targetCamZ - camera.position.z) * 0.12;
+      camera.lookAt(p.x, p.y + 1.2, p.z);
 
       // Distance to Surveyor 5
       const dist = Math.hypot(p.x - landerPos.x, p.z - landerPos.z);
@@ -345,6 +405,11 @@ export default function LunarSurfaceScene({ onComplete }) {
     window.addEventListener('resize', handleResize);
 
     return () => {
+      container.removeEventListener('pointerdown', handlePointerDown);
+      window.removeEventListener('pointermove', handlePointerMove);
+      window.removeEventListener('pointerup', handlePointerUp);
+      window.removeEventListener('pointercancel', handlePointerUp);
+      container.removeEventListener('wheel', handleWheel);
       window.removeEventListener('resize', handleResize);
       if (animId) cancelAnimationFrame(animId);
       [groundGeo, rockGeo, frameGeo, panelGeo, camGeo, dishGeo, suitGeo, helmetGeo, visorGeo, packGeo, earthGeo, starGeo].forEach(g => g?.dispose());
