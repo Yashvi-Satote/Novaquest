@@ -169,6 +169,7 @@ export default function Level1Surveyor5Page() {
   const [isIntroVideoFading, setIsIntroVideoFading] = useState(false);
   const [isHqOpen, setIsHqOpen] = useState(false);
   const [soilAnalysisModalOpen, setSoilAnalysisModalOpen] = useState(false);
+  const [retrievalRequestToken, setRetrievalRequestToken] = useState(0);
   const isOldLunarMapActive = USE_OLD_LUNAR_MAP && gamePhase === 'phase4_open_world';
 
   // Inventory & Component Recovery Tracking
@@ -1345,6 +1346,7 @@ export default function Level1Surveyor5Page() {
       <OldLunarMapPage
         onComplete={() => setGamePhase('phase5_victory')}
         onReturnMenu={() => navigate('/missions')}
+        retrievalRequestToken={retrievalRequestToken}
       />
     )}
 
@@ -1364,6 +1366,11 @@ export default function Level1Surveyor5Page() {
       mode="scanning"
       onClose={() => setSoilAnalysisModalOpen(false)}
       onReturnMenu={() => navigate('/missions')}
+      onRetrieveSurveyor={() => {
+        setSoilAnalysisModalOpen(false);
+        setGamePhase('phase4_open_world');
+        setRetrievalRequestToken((token) => token + 1);
+      }}
     />
     </>
   );

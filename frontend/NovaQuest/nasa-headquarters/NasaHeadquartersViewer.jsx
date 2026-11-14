@@ -44,6 +44,7 @@ import {
   SURVEYOR5_MANIFEST_TOTAL,
 } from './surveyor5Mission';
 import { STORAGE_ROOM_COMPONENTS } from './storageRoomComponents';
+import { getComponentSpriteDataUrl } from './componentSpriteTexture';
 
 const HEADQUARTERS_ROOM_RADIUS = 12.5;
 const PLAYER_COLLISION_RADIUS = 0.34;
@@ -2188,30 +2189,17 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer(
                           )}
                         </span>
                         <div className="min-w-0 flex-1">
-                          <div className="flex items-start justify-between gap-2">
-                            <p
-                              className={`text-[10px] font-semibold uppercase leading-relaxed tracking-[0.08em] sm:text-[11px] ${
-                                isInstalled
-                                  ? 'text-[#6fb9cf] line-through decoration-[#7fe3ff]/80 decoration-2'
-                                  : isInCart
-                                    ? 'text-[#ffd79a]'
-                                    : 'text-[#d7edf7]'
-                              }`}
-                            >
-                              {part.name}
-                            </p>
-                            <span
-                              className={`shrink-0 text-[7px] font-bold uppercase tracking-[0.14em] ${
-                                isInstalled
-                                  ? 'text-[#7fe3ff]'
-                                  : isInCart
-                                    ? 'text-[#ffd79a]'
-                                    : 'text-[#397597]'
-                              }`}
-                            >
-                              {isInstalled ? 'Crossed off' : isInCart ? 'In cart' : 'Missing'}
-                            </span>
-                          </div>
+                          <p
+                            className={`text-[10px] font-semibold uppercase leading-relaxed tracking-[0.08em] sm:text-[11px] ${
+                              isInstalled
+                                ? 'text-[#6fb9cf] line-through decoration-[#7fe3ff]/80 decoration-2'
+                                : isInCart
+                                  ? 'text-[#ffd79a]'
+                                  : 'text-[#d7edf7]'
+                            }`}
+                          >
+                            {part.name}
+                          </p>
                           <p className="mt-0.5 text-[7px] font-semibold uppercase tracking-[0.18em] text-[#4f8cab]">
                             {part.category}
                           </p>
@@ -2222,6 +2210,24 @@ const NasaHeadquartersViewer = forwardRef(function NasaHeadquartersViewer(
                           >
                             {part.description}
                           </p>
+                        </div>
+                        <div className="flex w-24 shrink-0 flex-col items-center gap-1.5 self-center sm:w-28">
+                          <span
+                            className={`text-[7px] font-bold uppercase tracking-[0.14em] ${
+                              isInstalled
+                                ? 'text-[#7fe3ff]'
+                                : isInCart
+                                  ? 'text-[#ffd79a]'
+                                  : 'text-[#397597]'
+                            }`}
+                          >
+                            {isInstalled ? 'Crossed off' : isInCart ? 'In cart' : 'Missing'}
+                          </span>
+                          <img
+                            src={getComponentSpriteDataUrl(part)}
+                            alt={`${part.name} sprite`}
+                            className="h-24 w-24 rounded-lg shadow-[0_0_18px_rgba(94,231,255,0.18)] [image-rendering:pixelated] sm:h-28 sm:w-28"
+                          />
                         </div>
                       </div>
                     );

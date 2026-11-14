@@ -840,7 +840,7 @@ function drawBadge(ctx, component) {
   });
 }
 
-export function createComponentSpriteTexture(component) {
+export function createComponentSpriteCanvas(component) {
   const canvas = document.createElement('canvas');
   canvas.width = GRID * SCALE;
   canvas.height = GRID * SCALE;
@@ -852,6 +852,25 @@ export function createComponentSpriteTexture(component) {
   drawBadge(ctx, component);
   ctx.restore();
 
+  return canvas;
+}
+
+/** Cached PNG data URLs so the same badge artwork can be reused in HTML lists. */
+const spriteDataUrlCache = new Map();
+
+export function getComponentSpriteDataUrl(component) {
+  if (!component || typeof document === 'undefined') return null;
+  const cacheKey = component.id ?? `${component.mission}:${component.sprite}:${component.color}`;
+  const cached = spriteDataUrlCache.get(cacheKey);
+  if (cached) return cached;
+
+  const dataUrl = createComponentSpriteCanvas(component).toDataURL('image/png');
+  spriteDataUrlCache.set(cacheKey, dataUrl);
+  return dataUrl;
+}
+
+export function createComponentSpriteTexture(component) {
+  const canvas = createComponentSpriteCanvas(component);
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;
   texture.magFilter = THREE.NearestFilter;

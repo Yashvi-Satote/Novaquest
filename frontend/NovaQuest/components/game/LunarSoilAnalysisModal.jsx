@@ -12,6 +12,7 @@ import {
   Sparkles,
   X,
   Compass,
+  ArrowDownToLine,
 } from 'lucide-react';
 import { audio } from '../../game/moonMapAudioManager';
 import { gameAudio } from '../../config/gameAudio';
@@ -30,6 +31,7 @@ export default function LunarSoilAnalysisModal({
   mode = 'scanning', // 'scanning' | 'report'
   onClose,
   onReturnMenu,
+  onRetrieveSurveyor,
 }) {
   const [scanProgress, setScanProgress] = useState(mode === 'report' ? 100 : 0);
   const [currentPhaseText, setCurrentPhaseText] = useState('INITIALIZING ALPHA-SCATTERING SENSOR...');
@@ -349,11 +351,13 @@ export default function LunarSoilAnalysisModal({
                 type="button"
                 onClick={() => {
                   gameAudio.playClick?.();
-                  onClose?.();
+                  if (onRetrieveSurveyor) onRetrieveSurveyor();
+                  else onClose?.();
                 }}
-                className="flex-1 sm:flex-none px-6 py-2.5 rounded-xl border border-cyan-400 bg-gradient-to-r from-cyan-600 via-sky-600 to-blue-700 text-white text-xs font-bold uppercase tracking-wider shadow-[0_0_24px_rgba(6,182,212,0.4)] hover:brightness-110 active:scale-95 transition-all"
+                className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl border border-cyan-400 bg-gradient-to-r from-cyan-600 via-sky-600 to-blue-700 text-white text-xs font-bold uppercase tracking-wider shadow-[0_0_24px_rgba(6,182,212,0.4)] hover:brightness-110 active:scale-95 transition-all"
               >
-                Resume Exploration
+                <ArrowDownToLine className="w-4 h-4 text-cyan-200" />
+                <span>Retrieve Surveyor 5</span>
               </button>
 
               {onReturnMenu && (
