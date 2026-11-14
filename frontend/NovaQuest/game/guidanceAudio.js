@@ -80,9 +80,7 @@ class GuidanceAudioEngine {
       ctx.resume().catch(() => {});
     }
     this.isUnlocked = true;
-    if (!this.isMuted && !this.isSpaceHumPlaying) {
-      this.startSpaceHum();
-    }
+    // Ambient space hum disabled to maintain clean lunar audio
   }
 
   setVolume(vol) {
@@ -132,203 +130,27 @@ class GuidanceAudioEngine {
   }
 
   // =========================================================================
-  // 1. BEACON PING (Sonar ping with simulated reverb/delay)
+  // 1. BEACON PING (Sonar ping with simulated reverb/delay) - SILENCED
   // =========================================================================
-  playBeaconPing(distance = 50, minDistance = 8, maxDistance = 140, basePitch = 600) {
-    if (this.isMuted) return;
-    if (this._tryPlayExternal('beaconPing')) return;
-
-    this.unlock();
-    const ctx = this.ctx;
-    if (!ctx) return;
-
-    const now = ctx.currentTime;
-
-    // Pitch scales higher as distance decreases (closer = more urgent)
-    const factor = Math.max(0, Math.min(1, (distance - minDistance) / (maxDistance - minDistance)));
-    const targetPitch = basePitch + (1.0 - factor) * 320; // 600 Hz far -> 920 Hz close
-
-    // Master node for this ping instance
-    const pingOutput = ctx.createGain();
-    const vol = (0.24 + (1.0 - factor) * 0.12) * this.masterVolume;
-    pingOutput.gain.setValueAtTime(vol, now);
-
-    // Primary Sonar Tone Oscillator
-    const osc = ctx.createOscillator();
-    const oscGain = ctx.createGain();
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(targetPitch, now);
-    // Subtle downward glissando gives sonar acoustic feel
-    osc.frequency.exponentialRampToValueAtTime(targetPitch * 0.94, now + 0.22);
-
-    oscGain.gain.setValueAtTime(1.0, now);
-    oscGain.gain.exponentialRampToValueAtTime(0.001, now + 0.28);
-
-    // Sub-Harmonic Accent for depth
-    const subOsc = ctx.createOscillator();
-    const subGain = ctx.createGain();
-    subOsc.type = 'triangle';
-    subOsc.frequency.setValueAtTime(targetPitch * 0.5, now);
-    subGain.gain.setValueAtTime(0.35, now);
-    subGain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
-
-    // Simulated Reverb / Stereo Delay Network
-    const delay = ctx.createDelay();
-    delay.delayTime.setValueAtTime(0.14, now);
-    const feedback = ctx.createGain();
-    feedback.gain.setValueAtTime(0.38, now);
-    const delayFilter = ctx.createBiquadFilter();
-    delayFilter.type = 'lowpass';
-    delayFilter.frequency.setValueAtTime(1400, now);
-
-    // Connections
-    osc.connect(oscGain);
-    subOsc.connect(subGain);
-    oscGain.connect(pingOutput);
-    subGain.connect(pingOutput);
-
-    // Feed to Delay Reverb loop
-    pingOutput.connect(delay);
-    delay.connect(delayFilter);
-    delayFilter.connect(feedback);
-    feedback.connect(delay);
-    delayFilter.connect(ctx.destination);
-
-    // Direct Dry output
-    pingOutput.connect(ctx.destination);
-
-    osc.start(now);
-    subOsc.start(now);
-    osc.stop(now + 0.3);
-    subOsc.stop(now + 0.2);
-
-    // Clean disconnect after echoes finish
-    setTimeout(() => {
-      try {
-        pingOutput.disconnect();
-        delay.disconnect();
-        feedback.disconnect();
-      } catch (e) {}
-    }, 900);
+  playBeaconPing() {
+    // Proximity sonar pings permanently disabled per mission audio requirements
+    return;
   }
 
   // =========================================================================
-  // 2. BEACON ACTIVATED (Rising synth sweep + short digital chirp)
+  // 2. BEACON ACTIVATED - SILENCED
   // =========================================================================
   playBeaconActivated() {
-    if (this.isMuted) return;
-    if (this._tryPlayExternal('beaconActivated')) return;
-
-    this.unlock();
-    const ctx = this.ctx;
-    if (!ctx) return;
-
-    const now = ctx.currentTime;
-
-    // 1. Rising Synth Sweep
-    const sweepOsc = ctx.createOscillator();
-    const sweepGain = ctx.createGain();
-    const sweepFilter = ctx.createBiquadFilter();
-
-    sweepOsc.type = 'sawtooth';
-    sweepOsc.frequency.setValueAtTime(130, now);
-    sweepOsc.frequency.exponentialRampToValueAtTime(1250, now + 0.75);
-
-    sweepFilter.type = 'bandpass';
-    sweepFilter.frequency.setValueAtTime(280, now);
-    sweepFilter.frequency.exponentialRampToValueAtTime(2400, now + 0.75);
-    sweepFilter.Q.setValueAtTime(4.0, now);
-
-    sweepGain.gain.setValueAtTime(0.01, now);
-    sweepGain.gain.linearRampToValueAtTime(this.masterVolume * 0.28, now + 0.45);
-    sweepGain.gain.exponentialRampToValueAtTime(0.001, now + 0.82);
-
-    sweepOsc.connect(sweepFilter);
-    sweepFilter.connect(sweepGain);
-    sweepGain.connect(ctx.destination);
-
-    sweepOsc.start(now);
-    sweepOsc.stop(now + 0.85);
-
-    // 2. Dual Digital Chirp at apex (0.65s)
-    const chirpTime = now + 0.65;
-    [1760, 2349].forEach((freq, idx) => {
-      const chirpOsc = ctx.createOscillator();
-      const chirpGain = ctx.createGain();
-
-      chirpOsc.type = 'sine';
-      chirpOsc.frequency.setValueAtTime(freq, chirpTime + idx * 0.05);
-
-      chirpGain.gain.setValueAtTime(this.masterVolume * 0.32, chirpTime + idx * 0.05);
-      chirpGain.gain.exponentialRampToValueAtTime(0.001, chirpTime + idx * 0.05 + 0.14);
-
-      chirpOsc.connect(chirpGain);
-      chirpGain.connect(ctx.destination);
-
-      chirpOsc.start(chirpTime + idx * 0.05);
-      chirpOsc.stop(chirpTime + idx * 0.05 + 0.16);
-    });
+    // Beacon sound disabled per requirements
+    return;
   }
 
   // =========================================================================
-  // 3. MARKER APPEARS (Holographic whoosh + crystalline chime)
+  // 3. MARKER APPEARS - SILENCED
   // =========================================================================
   playMarkerAppears() {
-    if (this.isMuted) return;
-    if (this._tryPlayExternal('markerChime')) return;
-
-    this.unlock();
-    const ctx = this.ctx;
-    if (!ctx) return;
-
-    const now = ctx.currentTime;
-
-    // 1. Holographic Soft Whoosh (Procedural filtered noise)
-    const bufferSize = ctx.sampleRate * 0.35;
-    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-    const output = buffer.getChannelData(0);
-    for (let i = 0; i < bufferSize; i++) {
-      output[i] = (Math.random() * 2 - 1) * 0.7;
-    }
-
-    const whiteNoise = ctx.createBufferSource();
-    whiteNoise.buffer = buffer;
-
-    const whooshFilter = ctx.createBiquadFilter();
-    whooshFilter.type = 'bandpass';
-    whooshFilter.frequency.setValueAtTime(2200, now);
-    whooshFilter.frequency.exponentialRampToValueAtTime(450, now + 0.32);
-    whooshFilter.Q.setValueAtTime(2.5, now);
-
-    const whooshGain = ctx.createGain();
-    whooshGain.gain.setValueAtTime(0.01, now);
-    whooshGain.gain.linearRampToValueAtTime(this.masterVolume * 0.22, now + 0.12);
-    whooshGain.gain.exponentialRampToValueAtTime(0.001, now + 0.34);
-
-    whiteNoise.connect(whooshFilter);
-    whooshFilter.connect(whooshGain);
-    whooshGain.connect(ctx.destination);
-    whiteNoise.start(now);
-
-    // 2. Crystalline Chime Triad (High glitter sine notes)
-    const chimeNotes = [1046.5, 1318.51, 1567.98, 2093.0]; // C6, E6, G6, C7
-    chimeNotes.forEach((f, i) => {
-      const cTime = now + 0.08 + i * 0.05;
-      const cOsc = ctx.createOscillator();
-      const cGain = ctx.createGain();
-
-      cOsc.type = 'sine';
-      cOsc.frequency.setValueAtTime(f, cTime);
-
-      cGain.gain.setValueAtTime(this.masterVolume * 0.24, cTime);
-      cGain.gain.exponentialRampToValueAtTime(0.001, cTime + 0.38);
-
-      cOsc.connect(cGain);
-      cGain.connect(ctx.destination);
-
-      cOsc.start(cTime);
-      cOsc.stop(cTime + 0.4);
-    });
+    // Proximity approach whoosh/chime completely removed per requirements
+    return;
   }
 
   // =========================================================================
@@ -391,42 +213,14 @@ class GuidanceAudioEngine {
   }
 
   // =========================================================================
-  // 5. AMBIENT SPACE HUM LOOP (Low, immersive atmospheric sub-bass)
+  // 5. AMBIENT SPACE HUM LOOP - SILENCED
   // =========================================================================
   startSpaceHum() {
-    if (this.isSpaceHumPlaying || this.isMuted) return;
-    const ctx = this.getContext();
-    if (!ctx) return;
-
-    try {
-      const now = ctx.currentTime;
-      this.spaceHumGain = ctx.createGain();
-      this.spaceHumGain.gain.setValueAtTime(this.isMuted ? 0 : this.masterVolume * 0.035, now);
-
-      const filter = ctx.createBiquadFilter();
-      filter.type = 'lowpass';
-      filter.frequency.setValueAtTime(130, now);
-
-      // Low 55 Hz Sine + 110 Hz Triangle
-      this.spaceHumOsc1 = ctx.createOscillator();
-      this.spaceHumOsc1.type = 'sine';
-      this.spaceHumOsc1.frequency.setValueAtTime(55.0, now); // Sub-bass A1
-
-      this.spaceHumOsc2 = ctx.createOscillator();
-      this.spaceHumOsc2.type = 'triangle';
-      this.spaceHumOsc2.frequency.setValueAtTime(110.0, now); // A2 harmonic
-
-      this.spaceHumOsc1.connect(filter);
-      this.spaceHumOsc2.connect(filter);
-      filter.connect(this.spaceHumGain);
-      this.spaceHumGain.connect(ctx.destination);
-
-      this.spaceHumOsc1.start();
-      this.spaceHumOsc2.start();
-      this.isSpaceHumPlaying = true;
-    } catch (e) {
-      console.warn('Could not start ambient space hum:', e);
+    // Unwanted space hum disabled per audio requirements
+    if (this.isSpaceHumPlaying) {
+      this.stopSpaceHum();
     }
+    return;
   }
 
   stopSpaceHum() {

@@ -22,7 +22,7 @@ import { gameAudio } from '../config/gameAudio';
  * base where the player collects the manifest, materialises the hologram and
  * launches the lander from the firing room.
  */
-export default function NasaHeadquartersModal({ isOpen, onClose, onSoilAnalysis }) {
+export default function NasaHeadquartersModal({ isOpen, onClose, onSoilAnalysis, onMissionSuccess }) {
   const viewerRef = useRef(null);
   const [taskOpen, setTaskOpen] = useState(false);
   const [task2Open, setTask2Open] = useState(false);
@@ -53,6 +53,11 @@ export default function NasaHeadquartersModal({ isOpen, onClose, onSoilAnalysis 
     document.body.style.overflow = 'hidden';
 
     const handleKeyDown = (event) => {
+      // Block key 3 strictly to prevent any auto-complete or mission bypass
+      if (event.key === '3' || event.code === 'Digit3' || event.code === 'Numpad3') {
+        event.preventDefault();
+        return;
+      }
       if (event.key !== 'Escape') return;
       if (task3Open) {
         setTask3Open(false);
@@ -171,11 +176,7 @@ export default function NasaHeadquartersModal({ isOpen, onClose, onSoilAnalysis 
   }, [hologramConverted, missionSolved]);
 
   const handleAutoCompleteTask = useCallback(() => {
-    setCollectedPartIds([...SURVEYOR5_MANIFEST_IDS]);
-    setCartPartIds([]);
-    setHologramConverted(true);
-    setUnlockedModalOpen(true);
-    gameAudio.playVictory();
+    // Auto-complete strictly disabled - mission requires manual objective completion
   }, []);
 
   const handleUnlockLaunch = useCallback(() => {
@@ -431,14 +432,20 @@ export default function NasaHeadquartersModal({ isOpen, onClose, onSoilAnalysis 
           onClose={() => {
             setMissionComplete(false);
             onClose();
+            onMissionSuccess?.();
             onSoilAnalysis?.();
           }}
           onSoilAnalysis={() => {
             setMissionComplete(false);
             onClose();
+            onMissionSuccess?.();
             onSoilAnalysis?.();
           }}
-          onReturnHub={handleClose}
+          onReturnHub={() => {
+            setMissionComplete(false);
+            onClose();
+            onMissionSuccess?.();
+          }}
         />
 
         <Surveyor5Task2Page

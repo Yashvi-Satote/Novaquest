@@ -917,15 +917,16 @@ export default function Level1Surveyor5Page() {
     };
   }, [openingStage, isOldLunarMapActive]);
 
-  // Reference for test / debug mission completion
+  // Prevent key 3 from bypassing objectives
   useEffect(() => {
-    const handleTestComplete = () => {
-      setInventory(['solar_panel', 'antenna', 'tv_camera', 'alpha_sensor']);
-      setInstalledSlots(['solar_panel', 'antenna', 'tv_camera', 'alpha_sensor']);
-      setGamePhase('phase5_victory');
+    const handleKeyDownBlock = (e) => {
+      if (e.key === '3' || e.code === 'Digit3' || e.code === 'Numpad3') {
+        e.preventDefault();
+        e.stopPropagation();
+      }
     };
-    window.addEventListener('test-complete-mission', handleTestComplete);
-    return () => window.removeEventListener('test-complete-mission', handleTestComplete);
+    window.addEventListener('keydown', handleKeyDownBlock, true);
+    return () => window.removeEventListener('keydown', handleKeyDownBlock, true);
   }, []);
 
   // -------------------------------------------------------------

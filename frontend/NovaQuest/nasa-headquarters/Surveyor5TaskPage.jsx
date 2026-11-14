@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Check,
   CheckCircle2,
@@ -141,6 +141,18 @@ export default function Surveyor5TaskPage({
   onClose,
 }) {
   const [showList, setShowList] = useState(false);
+
+  useEffect(() => {
+    if (!isOpen) return undefined;
+    const handleTaskKeyDown = (e) => {
+      if (e.key === '3' || e.code === 'Digit3' || e.code === 'Numpad3') {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    };
+    window.addEventListener('keydown', handleTaskKeyDown, true);
+    return () => window.removeEventListener('keydown', handleTaskKeyDown, true);
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -651,20 +663,6 @@ export default function Surveyor5TaskPage({
                     <ChevronRight className="h-5 w-5 shrink-0 text-[#9df0ff] transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
                   )}
                 </button>
-
-                {!allInstalled && onAutoCompleteTask && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      gameAudio.playClick();
-                      onAutoCompleteTask();
-                    }}
-                    className="group mt-2 flex w-full items-center justify-center gap-2 rounded-lg border border-[#5ee7ff]/60 bg-gradient-to-r from-[#08294a] via-[#0a3e75] to-[#08294a] px-3 py-2 text-[9px] font-bold uppercase tracking-[0.2em] text-[#d6f7ff] shadow-[0_0_18px_rgba(94,231,255,0.2)] transition-all hover:border-[#8ef4ff] hover:text-white hover:shadow-[0_0_24px_rgba(94,231,255,0.4)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5ee7ff]"
-                  >
-                    <CheckCircle2 className="h-3.5 w-3.5 text-[#5ee7ff] transition-transform group-hover:scale-110" aria-hidden="true" />
-                    <span>Auto-Complete Task (100%)</span>
-                  </button>
-                )}
               </div>
             </aside>
           </div>
