@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowUpRight, Building2, ChevronRight } from 'lucide-react';
+import { ArrowUpRight, Building2, ChevronRight, Film } from 'lucide-react';
 import AppNavbar from '../../Shared/components/layout/AppNavbar';
 import CinematicMoonHero3D from '../components/home/CinematicMoonHero3D';
 import SettingsModal from '../components/home/SettingsModal';
@@ -203,6 +203,64 @@ export default function TimeTravelersHomePage() {
               aria-hidden="true"
             />
           </button>
+
+          {/* Dedicated MEMOIR Module Card */}
+          <div
+            id="memoir-module-card"
+            className="cinematic-rise group mt-5 w-full max-w-[500px] overflow-hidden rounded-xl border border-[#4F79FF]/35 bg-gradient-to-br from-[#0c1329]/95 via-[#070b14]/90 to-[#101b3b]/80 p-4 sm:p-5 backdrop-blur-md shadow-[0_4px_30px_rgba(61,107,255,0.18)] transition-all duration-300 hover:border-[#4F79FF] hover:shadow-[0_4px_40px_rgba(61,107,255,0.35)]"
+            style={{ animationDelay: '0.45s' }}
+          >
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+              <div className="relative h-28 w-full shrink-0 overflow-hidden rounded-lg border border-white/10 bg-black sm:w-36">
+                <img
+                  src="/assets/memoir/scene1_surveyor3_anime_establishing.jpg"
+                  alt="Memoir Preview - Surveyor 3"
+                  className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+                <span className="absolute bottom-1.5 left-2 rounded bg-[#3D6BFF]/90 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider text-white">
+                  EPISODE 01
+                </span>
+              </div>
+
+              <div className="min-w-0 flex-1 space-y-1.5">
+                <div className="flex items-center gap-1.5">
+                  <Film className="h-3 w-3 text-[#4F79FF]" />
+                  <span className="text-[8px] font-bold uppercase tracking-[0.28em] text-[#8ce5ff]">
+                    Cinematic Series
+                  </span>
+                </div>
+
+                <h2 className="cinematic-display text-lg font-bold tracking-[0.2em] text-white sm:text-xl">
+                  MEMOIR
+                </h2>
+
+                <p className="text-[11px] font-semibold italic tracking-[0.08em] text-[#8ce5ff]">
+                  Every machine has a story.
+                </p>
+
+                <p className="text-[11px] leading-relaxed text-[#AEB4C2]">
+                  Explore the forgotten stories of machines left behind on the Moon and Mars through
+                  cinematic animated storytelling.
+                </p>
+
+                <div className="pt-1.5">
+                  <button
+                    id="enter-memoir-btn"
+                    type="button"
+                    onClick={() => {
+                      gameAudio.playClick();
+                      navigate('/memoir');
+                    }}
+                    className="inline-flex items-center gap-2 rounded-lg bg-[#3D6BFF] px-4 py-2 text-[10px] font-bold uppercase tracking-[0.25em] text-white shadow-md shadow-[#3D6BFF]/30 transition-all hover:bg-[#4F79FF] hover:shadow-[0_0_20px_rgba(61,107,255,0.6)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#3D6BFF]"
+                  >
+                    <span>ENTER MEMOIR</span>
+                    <ChevronRight className="h-3 w-3" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
 
           {/* Primary controls + right-side secondary links. */}
           <div

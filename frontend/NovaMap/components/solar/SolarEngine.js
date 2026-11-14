@@ -134,7 +134,7 @@ export class SolarEngine {
     this.container.appendChild(this.domElement);
 
     // 4. Lighting Setup
-    this.ambientLight = new THREE.AmbientLight(0x1e293b, 0.7);
+    this.ambientLight = new THREE.AmbientLight(0x475569, 0.9);
     this.scene.add(this.ambientLight);
 
     this.floodLight = new THREE.DirectionalLight(0xffffff, 0);
@@ -941,9 +941,9 @@ export class SolarEngine {
       this.ambientLight.intensity = 1.35;
       this.floodLight.intensity = 0.85;
     } else {
-      // Natural sunlight from central Sun
-      this.ambientLight.color.setHex(0x1e293b);
-      this.ambientLight.intensity = 0.65;
+      // Natural sunlight from central Sun with soft deep-space starlight fill
+      this.ambientLight.color.setHex(0x475569);
+      this.ambientLight.intensity = 0.9;
       this.floodLight.intensity = 0.0;
     }
   }

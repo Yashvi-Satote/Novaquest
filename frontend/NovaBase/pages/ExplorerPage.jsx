@@ -116,6 +116,22 @@ export default function ExplorerPage() {
     loadHardware();
   }, [loadHardware]);
 
+  const handleRetry = useCallback(async () => {
+    try {
+      const filtersRes = await fetchFilters();
+      setHierarchy(filtersRes.hierarchy || []);
+    } catch (err) {
+      console.error('Retry filters error:', err);
+    }
+    try {
+      const health = await fetchNovaBaseHealth();
+      setNovaHealth(health);
+    } catch (err) {
+      console.error('Retry health error:', err);
+    }
+    loadHardware();
+  }, [loadHardware]);
+
   // Filter handlers
   const handleFilterChange = (newFilters) => {
     setActiveFilters(prev => ({
@@ -266,7 +282,7 @@ export default function ExplorerPage() {
               </div>
               <button
                 type="button"
-                onClick={loadHardware}
+                onClick={handleRetry}
                 className="px-3 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-semibold cursor-pointer shadow-xs"
               >
                 Retry

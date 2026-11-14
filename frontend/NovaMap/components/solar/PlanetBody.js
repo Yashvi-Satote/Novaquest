@@ -726,10 +726,11 @@ export class PlanetBody {
       this.container.add(atmoMesh);
 
     } else {
+      const isGasGiant = this.data.id === 'jupiter' || this.data.id === 'saturn' || this.data.id === 'uranus' || this.data.id === 'neptune';
       material = new THREE.MeshStandardMaterial({
         map: texture,
-        roughness: this.data.id === 'venus' ? 0.95 : (this.data.id === 'mars' ? 0.78 : 0.68),
-        metalness: 0.05
+        roughness: isGasGiant ? 0.95 : this.data.id === 'venus' ? 0.95 : (this.data.id === 'mars' ? 0.78 : 0.68),
+        metalness: isGasGiant ? 0.0 : 0.05
       });
 
       // Atmosphere Glow Layer
