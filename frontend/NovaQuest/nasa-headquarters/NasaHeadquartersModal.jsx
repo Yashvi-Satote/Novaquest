@@ -273,16 +273,13 @@ export default function NasaHeadquartersModal({ isOpen, onClose, onSoilAnalysis,
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[200] flex bg-[#02060d]/95 p-2 backdrop-blur-md sm:p-4"
-      onClick={(event) => {
-        if (event.target === event.currentTarget) handleClose();
-      }}
+      className="fixed inset-0 z-[200] flex bg-[#040911] overflow-hidden"
     >
       <section
         role="dialog"
         aria-modal="true"
         aria-label="NASA Headquarters 3D mission control base"
-        className="relative flex h-full w-full flex-col overflow-hidden rounded-2xl border border-[#3D6BFF]/35 bg-[#040911] shadow-[0_0_80px_rgba(28,88,255,0.22)]"
+        className="relative flex h-full w-full flex-col overflow-hidden bg-[#040911]"
       >
         <NasaHeadquartersViewer
           ref={viewerRef}
