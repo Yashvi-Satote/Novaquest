@@ -22,6 +22,21 @@ db_info = {
     "message": ""
 }
 
+def is_production() -> bool:
+    """Return True if running in a production deployment environment."""
+    if os.getenv("RAILWAY_ENVIRONMENT") or os.getenv("RAILWAY_PROJECT_ID") or os.getenv("RAILWAY_SERVICE_ID"):
+        return True
+    if (os.getenv("FLASK_ENV") or "").strip().lower() == "production":
+        return True
+    if (os.getenv("ENVIRONMENT") or "").strip().lower() == "production":
+        return True
+    if (os.getenv("NODE_ENV") or "").strip().lower() == "production":
+        return True
+    if os.getenv("VERCEL"):
+        return True
+    return False
+
+
 def _is_postgres_url(url: str) -> bool:
     lowered = (url or "").strip().lower()
     return lowered.startswith(("postgresql://", "postgres://", "postgresql+psycopg://",
@@ -31,11 +46,31 @@ def _is_postgres_url(url: str) -> bool:
 def create_db_engine():
     global DATABASE_URL
     
+    prod = is_production()
+    current_url = os.getenv("DATABASE_URL", "").strip()
+    if not current_url:
+        current_url = DATABASE_URL
+    
     # Check if PostgreSQL URL is provided. Accept driver-qualified URLs too
     # (postgresql+psycopg://, postgresql+psycopg2://).
-    is_placeholder = any(p in (DATABASE_URL or "").lower() for p in ["your_db_user", "your_db_password", "placeholder"])
-    if DATABASE_URL and _is_postgres_url(DATABASE_URL) and not is_placeholder:
-        normalized_url = DATABASE_URL
+    is_placeholder = any(p in (current_url or "").lower() for p in ["your_db_user", "your_db_password", "placeholder"])
+    
+    if prod and (not current_url or is_placeholder or not _is_postgres_url(current_url)):
+        err_msg = (
+            "CRITICAL: DATABASE_URL is missing, placeholder, or invalid in production environment. "
+            "Silent SQLite fallback is strictly prohibited in production to prevent data loss on ephemeral filesystems. "
+            "Please configure a valid persistent PostgreSQL connection string in your Railway environment variables."
+        )
+        logger.critical(err_msg)
+        db_info["engine_type"] = "none"
+        db_info["is_postgres"] = False
+        db_info["connected"] = False
+        db_info["error"] = err_msg
+        db_info["message"] = err_msg
+        raise RuntimeError(err_msg)
+
+    if current_url and _is_postgres_url(current_url) and not is_placeholder:
+        normalized_url = current_url
         if normalized_url.startswith("postgres://"):
             normalized_url = normalized_url.replace("postgres://", "postgresql://", 1)
         if normalized_url.startswith("postgresql+asyncpg://"):
@@ -58,10 +93,25 @@ def create_db_engine():
             db_info["engine_type"] = "postgresql"
             db_info["is_postgres"] = True
             db_info["connected"] = True
+            db_info["error"] = None
             db_info["message"] = "Connected to PostgreSQL database."
             logger.info("Successfully connected to PostgreSQL database.")
             return pg_engine
         except Exception as e:
+            if prod:
+                err_msg = (
+                    f"CRITICAL: Failed to connect to production PostgreSQL database ({e}). "
+                    "Silent SQLite fallback is strictly prohibited in production. "
+                    "Ensure PostgreSQL is provisioned, reachable, and credentials in DATABASE_URL are correct."
+                )
+                logger.critical(err_msg)
+                db_info["engine_type"] = "none"
+                db_info["is_postgres"] = False
+                db_info["connected"] = False
+                db_info["error"] = str(e)
+                db_info["message"] = err_msg
+                raise RuntimeError(err_msg) from e
+            
             logger.warning(f"Failed to connect to PostgreSQL ({e}). Falling back to SQLite for local development.")
             db_info["error"] = str(e)
     

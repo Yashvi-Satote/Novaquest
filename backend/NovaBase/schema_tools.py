@@ -145,6 +145,33 @@ def create_database_if_missing(database_url: str) -> bool:
         logger.warning("psycopg2 is not installed; skipping CREATE DATABASE.")
         return False
 
+    # 1. First test if the target database already exists and is reachable.
+    # On Railway, Supabase, Neon, etc. the database is pre-provisioned and CREATEDB is restricted.
+    try:
+        test_conn = psycopg2.connect(
+            host=url.host or "localhost",
+            port=url.port or 5432,
+            user=url.username,
+            password=url.password,
+            dbname=database,
+            connect_timeout=8,
+        )
+        test_conn.close()
+        logger.info("Target PostgreSQL database %s already exists and is accessible.", database)
+        return False
+    except psycopg2.OperationalError as exc:
+        err_str = str(exc).lower()
+        pgcode = getattr(exc, "pgcode", None)
+        is_missing = (
+            pgcode == "3D000"
+            or f'database "{database.lower()}" does not exist' in err_str
+            or f"database '{database.lower()}' does not exist" in err_str
+        )
+        if not is_missing:
+            logger.warning("Could not reach target PostgreSQL database %s: %s", database, exc)
+            return False
+
+    # 2. If the database does not exist, attempt creation via maintenance connection
     try:
         conn = psycopg2.connect(
             host=url.host or "localhost",
