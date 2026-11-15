@@ -190,16 +190,6 @@ export default function NasaHqCinematic({ onComplete, onSkip }) {
             <h2 className="text-sm sm:text-base font-extrabold text-white">NASA Headquarters — Washington D.C., 1967</h2>
           </div>
         </div>
-
-        {onSkip && (
-          <button
-            onClick={onSkip}
-            className="flex items-center gap-2 px-4 py-2 bg-slate-900/80 hover:bg-slate-800 backdrop-blur-md text-slate-300 hover:text-white rounded-2xl border border-slate-700 hover:border-sky-400 transition-all pointer-events-auto text-xs sm:text-sm font-semibold shadow-md active:scale-95"
-          >
-            <span>Skip Cinematic</span>
-            <FastForward className="w-4 h-4 text-sky-400" />
-          </button>
-        )}
       </div>
 
       {/* Cinematic Lower Third Subtitle Dialogue Box */}

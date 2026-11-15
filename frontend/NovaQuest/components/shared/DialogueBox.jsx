@@ -133,7 +133,7 @@ export default function DialogueBox({
             onClick={handleSkipOrContinue}
             icon={ChevronRight}
           >
-            {isTyping ? 'Skip' : continueLabel}
+            {continueLabel}
           </GameButton>
         </div>
       </div>

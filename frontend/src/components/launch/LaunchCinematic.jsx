@@ -140,18 +140,6 @@ export default function LaunchCinematic({ isOpen, onComplete }) {
           <div className="hidden sm:block px-2.5 py-1 rounded border border-[#00f0ff]/30 bg-[#061e33]/60 font-mono text-xs font-bold tracking-widest text-[#00f0ff] shadow-[0_0_12px_rgba(0,240,255,0.3)]">
             REC ●
           </div>
-
-          {/* Skip Button */}
-          <button
-            type="button"
-            onClick={handleSkip}
-            className="pointer-events-auto group flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg border border-[#00f0ff]/70 bg-gradient-to-r from-[#07253d] to-[#0c3f64] hover:from-[#0a385c] hover:to-[#13588a] hover:border-[#5ee7ff] text-[#8ef4ff] hover:text-white font-mono text-[11px] font-bold uppercase tracking-[0.2em] shadow-[0_0_16px_rgba(0,240,255,0.35)] hover:shadow-[0_0_24px_rgba(0,240,255,0.65)] transition-all cursor-pointer active:scale-95"
-            title="Skip transmission (or press Esc/Space)"
-            aria-label="Skip video"
-          >
-            <span>Skip</span>
-            <SkipForward className="w-3.5 h-3.5 text-[#00f0ff] group-hover:translate-x-0.5 transition-transform" />
-          </button>
         </div>
       </div>
 

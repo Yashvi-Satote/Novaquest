@@ -121,13 +121,6 @@ const IntroVideoPlayer = memo(function IntroVideoPlayer({
           Play intro with sound
         </button>
       )}
-      <button
-        type="button"
-        onClick={onSkip}
-        className="absolute bottom-6 right-6 z-20 rounded-md bg-black/70 px-4 py-2 text-sm font-bold text-white transition-opacity hover:opacity-80"
-      >
-        Skip
-      </button>
     </div>
   );
 });
@@ -186,6 +179,14 @@ export default function Level1Surveyor5Page() {
 
   // Radio / Character Dialogue Overlay State
   const [radioTransmission, setRadioTransmission] = useState(null);
+  const [showStartScreen, setShowStartScreen] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowStartScreen(false);
+    }, 2800);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Cockpit Flight Telemetry (Phase 3)
   const [flightAltitude, setFlightAltitude] = useState(120);
@@ -1050,17 +1051,6 @@ export default function Level1Surveyor5Page() {
             </button>
           )}
 
-          {gamePhase !== 'phase4_open_world' && gamePhase !== 'phase5_victory' && (
-            <button
-              id="skip-to-moon-btn"
-              onClick={handleSkipToOpenWorld}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-900/85 hover:bg-slate-800 backdrop-blur-md text-slate-300 hover:text-white rounded-2xl border border-slate-700 hover:border-sky-400 transition-all text-xs font-bold shadow-md active:scale-95"
-            >
-              <span>Skip to Moon</span>
-              <FastForward className="w-3.5 h-3.5 text-sky-400" />
-            </button>
-          )}
-
           <button
             onClick={() => navigate('/missions')}
             className="px-3 py-1.5 bg-slate-900/85 hover:bg-slate-800 backdrop-blur-md text-slate-400 hover:text-white rounded-2xl border border-slate-700 text-xs font-bold transition-all shadow-md active:scale-95"
@@ -1372,6 +1362,20 @@ export default function Level1Surveyor5Page() {
         setRetrievalRequestToken((token) => token + 1);
       }}
     />
+
+    {/* 1. BLACK SCREEN AT START: 29 June 2126 in bold white */}
+    {showStartScreen && (
+      <div className="fixed inset-0 z-[400] flex flex-col items-center justify-center bg-black select-none pointer-events-auto transition-opacity duration-700 animate-in fade-in">
+        <div className="text-center px-6">
+          <h1 className="text-4xl sm:text-6xl md:text-7xl font-black tracking-wider text-white uppercase drop-shadow-[0_0_28px_rgba(255,255,255,0.7)] font-mono">
+            29 June 2126
+          </h1>
+          <p className="mt-3 text-xs sm:text-sm font-mono tracking-[0.28em] uppercase text-cyan-300/80">
+            Mare Tranquillitatis · Lunar Surface Expedition
+          </p>
+        </div>
+      </div>
+    )}
     </>
   );
 }
