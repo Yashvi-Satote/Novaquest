@@ -19,6 +19,10 @@
       }
     },
     {
+      "source": "/((?!assets/|videos/|models/|textures/|.*\\..*).*)",
+      "destination": "/index.html"
+    },
+    {
       "source": "/(.*)",
       "destination": {
         "service": "frontend"

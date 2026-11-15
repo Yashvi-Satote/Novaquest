@@ -1,0 +1,11 @@
+dist
+frontend/dist
+.venv
+**/__pycache__
+**/*.pyc
+.git
+.github
+*.log
+frontend/test_*.mjs
+frontend/verify_*.mjs
+frontend/record_*.mjs
