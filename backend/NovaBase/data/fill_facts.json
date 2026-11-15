@@ -1142,28 +1142,35 @@
       ]
     },
     "dawn": {
-      "retrieved_at": "2026-11-06",
+      "retrieved_at": "2026-11-15",
       "confidence": "high",
       "sections": {
-        "how_it_works": {
-          "text": "Dawn used three 30 cm xenon ion thrusters, derived from the engine flown on Deep Space 1, as its main propulsion. The thrusters ionise xenon and accelerate it electrostatically, producing up to about 92 mN of thrust at 2.6 kW with a specific impulse between 1900 and 3200 seconds, so the spacecraft could change orbit around Vesta and Ceres using very little propellant. Two 2.3 by 8.3 m solar arrays supplied up to 10.3 kW at 1 AU, and a 35 Ah nickel-hydrogen battery carried the spacecraft through eclipse.",
-          "source_url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=2007-043A",
+        "what_is_it": {
+          "text": "Dawn was NASA's first truly interplanetary spaceship capable of visiting, orbiting, and exploring two distinct extraterrestrial bodies in deep space. Flown under NASA's Discovery program, Dawn spent extended years exploring the giant asteroid Vesta and the dwarf planet Ceres in the main asteroid belt between Mars and Jupiter to investigate the conditions present at the birth of the solar system.",
+          "source_url": "https://science.nasa.gov/mission/dawn/",
           "confidence": "high",
-          "attribution": "NASA/NSSDCA",
+          "attribution": "NASA/JPL",
+          "license": "Public domain (NASA)"
+        },
+        "how_it_works": {
+          "text": "Dawn relied on innovative xenon ion propulsion thrusters, which accelerated ionized xenon gas electrostatically to achieve exceptionally high propellant efficiency and execute complex orbital rendezvous at multiple planetary targets. Large deployable solar panels powered the ion engines and payload, which included framing cameras, a visible and infrared mapping spectrometer, and a gamma ray and neutron detector.",
+          "source_url": "https://science.nasa.gov/mission/dawn/",
+          "confidence": "high",
+          "attribution": "NASA/JPL",
           "license": "Public domain (NASA)"
         },
         "why_important": {
-          "text": "Dawn was the first spacecraft to orbit two separate extraterrestrial bodies, Vesta and Ceres, and the first to use ion propulsion to do so. At Vesta it showed a differentiated protoplanet with a basaltic crust and huge impact basins; at Ceres it found a water-ice-rich crust, bright carbonate deposits and evidence of briny material reaching the surface. Together the two encounters let scientists compare how a rocky inner-belt body and an ice-rich dwarf planet evolved.",
+          "text": "Dawn became the first human spacecraft to orbit an object in the main asteroid belt (Vesta in 2011) and the first to visit and orbit a dwarf planet (Ceres in 2015). It provided evidence of ancient interior heating and fluid flow on Ceres, examined clues of long-standing internal energy and potential habitability, and photographed dramatic bright sodium carbonate salt deposits inside Occator Crater on Ceres.",
           "source_url": "https://science.nasa.gov/mission/dawn/",
           "confidence": "high",
-          "attribution": "NASA Science",
+          "attribution": "NASA/JPL",
           "license": "Public domain (NASA)"
         },
         "status": {
-          "text": "Dawn's mission ended on 1 November 2018, when the spacecraft exhausted its hydrazine. It remains in orbit around Ceres, where it is expected to stay for decades.",
+          "text": "Dawn completed its mission successfully after exhausting its hydrazine attitude-control propellant on October 31 - November 1, 2018. Having met all planetary protection requirements, the silent spacecraft remains in a stable, unpowered perpetual orbit around dwarf planet Ceres.",
           "source_url": "https://science.nasa.gov/mission/dawn/",
           "confidence": "high",
-          "attribution": "NASA Science",
+          "attribution": "NASA/JPL",
           "license": "Public domain (NASA)"
         }
       },
@@ -1171,60 +1178,54 @@
         {
           "event_date": "2007-09-27",
           "event_date_precision": "day",
-          "title": "Launch",
-          "description": "Dawn lifted off on a Delta II rocket from Cape Canaveral Air Force Station.",
+          "title": "Launch from Cape Canaveral",
+          "description": "Launched aboard a Delta II Heavy rocket from Cape Canaveral Air Force Station.",
           "event_type": "launch",
-          "source_url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=2007-043A",
-          "confidence": "high"
-        },
-        {
-          "event_date": "2009-02-18",
-          "event_date_precision": "day",
-          "title": "Mars gravity assist",
-          "description": "Dawn flew past Mars, using the planet's gravity to shape its trajectory toward Vesta.",
-          "event_type": "flyby",
-          "source_url": "https://science.nasa.gov/mission/dawn/",
-          "confidence": "high"
+          "source_url": "https://science.nasa.gov/mission/dawn/"
         },
         {
           "event_date": "2011-07-16",
           "event_date_precision": "day",
-          "title": "Entered orbit around Vesta",
-          "description": "Dawn became the first spacecraft to orbit a main-belt asteroid.",
+          "title": "Orbit Insertion at Vesta",
+          "description": "Became the first spacecraft to enter orbit around the giant asteroid Vesta.",
           "event_type": "orbit",
-          "source_url": "https://science.nasa.gov/mission/dawn/",
-          "confidence": "high"
+          "source_url": "https://science.nasa.gov/mission/dawn/"
+        },
+        {
+          "event_date": "2012-09-05",
+          "event_date_precision": "day",
+          "title": "Departure from Vesta",
+          "description": "Escaped Vesta's gravity via ion propulsion, setting course for Ceres.",
+          "event_type": "departure",
+          "source_url": "https://science.nasa.gov/mission/dawn/"
         },
         {
           "event_date": "2015-03-06",
           "event_date_precision": "day",
-          "title": "Entered orbit around Ceres",
-          "description": "Dawn arrived at Ceres and became the first spacecraft to orbit a dwarf planet.",
+          "title": "Orbit Insertion at Ceres",
+          "description": "Became the first spacecraft to enter orbit around a dwarf planet.",
           "event_type": "orbit",
-          "source_url": "https://science.nasa.gov/mission/dawn/",
-          "confidence": "high"
+          "source_url": "https://science.nasa.gov/mission/dawn/"
         },
         {
           "event_date": "2018-11-01",
           "event_date_precision": "day",
-          "title": "Mission ended",
-          "description": "After exhausting its hydrazine, Dawn stopped operating in orbit around Ceres.",
+          "title": "Mission Concluded",
+          "description": "Mission ended following hydrazine fuel exhaustion; entered silent perpetual orbit around Ceres.",
           "event_type": "end_of_mission",
-          "source_url": "https://science.nasa.gov/mission/dawn/",
-          "confidence": "high"
+          "source_url": "https://science.nasa.gov/mission/dawn/"
         }
       ],
       "imagery": [
         {
-          "title": "Dawn spacecraft",
-          "image_url": "https://nssdc.gsfc.nasa.gov/image/spacecraft/dawn.jpg",
-          "source_url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=2007-043A",
-          "attribution": "NASA/NSSDCA",
-          "description": "The Dawn spacecraft with its two large solar arrays and ion propulsion system.",
+          "title": "Dawn Sees Crescent Ceres",
+          "image_url": "https://assets.science.nasa.gov/dynamicimage/assets/science/psd/solar/2023/07/PIA21921_hires.jpg",
+          "source_url": "https://science.nasa.gov/mission/dawn/",
+          "attribution": "NASA/JPL-Caltech/UCLA/MPS/DLR/IDA",
           "kind": "photo",
           "item_type": "Photo",
           "license": "Public domain (NASA)",
-          "confidence": "high"
+          "description": "Crescent view of dwarf planet Ceres captured by NASA's Dawn spacecraft from high orbit."
         }
       ],
       "stakeholders": [
@@ -1232,73 +1233,18 @@
           "name": "NASA",
           "organization_type": "Government Agency",
           "country": "United States",
-          "official_url": "https://www.nasa.gov/",
-          "role": "Mission sponsor and programme management",
-          "source_url": "https://science.nasa.gov/mission/dawn/",
-          "confidence": "high"
+          "role": "Space Agency",
+          "source_url": "https://science.nasa.gov/mission/dawn/"
         },
         {
-          "name": "NASA Jet Propulsion Laboratory",
-          "organization_type": "Government Laboratory",
+          "name": "NASA / JPL",
+          "organization_type": "Government Agency",
           "country": "United States",
-          "official_url": "https://www.jpl.nasa.gov/",
-          "role": "Project management, flight operations and mission design",
-          "source_url": "https://science.nasa.gov/mission/dawn/",
-          "confidence": "high"
-        },
-        {
-          "name": "University of California, Los Angeles",
-          "organization_type": "University",
-          "country": "United States",
-          "official_url": "https://www.ucla.edu/",
-          "role": "Principal Investigator and science leadership",
-          "source_url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=2007-043A",
-          "confidence": "high"
-        },
-        {
-          "name": "Orbital Sciences Corporation (now Northrop Grumman)",
-          "organization_type": "Contractor",
-          "country": "United States",
-          "official_url": "https://www.northropgrumman.com/",
-          "role": "Spacecraft design and construction",
-          "source_url": "https://science.nasa.gov/mission/dawn/",
-          "confidence": "high"
+          "role": "Mission Lead and Operations",
+          "source_url": "https://science.nasa.gov/mission/dawn/"
         }
       ],
-      "people": [
-        {
-          "full_name": "Christopher T. Russell",
-          "role_on_mission": "Principal Investigator",
-          "affiliation": "University of California, Los Angeles",
-          "source_url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=2007-043A",
-          "confidence": "high",
-          "rank_order": 1
-        },
-        {
-          "full_name": "Marc Rayman",
-          "role_on_mission": "Mission Director and Chief Engineer",
-          "affiliation": "NASA Jet Propulsion Laboratory",
-          "source_url": "https://science.nasa.gov/people/dr-marc-rayman/",
-          "confidence": "high",
-          "rank_order": 2
-        },
-        {
-          "full_name": "Carol Raymond",
-          "role_on_mission": "Deputy Principal Investigator",
-          "affiliation": "NASA Jet Propulsion Laboratory",
-          "source_url": "https://science.nasa.gov/people/carol-raymond/",
-          "confidence": "high",
-          "rank_order": 3
-        },
-        {
-          "full_name": "Robert Mase",
-          "role_on_mission": "Project Manager",
-          "affiliation": "NASA Jet Propulsion Laboratory",
-          "source_url": "https://www.jpl.nasa.gov/news/dawn-mission-honored-by-rnasa-foundation/",
-          "confidence": "high",
-          "rank_order": 4
-        }
-      ]
+      "people": []
     },
     "deep-impact": {
       "retrieved_at": "2026-11-06",
@@ -1720,6 +1666,1129 @@
           "source_url": "https://science.nasa.gov/mission/dscovr/",
           "confidence": "high",
           "rank_order": 5
+        }
+      ]
+    },
+    "apollo-15-lunar-module": {
+      "retrieved_at": "2026-11-15",
+      "confidence": "high",
+      "sections": {
+        "what_is_it": {
+          "text": "The Apollo 15 Lunar Module 'Falcon' (LM-10) was the fourth crewed vehicle to land on the Moon, transporting Commander David R. Scott and Lunar Module Pilot James B. Irwin to the surface on July 30, 1971. In addition to housing and landing the astronauts, the spacecraft delivered the first Lunar Roving Vehicle (LRV) and the Apollo Lunar Surface Experiments Package (ALSEP) to the Hadley-Apennine landing site for extended scientific investigations.",
+          "source_url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1971-063C",
+          "confidence": "high",
+          "attribution": "NASA",
+          "license": "Public domain (NASA)"
+        },
+        "how_it_works": {
+          "text": "The Lunar Module was a two-stage spacecraft with a total mass of 16,430 kg at launch. The descent stage (dry mass 2,797 kg, 8,873 kg propellant) was an octagonal prism measuring 4.2 meters across and 1.7 meters thick, equipped with a 45,000 N deep-throttling ablative rocket engine, four landing gear legs spanning 9.4 meters, silver-zinc batteries, and storage bays for the LRV and ALSEP instruments. The ascent stage (dry mass 2,385 kg, 2,375 kg propellant) housed the 6.65 cubic meter pressurized crew cabin, Apollo guidance computer, 15,000 N constant-thrust rocket engine, reaction control thrusters, and S-band and VHF antennas. Power for surface science was supplied by a SNAP-27 radioisotope thermoelectric generator producing ~70 W DC from a plutonium-238 capsule.",
+          "source_url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1971-063C",
+          "confidence": "high",
+          "attribution": "NASA",
+          "license": "Public domain (NASA)"
+        },
+        "why_important": {
+          "text": "Apollo 15 marked the first extended scientific expedition to the Moon and the first deployment of the Lunar Roving Vehicle. The crew completed three moonwalk EVAs totaling 18 hours and 35 minutes, traversed 27.9 km across Hadley Rille and the Apennine Mountains, and collected 77.31 kg of rock and soil samples, including a core drill sample from three meters depth. Commander Scott also performed the famous televised demonstration of a hammer and feather dropping at identical rates in the lunar vacuum.",
+          "source_url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1971-063C",
+          "confidence": "high",
+          "attribution": "NASA",
+          "license": "Public domain (NASA)"
+        },
+        "status": {
+          "text": "The LM ascent stage lifted off from the Moon on August 2, 1971 at 17:11:22 UT, docked with the CSM, and was jettisoned on August 3, intentionally impacting the Moon at 26.36 N, 0.25 E. The descent stage remains at the landing site (26.13239 N, 3.63330 E). The ALSEP scientific station transmitted surface geophysical data continuously until all Apollo ALSEP stations were officially shut down on September 30, 1977.",
+          "source_url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1971-063C",
+          "confidence": "high",
+          "attribution": "NASA",
+          "license": "Public domain (NASA)"
+        }
+      },
+      "timeline": [
+        {
+          "event_date": "1971-07-26",
+          "event_date_precision": "day",
+          "title": "Launch from Cape Canaveral",
+          "description": "Launched aboard a Saturn 5 rocket from Cape Canaveral Launch Complex 39A.",
+          "event_type": "launch",
+          "source_url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1971-063C"
+        },
+        {
+          "event_date": "1971-07-30",
+          "event_date_precision": "day",
+          "title": "Lunar Landing at Hadley-Apennine",
+          "description": "LM Falcon separated from the CSM and touched down at 22:16:29 UT in Mare Imbrium near the Apennine Mountains.",
+          "event_type": "landing",
+          "source_url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1971-063C"
+        },
+        {
+          "event_date": "1971-07-31",
+          "event_date_precision": "day",
+          "title": "First Moonwalk and LRV Deployment",
+          "description": "Scott and Irwin unloaded and drove the Lunar Roving Vehicle 10.3 km to Hadley Rille and deployed the ALSEP station.",
+          "event_type": "eva",
+          "source_url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1971-063C"
+        },
+        {
+          "event_date": "1971-08-01",
+          "event_date_precision": "day",
+          "title": "Second Moonwalk Traverse",
+          "description": "Astronauts drove 12.5 km along the base of the Apennine Mountains near Spur Crater.",
+          "event_type": "eva",
+          "source_url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1971-063C"
+        },
+        {
+          "event_date": "1971-08-02",
+          "event_date_precision": "day",
+          "title": "Third Moonwalk and Lunar Liftoff",
+          "description": "Conducted 5.1 km traverse to Scarp Crater, demonstrated hammer-and-feather drop, and lifted off the Moon at 17:11:22 UT.",
+          "event_type": "departure",
+          "source_url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1971-063C"
+        },
+        {
+          "event_date": "1971-08-03",
+          "event_date_precision": "day",
+          "title": "Ascent Stage Lunar Impact",
+          "description": "After CSM docking and crew transfer, the ascent stage was jettisoned and impacted the Moon at 26.36 N, 0.25 E.",
+          "event_type": "impact",
+          "source_url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1971-063C"
+        },
+        {
+          "event_date": "1977-09-30",
+          "event_date_precision": "day",
+          "title": "ALSEP Station Shutdown",
+          "description": "The Apollo 15 ALSEP scientific station was formally shut down along with all Apollo surface stations.",
+          "event_type": "decommission",
+          "source_url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1971-063C"
+        }
+      ],
+      "imagery": [
+        {
+          "title": "Diagram of the Apollo Lunar Module",
+          "image_url": "https://nssdc.gsfc.nasa.gov/planetary/lunar/images/lm_diagram.gif",
+          "source_url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1971-063C",
+          "attribution": "NASA History Office",
+          "kind": "diagram",
+          "item_type": "Photo",
+          "license": "Public domain (NASA)",
+          "description": "Schematic diagram of the Apollo Lunar Module descent and ascent stages."
+        }
+      ],
+      "stakeholders": [
+        {
+          "name": "NASA-Office of Manned Space Flight",
+          "organization_type": "Government Agency",
+          "country": "United States",
+          "role": "Program Leadership",
+          "source_url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1971-063C"
+        },
+        {
+          "name": "NASA-Office of Space Science",
+          "organization_type": "Government Agency",
+          "country": "United States",
+          "role": "Scientific Sponsor",
+          "source_url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1971-063C"
+        },
+        {
+          "name": "NASA Johnson Space Center",
+          "organization_type": "Government Agency",
+          "country": "United States",
+          "role": "Project Management",
+          "source_url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1971-063C"
+        },
+        {
+          "name": "Grumman",
+          "organization_type": "Contractor / University",
+          "country": "United States",
+          "role": "Spacecraft Manufacturer",
+          "source_url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1971-063C"
+        }
+      ],
+      "people": [
+        {
+          "full_name": "Floyd I. Roberson",
+          "role_on_mission": "Program Manager (NASA Headquarters)",
+          "affiliation": "NASA Headquarters",
+          "wiki_url": null,
+          "source_url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1971-063C",
+          "rank_order": 1
+        },
+        {
+          "full_name": "Wilbert F. Eichelman",
+          "role_on_mission": "Project Manager (NASA Johnson Space Center)",
+          "affiliation": "NASA Johnson Space Center",
+          "wiki_url": null,
+          "source_url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1971-063C",
+          "rank_order": 2
+        },
+        {
+          "full_name": "Dr. John B. Hanley",
+          "role_on_mission": "Program Scientist (NASA Headquarters)",
+          "affiliation": "NASA Headquarters",
+          "wiki_url": null,
+          "source_url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1971-063C",
+          "rank_order": 3
+        },
+        {
+          "full_name": "David R. Scott",
+          "role_on_mission": "Commander (Apollo 15 Crew)",
+          "affiliation": "NASA Astronaut Corps",
+          "wiki_url": null,
+          "source_url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1971-063C",
+          "rank_order": 4
+        },
+        {
+          "full_name": "James B. Irwin",
+          "role_on_mission": "Lunar Module Pilot (Apollo 15 Crew)",
+          "affiliation": "NASA Astronaut Corps",
+          "wiki_url": null,
+          "source_url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1971-063C",
+          "rank_order": 5
+        }
+      ]
+    },
+    "apollo-12-lunar-module": {
+      "retrieved_at": "2026-11-15",
+      "confidence": "high",
+      "sections": {
+        "what_is_it": {
+          "text": "The Apollo 12 Lunar Module 'Intrepid' (LM-6) was the second crewed vehicle to land on the Moon, carrying Commander Charles 'Pete' Conrad and Lunar Module Pilot Alan L. Bean to Oceanus Procellarum on November 19, 1969. The spacecraft demonstrated pinpoint lunar landing accuracy by touching down within approximately 180 meters of the robotic Surveyor 3 lander and carried the first complete Apollo Lunar Surface Experiments Package (ALSEP).",
+          "source_url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1969-099C",
+          "confidence": "high",
+          "attribution": "NASA",
+          "license": "Public domain (NASA)"
+        },
+        "how_it_works": {
+          "text": "The Lunar Module comprised an ascent stage (dry mass 2,383 kg, 2,375 kg propellant) and a descent stage (dry mass 2,118 kg, 8,359 kg propellant) with a total mass of 15,235 kg. The descent stage used a 45,000 N throttleable rocket engine for powered descent and landed on four gear legs spanning 9.4 meters. The ascent stage featured a 6.65 cubic meter crew compartment, a 15,000 N constant-thrust ascent engine, S-band parabolic antenna, VHF transceivers, Apollo guidance computer, and silver-zinc batteries. The ALSEP instruments were powered by a 17 kg SNAP-27 radioisotope thermoelectric generator containing a 4 kg plutonium-238 capsule producing ~70 W DC.",
+          "source_url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1969-099C",
+          "confidence": "high",
+          "attribution": "NASA",
+          "license": "Public domain (NASA)"
+        },
+        "why_important": {
+          "text": "Apollo 12 proved that pinpoint precision landings on the Moon were achievable, landing within walking distance (180 meters) of the Surveyor 3 probe. Astronauts performed two moonwalks totaling 7 hours and 45 minutes, gathered 34.35 kg of lunar samples, retrieved ~10 kg of Surveyor 3 components (including its TV camera) to test prolonged space exposure, and deployed the first nuclear-powered geophysical ALSEP station. Upon jettison, the ascent stage's deliberate lunar impact produced the first recorded artificial moonquake.",
+          "source_url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1969-099C",
+          "confidence": "high",
+          "attribution": "NASA",
+          "license": "Public domain (NASA)"
+        },
+        "status": {
+          "text": "After 31 hours and 31 minutes on the lunar surface, the ascent stage lifted off on November 20, 1969 at 14:25:47 UT, docked with the CSM, and was jettisoned at 20:21:30 UT. It intentionally crashed into the Moon at 3.94 S, 338.80 E (~60 km from the landing site). The descent stage remains at Oceanus Procellarum (3.0128 S, 23.4219 W). The ALSEP geophysical station transmitted science data until it was shut down on September 30, 1977.",
+          "source_url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1969-099C",
+          "confidence": "high",
+          "attribution": "NASA",
+          "license": "Public domain (NASA)"
+        }
+      },
+      "timeline": [
+        {
+          "event_date": "1969-11-14",
+          "event_date_precision": "day",
+          "title": "Launch from Cape Canaveral",
+          "description": "Launched aboard a Saturn 5 rocket from Launch Complex 39A.",
+          "event_type": "launch",
+          "source_url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1969-099C"
+        },
+        {
+          "event_date": "1969-11-19",
+          "event_date_precision": "day",
+          "title": "Precision Landing at Oceanus Procellarum",
+          "description": "Intrepid touched down at 06:54:35 UT within 180 meters of the Surveyor 3 robotic probe.",
+          "event_type": "landing",
+          "source_url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1969-099C"
+        },
+        {
+          "event_date": "1969-11-19",
+          "event_date_precision": "day",
+          "title": "First Moonwalk and ALSEP Activation",
+          "description": "Conrad and Bean deployed the ALSEP station and solar wind composition foil; ALSEP turned on at 14:21 UT.",
+          "event_type": "eva",
+          "source_url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1969-099C"
+        },
+        {
+          "event_date": "1969-11-20",
+          "event_date_precision": "day",
+          "title": "Second Moonwalk and Surveyor 3 Visit",
+          "description": "Astronauts walked 1.3 km to Surveyor 3, recovered its camera and mechanical parts, and collected rock samples.",
+          "event_type": "eva",
+          "source_url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1969-099C"
+        },
+        {
+          "event_date": "1969-11-20",
+          "event_date_precision": "day",
+          "title": "Lunar Liftoff and Intentional Crash",
+          "description": "Ascent stage lifted off at 14:25:47 UT, docked with CSM, and was jettisoned to crash into the Moon at 3.94 S, 338.80 E.",
+          "event_type": "impact",
+          "source_url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1969-099C"
+        },
+        {
+          "event_date": "1977-09-30",
+          "event_date_precision": "day",
+          "title": "ALSEP Station Shutdown",
+          "description": "The Apollo 12 ALSEP geophysical station was powered down along with all Apollo surface stations.",
+          "event_type": "decommission",
+          "source_url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1969-099C"
+        }
+      ],
+      "imagery": [
+        {
+          "title": "Pete Conrad at Surveyor 3",
+          "image_url": "https://nssdc.gsfc.nasa.gov/planetary/lunar/images/as12_48_7133.jpg",
+          "source_url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1969-099C",
+          "attribution": "NASA / Alan Bean",
+          "kind": "photo",
+          "item_type": "Photo",
+          "license": "Public domain (NASA)",
+          "description": "Apollo 12 astronaut Pete Conrad examining the robotic Surveyor 3 lander with Intrepid visible in the background."
+        }
+      ],
+      "stakeholders": [
+        {
+          "name": "NASA-Office of Manned Space Flight",
+          "organization_type": "Government Agency",
+          "country": "United States",
+          "role": "Program Oversight",
+          "source_url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1969-099C"
+        },
+        {
+          "name": "NASA-Office of Space Science",
+          "organization_type": "Government Agency",
+          "country": "United States",
+          "role": "Scientific Program",
+          "source_url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1969-099C"
+        },
+        {
+          "name": "NASA Johnson Space Center",
+          "organization_type": "Government Agency",
+          "country": "United States",
+          "role": "Mission Operations",
+          "source_url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1969-099C"
+        },
+        {
+          "name": "Grumman",
+          "organization_type": "Contractor / University",
+          "country": "United States",
+          "role": "Spacecraft Manufacturer",
+          "source_url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1969-099C"
+        }
+      ],
+      "people": [
+        {
+          "full_name": "Floyd I. Roberson",
+          "role_on_mission": "Program Manager (NASA Headquarters)",
+          "affiliation": "NASA Headquarters",
+          "wiki_url": null,
+          "source_url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1969-099C",
+          "rank_order": 1
+        },
+        {
+          "full_name": "Wilbert F. Eichelman",
+          "role_on_mission": "Project Manager (NASA Johnson Space Center)",
+          "affiliation": "NASA Johnson Space Center",
+          "wiki_url": null,
+          "source_url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1969-099C",
+          "rank_order": 2
+        },
+        {
+          "full_name": "Dr. John B. Hanley",
+          "role_on_mission": "Program Scientist (NASA Headquarters)",
+          "affiliation": "NASA Headquarters",
+          "wiki_url": null,
+          "source_url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1969-099C",
+          "rank_order": 3
+        },
+        {
+          "full_name": "Charles P. \"Pete\" Conrad",
+          "role_on_mission": "Commander (Apollo 12 Crew)",
+          "affiliation": "NASA Astronaut Corps",
+          "wiki_url": null,
+          "source_url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1969-099C",
+          "rank_order": 4
+        },
+        {
+          "full_name": "Alan L. Bean",
+          "role_on_mission": "Lunar Module Pilot (Apollo 12 Crew)",
+          "affiliation": "NASA Astronaut Corps",
+          "wiki_url": null,
+          "source_url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1969-099C",
+          "rank_order": 5
+        }
+      ]
+    },
+    "spirit": {
+      "retrieved_at": "2026-11-15",
+      "confidence": "high",
+      "sections": {
+        "what_is_it": {
+          "text": "Spirit (MER-A) was one of NASA's twin Mars Exploration Rovers sent to explore the Red Planet as a robotic field geologist. Launched in 2003, Spirit touched down on January 3, 2004 at Gusev Crater, an ancient crater suspected to have once harbored an impact-basin lake, in search of clues about the historical presence of liquid water on Mars.",
+          "source_url": "https://science.nasa.gov/mission/mars-exploration-rovers-spirit-and-opportunity/",
+          "confidence": "high",
+          "attribution": "NASA/JPL",
+          "license": "Public domain (NASA)"
+        },
+        "how_it_works": {
+          "text": "Spirit was an autonomous six-wheeled rover powered by multi-panel solar arrays. It featured an articulated rocker-bogie mobility suspension to traverse rough terrain, a mast-mounted Panoramic Camera (Pancam) with multi-spectral color filters, and a deployable robotic instrument arm to position scientific sensors in direct contact with Martian rocks and soils.",
+          "source_url": "https://science.nasa.gov/mission/mars-exploration-rovers-spirit-and-opportunity/",
+          "confidence": "high",
+          "attribution": "NASA/JPL",
+          "license": "Public domain (NASA)"
+        },
+        "why_important": {
+          "text": "Spirit provided groundbreaking evidence confirming that liquid water was long-standing on ancient Mars. Operating for more than six years across a mission originally planned for 90 days, Spirit drove 4.8 miles (7.7 kilometers), scaled the Columbia Hills, and discovered extensive silica deposits that pointed to past hydrothermal activity and volcanic steam vents.",
+          "source_url": "https://science.nasa.gov/mission/mars-exploration-rovers-spirit-and-opportunity/",
+          "confidence": "high",
+          "attribution": "NASA/JPL",
+          "license": "Public domain (NASA)"
+        },
+        "status": {
+          "text": "Spirit completed its primary mission and extended investigations across over 2,200 sols, driving 4.8 miles (7.7 km). The rover became lodged in soft soil at 'Troy' in 2009 and served as a stationary science platform until contact was lost in March 2010 following winter power decline. NASA formally concluded the mission in 2010.",
+          "source_url": "https://science.nasa.gov/mission/mars-exploration-rovers-spirit-and-opportunity/",
+          "confidence": "high",
+          "attribution": "NASA/JPL",
+          "license": "Public domain (NASA)"
+        }
+      },
+      "timeline": [
+        {
+          "event_date": "2003-06-10",
+          "event_date_precision": "day",
+          "title": "Launch of Spirit",
+          "description": "Launched from Cape Canaveral Air Force Station aboard a Delta II rocket.",
+          "event_type": "launch",
+          "source_url": "https://science.nasa.gov/mission/mars-exploration-rovers-spirit-and-opportunity/"
+        },
+        {
+          "event_date": "2004-01-03",
+          "event_date_precision": "day",
+          "title": "Landing at Gusev Crater",
+          "description": "Spirit touched down in Gusev Crater, dedicated as the Columbia Memorial Station.",
+          "event_type": "landing",
+          "source_url": "https://science.nasa.gov/mission/mars-exploration-rovers-spirit-and-opportunity/"
+        },
+        {
+          "event_date": "2004-01-18",
+          "event_date_precision": "day",
+          "title": "First Full Pancam Landscape",
+          "description": "Captured sol 16 panoramic mosaic showing the landing site and journey toward the east hills.",
+          "event_type": "science",
+          "source_url": "https://science.nasa.gov/mission/mars-exploration-rovers-spirit-and-opportunity/"
+        },
+        {
+          "event_date": "2010",
+          "event_date_precision": "day",
+          "title": "Mission Concluded",
+          "description": "Spirit concluded operations after traveling 4.8 miles (7.7 km) across six years on Mars.",
+          "event_type": "end_of_mission",
+          "source_url": "https://science.nasa.gov/mission/mars-exploration-rovers-spirit-and-opportunity/"
+        }
+      ],
+      "imagery": [
+        {
+          "title": "Spirit Sol 16 Panoramic Landscape",
+          "image_url": "https://photojournal.jpl.nasa.gov/jpeg/PIA05203.jpg",
+          "source_url": "https://science.nasa.gov/mission/mars-exploration-rovers-spirit-and-opportunity/",
+          "attribution": "NASA/JPL-Caltech/Cornell",
+          "kind": "photo",
+          "item_type": "Photo",
+          "license": "Public domain (NASA)",
+          "description": "Approximate true-color mosaic taken by Spirit's panoramic camera showing the Columbia Memorial Station landing site at Gusev Crater."
+        }
+      ],
+      "stakeholders": [
+        {
+          "name": "NASA",
+          "organization_type": "Government Agency",
+          "country": "United States",
+          "role": "Space Agency",
+          "source_url": "https://science.nasa.gov/mission/mars-exploration-rovers-spirit-and-opportunity/"
+        },
+        {
+          "name": "NASA / JPL",
+          "organization_type": "Government Agency",
+          "country": "United States",
+          "role": "Mission Design and Management",
+          "source_url": "https://science.nasa.gov/mission/mars-exploration-rovers-spirit-and-opportunity/"
+        },
+        {
+          "name": "Cornell University",
+          "organization_type": "Contractor / University",
+          "country": "United States",
+          "role": "Pancam and Science Instrument Partner",
+          "source_url": "https://science.nasa.gov/mission/mars-exploration-rovers-spirit-and-opportunity/"
+        }
+      ],
+      "people": [
+        {
+          "full_name": "Steven Squyres",
+          "role_on_mission": "Principal Investigator (Athena Science Package)",
+          "affiliation": "Cornell University",
+          "wiki_url": null,
+          "source_url": "https://science.nasa.gov/mission/mars-exploration-rovers-spirit-and-opportunity/",
+          "rank_order": 1
+        },
+        {
+          "full_name": "Peter Theisinger",
+          "role_on_mission": "Project Manager",
+          "affiliation": "NASA / JPL",
+          "wiki_url": null,
+          "source_url": "https://science.nasa.gov/mission/mars-exploration-rovers-spirit-and-opportunity/",
+          "rank_order": 2
+        }
+      ]
+    },
+    "viking-1": {
+      "retrieved_at": "2026-11-15",
+      "confidence": "high",
+      "sections": {
+        "what_is_it": {
+          "text": "Viking 1 was the first NASA spacecraft to achieve a successful soft landing on Mars, providing humanity's first extended operational look at the Red Planet's surface. Launched on August 20, 1975, the mission consisted of an orbiter to map the planet from space and a lander equipped with a biological laboratory to conduct direct in-situ searches for signs of Martian life.",
+          "source_url": "https://science.nasa.gov/mission/viking-1/",
+          "confidence": "high",
+          "attribution": "NASA",
+          "license": "Public domain (NASA)"
+        },
+        "how_it_works": {
+          "text": "The composite Viking 1 spacecraft weighed 7,776 pounds (3,527 kg), comprising a 5,157-pound (2,339 kg) solar-powered orbiter and a 2,156-pound (978 kg) lander powered by two SNAP-19 radioisotope thermoelectric generators (RTGs). Launched by a Titan IIIE-Centaur rocket, the orbiter conducted atmospheric and surface mapping, while the lander deployed an aeroshell, parachute, and terminal descent engines before using a robotic sampler arm to deliver soil to onboard chemical and biological analysis chambers.",
+          "source_url": "https://science.nasa.gov/mission/viking-1/",
+          "confidence": "high",
+          "attribution": "NASA",
+          "license": "Public domain (NASA)"
+        },
+        "why_important": {
+          "text": "Viking 1 made history on July 20, 1976 by successfully landing on Chryse Planitia and returning the first color images, panoramas, and meteorological data from the Martian surface. The mission returned over 50,000 orbiter images (mapping 97% of the surface) and 4,500 surface photos, revealing volcanic features, immense canyons, water-carved channels, and sulfur-rich soil, establishing the foundational baseline for modern Mars exploration.",
+          "source_url": "https://science.nasa.gov/mission/viking-1/",
+          "confidence": "high",
+          "attribution": "NASA",
+          "license": "Public domain (NASA)"
+        },
+        "status": {
+          "text": "Viking 1 completed its primary mission in November 1976 and continued through extended survey operations. The orbiter was deactivated on August 7, 1980 after exhausting attitude-control propellant during its 1,489th orbit. The lander, renamed the Thomas Mutch Memorial Station in 1982, returned daily weather reports until November 11, 1982, when a flawed ground command permanently disrupted communications.",
+          "source_url": "https://science.nasa.gov/mission/viking-1/",
+          "confidence": "high",
+          "attribution": "NASA",
+          "license": "Public domain (NASA)"
+        }
+      },
+      "timeline": [
+        {
+          "event_date": "1975-08-20",
+          "event_date_precision": "day",
+          "title": "Launch from Cape Canaveral",
+          "description": "Launched on Titan IIIE-Centaur at 21:22:00 UT from Launch Complex 41.",
+          "event_type": "launch",
+          "source_url": "https://science.nasa.gov/mission/viking-1/"
+        },
+        {
+          "event_date": "1976-06-19",
+          "event_date_precision": "day",
+          "title": "Mars Orbit Insertion",
+          "description": "Entered Mars orbit with initial parameters of 1,500 x 50,300 km.",
+          "event_type": "orbit",
+          "source_url": "https://science.nasa.gov/mission/viking-1/"
+        },
+        {
+          "event_date": "1976-07-20",
+          "event_date_precision": "day",
+          "title": "First Successful Mars Landing",
+          "description": "Lander separated and touched down on Chryse Planitia at 11:53:06 UT (22.483 N, 47.94 W).",
+          "event_type": "landing",
+          "source_url": "https://science.nasa.gov/mission/viking-1/"
+        },
+        {
+          "event_date": "1976-07-28",
+          "event_date_precision": "day",
+          "title": "First Soil Scoop Analysis",
+          "description": "Robot arm collected first surface soil sample for delivery to the biological laboratory.",
+          "event_type": "science",
+          "source_url": "https://science.nasa.gov/mission/viking-1/"
+        },
+        {
+          "event_date": "1980-08-07",
+          "event_date_precision": "day",
+          "title": "Orbiter Shutdown",
+          "description": "Viking 1 Orbiter powered down after running out of attitude-control propellant on orbit 1,489.",
+          "event_type": "end_of_mission",
+          "source_url": "https://science.nasa.gov/mission/viking-1/"
+        },
+        {
+          "event_date": "1982-01",
+          "event_date_precision": "day",
+          "title": "Renamed Thomas Mutch Memorial Station",
+          "description": "Lander renamed in honor of the late leader of the Viking lander imaging team.",
+          "event_type": "milestone",
+          "source_url": "https://science.nasa.gov/mission/viking-1/"
+        },
+        {
+          "event_date": "1982-11-11",
+          "event_date_precision": "day",
+          "title": "Lander Contact Terminated",
+          "description": "Final transmission received; communications ended following an uplink command error.",
+          "event_type": "end_of_mission",
+          "source_url": "https://science.nasa.gov/mission/viking-1/"
+        }
+      ],
+      "imagery": [
+        {
+          "title": "Viking 1 Surface Panorama of Chryse Planitia",
+          "image_url": "https://images.nasa.gov/details/PIA00014",
+          "source_url": "https://science.nasa.gov/mission/viking-1/",
+          "attribution": "NASA",
+          "kind": "photo",
+          "item_type": "Photo",
+          "license": "Public domain (NASA)",
+          "description": "First panoramic view taken by Viking Lander 1 showing the rolling, rock-strewn plains of Chryse Planitia on Mars."
+        }
+      ],
+      "stakeholders": [
+        {
+          "name": "NASA",
+          "organization_type": "Government Agency",
+          "country": "United States",
+          "role": "Space Agency",
+          "source_url": "https://science.nasa.gov/mission/viking-1/"
+        },
+        {
+          "name": "NASA Langley Research Center",
+          "organization_type": "Government Agency",
+          "country": "United States",
+          "role": "Project Management",
+          "source_url": "https://science.nasa.gov/mission/viking-1/"
+        },
+        {
+          "name": "NASA Jet Propulsion Laboratory",
+          "organization_type": "Government Agency",
+          "country": "United States",
+          "role": "Orbiter & Operations",
+          "source_url": "https://science.nasa.gov/mission/viking-1/"
+        },
+        {
+          "name": "Martin Marietta",
+          "organization_type": "Contractor / University",
+          "country": "United States",
+          "role": "Lander Prime Contractor",
+          "source_url": "https://science.nasa.gov/mission/viking-1/"
+        }
+      ],
+      "people": [
+        {
+          "full_name": "Thomas A. Mutch",
+          "role_on_mission": "Lander Imaging Team Leader",
+          "affiliation": "Brown University / NASA",
+          "wiki_url": null,
+          "source_url": "https://science.nasa.gov/mission/viking-1/",
+          "rank_order": 1
+        }
+      ]
+    },
+    "insight": {
+      "retrieved_at": "2026-11-15",
+      "confidence": "high",
+      "sections": {
+        "what_is_it": {
+          "text": "InSight (Interior Exploration using Seismic Investigations, Geodesy and Heat Transport) was a stationary NASA lander engineered to probe the deep interior structure of Mars. Part of NASA's Discovery program, the mission was designed to measure Mars' internal 'pulse' (seismology), 'temperature' (heat flow), and 'reflexes' (precession tracking) to uncover the formation and evolution of rocky planets in the inner solar system.",
+          "source_url": "https://science.nasa.gov/mission/insight/",
+          "confidence": "high",
+          "attribution": "NASA/JPL",
+          "license": "Public domain (NASA)"
+        },
+        "how_it_works": {
+          "text": "Derived from the flight-proven Mars Phoenix lander design, InSight utilized twin deployable UltraFlex solar arrays built by Lockheed Martin Space Systems. It was launched from California's Central Coast on an Atlas V-401 rocket alongside two MarCO technology-demonstration CubeSats. The lander featured a 5 foot 9 inch (1.8-meter) robotic instrument deployment arm that lifted its seismometer and heat flow probe from the deck and placed them directly onto the Martian ground.",
+          "source_url": "https://science.nasa.gov/mission/insight/",
+          "confidence": "high",
+          "attribution": "NASA/JPL",
+          "license": "Public domain (NASA)"
+        },
+        "why_important": {
+          "text": "InSight offered humanity's first comprehensive examination beneath the Martian crust, detecting hundreds of marsquakes and tracking seismic tremors caused by meteorite impacts that penetrated deep into the planet's mantle. It revealed the layered nature of Mars' interior, measured the depth of its crust and the size of its liquid metallic core, and captured the first audio recordings of Martian wind blowing across Elysium Planitia.",
+          "source_url": "https://science.nasa.gov/mission/insight/",
+          "confidence": "high",
+          "attribution": "NASA/JPL",
+          "license": "Public domain (NASA)"
+        },
+        "status": {
+          "text": "InSight landed safely on November 26, 2018 at Elysium Planitia (4.5 N, 135.9 E) and operated for over four years. On December 15, 2022, after thick Martian dust steadily covered its solar panels and diminished electrical output below operating thresholds, NASA announced the end of the mission.",
+          "source_url": "https://science.nasa.gov/mission/insight/",
+          "confidence": "high",
+          "attribution": "NASA/JPL",
+          "license": "Public domain (NASA)"
+        }
+      },
+      "timeline": [
+        {
+          "event_date": "2018-05-05",
+          "event_date_precision": "day",
+          "title": "Launch from Vandenberg AFB",
+          "description": "Launched aboard an Atlas V-401 from Vandenberg Air Force Base, California at 04:05 PT.",
+          "event_type": "launch",
+          "source_url": "https://science.nasa.gov/mission/insight/"
+        },
+        {
+          "event_date": "2018-11-26",
+          "event_date_precision": "day",
+          "title": "Touchdown on Elysium Planitia",
+          "description": "Landed smoothly at 11:52:59 PT on the smooth plains of Elysium Planitia (4.5 N, 135.9 E).",
+          "event_type": "landing",
+          "source_url": "https://science.nasa.gov/mission/insight/"
+        },
+        {
+          "event_date": "2018-12-01",
+          "event_date_precision": "day",
+          "title": "Martian Wind Sounds Recorded",
+          "description": "Sensors recorded low-frequency rumble vibrations from 10 to 15 mph Martian winds blowing over the lander.",
+          "event_type": "science",
+          "source_url": "https://science.nasa.gov/mission/insight/"
+        },
+        {
+          "event_date": "2022-12-15",
+          "event_date_precision": "day",
+          "title": "End of Mission",
+          "description": "Mission concluded after dust buildup on the solar arrays depleted operating power.",
+          "event_type": "end_of_mission",
+          "source_url": "https://science.nasa.gov/mission/insight/"
+        }
+      ],
+      "imagery": [
+        {
+          "title": "InSight Solar Arrays Clean Room Deployment",
+          "image_url": "https://assets.science.nasa.gov/dynamicimage/assets/science/psd/solar/2023/07/InSight_Solar_Array_Test.jpg",
+          "source_url": "https://science.nasa.gov/mission/insight/",
+          "attribution": "NASA/JPL-Caltech/Lockheed Martin Space",
+          "kind": "photo",
+          "item_type": "Photo",
+          "license": "Public domain (NASA)",
+          "description": "Solar arrays on NASA's InSight lander deployed during pre-launch testing at Lockheed Martin Space Systems in Denver."
+        }
+      ],
+      "stakeholders": [
+        {
+          "name": "NASA",
+          "organization_type": "Government Agency",
+          "country": "United States",
+          "role": "Space Agency",
+          "source_url": "https://science.nasa.gov/mission/insight/"
+        },
+        {
+          "name": "NASA / JPL",
+          "organization_type": "Government Agency",
+          "country": "United States",
+          "role": "Project Management",
+          "source_url": "https://science.nasa.gov/mission/insight/"
+        },
+        {
+          "name": "Lockheed Martin Space",
+          "organization_type": "Contractor / University",
+          "country": "United States",
+          "role": "Spacecraft Prime Contractor",
+          "source_url": "https://science.nasa.gov/mission/insight/"
+        },
+        {
+          "name": "CNES / IPGP",
+          "organization_type": "Contractor / University",
+          "country": "France",
+          "role": "SEIS Lead Partner",
+          "source_url": "https://science.nasa.gov/mission/insight/"
+        }
+      ],
+      "people": [
+        {
+          "full_name": "Joel Steinkraus",
+          "role_on_mission": "MarCO / InSight Spacecraft Testing Engineer",
+          "affiliation": "NASA / JPL",
+          "wiki_url": null,
+          "source_url": "https://science.nasa.gov/mission/insight/",
+          "rank_order": 1
+        }
+      ]
+    },
+    "near-shoemaker": {
+      "retrieved_at": "2026-11-15",
+      "confidence": "high",
+      "sections": {
+        "what_is_it": {
+          "text": "NEAR Shoemaker (Near Earth Asteroid Rendezvous) was the first spacecraft to orbit an asteroid and the first to soft-land on one. Flown as the inaugural mission of NASA's Discovery program, the robotic explorer rendezvoused with the near-Earth asteroid 433 Eros to gather data on its physical properties, mineralogy, surface morphology, and magnetic field. It was later renamed in honor of renowned planetary geologist Eugene M. Shoemaker.",
+          "source_url": "https://science.nasa.gov/mission/near-shoemaker/",
+          "confidence": "high",
+          "attribution": "NASA",
+          "license": "Public domain (NASA)"
+        },
+        "how_it_works": {
+          "text": "The spacecraft weighed 1,775 pounds (805 kg) and was launched by a Delta 7925-8 rocket. It was the first planetary mission to rely entirely on solar cells for electrical power beyond the orbit of Mars. Although not designed as a lander, NEAR possessed hydrazine attitude thrusters, guidance sensors, and an array of spectrometers, laser rangefinders, and imaging cameras that allowed controllers to guide it through a controlled 4 mph (6.4 km/h) touchdown onto the asteroid surface.",
+          "source_url": "https://science.nasa.gov/mission/near-shoemaker/",
+          "confidence": "high",
+          "attribution": "NASA",
+          "license": "Public domain (NASA)"
+        },
+        "why_important": {
+          "text": "NEAR achieved an unprecedented series of firsts: the first spacecraft to orbit an asteroid (February 14, 2000) and the first to touch down on one (February 12, 2001). It marked the first time an American spacecraft was the first in human history to land on an extraterrestrial celestial body. The probe mapped over 70% of Eros, returned 160,000 images, and survived touchdown to beam gamma-ray surface spectroscopy data back to Earth for two weeks.",
+          "source_url": "https://science.nasa.gov/mission/near-shoemaker/",
+          "confidence": "high",
+          "attribution": "NASA",
+          "license": "Public domain (NASA)"
+        },
+        "status": {
+          "text": "NEAR successfully touched down on asteroid 433 Eros just south of Himeros on February 12, 2001. It operated on the surface until February 28, 2001, when extreme surface temperatures (minus 279 degrees Fahrenheit / minus 173 degrees Celsius) drained operating batteries. The probe rests permanently on Eros.",
+          "source_url": "https://science.nasa.gov/mission/near-shoemaker/",
+          "confidence": "high",
+          "attribution": "NASA",
+          "license": "Public domain (NASA)"
+        }
+      },
+      "timeline": [
+        {
+          "event_date": "1996-02-17",
+          "event_date_precision": "day",
+          "title": "Launch from Cape Canaveral",
+          "description": "Launched aboard a Delta 7925-8 rocket from Launch Complex 17B at 20:43:27 UT.",
+          "event_type": "launch",
+          "source_url": "https://science.nasa.gov/mission/near-shoemaker/"
+        },
+        {
+          "event_date": "1997-06-27",
+          "event_date_precision": "day",
+          "title": "Flyby of Asteroid 253 Mathilde",
+          "description": "Encountered asteroid Mathilde at a closest range of 750 miles (1,200 km).",
+          "event_type": "encounter",
+          "source_url": "https://science.nasa.gov/mission/near-shoemaker/"
+        },
+        {
+          "event_date": "1998-01-23",
+          "event_date_precision": "day",
+          "title": "Earth Gravity Assist",
+          "description": "Flew by Earth at an altitude of 335 miles (540 km) to alter trajectory toward Eros.",
+          "event_type": "gravity_assist",
+          "source_url": "https://science.nasa.gov/mission/near-shoemaker/"
+        },
+        {
+          "event_date": "2000-02-14",
+          "event_date_precision": "day",
+          "title": "First Orbit of an Asteroid",
+          "description": "Entered orbit around 433 Eros at 15:33 UT, becoming the first craft to orbit an asteroid.",
+          "event_type": "orbit",
+          "source_url": "https://science.nasa.gov/mission/near-shoemaker/"
+        },
+        {
+          "event_date": "2000-03-14",
+          "event_date_precision": "day",
+          "title": "Renamed NEAR Shoemaker",
+          "description": "Renamed in memory of legendary planetary geologist Eugene M. Shoemaker.",
+          "event_type": "milestone",
+          "source_url": "https://science.nasa.gov/mission/near-shoemaker/"
+        },
+        {
+          "event_date": "2001-02-12",
+          "event_date_precision": "day",
+          "title": "First Landing on an Asteroid",
+          "description": "Descended at 4 mph (6.4 km/h) and gently touched down on Eros near Himeros at 19:44 UT.",
+          "event_type": "landing",
+          "source_url": "https://science.nasa.gov/mission/near-shoemaker/"
+        },
+        {
+          "event_date": "2001-02-28",
+          "event_date_precision": "day",
+          "title": "Last Contact from Surface",
+          "description": "Final transmission received from the asteroid surface after two weeks of post-landing science.",
+          "event_type": "end_of_mission",
+          "source_url": "https://science.nasa.gov/mission/near-shoemaker/"
+        }
+      ],
+      "imagery": [
+        {
+          "title": "NEAR at Asteroid Eros",
+          "image_url": "https://images.nasa.gov/details/PIA02462",
+          "source_url": "https://science.nasa.gov/mission/near-shoemaker/",
+          "attribution": "NASA / JHUAPL",
+          "kind": "illustration",
+          "item_type": "Photo",
+          "license": "Public domain (NASA)",
+          "description": "Artist's concept depicting the NEAR Shoemaker spacecraft in close proximity to minor planet 433 Eros."
+        }
+      ],
+      "stakeholders": [
+        {
+          "name": "NASA",
+          "organization_type": "Government Agency",
+          "country": "United States",
+          "role": "Space Agency",
+          "source_url": "https://science.nasa.gov/mission/near-shoemaker/"
+        },
+        {
+          "name": "NASA Goddard Space Flight Center",
+          "organization_type": "Government Agency",
+          "country": "United States",
+          "role": "Program Management",
+          "source_url": "https://science.nasa.gov/mission/near-shoemaker/"
+        },
+        {
+          "name": "Johns Hopkins APL",
+          "organization_type": "Contractor / University",
+          "country": "United States",
+          "role": "Spacecraft Design and Operations",
+          "source_url": "https://science.nasa.gov/mission/near-shoemaker/"
+        }
+      ],
+      "people": [
+        {
+          "full_name": "Eugene M. Shoemaker",
+          "role_on_mission": "Planetary Geologist / Mission Namesake",
+          "affiliation": "USGS / Caltech",
+          "wiki_url": null,
+          "source_url": "https://science.nasa.gov/mission/near-shoemaker/",
+          "rank_order": 1
+        }
+      ]
+    },
+    "pioneer-10": {
+      "retrieved_at": "2026-11-15",
+      "confidence": "high",
+      "sections": {
+        "what_is_it": {
+          "text": "Pioneer 10 (Pioneer-F) was NASA's trailblazing first robotic mission to the outer planets. Launched in March 1972, the spacecraft achieved an unmatched series of deep-space exploration milestones, becoming the first probe to venture beyond Mars, the first to traverse the main asteroid belt, the first to conduct a close flyby of Jupiter, and the first human-built craft placed on an escape trajectory out of the solar system.",
+          "source_url": "https://science.nasa.gov/mission/pioneer-10/",
+          "confidence": "high",
+          "attribution": "NASA",
+          "license": "Public domain (NASA)"
+        },
+        "how_it_works": {
+          "text": "Weighing 569 pounds (258 kilograms), Pioneer 10 was boosted by a three-stage Atlas Centaur rocket with a TE-M-364-4 upper stage to a record escape velocity of 32,110 mph (51,682 km/h). Pioneer 10 was the first spacecraft to rely exclusively on nuclear electrical power, driven by twin SNAP-19 radioisotope thermoelectric generators (RTGs) generating ~140 W during its Jupiter flyby. It operated with spin stabilization and carried an array of magnetic, plasma, and imaging photopolarimeter instruments alongside an iconic gold-anodized pictorial plaque.",
+          "source_url": "https://science.nasa.gov/mission/pioneer-10/",
+          "confidence": "high",
+          "attribution": "NASA",
+          "license": "Public domain (NASA)"
+        },
+        "why_important": {
+          "text": "Pioneer 10 revolutionized planetary science by revealing that Jupiter is predominantly a liquid planet encased in intense trapped-radiation belts and a massive magnetic tail stretching nearly 800 million kilometers. In June 1983, it crossed the orbit of Neptune to become the first human-made object to venture beyond the outermost known planet, operating for over three decades across a mission planned for 21 months.",
+          "source_url": "https://science.nasa.gov/mission/pioneer-10/",
+          "confidence": "high",
+          "attribution": "NASA",
+          "license": "Public domain (NASA)"
+        },
+        "status": {
+          "text": "NASA maintained routine communications with Pioneer 10 until March 31, 1997. Ground antennas received the spacecraft's final faint radio signal on January 23, 2003, at a distance of 7.6 billion miles (12.23 billion kilometers) from Earth. Pioneer 10 is currently drifting silently into interstellar space toward the red star Aldebaran in the constellation Taurus.",
+          "source_url": "https://science.nasa.gov/mission/pioneer-10/",
+          "confidence": "high",
+          "attribution": "NASA",
+          "license": "Public domain (NASA)"
+        }
+      },
+      "timeline": [
+        {
+          "event_date": "1972-03-02",
+          "event_date_precision": "day",
+          "title": "Launch from Cape Canaveral",
+          "description": "Launched on an Atlas Centaur rocket from Launch Complex 36A at 01:49:04 UT.",
+          "event_type": "launch",
+          "source_url": "https://science.nasa.gov/mission/pioneer-10/"
+        },
+        {
+          "event_date": "1972-07-15",
+          "event_date_precision": "day",
+          "title": "Entered the Asteroid Belt",
+          "description": "First spacecraft to enter the main asteroid belt, emerging safely in February 1973.",
+          "event_type": "encounter",
+          "source_url": "https://science.nasa.gov/mission/pioneer-10/"
+        },
+        {
+          "event_date": "1973-12-04",
+          "event_date_precision": "day",
+          "title": "Closest Approach to Jupiter",
+          "description": "Raced past Jupiter at a range of 81,000 miles (130,354 km) at 78,000 mph, returning close-up imagery.",
+          "event_type": "flyby",
+          "source_url": "https://science.nasa.gov/mission/pioneer-10/"
+        },
+        {
+          "event_date": "1976-02",
+          "event_date_precision": "day",
+          "title": "Crossed Saturn's Orbit",
+          "description": "Crossed Saturn's orbital radius while detecting Jupiter's enormous magnetic tail.",
+          "event_type": "milestone",
+          "source_url": "https://science.nasa.gov/mission/pioneer-10/"
+        },
+        {
+          "event_date": "1983-06-13",
+          "event_date_precision": "day",
+          "title": "Crossed Neptune's Orbit",
+          "description": "Became the first human-built craft to travel beyond the furthest planet in the solar system.",
+          "event_type": "milestone",
+          "source_url": "https://science.nasa.gov/mission/pioneer-10/"
+        },
+        {
+          "event_date": "1997-03-31",
+          "event_date_precision": "day",
+          "title": "Routine Contact Terminated",
+          "description": "Formal mission operations ended due to budget constraints after 25 years.",
+          "event_type": "milestone",
+          "source_url": "https://science.nasa.gov/mission/pioneer-10/"
+        },
+        {
+          "event_date": "2003-01-23",
+          "event_date_precision": "day",
+          "title": "Last Signal Received on Earth",
+          "description": "Received final telemetry signal from a distance of 7.6 billion miles (12.23 billion km).",
+          "event_type": "end_of_mission",
+          "source_url": "https://science.nasa.gov/mission/pioneer-10/"
+        }
+      ],
+      "imagery": [
+        {
+          "title": "Pioneer 10 Artist's Concept",
+          "image_url": "https://assets.science.nasa.gov/dynamicimage/assets/science/psd/solar/2023/07/pioneer10.jpg",
+          "source_url": "https://science.nasa.gov/mission/pioneer-10/",
+          "attribution": "NASA",
+          "kind": "illustration",
+          "item_type": "Photo",
+          "license": "Public domain (NASA)",
+          "description": "Artist's rendering of the Pioneer 10 spacecraft during its flight past Jupiter."
+        }
+      ],
+      "stakeholders": [
+        {
+          "name": "NASA",
+          "organization_type": "Government Agency",
+          "country": "United States",
+          "role": "Space Agency",
+          "source_url": "https://science.nasa.gov/mission/pioneer-10/"
+        },
+        {
+          "name": "NASA Ames Research Center",
+          "organization_type": "Government Agency",
+          "country": "United States",
+          "role": "Mission Design and Management",
+          "source_url": "https://science.nasa.gov/mission/pioneer-10/"
+        },
+        {
+          "name": "TRW Inc.",
+          "organization_type": "Contractor / University",
+          "country": "United States",
+          "role": "Spacecraft Prime Contractor",
+          "source_url": "https://science.nasa.gov/mission/pioneer-10/"
+        }
+      ],
+      "people": []
+    },
+    "kepler": {
+      "retrieved_at": "2026-11-15",
+      "confidence": "high",
+      "sections": {
+        "what_is_it": {
+          "text": "The Kepler Space Telescope was NASA’s first dedicated planet-hunting mission, assigned to survey our region of the Milky Way galaxy for Earth-sized exoplanets orbiting within stellar habitable zones. Operating in an Earth-trailing heliocentric orbit, Kepler and its second-act extended mission, K2, surveyed more than 500,000 stars over nine years in deep space.",
+          "source_url": "https://science.nasa.gov/mission/kepler/",
+          "confidence": "high",
+          "attribution": "NASA",
+          "license": "Public domain (NASA)"
+        },
+        "how_it_works": {
+          "text": "The spacecraft was built around a single primary instrument: a specialized 3-foot (1-meter) aperture Schmidt telescope equipped with a 4-foot 7-inch (1.4-meter) primary mirror and a 95-megapixel image sensor array—the largest digital camera array launched into outer space at that time. Kepler detected planets by observing transits, recording tiny periodic dips in stellar brightness. When two of four reaction wheels failed in 2013, engineers used solar photon pressure to balance the telescope's pointing, initiating the extended K2 mission.",
+          "source_url": "https://science.nasa.gov/mission/kepler/",
+          "confidence": "high",
+          "attribution": "NASA",
+          "license": "Public domain (NASA)"
+        },
+        "why_important": {
+          "text": "Kepler revolutionized astronomy by confirming more than 2,600 exoplanets and proving that planets outnumber stars in our galaxy. Its observations revealed that 20 to 50 percent of stars visible in the night sky likely host small, rocky planets in their habitable zones. Kepler discovered the first multi-planet transiting systems (Kepler-9 and Kepler-11) and demonstrated that worlds between the size of Earth and Neptune are common throughout the Milky Way.",
+          "source_url": "https://science.nasa.gov/mission/kepler/",
+          "confidence": "high",
+          "attribution": "NASA",
+          "license": "Public domain (NASA)"
+        },
+        "status": {
+          "text": "After nine years of operations, Kepler exhausted its attitude-control fuel needed for further science observations. NASA officially retired the spacecraft on October 30, 2018, leaving it safely parked in its Earth-trailing heliocentric orbit.",
+          "source_url": "https://science.nasa.gov/mission/kepler/",
+          "confidence": "high",
+          "attribution": "NASA",
+          "license": "Public domain (NASA)"
+        }
+      },
+      "timeline": [
+        {
+          "event_date": "2009-03-06",
+          "event_date_precision": "day",
+          "title": "Launch into Heliocentric Orbit",
+          "description": "Launched aboard a Delta II rocket from Cape Canaveral Air Force Station.",
+          "event_type": "launch",
+          "source_url": "https://science.nasa.gov/mission/kepler/"
+        },
+        {
+          "event_date": "2010-01",
+          "event_date_precision": "day",
+          "title": "First Exoplanet Discoveries",
+          "description": "NASA announced Kepler's first five exoplanet detections (Kepler 4b through 8b).",
+          "event_type": "science",
+          "source_url": "https://science.nasa.gov/mission/kepler/"
+        },
+        {
+          "event_date": "2010-04",
+          "event_date_precision": "day",
+          "title": "First Multi-Planet Transiting System",
+          "description": "Confirmed Kepler-9, the first planetary system with multiple planets transiting the same star.",
+          "event_type": "science",
+          "source_url": "https://science.nasa.gov/mission/kepler/"
+        },
+        {
+          "event_date": "2013-05",
+          "event_date_precision": "day",
+          "title": "Second Reaction Wheel Failure",
+          "description": "Loss of second reaction wheel concluded prime mission; engineers devised solar-pressure pointing.",
+          "event_type": "milestone",
+          "source_url": "https://science.nasa.gov/mission/kepler/"
+        },
+        {
+          "event_date": "2014",
+          "event_date_precision": "day",
+          "title": "K2 Mission Initiated",
+          "description": "Commenced K2 extended mission observing fields along the ecliptic plane across 19 campaigns.",
+          "event_type": "milestone",
+          "source_url": "https://science.nasa.gov/mission/kepler/"
+        },
+        {
+          "event_date": "2018-10-30",
+          "event_date_precision": "day",
+          "title": "Kepler Officially Retired",
+          "description": "NASA retired Kepler within its safe Earth-trailing heliocentric orbit upon fuel exhaustion.",
+          "event_type": "end_of_mission",
+          "source_url": "https://science.nasa.gov/mission/kepler/"
+        }
+      ],
+      "imagery": [
+        {
+          "title": "Kepler Space Telescope in K2 Mission",
+          "image_url": "https://assets.science.nasa.gov/dynamicimage/assets/science/astro/missions/Kepler_concept.jpg",
+          "source_url": "https://science.nasa.gov/mission/kepler/",
+          "attribution": "NASA, ESA, CSA, and STScI",
+          "kind": "illustration",
+          "item_type": "Photo",
+          "license": "Public domain (NASA)",
+          "description": "Artist's concept of NASA's planet-hunting Kepler spacecraft operating in its K2 mission configuration."
+        }
+      ],
+      "stakeholders": [
+        {
+          "name": "NASA",
+          "organization_type": "Government Agency",
+          "country": "United States",
+          "role": "Space Agency",
+          "source_url": "https://science.nasa.gov/mission/kepler/"
+        },
+        {
+          "name": "NASA Ames Research Center",
+          "organization_type": "Government Agency",
+          "country": "United States",
+          "role": "Science Lead and Operations",
+          "source_url": "https://science.nasa.gov/mission/kepler/"
+        },
+        {
+          "name": "Ball Aerospace",
+          "organization_type": "Contractor / University",
+          "country": "United States",
+          "role": "Spacecraft Prime Contractor",
+          "source_url": "https://science.nasa.gov/mission/kepler/"
+        }
+      ],
+      "people": [
+        {
+          "full_name": "William Borucki",
+          "role_on_mission": "Founding Principal Investigator",
+          "affiliation": "NASA Ames Research Center",
+          "wiki_url": null,
+          "source_url": "https://science.nasa.gov/mission/kepler/",
+          "rank_order": 1
         }
       ]
     }
