@@ -177,6 +177,99 @@
       ]
     },
     {
+      "slug": "surveyor-5",
+      "name": "Surveyor 5",
+      "display_name": "Surveyor 5",
+      "destination_category": "Moon",
+      "destination": "Moon (Mare Tranquillitatis)",
+      "mission_type": "Lander",
+      "object_type": "Lander",
+      "agency": "NASA/JPL",
+      "operator": "NASA/JPL",
+      "manufacturer": "Hughes Aircraft",
+      "wiki_title": "Surveyor_5",
+      "secondary_wiki_titles": [],
+      "nssdca_id": "1967-084A",
+      "model_keywords": [
+        "Surveyor"
+      ],
+      "model_include": [],
+      "model_exclude": [
+        "Mars Global Surveyor"
+      ],
+      "model_overrides": [],
+      "launch_date": "1967-09-08",
+      "landing_date": "1967-09-11",
+      "end_date": "1967-12-17",
+      "status_label": "ended",
+      "status_text": "Contact ended 17 December 1967 after a successful soft landing and science operations.",
+      "mission_status": "Completed",
+      "sources": [
+        {
+          "label": "NASA NSSDCA - Surveyor 5",
+          "url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1967-084A",
+          "source_type": "archive"
+        },
+        {
+          "label": "NASA Science - Surveyor 5",
+          "url": "https://science.nasa.gov/mission/surveyor-5/",
+          "source_type": "official_nasa"
+        },
+        {
+          "label": "Wikipedia - Surveyor 5",
+          "url": "https://en.wikipedia.org/wiki/Surveyor_5",
+          "source_type": "wikipedia"
+        },
+        {
+          "label": "Lunar and Planetary Institute - The Surveyor Program",
+          "url": "https://www.lpi.usra.edu/lunar/missions/surveyor/",
+          "source_type": "archive"
+        }
+      ],
+      "people": [
+        {
+          "name": "Benjamin Milwitzky",
+          "role": "NASA Surveyor program manager"
+        },
+        {
+          "name": "Robert J. Parks",
+          "role": "JPL Surveyor program manager"
+        },
+        {
+          "name": "Leo Stoolman",
+          "role": "Hughes Aircraft Surveyor project manager"
+        },
+        {
+          "name": "Leonard Jaffe",
+          "role": "NASA Surveyor program scientist"
+        },
+        {
+          "name": "Eugene M. Shoemaker",
+          "role": "Leader of the Surveyor television experiment"
+        },
+        {
+          "name": "Anthony Turkevich",
+          "role": "Principal investigator, alpha-scattering surface analyzer (University of Chicago)"
+        },
+        {
+          "name": "Ernest J. Franzgrote",
+          "role": "Co-investigator, alpha-scattering surface analyzer (JPL)"
+        },
+        {
+          "name": "James H. Patterson",
+          "role": "Co-investigator, alpha-scattering surface analyzer (Argonne National Laboratory)"
+        },
+        {
+          "name": "Justin J. Rennilson",
+          "role": "Co-investigator, Surveyor television experiment (JPL)"
+        },
+        {
+          "name": "Howard H. Haglund",
+          "role": "JPL Surveyor program manager (1966-1968)"
+        }
+      ]
+    },
+    {
       "slug": "apollo-lunar-module",
       "name": "Apollo Lunar Module",
       "display_name": "Apollo Lunar Module (LM) Components",
