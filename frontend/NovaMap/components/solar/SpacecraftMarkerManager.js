@@ -39,33 +39,86 @@ export class SpacecraftMarkerManager {
 
     // Textures
     this.whiteDotTexture = this.createWhiteDotTexture();
+    this.beaconGlowTexture = this.createBeaconGlowTexture();
     this.pulseHaloTexture = this.createPulseHaloTexture();
 
     this.initAllMappedSpacecraft();
   }
 
   /**
-   * Generates a clean luminous celestial white dot with soft radial glow
+   * Generates a high-contrast spacecraft beacon texture:
+   * - bright solid white core so each craft reads as a distinct point of light
+   * - thin dashed reticle ring (rotated per-frame => visible "spinning" motion)
+   * - soft cyan halo bloom for legibility against the starfield
    */
   createWhiteDotTexture() {
     const canvas = document.createElement('canvas');
-    canvas.width = 64;
-    canvas.height = 64;
+    canvas.width = 128;
+    canvas.height = 128;
     const ctx = canvas.getContext('2d');
+    const c = 64;
 
-    const grad = ctx.createRadialGradient(32, 32, 0, 32, 32, 30);
-    grad.addColorStop(0.0, 'rgba(255, 255, 255, 1.0)');
-    grad.addColorStop(0.25, 'rgba(255, 255, 255, 0.95)');
-    grad.addColorStop(0.55, 'rgba(224, 242, 254, 0.45)');
-    grad.addColorStop(0.85, 'rgba(186, 230, 253, 0.12)');
-    grad.addColorStop(1.0, 'rgba(186, 230, 253, 0.0)');
+    // Soft cyan bloom
+    const bloom = ctx.createRadialGradient(c, c, 0, c, c, 62);
+    bloom.addColorStop(0.0, 'rgba(255, 255, 255, 1.0)');
+    bloom.addColorStop(0.18, 'rgba(240, 249, 255, 1.0)');
+    bloom.addColorStop(0.32, 'rgba(186, 230, 253, 0.85)');
+    bloom.addColorStop(0.5, 'rgba(56, 189, 248, 0.34)');
+    bloom.addColorStop(0.75, 'rgba(56, 189, 248, 0.09)');
+    bloom.addColorStop(1.0, 'rgba(56, 189, 248, 0.0)');
+    ctx.fillStyle = bloom;
+    ctx.fillRect(0, 0, 128, 128);
 
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, 64, 64);
+    // Dashed spacecraft reticle ring (asymmetric on purpose so rotation reads)
+    ctx.strokeStyle = 'rgba(224, 242, 254, 0.95)';
+    ctx.lineWidth = 4;
+    ctx.lineCap = 'round';
+    for (let i = 0; i < 3; i++) {
+      const start = i * (Math.PI * 2 / 3) + 0.28;
+      ctx.beginPath();
+      ctx.arc(c, c, 30, start, start + Math.PI * 2 / 3 - 0.56);
+      ctx.stroke();
+    }
+
+    // Solid white core
+    const core = ctx.createRadialGradient(c, c, 0, c, c, 15);
+    core.addColorStop(0.0, 'rgba(255, 255, 255, 1.0)');
+    core.addColorStop(0.62, 'rgba(255, 255, 255, 1.0)');
+    core.addColorStop(1.0, 'rgba(255, 255, 255, 0.0)');
+    ctx.fillStyle = core;
+    ctx.beginPath();
+    ctx.arc(c, c, 15, 0, Math.PI * 2);
+    ctx.fill();
 
     const texture = new THREE.CanvasTexture(canvas);
     texture.generateMipmaps = false;
     texture.minFilter = THREE.LinearFilter;
+    this.disposables.push(texture);
+    return texture;
+  }
+
+  /**
+   * Soft always-on glow that sits behind each spacecraft dot so markers stay
+   * visible even when they are tightly clustered (e.g. lunar landing sites).
+   */
+  createBeaconGlowTexture() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 128;
+    canvas.height = 128;
+    const ctx = canvas.getContext('2d');
+
+    const grad = ctx.createRadialGradient(64, 64, 0, 64, 64, 62);
+    grad.addColorStop(0.0, 'rgba(186, 230, 253, 0.55)');
+    grad.addColorStop(0.35, 'rgba(56, 189, 248, 0.26)');
+    grad.addColorStop(0.7, 'rgba(56, 189, 248, 0.08)');
+    grad.addColorStop(1.0, 'rgba(56, 189, 248, 0.0)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, 128, 128);
+
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.generateMipmaps = false;
+    texture.minFilter = THREE.LinearFilter;
+    this.disposables.push(texture);
     return texture;
   }
 
@@ -264,8 +317,24 @@ export class SpacecraftMarkerManager {
 
     const dotSprite = new THREE.Sprite(dotMat);
     dotSprite.position.y = 0.28;
-    dotSprite.scale.set(0.24, 0.24, 1);
+    dotSprite.scale.set(0.34, 0.34, 1);
     beaconGroup.add(dotSprite);
+
+    // Always-on soft glow beneath the dot (keeps clusters readable)
+    const glowMat = new THREE.SpriteMaterial({
+      map: this.beaconGlowTexture,
+      transparent: true,
+      opacity: 0.45,
+      depthTest: true,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending
+    });
+    this.disposables.push(glowMat);
+
+    const glowSprite = new THREE.Sprite(glowMat);
+    glowSprite.position.y = 0.28;
+    glowSprite.scale.set(0.8, 0.8, 1);
+    beaconGroup.add(glowSprite);
 
     // Subtle Selection / Hover Halo Ring
     const haloMat = new THREE.SpriteMaterial({
@@ -313,6 +382,7 @@ export class SpacecraftMarkerManager {
       group: beaconGroup,
       stemLine,
       dotSprite,
+      glowSprite,
       haloSprite,
       labelSprite,
       hitProxy,
@@ -373,8 +443,23 @@ export class SpacecraftMarkerManager {
     this.disposables.push(dotMat);
 
     const dotSprite = new THREE.Sprite(dotMat);
-    dotSprite.scale.set(0.3, 0.3, 1);
+    dotSprite.scale.set(0.42, 0.42, 1);
     craftGroup.add(dotSprite);
+
+    // Always-on soft glow beneath the dot
+    const glowMat = new THREE.SpriteMaterial({
+      map: this.beaconGlowTexture,
+      transparent: true,
+      opacity: 0.45,
+      depthTest: true,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending
+    });
+    this.disposables.push(glowMat);
+
+    const glowSprite = new THREE.Sprite(glowMat);
+    glowSprite.scale.set(1.0, 1.0, 1);
+    craftGroup.add(glowSprite);
 
     // Subtle Selection / Hover Halo Ring
     const haloMat = new THREE.SpriteMaterial({
@@ -419,6 +504,7 @@ export class SpacecraftMarkerManager {
       craftGroup,
       orbitLine,
       dotSprite,
+      glowSprite,
       haloSprite,
       labelSprite,
       hitProxy,
@@ -484,8 +570,23 @@ export class SpacecraftMarkerManager {
     this.disposables.push(dotMat);
 
     const dotSprite = new THREE.Sprite(dotMat);
-    dotSprite.scale.set(0.5, 0.5, 1);
+    dotSprite.scale.set(0.7, 0.7, 1);
     probeGroup.add(dotSprite);
+
+    // Always-on soft glow beneath the dot
+    const glowMat = new THREE.SpriteMaterial({
+      map: this.beaconGlowTexture,
+      transparent: true,
+      opacity: 0.45,
+      depthTest: true,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending
+    });
+    this.disposables.push(glowMat);
+
+    const glowSprite = new THREE.Sprite(glowMat);
+    glowSprite.scale.set(1.7, 1.7, 1);
+    probeGroup.add(glowSprite);
 
     // Subtle Selection / Hover Halo Ring
     const haloMat = new THREE.SpriteMaterial({
@@ -527,6 +628,7 @@ export class SpacecraftMarkerManager {
       group: probeGroup,
       trajLine,
       dotSprite,
+      glowSprite,
       haloSprite,
       labelSprite,
       hitProxy,
@@ -630,6 +732,7 @@ export class SpacecraftMarkerManager {
       const o = this.orbiters.get(targetSlug);
       o.hiddenFromInspection = !visible;
       o.dotSprite.visible = visible;
+      o.glowSprite.visible = visible;
       o.haloSprite.visible = visible;
       if (!visible) {
         o.haloSprite.material.opacity = 0.0;
@@ -651,7 +754,7 @@ export class SpacecraftMarkerManager {
     if (type === 'markers') {
       this.visibleMarkers = visible;
       this.markers.forEach(m => { m.group.visible = visible; });
-      this.orbiters.forEach(o => { o.dotSprite.visible = visible; o.haloSprite.visible = visible; if (!visible) o.labelSprite.visible = false; });
+      this.orbiters.forEach(o => { o.dotSprite.visible = visible; o.glowSprite.visible = visible; o.haloSprite.visible = visible; if (!visible) o.labelSprite.visible = false; });
       this.heliocentricProbes.forEach(p => { p.group.visible = visible; });
     } else if (type === 'trajectories') {
       this.visibleTrajectories = visible;
@@ -745,16 +848,20 @@ export class SpacecraftMarkerManager {
       marker.dotSprite.getWorldPosition(this.scratchWorldPos);
       const distance = this.scratchCamPos.distanceTo(this.scratchWorldPos);
 
-      // Scale white dot adaptively: clean pin-prick at close range, crisp dot at distance
-      const baseScale = Math.max(0.06, Math.min(distance * 0.016, 1.2));
+      // Scale white dot adaptively: readable at close range, crisp beacon at distance
+      const baseScale = Math.max(0.12, Math.min(distance * 0.02, 1.6));
       marker.dotSprite.scale.set(baseScale, baseScale, 1);
       marker.dotSprite.position.y = baseScale * 0.9;
+      marker.glowSprite.position.y = baseScale * 0.9;
+      marker.glowSprite.scale.set(baseScale * 2.4, baseScale * 2.4, 1);
       marker.haloSprite.position.y = baseScale * 0.9;
       marker.stemLine.scale.set(1, baseScale * 2.2, 1);
 
-      // Subtle blinking animation
-      const blink = 0.78 + 0.22 * Math.sin(time * 3.5 + marker.phase);
+      // Gentle brightness pulse + slow reticle spin (frozen when paused)
+      const blink = 0.9 + 0.1 * Math.sin(time * 3.2 + marker.phase);
       marker.dotSprite.material.opacity = blink;
+      marker.dotSprite.material.rotation = time * 0.55 + marker.phase;
+      marker.glowSprite.material.opacity = 0.42 * blink;
 
       const isSelected = this.selectedSlug === slug;
       const isHovered = this.hoveredSlug === slug;
@@ -774,6 +881,7 @@ export class SpacecraftMarkerManager {
 
         marker.group.visible = lodOpacity > 0.01;
         marker.dotSprite.material.opacity = lodOpacity * blink;
+        marker.glowSprite.material.opacity = lodOpacity * 0.42 * blink;
         marker.stemLine.material.opacity = lodOpacity * 0.5;
         marker.haloSprite.material.opacity = 0.0;
         // Show labels when close enough
@@ -789,22 +897,26 @@ export class SpacecraftMarkerManager {
     this.orbiters.forEach((orbiter, slug) => {
       if (!this.visibleMarkers || orbiter.hiddenFromInspection) {
         orbiter.dotSprite.visible = false;
+        orbiter.glowSprite.visible = false;
         orbiter.haloSprite.visible = false;
         orbiter.haloSprite.material.opacity = 0.0;
         orbiter.labelSprite.visible = false;
         return;
       }
 
-      // Dynamic orbital revolution
+      // Dynamic orbital revolution (follows the simulation clock => pauses too)
       orbiter.nodePivot.rotation.y = time * 0.35 * (orbiter.speed || 1.0);
 
       orbiter.dotSprite.getWorldPosition(this.scratchWorldPos);
       const distance = this.scratchCamPos.distanceTo(this.scratchWorldPos);
-      const baseScale = Math.max(0.08, Math.min(distance * 0.018, 1.4));
+      const baseScale = Math.max(0.13, Math.min(distance * 0.022, 1.7));
       orbiter.dotSprite.scale.set(baseScale, baseScale, 1);
+      orbiter.glowSprite.scale.set(baseScale * 2.4, baseScale * 2.4, 1);
 
-      const blink = 0.8 + 0.2 * Math.sin(time * 3.5 + orbiter.phase);
+      const blink = 0.9 + 0.1 * Math.sin(time * 3.2 + orbiter.phase);
       orbiter.dotSprite.material.opacity = blink;
+      orbiter.dotSprite.material.rotation = time * 0.55 + orbiter.phase;
+      orbiter.glowSprite.material.opacity = 0.42 * blink;
 
       const isSelected = this.selectedSlug === slug;
       const isHovered = this.hoveredSlug === slug;
@@ -832,6 +944,7 @@ export class SpacecraftMarkerManager {
     this.heliocentricProbes.forEach((probe, slug) => {
       if (!this.visibleMarkers || probe.hiddenFromInspection) {
         probe.dotSprite.visible = false;
+        probe.glowSprite.visible = false;
         probe.haloSprite.visible = false;
         probe.haloSprite.material.opacity = 0.0;
         probe.labelSprite.visible = false;
@@ -839,11 +952,14 @@ export class SpacecraftMarkerManager {
       }
 
       const distance = this.scratchCamPos.distanceTo(probe.group.position);
-      const baseScale = Math.max(0.14, Math.min(distance * 0.015, 1.6));
+      const baseScale = Math.max(0.22, Math.min(distance * 0.018, 2.0));
       probe.dotSprite.scale.set(baseScale, baseScale, 1);
+      probe.glowSprite.scale.set(baseScale * 2.4, baseScale * 2.4, 1);
 
-      const blink = 0.8 + 0.2 * Math.sin(time * 3.5 + probe.phase);
+      const blink = 0.9 + 0.1 * Math.sin(time * 3.2 + probe.phase);
       probe.dotSprite.material.opacity = blink;
+      probe.dotSprite.material.rotation = time * 0.55 + probe.phase;
+      probe.glowSprite.material.opacity = 0.42 * blink;
 
       const isSelected = this.selectedSlug === slug;
       const isHovered = this.hoveredSlug === slug;
