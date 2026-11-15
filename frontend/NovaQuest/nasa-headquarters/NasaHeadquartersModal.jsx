@@ -355,22 +355,6 @@ export default function NasaHeadquartersModal({ isOpen, onClose, onSoilAnalysis,
           <div className="pointer-events-auto flex items-center gap-2.5">
             <button
               type="button"
-              onClick={() => {
-                gameAudio.playClick();
-                setMissionComplete(false);
-                onClose();
-                onSoilAnalysis?.();
-              }}
-              className="flex items-center gap-2 px-3.5 py-2 rounded-xl border border-cyan-400/60 bg-gradient-to-r from-cyan-950/90 to-blue-950/90 text-cyan-200 text-xs font-bold uppercase tracking-wider shadow-[0_0_20px_rgba(34,211,238,0.3)] hover:border-cyan-300 hover:text-white hover:scale-105 active:scale-95 transition-all cursor-pointer"
-              title="Return to Moon to perform Soil Analysis"
-            >
-              <Layers className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />
-              <span className="hidden sm:inline">Return to Moon · Soil Analysis</span>
-              <span className="sm:hidden">Soil Analysis</span>
-            </button>
-
-            <button
-              type="button"
               autoFocus
               onClick={handleClose}
               aria-label="Close NASA Headquarters"

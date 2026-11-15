@@ -823,6 +823,8 @@ export default function Level1Surveyor5Page() {
                       "Telemetry restored! Dr. Jaffe here from Mission Control! We are receiving pristine television pictures and alpha particle data from the Sea of Tranquility! Outstanding work, Leo! You've saved Surveyor 5 and secured humanity's path to Apollo!",
                       () => {
                         try {
+                          localStorage.setItem('novaquest_level1_completed', 'true');
+                          localStorage.setItem('novaquest_level2_unlocked', 'true');
                           saveGame({
                             currentChapter: 'surveyor_5_repaired',
                             badges: ['Lunar Pioneer Badge', 'Surveyor 5 Restorer'],
@@ -1027,19 +1029,6 @@ export default function Level1Surveyor5Page() {
 
         {/* Right: Suit Switcher & Exit Controls */}
         <div className="flex items-center gap-2 pointer-events-auto">
-          <button
-            id="open-hq-btn"
-            onClick={() => {
-              gameAudio.playClick?.();
-              setIsHqOpen(true);
-            }}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-cyan-600/90 to-blue-700/90 hover:from-cyan-500 hover:to-blue-600 backdrop-blur-md text-white rounded-2xl border border-cyan-400/50 text-xs font-black shadow-lg shadow-cyan-500/25 active:scale-95 transition-all cursor-pointer"
-            title="Open NASA Headquarters & Firing Room"
-          >
-            <Building2 className="w-3.5 h-3.5" />
-            <span>NASA HQ</span>
-          </button>
-
           {gamePhase === 'phase4_open_world' && (
             <button
               id="suit-switch-btn"
@@ -1050,13 +1039,6 @@ export default function Level1Surveyor5Page() {
               <span>{selectedSuit === 'alien' ? '👽 Alien Explorer' : '🧑‍🚀 Apollo Astronaut'}</span>
             </button>
           )}
-
-          <button
-            onClick={() => navigate('/missions')}
-            className="px-3 py-1.5 bg-slate-900/85 hover:bg-slate-800 backdrop-blur-md text-slate-400 hover:text-white rounded-2xl border border-slate-700 text-xs font-bold transition-all shadow-md active:scale-95"
-          >
-            Hub
-          </button>
         </div>
       </div>
 

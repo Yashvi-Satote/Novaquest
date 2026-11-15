@@ -310,6 +310,10 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
 
     setIsSurveyorCollected(true);
     isSurveyorCollectedRef.current = true;
+    try {
+      localStorage.setItem('novaquest_level1_completed', 'true');
+      localStorage.setItem('novaquest_level2_unlocked', 'true');
+    } catch (_) {}
 
     // Show popup modal after collection animation
     setTimeout(() => {
