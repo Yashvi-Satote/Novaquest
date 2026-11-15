@@ -12,6 +12,7 @@ import MissionDetailDrawer from '../components/solar/MissionDetailDrawer';
 import CelestialDetailDrawer from '../components/solar/CelestialDetailDrawer';
 import CinematicFloatingControls from '../components/solar/CinematicFloatingControls';
 import NovaAstronautCompanion from '../components/companion/NovaAstronautCompanion';
+import NovaMapOnboardingTutorial, { TUTORIAL_STORAGE_KEY, TUTORIAL_SESSION_KEY } from '../components/solar/NovaMapOnboardingTutorial';
 
 const LAYOUT_STORAGE_KEY = 'nova_layout_preferences_v1';
 
@@ -99,6 +100,28 @@ export default function SolarSystemPage() {
 
   // Requirement 5: Bottom HUD Restore / Hide (Default: hidden to maintain cinematic view)
   const [isBottomHudVisible, setIsBottomHudVisible] = useState(false);
+
+  // Interactive Onboarding & Guided Tutorial state
+  const [isTutorialOpen, setIsTutorialOpen] = useState(() => {
+    try {
+      const status = localStorage.getItem(TUTORIAL_STORAGE_KEY);
+      const sessionDeferred = sessionStorage.getItem(TUTORIAL_SESSION_KEY);
+      if (status === 'completed' || status === 'skipped' || sessionDeferred === 'true') {
+        return false;
+      }
+      return true; // First-time visit
+    } catch {
+      return false;
+    }
+  });
+
+  const handleStartTutorial = () => {
+    setIsTutorialOpen(true);
+  };
+
+  const handleCloseTutorial = () => {
+    setIsTutorialOpen(false);
+  };
 
   // Save layout preferences to localStorage
   const saveLayoutPrefs = (updates) => {
@@ -414,6 +437,7 @@ export default function SolarSystemPage() {
           isZenMode={layoutPrefs.isZenMode}
           onToggleZenMode={handleToggleZenMode}
           onRestoreDefaultLayout={handleRestoreDefaultLayout}
+          onStartTutorial={handleStartTutorial}
           className={
             layoutPrefs.isZenMode
               ? 'top-4 left-4'
@@ -554,6 +578,7 @@ export default function SolarSystemPage() {
             onToggleLayer={handleToggleLayer}
             onScrubStart={handleScrubStart}
             onScrubEnd={handleScrubEnd}
+            onStartTutorial={handleStartTutorial}
           />
         )}
 
@@ -637,6 +662,26 @@ export default function SolarSystemPage() {
             onResetToSystem={handleResetView}
           />
         )}
+
+        {/* Interactive Guided Onboarding Tutorial with SVG Spotlight */}
+        <NovaMapOnboardingTutorial
+          isOpen={isTutorialOpen}
+          onClose={handleCloseTutorial}
+          onSelectPlanet={(planetId) => {
+            setSelectedCelestialId(planetId);
+            setSelectedMissionSlug(null);
+            if (canvasRef.current) {
+              canvasRef.current.focusPlanet(planetId);
+            }
+            saveLayoutPrefs({ isDrawerOpen: true });
+          }}
+          onResetView={handleResetView}
+          onOpenSidebar={() => saveLayoutPrefs({ isSidebarOpen: true })}
+          onOpenBottomHud={() => setIsBottomHudVisible(true)}
+          onOpenDrawer={() => saveLayoutPrefs({ isDrawerOpen: true })}
+          isDrawerOpen={layoutPrefs.isDrawerOpen}
+          selectedCelestialId={selectedCelestialId}
+        />
 
       </main>
     </div>

@@ -11,7 +11,8 @@ import {
   Maximize, 
   Minimize, 
   RotateCcw,
-  Sparkles
+  Sparkles,
+  HelpCircle
 } from 'lucide-react';
 
 /**
@@ -24,6 +25,7 @@ import {
  * - Hide/show technical detail drawer
  * - Hide all panels (Zen Cinematic Immersion)
  * - Restore default layout
+ * - Start interactive guided tour (Help)
  * - Fullscreen toggle
  */
 export default function CinematicFloatingControls({
@@ -38,6 +40,7 @@ export default function CinematicFloatingControls({
   isZenMode,
   onToggleZenMode,
   onRestoreDefaultLayout,
+  onStartTutorial,
   className = ''
 }) {
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -162,7 +165,21 @@ export default function CinematicFloatingControls({
         <RotateCcw className="w-4 h-4" />
       </button>
 
-      {/* 7. Fullscreen Toggle */}
+      {/* 7. Guided Onboarding Tour & Interactive Help */}
+      {onStartTutorial && (
+        <button
+          type="button"
+          id="dock-start-tutorial-btn"
+          onClick={onStartTutorial}
+          className="p-2 rounded-xl text-cyan-400 hover:text-white hover:bg-cyan-500/20 border border-cyan-500/30 hover:border-cyan-400 transition-all cursor-pointer shadow-sm shadow-cyan-950/40"
+          title="Start Guided Solar System Tour"
+          aria-label="Start Guided Solar System Tour"
+        >
+          <HelpCircle className="w-4 h-4" />
+        </button>
+      )}
+
+      {/* 8. Fullscreen Toggle */}
       <button
         type="button"
         id="dock-toggle-fullscreen-btn"
