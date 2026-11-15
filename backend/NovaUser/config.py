@@ -49,7 +49,9 @@ class Settings:
     """Validated runtime settings for NovaUser."""
 
     def __init__(self) -> None:
-        database_url = (os.getenv("NOVAUSER_DATABASE_URL") or "").strip()
+        database_url = (
+            os.getenv("NOVAUSER_DATABASE_URL") or os.getenv("DATABASE_URL") or ""
+        ).strip()
         if not database_url:
             raise ConfigError(
                 "NOVAUSER_DATABASE_URL is not set. Add the PostgreSQL connection "
