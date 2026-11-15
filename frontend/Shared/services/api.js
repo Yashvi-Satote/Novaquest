@@ -19,7 +19,7 @@ export async function fetchHealth() {
       database: 'unknown',
       database_connected: false,
       postgres_active: false,
-      database_message: 'Cannot reach Flask backend server. Ensure backend is running on port 5000.',
+      database_message: 'Cannot reach backend server. In production, check that the Railway service is running. For local dev, start the Flask server: python backend/app.py',
       hardware_records_count: 0
     };
   }
