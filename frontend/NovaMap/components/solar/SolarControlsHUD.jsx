@@ -165,7 +165,7 @@ export default function SolarControlsHUD({
           <div>
             <span className="text-xs font-bold text-white tracking-wide block">{hoveredItemInfo.name}</span>
             <span className="text-[10px] text-cyan-300 font-mono">
-              {hoveredItemInfo.isSpacecraft ? (hoveredItemInfo.coordinates || 'Spacecraft Telemetry') : 'Celestial Body'} • Click to Inspect
+              {hoveredItemInfo.isSpacecraft ? (hoveredItemInfo.coordinates || 'Spacecraft Telemetry') : 'Celestial Body'} • {hoveredItemInfo.isSpacecraft ? 'Click to Open 3D Explore Page' : 'Click to Inspect'}
             </span>
           </div>
         </div>

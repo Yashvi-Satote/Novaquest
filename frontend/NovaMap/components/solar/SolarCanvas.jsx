@@ -16,6 +16,7 @@ const SolarCanvas = forwardRef(function SolarCanvas({
   layerVisibility = { orbits: true, trajectories: true, markers: true, asteroids: true, comets: true, spacecraft: true },
   onSelectPlanet,
   onSelectSpacecraft,
+  onOpenSpacecraftPage,
   onDeselect,
   onHoverItem,
   onModeChange,
@@ -155,6 +156,7 @@ const SolarCanvas = forwardRef(function SolarCanvas({
 
   const onSelectPlanetRef = useRef(onSelectPlanet);
   const onSelectCraftRef = useRef(onSelectSpacecraft);
+  const onOpenCraftPageRef = useRef(onOpenSpacecraftPage);
   const onDeselectRef = useRef(onDeselect);
   const onHoverRef = useRef(onHoverItem);
   const onModeChangeRef = useRef(onModeChange);
@@ -164,6 +166,7 @@ const SolarCanvas = forwardRef(function SolarCanvas({
   useEffect(() => { onModeChangeRef.current = onModeChange; }, [onModeChange]);
   useEffect(() => { onSelectPlanetRef.current = onSelectPlanet; }, [onSelectPlanet]);
   useEffect(() => { onSelectCraftRef.current = onSelectSpacecraft; }, [onSelectSpacecraft]);
+  useEffect(() => { onOpenCraftPageRef.current = onOpenSpacecraftPage; }, [onOpenSpacecraftPage]);
   useEffect(() => { onDeselectRef.current = onDeselect; }, [onDeselect]);
   useEffect(() => { onHoverRef.current = onHoverItem; }, [onHoverItem]);
   useEffect(() => { onDateChangeRef.current = onDateChange; }, [onDateChange]);
@@ -253,6 +256,7 @@ const SolarCanvas = forwardRef(function SolarCanvas({
     const engine = new SolarEngine(container, {
       onSelectPlanet: (id) => onSelectPlanetRef.current && onSelectPlanetRef.current(id),
       onSelectSpacecraft: (slug) => onSelectCraftRef.current && onSelectCraftRef.current(slug),
+      onOpenSpacecraftPage: (slug) => onOpenCraftPageRef.current && onOpenCraftPageRef.current(slug),
       onDeselect: () => onDeselectRef.current && onDeselectRef.current(),
       onHoverItem: (info) => onHoverRef.current && onHoverRef.current(info),
       onModeChange: (data) => onModeChangeRef.current && onModeChangeRef.current(data),
@@ -260,6 +264,7 @@ const SolarCanvas = forwardRef(function SolarCanvas({
       onSpacecraftInspectionChange: (data) => onSpacecraftInspectionChangeRef.current && onSpacecraftInspectionChangeRef.current(data)
     });
     engineRef.current = engine;
+    if (import.meta.env.DEV) window.__novaEngine = engine;
 
     const resizeObserver = new ResizeObserver((entries) => {
       for (const entry of entries) {
