@@ -34,7 +34,8 @@ export const ALL_MISSIONS = [
     destination: 'Interstellar Space',
     difficulty: 'Beginner Friendly',
     estimatedDuration: '5 Minutes',
-    status: 'unlocked',
+    status: 'locked',
+    lockReason: 'Complete Level 1: Surveyor 5 to unlock',
     heroImage: '/textures/planets/milky_way.jpg',
     badge: 'Golden Record Star',
     tags: ['Voyager 1', 'Interstellar', '1977', 'Golden Record'],
@@ -53,10 +54,11 @@ export const ALL_MISSIONS = [
     difficulty: 'Intermediate',
     estimatedDuration: '7 Minutes',
     status: 'locked',
+    isUnderDevelopment: true,
+    lockReason: 'Under Development',
     heroImage: '/images/moon_close_up_telescope.jpg',
-    badge: 'Tranquility Base Medal',
-    tags: ['Apollo', 'Crewed', '1969', 'Moonwalkers'],
-    lockReason: 'Complete Level 2: Message of Earth to unlock Apollo 11'
+    badge: 'Under Development',
+    tags: ['Apollo', 'Crewed', '1969', 'Moonwalkers']
   },
   {
     id: 'viking-1',
@@ -68,10 +70,11 @@ export const ALL_MISSIONS = [
     difficulty: 'Intermediate',
     estimatedDuration: '8 Minutes',
     status: 'locked',
+    isUnderDevelopment: true,
+    lockReason: 'Under Development',
     heroImage: '/textures/planets/mars.jpg',
-    badge: 'Martian Explorer Ribbon',
-    tags: ['Mars', 'Lander', '1976', 'Astrobiology'],
-    lockReason: 'Complete Level 3 to unlock Viking 1'
+    badge: 'Under Development',
+    tags: ['Mars', 'Lander', '1976', 'Astrobiology']
   },
   {
     id: 'cassini-huygens',
@@ -83,10 +86,11 @@ export const ALL_MISSIONS = [
     difficulty: 'Advanced',
     estimatedDuration: '10 Minutes',
     status: 'locked',
+    isUnderDevelopment: true,
+    lockReason: 'Under Development',
     heroImage: '/textures/planets/saturn.jpg',
-    badge: 'Titan Aeroshell Crest',
-    tags: ['Saturn', 'Orbiter', 'Probe', 'Ocean Worlds'],
-    lockReason: 'Complete Level 4 to unlock Cassini'
+    badge: 'Under Development',
+    tags: ['Saturn', 'Orbiter', 'Probe', 'Ocean Worlds']
   },
   {
     id: 'jwst',
@@ -98,14 +102,45 @@ export const ALL_MISSIONS = [
     difficulty: 'Master',
     estimatedDuration: '12 Minutes',
     status: 'locked',
+    isUnderDevelopment: true,
+    lockReason: 'Under Development',
     heroImage: '/textures/planets/milky_way.jpg',
-    badge: 'Cosmic Dawn Prism',
-    tags: ['Telescope', 'Infrared', 'L2', 'First Stars'],
-    lockReason: 'Complete Level 5 to unlock JWST'
+    badge: 'Under Development',
+    tags: ['Telescope', 'Infrared', 'L2', 'First Stars']
   }
 ];
 
+export function getMissionsWithProgress() {
+  const isLevel1Done = typeof window !== 'undefined' && (
+    localStorage.getItem('novaquest_level1_completed') === 'true' ||
+    localStorage.getItem('novaquest_level2_unlocked') === 'true'
+  );
+
+  return ALL_MISSIONS.map((m) => {
+    if (m.levelNumber === 1) {
+      return {
+        ...m,
+        status: isLevel1Done ? 'completed' : 'unlocked'
+      };
+    }
+    if (m.levelNumber === 2) {
+      return {
+        ...m,
+        status: isLevel1Done ? 'unlocked' : 'locked',
+        lockReason: isLevel1Done ? '' : 'Complete Level 1: Surveyor 5 to unlock'
+      };
+    }
+    return {
+      ...m,
+      status: 'locked',
+      isUnderDevelopment: true,
+      lockReason: 'Under Development'
+    };
+  });
+}
+
 export function getMissionById(id) {
-  return ALL_MISSIONS.find(m => m.id === id) || ALL_MISSIONS[0];
+  const missions = getMissionsWithProgress();
+  return missions.find(m => m.id === id) || ALL_MISSIONS[0];
 }
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft, 
@@ -14,7 +14,7 @@ import AppNavbar from '../../Shared/components/layout/AppNavbar';
 import MissionCard from '../components/missions/MissionCard';
 import MissionDetailModal from '../components/missions/MissionDetailModal';
 import GameButton from '../components/shared/GameButton';
-import { ALL_MISSIONS } from '../config/missions';
+import { ALL_MISSIONS, getMissionsWithProgress } from '../config/missions';
 import { gameAudio } from '../config/gameAudio';
 
 /**
@@ -22,21 +22,35 @@ import { gameAudio } from '../config/gameAudio';
  * 
  * Phase 3: Mission Selection Screen
  * - Displays Level 1: Surveyor 5 as fully unlocked and playable.
- * - Displays future scalable levels (Apollo 11, Viking 1, Voyager 1, Cassini, JWST) as locked with clear historical reasons.
+ * - Displays Level 2: Voyager 1 as locked until the player completes Level 1.
+ * - Displays all remaining levels (Apollo 11, Viking 1, Cassini, JWST) as Under Development.
  * - Kid-friendly commercial layout with 3D cards, badges, and briefing modal.
  */
 export default function MissionSelectPage() {
   const navigate = useNavigate();
+  const [missions, setMissions] = useState(() => getMissionsWithProgress());
   const [selectedMission, setSelectedMission] = useState(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
 
+  useEffect(() => {
+    setMissions(getMissionsWithProgress());
+  }, []);
+
   const handleInspectMission = (mission) => {
+    if (!mission || mission.status === 'locked' || mission.isUnderDevelopment) {
+      gameAudio.playError?.();
+      return;
+    }
     setSelectedMission(mission);
     setIsDetailOpen(true);
   };
 
   const handlePlayMission = (mission) => {
-    gameAudio.playClick();
+    if (!mission || mission.status === 'locked' || mission.isUnderDevelopment) {
+      gameAudio.playError?.();
+      return;
+    }
+    gameAudio.playClick?.();
     if (mission.id === 'surveyor-5') {
       navigate('/play');
     } else if (mission.id === 'voyager-1') {
@@ -44,7 +58,7 @@ export default function MissionSelectPage() {
     }
   };
 
-  const unlockedCount = ALL_MISSIONS.filter((m) => m.status !== 'locked').length;
+  const unlockedCount = missions.filter((m) => m.status !== 'locked').length;
 
   return (
     <div className="relative min-h-screen w-full bg-[#070b19] font-sans text-slate-100 select-none flex flex-col justify-between">
@@ -104,7 +118,7 @@ export default function MissionSelectPage() {
 
         {/* Mission Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {ALL_MISSIONS.map((mission) => (
+          {missions.map((mission) => (
             <MissionCard
               key={mission.id}
               mission={mission}
@@ -133,21 +147,32 @@ export default function MissionSelectPage() {
             <GameButton
               size="md"
               variant="secondary"
-              onClick={() => handlePlayMission(ALL_MISSIONS[0])}
+              onClick={() => handlePlayMission(missions[0])}
               icon={Sparkles}
               className="text-xs font-black uppercase"
             >
               Play Level 1
             </GameButton>
-            <GameButton
-              size="md"
-              variant="accent"
-              onClick={() => handlePlayMission(ALL_MISSIONS[1])}
-              icon={Rocket}
-              className="text-xs font-black uppercase"
-            >
-              Play Level 2
-            </GameButton>
+            {missions[1]?.status !== 'locked' ? (
+              <GameButton
+                size="md"
+                variant="accent"
+                onClick={() => handlePlayMission(missions[1])}
+                icon={Rocket}
+                className="text-xs font-black uppercase"
+              >
+                Play Level 2
+              </GameButton>
+            ) : (
+              <button
+                disabled
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-800/70 text-slate-500 font-bold text-xs uppercase border border-slate-700/60 cursor-not-allowed"
+                title="Complete Level 1: Surveyor 5 to unlock Level 2"
+              >
+                <Lock className="w-3.5 h-3.5 text-slate-500" />
+                <span>Level 2 Locked</span>
+              </button>
+            )}
           </div>
         </div>
       </main>
