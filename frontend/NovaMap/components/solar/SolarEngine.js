@@ -32,6 +32,9 @@ export class SolarEngine {
     this.container = container;
     this.onSelectPlanet = options.onSelectPlanet || null;
     this.onSelectSpacecraft = options.onSelectSpacecraft || null;
+    // Opens the dedicated 3D spacecraft explore page (/spacecraft/:slug) instead
+    // of dropping an in-scene model on top of the parent planet.
+    this.onOpenSpacecraftPage = options.onOpenSpacecraftPage || null;
     this.onDeselect = options.onDeselect || null;
     this.onHoverItem = options.onHoverItem || null;
     this.onModeChange = options.onModeChange || null;
@@ -52,6 +55,10 @@ export class SolarEngine {
     this.isVoyagerLocalMode = false;
     this.isSurfaceMode = false;
     this.activeSurfaceCraft = null;
+
+    // Anchor used to co-rotate the inspection viewpoint with a focused planet's orbit
+    this.lastTrackedBodyId = null;
+    this.lastTrackedBodyPos = null;
 
     // In-Scene 3D Spacecraft Exploration State (NASA Eyes Experience)
     this.isInspectingSpacecraft = false;
@@ -80,6 +87,11 @@ export class SolarEngine {
 
     // Clock
     this.clock = new THREE.Clock();
+
+    // Dedicated clock for spacecraft beacon animation (spin, blink, orbit
+    // revolution). It advances ONLY while the simulation is playing, so the
+    // play/pause control freezes spacecraft dots together with the planets.
+    this.markerAnimationTime = 0;
 
     // Raycasting
     this.raycaster = new THREE.Raycaster();
@@ -313,6 +325,14 @@ export class SolarEngine {
       const hitMesh = intersects[0].object;
       const id = hitMesh.userData.id;
       if (hitMesh.userData.isSpacecraft) {
+        // Spacecraft dots are pure navigation affordances: open the dedicated
+        // 3D explore page so the model renders in its own clean studio viewport
+        // with its mission description instead of being spawned inside the
+        // parent planet's scene graph.
+        if (this.onOpenSpacecraftPage && id) {
+          this.onOpenSpacecraftPage(id);
+          return;
+        }
         this.focusSpacecraft(id);
       } else if (hitMesh.userData.isMoon) {
         this.focusMoon(id);
@@ -329,12 +349,22 @@ export class SolarEngine {
     this.selectedBodyId = null;
     this.selectedSpacecraftSlug = null;
     this.trackedCraftSlug = null;
+    this.resetTrackedBodyAnchor();
     this.planetBodies.forEach(pBody => pBody.setSelected(false));
     if (this.markers) this.markers.highlightMarker(null);
     if (this.interstellar) this.interstellar.highlightProbe(null);
     if (this.onDeselect) {
       this.onDeselect();
     }
+  }
+
+  /**
+   * Clears the orbital-tracking anchor so a newly focused body never inherits
+   * a stale position (which would cause a camera jump/spin).
+   */
+  resetTrackedBodyAnchor() {
+    this.lastTrackedBodyId = null;
+    this.lastTrackedBodyPos = null;
   }
 
   zoomIn(factor = 0.72) {
@@ -390,6 +420,7 @@ export class SolarEngine {
     const body = this.planetBodies.get(planetId);
     this.selectedBodyId = planetId;
     this.selectedSpacecraftSlug = null;
+    this.resetTrackedBodyAnchor();
     this.planetBodies.forEach((pBody, pId) => pBody.setSelected(pId === planetId));
     this.interstellar.highlightProbe(null);
     this.markers.highlightMarker(null);
@@ -399,22 +430,52 @@ export class SolarEngine {
     }
 
     const worldPos = body.getWorldPosition();
-    const radius = body.data.radius;
-    
-    // Balanced framing distance: fills the viewport for realistic 3D globe inspection
-    let distanceOffset;
-    if (planetId === 'sun') distanceOffset = 22;
-    else if (planetId === 'saturn') distanceOffset = 16;
-    else if (planetId === 'jupiter') distanceOffset = 12;
-    else distanceOffset = Math.max(radius * 2.5, 3.2);
-
-    const targetCameraPos = new THREE.Vector3(
-      worldPos.x + distanceOffset * 0.72,
-      worldPos.y + distanceOffset * 0.35,
-      worldPos.z + distanceOffset * 0.72
-    );
+    const distanceOffset = this.getInspectionDistance(planetId, body.data.radius);
+    const targetCameraPos = worldPos.clone().add(this.getSunlitViewOffset(worldPos, distanceOffset));
 
     this.smoothCameraTransition(targetCameraPos, worldPos, 1400, planetId);
+  }
+
+  /**
+   * Balanced framing distance used when inspecting a single body (NASA Eyes style).
+   * Slightly further out than the body radius so the whole globe, limbs and rings fit.
+   */
+  getInspectionDistance(bodyId, radius) {
+    if (bodyId === 'sun') return Math.max(radius * 3.1, 24);
+    if (bodyId === 'saturn') return Math.max(radius * 4.1, 17); // Leave room for the rings
+    if (bodyId === 'jupiter') return Math.max(radius * 2.9, 14);
+    return Math.max(radius * 3.0, 3.6);
+  }
+
+  /**
+   * Builds a camera offset that keeps the viewer on the sunlit hemisphere.
+   *
+   * The Sun sits at the scene origin, so the direction "planet -> Sun" is the
+   * normal of the illuminated half of the globe. Sampling the camera from that
+   * side (with a slight elevation and tangential offset for a 3/4 hero view)
+   * guarantees the selected body is visibly lit instead of showing its night
+   * side as an unlit black silhouette.
+   */
+  getSunlitViewOffset(worldPos, distance) {
+    const toSun = this.scratchVecA.copy(worldPos).multiplyScalar(-1);
+    if (toSun.lengthSq() < 1e-8) {
+      toSun.set(0, 0.25, 1); // Viewing the Sun itself (Sun position is the origin)
+    }
+    toSun.normalize();
+
+    const up = this.scratchVecB.set(0, 1, 0);
+    const tangent = new THREE.Vector3().crossVectors(up, toSun);
+    if (tangent.lengthSq() < 1e-8) {
+      tangent.set(1, 0, 0);
+    }
+    tangent.normalize();
+
+    return new THREE.Vector3()
+      .addScaledVector(toSun, 0.86)
+      .addScaledVector(up, 0.36)
+      .addScaledVector(tangent, 0.30)
+      .normalize()
+      .multiplyScalar(distance);
   }
 
   focusMoon(moonId) {
@@ -433,16 +494,12 @@ export class SolarEngine {
           const worldPos = new THREE.Vector3();
           found.mesh.getWorldPosition(worldPos);
           const moonRadius = found.data.radius;
-          const distanceOffset = Math.max(moonRadius * 2.8, 1.35);
-
-          const targetCameraPos = new THREE.Vector3(
-            worldPos.x + distanceOffset * 0.72,
-            worldPos.y + distanceOffset * 0.35,
-            worldPos.z + distanceOffset * 0.72
-          );
+          const distanceOffset = Math.max(moonRadius * 3.2, 1.6);
+          const targetCameraPos = worldPos.clone().add(this.getSunlitViewOffset(worldPos, distanceOffset));
 
           this.selectedBodyId = moonId;
           this.selectedSpacecraftSlug = null;
+          this.resetTrackedBodyAnchor();
           this.interstellar.highlightProbe(null);
           this.markers.highlightMarker(null);
 
@@ -458,23 +515,34 @@ export class SolarEngine {
   }
 
   /**
-   * Focuses and initiates Full In-Scene 3D Exploration for any spacecraft mission.
-   * Directly satisfies NASA Eyes-style in-scene inspection:
-   * 1. Smoothly glides camera to the spacecraft's location in the Solar System.
-   * 2. Renders the full 3D spacecraft model in the main SolarEngine scene graph.
-   * 3. Configures OrbitControls for full 360-degree rotation, pitch, and zoom around the craft.
+   * Focuses a spacecraft's plotted position in the Solar System.
+   *
+   * The 3D model itself is intentionally NOT spawned inside the planetary
+   * scene: spacecraft models are presented on their dedicated explore page
+   * (/spacecraft/:slug) where they sit in a clean studio viewport next to
+   * their mission description. Spawning them at the marker position produced
+   * oversized geometry intersecting the parent planet (see the "spacecraft
+   * skewered through Earth" defect).
+   *
+   * @param {string} slug
+   * @param {{ inspect?: boolean }} [options] pass `inspect: true` to opt into
+   *        the legacy in-scene model inspection experience.
    */
-  focusSpacecraft(slug) {
+  focusSpacecraft(slug, { inspect = false } = {}) {
     if (this.isVoyagerLocalMode && slug !== 'voyager-1') {
       this.exitVoyagerLocalMode(false);
     }
     if (this.isSurfaceMode && this.activeSurfaceCraft?.slug !== slug) {
       this.exitSurfaceMode(false);
     }
+    if (this.isInspectingSpacecraft) {
+      this.exitSpacecraftInspection(false);
+    }
 
     this.selectedSpacecraftSlug = slug;
     this.selectedBodyId = null;
     this.trackedCraftSlug = slug;
+    this.resetTrackedBodyAnchor();
 
     // Highlight target in subsystems
     this.interstellar.highlightProbe(slug);
@@ -484,9 +552,65 @@ export class SolarEngine {
       this.onSelectSpacecraft(slug);
     }
 
-    // Enter in-scene 3D inspection mode
-    this.enterSpacecraftInspection(slug);
+    // Camera framing around the spacecraft's plotted dot (no model spawn).
+    const craft = getEligibleSpacecraftRecord(slug) || VERIFIED_SPACECRAFT[slug];
+    const targetWorldPos = this.getSpacecraftMarkerPosition(slug, craft);
+    if (targetWorldPos) {
+      const targetCamPos = targetWorldPos.clone().add(new THREE.Vector3(2.6, 1.5, 2.6));
+      this.controls.autoRotate = false;
+      this.controls.minDistance = 0.4;
+      this.controls.maxDistance = 18000;
+      this.smoothCameraTransition(targetCamPos, targetWorldPos, 1400, slug);
+    }
+
+    if (inspect) {
+      this.enterSpacecraftInspection(slug);
+    }
   }
+
+  /**
+   * Resolves a spacecraft's live world position from whichever subsystem owns
+   * its marker (surface beacon, planetary orbiter, heliocentric probe or
+   * interstellar probe).
+   */
+  getSpacecraftMarkerPosition(slug, craft = null) {
+    const resolvedCraft = craft || getEligibleSpacecraftRecord(slug) || VERIFIED_SPACECRAFT[slug];
+
+    if (resolvedCraft?.positionType === 'interstellar') {
+      const probePos = this.interstellar?.getProbePosition(resolvedCraft.slug);
+      if (probePos && Number.isFinite(probePos.x)) {
+        return new THREE.Vector3().copy(probePos);
+      }
+    }
+
+    const markerWorldPos = this.markers?.getMarkerWorldPosition(slug);
+    if (markerWorldPos && Number.isFinite(markerWorldPos.x)) {
+      return markerWorldPos;
+    }
+
+    if (resolvedCraft?.positionType === 'surface') {
+      // Fallback: hover just above the parent body's surface.
+      let parentBody = null;
+      if (resolvedCraft.referenceBody === 'moon') {
+        parentBody = this.planetBodies.get('earth');
+        if (parentBody?.moonMesh) {
+          const moonPos = new THREE.Vector3();
+          parentBody.moonMesh.getWorldPosition(moonPos);
+          return moonPos;
+        }
+        return null;
+      }
+      parentBody = this.planetBodies.get(resolvedCraft.referenceBody);
+      if (parentBody) {
+        const pos = parentBody.getWorldPosition();
+        pos.y += (parentBody.data?.radius || 2.0) * 0.6;
+        return pos;
+      }
+    }
+
+    return null;
+  }
+
 
   async enterSpacecraftInspection(slug) {
     const craft = getEligibleSpacecraftRecord(slug) || VERIFIED_SPACECRAFT[slug];
@@ -739,6 +863,7 @@ export class SolarEngine {
     this.selectedBodyId = null;
     this.selectedSpacecraftSlug = null;
     this.trackedCraftSlug = null;
+    this.resetTrackedBodyAnchor();
     this.interstellar.highlightProbe(null);
     this.markers.highlightMarker(null);
 
@@ -792,6 +917,7 @@ export class SolarEngine {
     this.selectedBodyId = null;
     this.selectedSpacecraftSlug = null;
     this.trackedCraftSlug = null;
+    this.resetTrackedBodyAnchor();
     this.interstellar.highlightProbe(null);
     this.markers.highlightMarker(null);
     if (this.onSelectPlanet) this.onSelectPlanet(null);
@@ -828,6 +954,7 @@ export class SolarEngine {
     const startPos = this.camera.position.clone();
     const startTarget = this.controls.target.clone();
     const distance = startPos.distanceTo(safeTargetCamPos);
+    const relativeOffset = safeTargetCamPos.clone().sub(safeTargetFocus);
 
     if (distance < 0.1) {
       this.camera.position.copy(safeTargetCamPos);
@@ -847,26 +974,42 @@ export class SolarEngine {
     const midCamPos = new THREE.Vector3().addVectors(startPos, safeTargetCamPos).multiplyScalar(0.5);
     midCamPos.y += arcHeight;
 
+    // Scratch vectors reused per frame while the target body keeps orbiting
+    const liveEndPos = new THREE.Vector3();
+    const liveMidPos = new THREE.Vector3();
+    const liveTarget = new THREE.Vector3();
+
     this.currentCameraTween = new TWEEN.Tween({ t: 0 }, this.tweenGroup)
       .to({ t: 1 }, duration)
       .easing(TWEEN.Easing.Cubic.InOut)
       .onUpdate(({ t }) => {
         const oneMinusT = 1 - t;
-        const pX = oneMinusT * oneMinusT * startPos.x + 2 * oneMinusT * t * midCamPos.x + t * t * safeTargetCamPos.x;
-        const pY = oneMinusT * oneMinusT * startPos.y + 2 * oneMinusT * t * midCamPos.y + t * t * safeTargetCamPos.y;
-        const pZ = oneMinusT * oneMinusT * startPos.z + 2 * oneMinusT * t * midCamPos.z + t * t * safeTargetCamPos.z;
+
+        // Track the moving body so the camera keeps its intended framing
+        // (otherwise the planet drifts into the camera and fills the screen)
+        let endPos = safeTargetCamPos;
+        let endMid = midCamPos;
+        liveTarget.copy(safeTargetFocus);
+        if (trackingTargetId) {
+          const livePos = this.getCelestialBodyPosition(trackingTargetId) || (this.markers && this.markers.getMarkerWorldPosition(trackingTargetId));
+          if (livePos && Number.isFinite(livePos.x)) {
+            liveTarget.copy(livePos);
+            liveEndPos.copy(livePos).add(relativeOffset);
+            endPos = liveEndPos;
+            liveMidPos.addVectors(startPos, endPos).multiplyScalar(0.5);
+            liveMidPos.y += arcHeight;
+            endMid = liveMidPos;
+          }
+        }
+
+        const pX = oneMinusT * oneMinusT * startPos.x + 2 * oneMinusT * t * endMid.x + t * t * endPos.x;
+        const pY = oneMinusT * oneMinusT * startPos.y + 2 * oneMinusT * t * endMid.y + t * t * endPos.y;
+        const pZ = oneMinusT * oneMinusT * startPos.z + 2 * oneMinusT * t * endMid.z + t * t * endPos.z;
 
         if (Number.isFinite(pX) && Number.isFinite(pY) && Number.isFinite(pZ)) {
           this.camera.position.set(pX, pY, pZ);
         }
 
-        let liveTarget = safeTargetFocus;
-        if (trackingTargetId) {
-          const livePos = this.getCelestialBodyPosition(trackingTargetId) || (this.markers && this.markers.getMarkerWorldPosition(trackingTargetId));
-          if (livePos && Number.isFinite(livePos.x)) {
-            liveTarget = livePos;
-          }
-        }
         this.controls.target.lerpVectors(startTarget, liveTarget, t);
       })
       .onComplete(() => {
@@ -896,6 +1039,7 @@ export class SolarEngine {
 
   stepDays(days) {
     this.simulationDate = new Date(this.simulationDate.getTime() + days * 86400000);
+    this.resetTrackedBodyAnchor();
     this.applyEphemeris();
     if (this.onDateChange) {
       this.onDateChange(this.simulationDate);
@@ -909,6 +1053,7 @@ export class SolarEngine {
   setSimulationDate(date) {
     if (!date) return;
     this.simulationDate = new Date(date);
+    this.resetTrackedBodyAnchor();
     this.applyEphemeris();
     if (this.onDateChange) {
       this.onDateChange(this.simulationDate);
@@ -1038,7 +1183,12 @@ export class SolarEngine {
     this.animationFrameId = requestAnimationFrame(this.animate);
 
     const delta = Math.min(this.clock.getDelta(), 0.1);
-    const elapsedTime = this.clock.getElapsedTime();
+
+    // Advance the spacecraft beacon clock only while playing, so pausing the
+    // simulation also freezes spacecraft drift, spin and blinking.
+    if (this.isPlaying) {
+      this.markerAnimationTime += delta;
+    }
 
     // 1. Advance simulation time if playing (single authoritative clock)
     if (this.isPlaying) {
@@ -1065,12 +1215,12 @@ export class SolarEngine {
 
     // 4. Update Spacecraft Markers
     if (this.markers) {
-      this.markers.update(this.camera, elapsedTime);
+      this.markers.update(this.camera, this.markerAnimationTime);
     }
 
     // 5. Update Interstellar Probes
     if (this.interstellar) {
-      this.interstellar.update(this.camera, elapsedTime);
+      this.interstellar.update(this.camera, this.markerAnimationTime);
     }
 
     // 5b. Update Main Asteroid Belt Swarm
@@ -1113,9 +1263,33 @@ export class SolarEngine {
     } else if (this.selectedBodyId && !this.isTransitioning && this.isPlaying) {
       const currentWorldPos = this.getCelestialBodyPosition(this.selectedBodyId);
       if (currentWorldPos && Number.isFinite(currentWorldPos.x)) {
-        this.scratchVecA.copy(currentWorldPos).sub(this.controls.target);
+        // Keep the camera offset anchored to the body while it orbits. For
+        // planets, the offset also co-rotates with the orbital revolution so
+        // the sunlit hemisphere keeps facing the camera over time (instead of
+        // slowly drifting into an unlit "shadow" silhouette).
+        const offset = this.scratchVecA.copy(this.camera.position).sub(this.controls.target);
+
+        const canCoRotate = this.planetBodies.has(this.selectedBodyId) &&
+          this.lastTrackedBodyId === this.selectedBodyId &&
+          this.lastTrackedBodyPos;
+
+        if (canCoRotate) {
+          const prevAngle = Math.atan2(this.lastTrackedBodyPos.z, this.lastTrackedBodyPos.x);
+          const currAngle = Math.atan2(currentWorldPos.z, currentWorldPos.x);
+          let orbitDelta = currAngle - prevAngle;
+          if (orbitDelta > Math.PI) orbitDelta -= Math.PI * 2;
+          if (orbitDelta < -Math.PI) orbitDelta += Math.PI * 2;
+          if (Math.abs(orbitDelta) > 1e-5) {
+            offset.applyAxisAngle(this.scratchVecB.set(0, 1, 0), orbitDelta);
+          }
+        }
+
         this.controls.target.copy(currentWorldPos);
-        this.camera.position.add(this.scratchVecA);
+        this.camera.position.copy(currentWorldPos).add(offset);
+
+        this.lastTrackedBodyId = this.selectedBodyId;
+        if (!this.lastTrackedBodyPos) this.lastTrackedBodyPos = new THREE.Vector3();
+        this.lastTrackedBodyPos.copy(currentWorldPos);
       }
     }
 

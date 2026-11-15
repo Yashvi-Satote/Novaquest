@@ -1,6 +1,8 @@
 import React, { useMemo, useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   AlertTriangle,
+  ArrowLeft,
   Award,
   CheckCircle2,
   ChevronRight,
@@ -202,9 +204,12 @@ export default function Task3({
   onDeductScore,
   score = 100,
 }) {
+  const navigate = useNavigate();
   const [selectedCardId, setSelectedCardId] = useState(null);
   const [feedback, setFeedback] = useState(null);
   const [isSolved, setIsSolved] = useState(false);
+  const [isFailed, setIsFailed] = useState(false);
+  const [failureMessage, setFailureMessage] = useState('');
   const [shakenCardId, setShakenCardId] = useState(null);
 
   // Randomize the 4 cards order once when opened
@@ -223,6 +228,7 @@ export default function Task3({
 
       if (card.isCorrect) {
         setIsSolved(true);
+        setIsFailed(false);
         setFeedback({
           isCorrect: true,
           message: card.feedback,
@@ -231,12 +237,9 @@ export default function Task3({
         gameAudio.playVictory?.();
       } else {
         setShakenCardId(card.id);
-        setTimeout(() => setShakenCardId(null), 600);
-        setFeedback({
-          isCorrect: false,
-          message: card.feedback,
-        });
         gameAudio.playError?.();
+        setIsFailed(true);
+        setFailureMessage(card.feedback || 'Incorrect command executed. Spacecraft lost helium pressure and cannot perform lunar landing.');
         onDeductScore?.(10);
       }
     },
@@ -313,8 +316,59 @@ export default function Task3({
           <HeliumLeakDiagram />
         </section>
 
-        {/* STEP B: 4 Solution Cards */}
-        {!isSolved ? (
+        {/* STEP B: 4 Solution Cards OR Mission Failed */}
+        {isFailed ? (
+          <section className="space-y-5 py-4 text-center animate-fade-in">
+            <div className="relative mx-auto flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-2xl border-2 border-rose-500 bg-gradient-to-tr from-rose-950 to-rose-900 shadow-[0_0_35px_rgba(244,63,94,0.6)]">
+              <AlertTriangle className="w-10 h-10 text-rose-400 animate-bounce" />
+            </div>
+
+            <div className="space-y-2 max-w-lg mx-auto">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-950/80 border border-rose-500/50 text-[10px] font-black uppercase tracking-[0.2em] text-rose-300">
+                <AlertTriangle className="w-3.5 h-3.5 text-rose-400" />
+                <span>CRITICAL ANOMALY · MISSION FAILED</span>
+              </div>
+              <h3 className="text-xl sm:text-3xl font-black uppercase tracking-widest text-white drop-shadow-[0_0_15px_rgba(244,63,94,0.8)]">
+                Mission Failed
+              </h3>
+              <p className="text-xs sm:text-sm leading-relaxed text-rose-200 font-sans">
+                {failureMessage}
+              </p>
+              <p className="text-xs sm:text-sm font-mono font-bold text-amber-300 tracking-wider pt-2">
+                The spacecraft has lost vital landing pressure. You must restart the level.
+              </p>
+            </div>
+
+            {/* TWO BUTTONS: RESTART LEVEL & MAIN MENU */}
+            <div className="flex flex-col sm:flex-row gap-3 pt-3 max-w-md mx-auto">
+              <button
+                type="button"
+                autoFocus
+                onClick={() => {
+                  gameAudio.playClick?.();
+                  window.location.href = '/play';
+                }}
+                className="flex-1 flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl border-2 border-cyan-400 bg-gradient-to-r from-cyan-600 via-sky-600 to-blue-600 text-white font-black text-xs sm:text-sm uppercase tracking-[0.16em] shadow-[0_0_25px_rgba(34,211,238,0.5)] hover:shadow-[0_0_40px_rgba(34,211,238,0.9)] hover:scale-105 active:scale-95 transition-all cursor-pointer"
+              >
+                <RotateCcw className="w-4 h-4" />
+                <span>Restart Level</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  gameAudio.playClick?.();
+                  if (onClose) onClose();
+                  navigate('/app');
+                }}
+                className="flex-1 flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl border border-white/20 bg-slate-900/90 hover:bg-slate-800 text-slate-200 hover:text-white font-bold text-xs sm:text-sm uppercase tracking-[0.14em] hover:border-cyan-400/60 shadow-lg hover:scale-105 active:scale-95 transition-all cursor-pointer"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span>Return to Main Menu</span>
+              </button>
+            </div>
+          </section>
+        ) : !isSolved ? (
           <section className="space-y-3 pt-1">
             <p className="text-[10px] sm:text-xs font-bold uppercase tracking-[0.22em] text-[#7fe3ff]">
               {TASK3_DATA.stepB.prompt}

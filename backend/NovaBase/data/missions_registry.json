@@ -1837,6 +1837,401 @@
           "role": "University of Mainz, APXS PI"
         }
       ]
+    },
+    {
+      "slug": "apollo-15-lunar-module",
+      "name": "Apollo 15 Lunar Module",
+      "display_name": "Apollo 15 Lunar Module / ALSEP",
+      "destination_category": "Moon",
+      "destination": "Moon (Hadley-Apennine)",
+      "mission_type": "Lander",
+      "object_type": "Lander",
+      "agency": "NASA",
+      "operator": "NASA",
+      "manufacturer": "Grumman",
+      "wiki_title": "Apollo_15_Lunar_Module",
+      "secondary_wiki_titles": [],
+      "nssdca_id": "1971-063C",
+      "model_keywords": [
+        "Apollo Lunar Module",
+        "Lunar Module"
+      ],
+      "model_include": [],
+      "model_exclude": [],
+      "model_overrides": [],
+      "launch_date": "1971-07-26",
+      "landing_date": "1971-07-30",
+      "end_date": "1977-09-30",
+      "status_label": "ended",
+      "status_text": "Ascent stage impacted the Moon on August 3, 1971; descent stage remains at Hadley-Apennine. Surface ALSEP station operated until September 30, 1977.",
+      "mission_status": "Completed",
+      "sources": [
+        {
+          "label": "NASA NSSDCA - Apollo 15 Lunar Module / ALSEP",
+          "url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1971-063C",
+          "source_type": "archive"
+        }
+      ],
+      "people": [
+        {
+          "name": "Floyd I. Roberson",
+          "role": "Program Manager (NASA Headquarters)"
+        },
+        {
+          "name": "Wilbert F. Eichelman",
+          "role": "Project Manager (NASA Johnson Space Center)"
+        },
+        {
+          "name": "Dr. John B. Hanley",
+          "role": "Program Scientist (NASA Headquarters)"
+        },
+        {
+          "name": "David R. Scott",
+          "role": "Commander (Apollo 15 Crew)"
+        },
+        {
+          "name": "James B. Irwin",
+          "role": "Lunar Module Pilot (Apollo 15 Crew)"
+        }
+      ]
+    },
+    {
+      "slug": "apollo-12-lunar-module",
+      "name": "Apollo 12 Lunar Module",
+      "display_name": "Apollo 12 Lunar Module / ALSEP",
+      "destination_category": "Moon",
+      "destination": "Moon (Oceanus Procellarum)",
+      "mission_type": "Lander",
+      "object_type": "Lander",
+      "agency": "NASA",
+      "operator": "NASA",
+      "manufacturer": "Grumman",
+      "wiki_title": "Apollo_12_Lunar_Module",
+      "secondary_wiki_titles": [],
+      "nssdca_id": "1969-099C",
+      "model_keywords": [
+        "Apollo Lunar Module",
+        "Lunar Module"
+      ],
+      "model_include": [],
+      "model_exclude": [],
+      "model_overrides": [],
+      "launch_date": "1969-11-14",
+      "landing_date": "1969-11-19",
+      "end_date": "1977-09-30",
+      "status_label": "ended",
+      "status_text": "Ascent stage crashed intentionally into the Moon on November 20, 1969; descent stage remains at Oceanus Procellarum. ALSEP operated until September 30, 1977.",
+      "mission_status": "Completed",
+      "sources": [
+        {
+          "label": "NASA NSSDCA - Apollo 12 Lunar Module / ALSEP",
+          "url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1969-099C",
+          "source_type": "archive"
+        }
+      ],
+      "people": [
+        {
+          "name": "Floyd I. Roberson",
+          "role": "Program Manager (NASA Headquarters)"
+        },
+        {
+          "name": "Wilbert F. Eichelman",
+          "role": "Project Manager (NASA Johnson Space Center)"
+        },
+        {
+          "name": "Dr. John B. Hanley",
+          "role": "Program Scientist (NASA Headquarters)"
+        },
+        {
+          "name": "Charles P. \"Pete\" Conrad",
+          "role": "Commander (Apollo 12 Crew)"
+        },
+        {
+          "name": "Alan L. Bean",
+          "role": "Lunar Module Pilot (Apollo 12 Crew)"
+        }
+      ]
+    },
+    {
+      "slug": "spirit",
+      "name": "Spirit",
+      "display_name": "Spirit (Mars Exploration Rover A)",
+      "destination_category": "Mars",
+      "destination": "Mars (Gusev Crater)",
+      "mission_type": "Rover",
+      "object_type": "Rover",
+      "agency": "NASA/JPL",
+      "operator": "NASA/JPL",
+      "manufacturer": "Jet Propulsion Laboratory",
+      "wiki_title": "Spirit_(rover)",
+      "secondary_wiki_titles": [],
+      "nssdca_id": "2003-027A",
+      "model_keywords": [
+        "Mars Exploration Rover",
+        "MER"
+      ],
+      "model_include": [],
+      "model_exclude": [],
+      "model_overrides": [],
+      "launch_date": "2003-06-10",
+      "landing_date": "2004-01-03",
+      "end_date": "2010-03-22",
+      "status_label": "ended",
+      "status_text": "Spirit concluded its mission in 2010 after operating for over six years and driving 4.8 miles (7.7 kilometers) on Mars.",
+      "mission_status": "Completed",
+      "sources": [
+        {
+          "label": "NASA Science - Mars Exploration Rovers: Spirit and Opportunity",
+          "url": "https://science.nasa.gov/mission/mars-exploration-rovers-spirit-and-opportunity/",
+          "source_type": "official"
+        }
+      ],
+      "people": [
+        {
+          "name": "Steven Squyres",
+          "role": "Principal Investigator (Athena Science Package)"
+        },
+        {
+          "name": "Peter Theisinger",
+          "role": "Project Manager"
+        }
+      ]
+    },
+    {
+      "slug": "viking-1",
+      "name": "Viking 1",
+      "display_name": "Viking 1 Orbiter & Lander",
+      "destination_category": "Mars",
+      "destination": "Mars (Chryse Planitia)",
+      "mission_type": "Orbiter / Lander",
+      "object_type": "Lander",
+      "agency": "NASA",
+      "operator": "NASA / Langley / JPL",
+      "manufacturer": "Martin Marietta",
+      "wiki_title": "Viking_1",
+      "secondary_wiki_titles": [],
+      "nssdca_id": "1975-075A",
+      "model_keywords": [
+        "Viking Lander",
+        "Viking"
+      ],
+      "model_include": [],
+      "model_exclude": [],
+      "model_overrides": [],
+      "launch_date": "1975-08-20",
+      "landing_date": "1976-07-20",
+      "end_date": "1982-11-11",
+      "status_label": "ended",
+      "status_text": "Orbiter shut down August 7, 1980 after propellant exhaustion; Lander operated until November 11, 1982 when communications ceased.",
+      "mission_status": "Completed",
+      "sources": [
+        {
+          "label": "NASA Science - Viking 1",
+          "url": "https://science.nasa.gov/mission/viking-1/",
+          "source_type": "official"
+        }
+      ],
+      "people": [
+        {
+          "name": "Thomas A. Mutch",
+          "role": "Lander Imaging Team Leader"
+        }
+      ]
+    },
+    {
+      "slug": "insight",
+      "name": "InSight",
+      "display_name": "InSight Lander",
+      "destination_category": "Mars",
+      "destination": "Mars (Elysium Planitia)",
+      "mission_type": "Lander",
+      "object_type": "Lander",
+      "agency": "NASA/JPL",
+      "operator": "NASA/JPL",
+      "manufacturer": "Lockheed Martin Space",
+      "wiki_title": "InSight",
+      "secondary_wiki_titles": [],
+      "nssdca_id": "2018-042A",
+      "model_keywords": [
+        "InSight",
+        "InSight Mars lander"
+      ],
+      "model_include": [],
+      "model_exclude": [],
+      "model_overrides": [],
+      "launch_date": "2018-05-05",
+      "landing_date": "2018-11-26",
+      "end_date": "2022-12-15",
+      "status_label": "ended",
+      "status_text": "InSight operated for over four years on Mars, concluding operations on December 15, 2022 after dust accumulation depleted solar power.",
+      "mission_status": "Completed",
+      "sources": [
+        {
+          "label": "NASA Science - InSight",
+          "url": "https://science.nasa.gov/mission/insight/",
+          "source_type": "official"
+        }
+      ],
+      "people": [
+        {
+          "name": "Joel Steinkraus",
+          "role": "MarCO / InSight Spacecraft Testing Engineer"
+        }
+      ]
+    },
+    {
+      "slug": "dawn",
+      "name": "Dawn",
+      "display_name": "Dawn Spacecraft",
+      "destination_category": "Deep Space",
+      "destination": "Main Asteroid Belt (Vesta & Ceres)",
+      "mission_type": "Orbiter",
+      "object_type": "Orbiter",
+      "agency": "NASA/JPL",
+      "operator": "NASA/JPL",
+      "manufacturer": "Orbital Sciences Corporation",
+      "wiki_title": "Dawn_(spacecraft)",
+      "secondary_wiki_titles": [],
+      "nssdca_id": "2007-043A",
+      "model_keywords": [
+        "Dawn",
+        "Dawn Spacecraft"
+      ],
+      "model_include": [],
+      "model_exclude": [],
+      "model_overrides": [],
+      "launch_date": "2007-09-27",
+      "landing_date": null,
+      "end_date": "2018-11-01",
+      "status_label": "ended",
+      "status_text": "Completed mission in November 2018 upon hydrazine depletion; remains in a perpetual, unpowered orbit around dwarf planet Ceres.",
+      "mission_status": "Completed",
+      "sources": [
+        {
+          "label": "NASA Science - Dawn",
+          "url": "https://science.nasa.gov/mission/dawn/",
+          "source_type": "official"
+        }
+      ],
+      "people": []
+    },
+    {
+      "slug": "near-shoemaker",
+      "name": "NEAR Shoemaker",
+      "display_name": "NEAR Shoemaker",
+      "destination_category": "Deep Space",
+      "destination": "Asteroid 433 Eros",
+      "mission_type": "Orbiter / Lander",
+      "object_type": "Orbiter",
+      "agency": "NASA",
+      "operator": "NASA / GSFC / APL",
+      "manufacturer": "Johns Hopkins APL",
+      "wiki_title": "NEAR_Shoemaker",
+      "secondary_wiki_titles": [],
+      "nssdca_id": "1996-008A",
+      "model_keywords": [
+        "NEAR Shoemaker",
+        "NEAR"
+      ],
+      "model_include": [],
+      "model_exclude": [],
+      "model_overrides": [],
+      "launch_date": "1996-02-17",
+      "landing_date": "2001-02-12",
+      "end_date": "2001-02-28",
+      "status_label": "ended",
+      "status_text": "Touched down on asteroid 433 Eros on February 12, 2001; transmitted science for two weeks before last contact on February 28, 2001.",
+      "mission_status": "Completed",
+      "sources": [
+        {
+          "label": "NASA Science - NEAR Shoemaker",
+          "url": "https://science.nasa.gov/mission/near-shoemaker/",
+          "source_type": "official"
+        }
+      ],
+      "people": [
+        {
+          "name": "Eugene M. Shoemaker",
+          "role": "Planetary Geologist / Mission Namesake"
+        }
+      ]
+    },
+    {
+      "slug": "pioneer-10",
+      "name": "Pioneer 10",
+      "display_name": "Pioneer 10",
+      "destination_category": "Deep Space",
+      "destination": "Outer Solar System / Interstellar Space",
+      "mission_type": "Flyby",
+      "object_type": "Probe",
+      "agency": "NASA",
+      "operator": "NASA / ARC",
+      "manufacturer": "TRW Inc.",
+      "wiki_title": "Pioneer_10",
+      "secondary_wiki_titles": [],
+      "nssdca_id": "1972-012A",
+      "model_keywords": [
+        "Pioneer 10",
+        "Pioneer"
+      ],
+      "model_include": [],
+      "model_exclude": [],
+      "model_overrides": [],
+      "launch_date": "1972-03-02",
+      "landing_date": null,
+      "end_date": "2003-01-23",
+      "status_label": "ended",
+      "status_text": "Routine contact ended March 31, 1997; final signal received January 23, 2003 from 7.6 billion miles away. Now drifting out of the solar system.",
+      "mission_status": "Completed",
+      "sources": [
+        {
+          "label": "NASA Science - Pioneer 10",
+          "url": "https://science.nasa.gov/mission/pioneer-10/",
+          "source_type": "official"
+        }
+      ],
+      "people": []
+    },
+    {
+      "slug": "kepler",
+      "name": "Kepler",
+      "display_name": "Kepler Space Telescope",
+      "destination_category": "Earth Orbit",
+      "destination": "Earth-trailing heliocentric orbit",
+      "mission_type": "Space Telescope",
+      "object_type": "Space Telescope",
+      "agency": "NASA",
+      "operator": "NASA / ARC",
+      "manufacturer": "Ball Aerospace",
+      "wiki_title": "Kepler_space_telescope",
+      "secondary_wiki_titles": [],
+      "nssdca_id": "2009-011A",
+      "model_keywords": [
+        "Kepler",
+        "Kepler Space Telescope"
+      ],
+      "model_include": [],
+      "model_exclude": [],
+      "model_overrides": [],
+      "launch_date": "2009-03-06",
+      "landing_date": null,
+      "end_date": "2018-10-30",
+      "status_label": "ended",
+      "status_text": "Retired on October 30, 2018 after depleting fuel following nine years of discoveries; remains in an Earth-trailing heliocentric orbit.",
+      "mission_status": "Completed",
+      "sources": [
+        {
+          "label": "NASA Science - Kepler / K2",
+          "url": "https://science.nasa.gov/mission/kepler/",
+          "source_type": "official"
+        }
+      ],
+      "people": [
+        {
+          "name": "William Borucki",
+          "role": "Founding Principal Investigator"
+        }
+      ]
     }
   ]
 }

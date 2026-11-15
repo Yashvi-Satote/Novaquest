@@ -57,11 +57,13 @@ export default function MissionCard({
           {mission.levelNumber}
         </span>
         <span className={`text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-full backdrop-blur-md border ${
-          isUnlocked
+          mission.isUnderDevelopment
+            ? 'bg-amber-950/80 text-amber-300 border-amber-500/40'
+            : isUnlocked
             ? 'bg-sky-950/80 text-sky-300 border-sky-400/40'
             : 'bg-slate-900/80 text-slate-500 border-slate-700'
         }`}>
-          {mission.difficulty}
+          {mission.isUnderDevelopment ? 'Under Development' : mission.difficulty}
         </span>
       </div>
 
@@ -86,13 +88,15 @@ export default function MissionCard({
 
         {/* Locked Overlay */}
         {!isUnlocked && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-950/70 backdrop-blur-xs p-4 text-center">
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-950/80 backdrop-blur-xs p-4 text-center">
             <div className="w-12 h-12 rounded-2xl bg-slate-900/90 border border-slate-700 flex items-center justify-center shadow-lg mb-2">
-              <Lock className="w-6 h-6 text-slate-400" />
+              <Lock className={`w-6 h-6 ${mission.isUnderDevelopment ? 'text-amber-400' : 'text-slate-400'}`} />
             </div>
-            <span className="text-xs font-bold text-slate-300">LOCKED MISSION</span>
-            <span className="text-[10px] text-slate-500 max-w-[200px] mt-1">
-              {mission.lockReason || 'Complete previous level to unlock'}
+            <span className={`text-xs font-black uppercase tracking-wider ${mission.isUnderDevelopment ? 'text-amber-300' : 'text-slate-300'}`}>
+              {mission.isUnderDevelopment ? 'UNDER DEVELOPMENT' : 'LOCKED MISSION'}
+            </span>
+            <span className="text-[10px] text-slate-400 max-w-[200px] mt-1 font-medium">
+              {mission.lockReason || (mission.isUnderDevelopment ? 'Coming soon in future updates' : 'Complete Level 1: Surveyor 5 to unlock')}
             </span>
           </div>
         )}
@@ -152,6 +156,14 @@ export default function MissionCard({
             >
               PLAY MISSION
             </GameButton>
+          ) : mission.isUnderDevelopment ? (
+            <button
+              disabled
+              className="w-full py-2.5 px-4 rounded-2xl bg-amber-950/40 text-amber-300/80 font-black text-xs flex items-center justify-center gap-2 cursor-not-allowed border border-amber-500/30 uppercase tracking-wider"
+            >
+              <Lock className="w-4 h-4 text-amber-400" />
+              UNDER DEVELOPMENT
+            </button>
           ) : (
             <button
               disabled

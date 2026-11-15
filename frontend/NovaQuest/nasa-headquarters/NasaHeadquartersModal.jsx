@@ -273,16 +273,13 @@ export default function NasaHeadquartersModal({ isOpen, onClose, onSoilAnalysis,
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[200] flex bg-[#02060d]/95 p-2 backdrop-blur-md sm:p-4"
-      onClick={(event) => {
-        if (event.target === event.currentTarget) handleClose();
-      }}
+      className="fixed inset-0 z-[200] flex bg-[#040911] overflow-hidden"
     >
       <section
         role="dialog"
         aria-modal="true"
         aria-label="NASA Headquarters 3D mission control base"
-        className="relative flex h-full w-full flex-col overflow-hidden rounded-2xl border border-[#3D6BFF]/35 bg-[#040911] shadow-[0_0_80px_rgba(28,88,255,0.22)]"
+        className="relative flex h-full w-full flex-col overflow-hidden bg-[#040911]"
       >
         <NasaHeadquartersViewer
           ref={viewerRef}
@@ -356,22 +353,6 @@ export default function NasaHeadquartersModal({ isOpen, onClose, onSoilAnalysis,
           </div>
 
           <div className="pointer-events-auto flex items-center gap-2.5">
-            <button
-              type="button"
-              onClick={() => {
-                gameAudio.playClick();
-                setMissionComplete(false);
-                onClose();
-                onSoilAnalysis?.();
-              }}
-              className="flex items-center gap-2 px-3.5 py-2 rounded-xl border border-cyan-400/60 bg-gradient-to-r from-cyan-950/90 to-blue-950/90 text-cyan-200 text-xs font-bold uppercase tracking-wider shadow-[0_0_20px_rgba(34,211,238,0.3)] hover:border-cyan-300 hover:text-white hover:scale-105 active:scale-95 transition-all cursor-pointer"
-              title="Return to Moon to perform Soil Analysis"
-            >
-              <Layers className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />
-              <span className="hidden sm:inline">Return to Moon · Soil Analysis</span>
-              <span className="sm:hidden">Soil Analysis</span>
-            </button>
-
             <button
               type="button"
               autoFocus

@@ -207,8 +207,17 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
   const [compassHeading, setCompassHeading] = useState(0); // 0 to 360 deg
   const [scanPulseActive, setScanPulseActive] = useState(false);
   const [nearInteractable, setNearInteractable] = useState(null);
+  const [showStartScreen, setShowStartScreen] = useState(true);
+  const [isTransitioningToHq, setIsTransitioningToHq] = useState(false);
   const [isHqOpen, setIsHqOpen] = useState(false);
   const isHqOpenRef = useRef(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowStartScreen(false);
+    }, 2800);
+    return () => clearTimeout(timer);
+  }, []);
 
   const [isSoilAnalysisReady, setIsSoilAnalysisReady] = useState(false);
   const isSoilAnalysisReadyRef = useRef(false);
@@ -301,6 +310,10 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
 
     setIsSurveyorCollected(true);
     isSurveyorCollectedRef.current = true;
+    try {
+      localStorage.setItem('novaquest_level1_completed', 'true');
+      localStorage.setItem('novaquest_level2_unlocked', 'true');
+    } catch (_) {}
 
     // Show popup modal after collection animation
     setTimeout(() => {
@@ -479,9 +492,14 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
   };
 
   const openHeadquarters = () => {
-    isHqOpenRef.current = true;
-    audio.playEquipmentFeedback();
-    setIsHqOpen(true);
+    if (isHqOpenRef.current || isTransitioningToHq) return;
+    setIsTransitioningToHq(true);
+    audio.playEquipmentFeedback?.();
+    setTimeout(() => {
+      setIsTransitioningToHq(false);
+      isHqOpenRef.current = true;
+      setIsHqOpen(true);
+    }, 2500);
   };
 
   const closeHeadquarters = () => {
@@ -5156,19 +5174,6 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
         </button>
       )}
 
-      {!isHqOpen && !hasReturnedFromHq && (
-        <button
-          type="button"
-          onClick={openHeadquarters}
-          className="absolute right-4 top-4 z-30 flex items-center gap-2 border border-[#7fe3ff]/45 bg-[#041323]/90 px-3 py-2.5 text-[9px] font-bold uppercase tracking-[0.16em] text-[#b9ecff] shadow-[0_0_20px_rgba(34,211,238,0.14)] backdrop-blur-md transition hover:border-[#7fe3ff]/90 hover:bg-[#08213a] hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7fe3ff] sm:right-6 sm:top-6 sm:px-4 sm:text-[10px]"
-          style={{ clipPath: 'polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px)' }}
-        >
-          <Building2 className="h-3.5 w-3.5 text-[#7fe3ff]" aria-hidden="true" />
-          Skip to NASA HQ
-          <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
-        </button>
-      )}
-
       {/* PROXIMITY-BASED SCI-FI INTERACTION: RETRIEVE SURVEYOR 5 */}
       <div
         className={`pointer-events-none absolute bottom-20 md:bottom-24 left-1/2 -translate-x-1/2 z-30 flex flex-col items-center select-none transition-all duration-500 ease-out ${
@@ -5856,6 +5861,34 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
                 <span>Replay</span>
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* 1. BLACK SCREEN AT START: 29 June 2126 in bold white */}
+      {showStartScreen && (
+        <div className="fixed inset-0 z-[400] flex flex-col items-center justify-center bg-black select-none pointer-events-auto transition-opacity duration-700 animate-in fade-in">
+          <div className="text-center px-6">
+            <h1 className="text-4xl sm:text-6xl md:text-7xl font-black tracking-wider text-white uppercase drop-shadow-[0_0_28px_rgba(255,255,255,0.7)] font-mono">
+              29 June 2126
+            </h1>
+            <p className="mt-3 text-xs sm:text-sm font-mono tracking-[0.28em] uppercase text-cyan-300/80">
+              Mare Tranquillitatis · Lunar Surface Expedition
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* 2. BLACK SCREEN TRANSITION TO NASA HQ: 8 September 1967 in bold white */}
+      {isTransitioningToHq && (
+        <div className="fixed inset-0 z-[400] flex flex-col items-center justify-center bg-black select-none pointer-events-auto transition-opacity duration-500 animate-in fade-in">
+          <div className="text-center px-6">
+            <h1 className="text-4xl sm:text-6xl md:text-7xl font-black tracking-wider text-white uppercase drop-shadow-[0_0_28px_rgba(255,255,255,0.7)] font-mono">
+              8 September 1967
+            </h1>
+            <p className="mt-3 text-xs sm:text-sm font-mono tracking-[0.28em] uppercase text-cyan-300/80">
+              Time Warp · NASA Headquarters · Washington, D.C.
+            </p>
           </div>
         </div>
       )}
