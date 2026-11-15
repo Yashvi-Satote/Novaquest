@@ -311,6 +311,16 @@ export default function SolarSystemPage() {
     }
   };
 
+  /**
+   * Spacecraft dots in space are navigational: open the dedicated 3D explore
+   * page (/spacecraft/:slug) where the model is presented in its own studio
+   * viewport alongside its mission description.
+   */
+  const handleOpenSpacecraftPage = (slug) => {
+    if (!slug) return;
+    navigate(`/spacecraft/${encodeURIComponent(slug)}`);
+  };
+
   const handleSelectPlanetFrom3D = (planetId) => {
     setSelectedCelestialId(planetId);
     setSelectedMissionSlug(null);
@@ -463,6 +473,7 @@ export default function SolarSystemPage() {
           layerVisibility={layerVisibility}
           onSelectPlanet={handleSelectPlanetFrom3D}
           onSelectSpacecraft={handleSelectSpacecraftFrom3D}
+          onOpenSpacecraftPage={handleOpenSpacecraftPage}
           onDeselect={() => {
             setSelectedCelestialId(null);
             setSelectedMissionSlug(null);

@@ -32,6 +32,9 @@ export class SolarEngine {
     this.container = container;
     this.onSelectPlanet = options.onSelectPlanet || null;
     this.onSelectSpacecraft = options.onSelectSpacecraft || null;
+    // Opens the dedicated 3D spacecraft explore page (/spacecraft/:slug) instead
+    // of dropping an in-scene model on top of the parent planet.
+    this.onOpenSpacecraftPage = options.onOpenSpacecraftPage || null;
     this.onDeselect = options.onDeselect || null;
     this.onHoverItem = options.onHoverItem || null;
     this.onModeChange = options.onModeChange || null;
@@ -322,6 +325,14 @@ export class SolarEngine {
       const hitMesh = intersects[0].object;
       const id = hitMesh.userData.id;
       if (hitMesh.userData.isSpacecraft) {
+        // Spacecraft dots are pure navigation affordances: open the dedicated
+        // 3D explore page so the model renders in its own clean studio viewport
+        // with its mission description instead of being spawned inside the
+        // parent planet's scene graph.
+        if (this.onOpenSpacecraftPage && id) {
+          this.onOpenSpacecraftPage(id);
+          return;
+        }
         this.focusSpacecraft(id);
       } else if (hitMesh.userData.isMoon) {
         this.focusMoon(id);
@@ -504,18 +515,28 @@ export class SolarEngine {
   }
 
   /**
-   * Focuses and initiates Full In-Scene 3D Exploration for any spacecraft mission.
-   * Directly satisfies NASA Eyes-style in-scene inspection:
-   * 1. Smoothly glides camera to the spacecraft's location in the Solar System.
-   * 2. Renders the full 3D spacecraft model in the main SolarEngine scene graph.
-   * 3. Configures OrbitControls for full 360-degree rotation, pitch, and zoom around the craft.
+   * Focuses a spacecraft's plotted position in the Solar System.
+   *
+   * The 3D model itself is intentionally NOT spawned inside the planetary
+   * scene: spacecraft models are presented on their dedicated explore page
+   * (/spacecraft/:slug) where they sit in a clean studio viewport next to
+   * their mission description. Spawning them at the marker position produced
+   * oversized geometry intersecting the parent planet (see the "spacecraft
+   * skewered through Earth" defect).
+   *
+   * @param {string} slug
+   * @param {{ inspect?: boolean }} [options] pass `inspect: true` to opt into
+   *        the legacy in-scene model inspection experience.
    */
-  focusSpacecraft(slug) {
+  focusSpacecraft(slug, { inspect = false } = {}) {
     if (this.isVoyagerLocalMode && slug !== 'voyager-1') {
       this.exitVoyagerLocalMode(false);
     }
     if (this.isSurfaceMode && this.activeSurfaceCraft?.slug !== slug) {
       this.exitSurfaceMode(false);
+    }
+    if (this.isInspectingSpacecraft) {
+      this.exitSpacecraftInspection(false);
     }
 
     this.selectedSpacecraftSlug = slug;
@@ -531,9 +552,65 @@ export class SolarEngine {
       this.onSelectSpacecraft(slug);
     }
 
-    // Enter in-scene 3D inspection mode
-    this.enterSpacecraftInspection(slug);
+    // Camera framing around the spacecraft's plotted dot (no model spawn).
+    const craft = getEligibleSpacecraftRecord(slug) || VERIFIED_SPACECRAFT[slug];
+    const targetWorldPos = this.getSpacecraftMarkerPosition(slug, craft);
+    if (targetWorldPos) {
+      const targetCamPos = targetWorldPos.clone().add(new THREE.Vector3(2.6, 1.5, 2.6));
+      this.controls.autoRotate = false;
+      this.controls.minDistance = 0.4;
+      this.controls.maxDistance = 18000;
+      this.smoothCameraTransition(targetCamPos, targetWorldPos, 1400, slug);
+    }
+
+    if (inspect) {
+      this.enterSpacecraftInspection(slug);
+    }
   }
+
+  /**
+   * Resolves a spacecraft's live world position from whichever subsystem owns
+   * its marker (surface beacon, planetary orbiter, heliocentric probe or
+   * interstellar probe).
+   */
+  getSpacecraftMarkerPosition(slug, craft = null) {
+    const resolvedCraft = craft || getEligibleSpacecraftRecord(slug) || VERIFIED_SPACECRAFT[slug];
+
+    if (resolvedCraft?.positionType === 'interstellar') {
+      const probePos = this.interstellar?.getProbePosition(resolvedCraft.slug);
+      if (probePos && Number.isFinite(probePos.x)) {
+        return new THREE.Vector3().copy(probePos);
+      }
+    }
+
+    const markerWorldPos = this.markers?.getMarkerWorldPosition(slug);
+    if (markerWorldPos && Number.isFinite(markerWorldPos.x)) {
+      return markerWorldPos;
+    }
+
+    if (resolvedCraft?.positionType === 'surface') {
+      // Fallback: hover just above the parent body's surface.
+      let parentBody = null;
+      if (resolvedCraft.referenceBody === 'moon') {
+        parentBody = this.planetBodies.get('earth');
+        if (parentBody?.moonMesh) {
+          const moonPos = new THREE.Vector3();
+          parentBody.moonMesh.getWorldPosition(moonPos);
+          return moonPos;
+        }
+        return null;
+      }
+      parentBody = this.planetBodies.get(resolvedCraft.referenceBody);
+      if (parentBody) {
+        const pos = parentBody.getWorldPosition();
+        pos.y += (parentBody.data?.radius || 2.0) * 0.6;
+        return pos;
+      }
+    }
+
+    return null;
+  }
+
 
   async enterSpacecraftInspection(slug) {
     const craft = getEligibleSpacecraftRecord(slug) || VERIFIED_SPACECRAFT[slug];
