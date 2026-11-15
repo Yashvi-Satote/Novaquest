@@ -5,7 +5,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://RAILWAY_DOMAIN_HERE/api/:path*"
+      "destination": "https://novaquest-production.up.railway.app/api/:path*"
     },
     {
       "source": "/(.*)",
