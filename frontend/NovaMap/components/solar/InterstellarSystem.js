@@ -353,7 +353,7 @@ export class InterstellarSystem {
       const label = this.labelSprites.get(slug);
       const phase = probeGroup.userData.phase || 0;
 
-      const blink = 0.8 + 0.2 * Math.sin(time * 3.5 + phase);
+      const blink = 0.9 + 0.1 * Math.sin(time * 3.2 + phase);
 
       if (dot) {
         dot.scale.set(baseScale * 2.8, baseScale * 2.8, 1);
