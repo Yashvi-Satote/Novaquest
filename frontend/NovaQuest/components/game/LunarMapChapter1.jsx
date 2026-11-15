@@ -4347,6 +4347,9 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
       setDistanceToSurveyor(Math.round(teleDist));
       setActiveZone('ZONE 2 · SURVEYOR 5 RETRIEVAL SITE');
     };
+    if (typeof window !== 'undefined') {
+      window.__teleportPlayer = teleportPlayerRef.current;
+    }
     let playerVelocityY = 0;
     let isGrounded = true;
     const LUNAR_GRAVITY = 6.2; // Adjusted for responsive gameplay feel (real 1.62m/s^2)

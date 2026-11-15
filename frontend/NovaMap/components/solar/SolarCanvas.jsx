@@ -283,8 +283,9 @@ const SolarCanvas = forwardRef(function SolarCanvas({
 
   return (
     <div
+      id="novamap-canvas-container"
       ref={containerRef}
-      className="w-full h-full relative cursor-grab active:cursor-grabbing outline-none"
+      className="novamap-viewport-canvas-area w-full h-full relative cursor-grab active:cursor-grabbing outline-none"
       style={{ touchAction: 'none' }}
     />
   );

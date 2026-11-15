@@ -20,7 +20,8 @@ import {
   SkipBack,
   SkipForward,
   Clock,
-  Sparkles
+  Sparkles,
+  HelpCircle
 } from 'lucide-react';
 import { SOLAR_SYSTEM_DISCLAIMER } from './celestialData';
 import { VOYAGER_LOCAL_METRICS } from './interstellarData';
@@ -57,7 +58,8 @@ export default function SolarControlsHUD({
   cameraMode = 'orbit',
   onChangeCameraMode,
   layerVisibility = { orbits: true, trajectories: true, markers: true, labels: true, stars: true, asteroids: true, comets: true, spacecraft: true },
-  onToggleLayer
+  onToggleLayer,
+  onStartTutorial
 }) {
   const [showLayersMenu, setShowLayersMenu] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -503,6 +505,20 @@ export default function SolarControlsHUD({
                   </span>
                 )}
               </div>
+
+              {/* Guided Onboarding Tour & Interactive Help */}
+              {onStartTutorial && (
+                <button
+                  type="button"
+                  id="solar-hud-tutorial-btn"
+                  onClick={onStartTutorial}
+                  className="p-2 rounded-xl border font-semibold transition-all cursor-pointer shadow-sm bg-[#060413] border-cyan-500/30 text-cyan-400 hover:text-white hover:bg-cyan-950/60"
+                  title="Start Guided Solar System Tour (Help)"
+                  aria-label="Start Guided Solar System Tour"
+                >
+                  <HelpCircle className="w-3.5 h-3.5" />
+                </button>
+              )}
 
               {/* Fullscreen Toggle */}
               <button
