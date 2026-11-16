@@ -75,8 +75,13 @@ DEFAULT_TRUSTED_ORIGINS = [
 
 
 def get_trusted_cors_origins() -> list[str]:
+    # FRONTEND_URL is the canonical production Vercel URL (e.g. https://novaquest.vercel.app).
+    # CORS_ORIGINS / CORS_ORIGIN can supply a comma-separated override list.
+    frontend_url = (os.getenv("FRONTEND_URL") or "").strip().rstrip("/")
     raw_env = os.getenv("CORS_ORIGINS") or os.getenv("CORS_ORIGIN") or ""
     configured = [origin.strip() for origin in raw_env.split(",") if origin.strip()]
+    if frontend_url:
+        configured.insert(0, frontend_url)
     origins = []
     for origin in configured:
         if origin == "*":

@@ -277,7 +277,7 @@ export default function ExplorerPage() {
               <div className="flex-1">
                 <strong className="text-rose-900 dark:text-white">Connection Alert:</strong> {fetchError}
                 <p className="mt-1 text-rose-700 dark:text-rose-300">
-                  Ensure the Flask backend is running on port 5000 (<code className="bg-rose-100 dark:bg-rose-900/60 px-1 py-0.5 rounded">python backend/app.py</code>).
+                  Ensure the Flask backend is running. For local dev: <code className="bg-rose-100 dark:bg-rose-900/60 px-1 py-0.5 rounded">python backend/app.py</code>. In production, check the Railway service is active.
                 </p>
               </div>
               <button

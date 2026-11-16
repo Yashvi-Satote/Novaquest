@@ -27,13 +27,15 @@ ENV/
 env.bak/
 venv.bak/
 
-# Local database files
+# Local database files — backup files are ignored, but the main seed DB is committed
 *.sqlite
 *.sqlite3
 *.db
 *.bak
 backend/*.db
 space_hardware.db
+# Exception: commit the main seed database so Railway has data on first boot
+!backend/space_hardware.db
 
 # Database dumps and provider caches
 *.dump
