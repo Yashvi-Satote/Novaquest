@@ -40,6 +40,7 @@ import { ALL_MISSIONS } from '../../config/missions';
 import MissionEchoModal from './MissionEchoModal';
 import NasaHeadquartersModal from '../../nasa-headquarters/NasaHeadquartersModal';
 import LunarSoilAnalysisModal from './LunarSoilAnalysisModal';
+import MobileGameControls from '../../../Shared/components/mobile/MobileGameControls';
 import { 
   createLunarRegolithTexture,
   createBasaltRockTexture,
@@ -149,6 +150,7 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
   const isMissionEchoCompletedRef = useRef(false);
   const triggerSparksRef = useRef(null);
   const triggerScannerBeamRef = useRef(null);
+  const mobileControlsRef = useRef(null);
 
   // Return from HQ & Surveyor 5 Retrieval State
   const [hasReturnedFromHq, setHasReturnedFromHq] = useState(false);
@@ -4449,6 +4451,62 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
     window.addEventListener('keydown', onKeyDown);
     window.addEventListener('keyup', onKeyUp);
 
+    // On-screen WASD controls for phones. These write the exact same movement
+    // state as the keyboard so WASD, sprint, jump, scan and interact all behave
+    // identically on touch devices.
+    const resetMobileKeys = () => {
+      keys.w = false;
+      keys.a = false;
+      keys.s = false;
+      keys.d = false;
+      keys.shift = false;
+      keys.space = false;
+    };
+
+    mobileControlsRef.current = {
+      setMove: (direction, pressed) => {
+        if (!(direction in keys)) return;
+        if (!pressed) {
+          keys[direction] = false;
+          return;
+        }
+        if (isHqOpenRef.current || isRetrievingRef.current) return;
+        keys[direction] = true;
+        audio.ensureContext();
+        audio.startAmbience();
+      },
+      jump: () => {
+        if (isHqOpenRef.current || isRetrievingRef.current) return;
+        if (!isGrounded) return;
+        playerVelocityY = JUMP_STRENGTH;
+        isGrounded = false;
+        audio.ensureContext();
+        audio.startAmbience();
+        audio.playJumpLunar();
+      },
+      scan: () => {
+        if (isHqOpenRef.current || isRetrievingRef.current) return;
+        audio.ensureContext();
+        audio.startAmbience();
+        triggerScannerPulse();
+      },
+      interact: () => {
+        if (isHqOpenRef.current || isRetrievingRef.current) return;
+        audio.ensureContext();
+        audio.startAmbience();
+        if (!isSurveyorCollectedRef.current && isNearSurveyorRef.current) {
+          triggerRetrievalRef.current?.();
+          return;
+        }
+        if (nearInteractableRef.current) triggerInvestigation();
+      },
+    };
+
+    // Release touch inputs if the app loses focus so the astronaut cannot
+    // keep walking after a call, notification or orientation change.
+    window.addEventListener('blur', resetMobileKeys);
+    document.addEventListener('visibilitychange', resetMobileKeys);
+
     // Mouse & Touchpad Look (1-finger drag & Pointer Lock)
     let pointerDown = null;
     const TRACKPAD_LOOK_SENSITIVITY = 0.0032;
@@ -5073,8 +5131,12 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
 
       audio.stopAllLoops();
       clearTimeout(resizeTimer);
+      resetMobileKeys();
+      mobileControlsRef.current = null;
       window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('keyup', onKeyUp);
+      window.removeEventListener('blur', resetMobileKeys);
+      document.removeEventListener('visibilitychange', resetMobileKeys);
       window.removeEventListener('resize', handleResize);
       window.removeEventListener('pointermove', onPointerMove);
       window.removeEventListener('pointerup', onPointerUp);
@@ -5231,7 +5293,18 @@ export default function LunarMapChapter1({ mcGender = 'male', onComplete, onRetu
       </div>
 
       {/* 3D WebGL Canvas */}
-      <div ref={mountRef} className="absolute inset-0 h-full w-full" />
+      <div ref={mountRef} className="absolute inset-0 h-full w-full touch-none" />
+
+      {/* MOBILE WASD TOUCH CONTROLS (PHONES IN LANDSCAPE) */}
+      {!isHqOpen && !isTransitioningToHq && !isRetrieving && (
+        <MobileGameControls
+          onMoveChange={(direction, pressed) => mobileControlsRef.current?.setMove(direction, pressed)}
+          onJump={() => mobileControlsRef.current?.jump()}
+          onScan={() => mobileControlsRef.current?.scan()}
+          onInteract={() => mobileControlsRef.current?.interact()}
+          interactLabel="Use"
+        />
+      )}
 
       {/* ASTRONAUT HELMET VISOR HUD OVERLAY */}
       <div className="absolute inset-0 pointer-events-none z-10 hidden">

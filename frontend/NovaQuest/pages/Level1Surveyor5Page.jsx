@@ -32,6 +32,7 @@ import { saveGame } from '../game/saveManager';
 import OldLunarMapPage from './OldLunarMapPage';
 import NasaHeadquartersModal from '../nasa-headquarters/NasaHeadquartersModal';
 import LunarSoilAnalysisModal from '../components/game/LunarSoilAnalysisModal';
+import MobileGameControls from '../../Shared/components/mobile/MobileGameControls';
 
 const INTRO_SESSION_KEY = 'novaquest-level1-intro-seen';
 const INTRO_720P_SRC = '/videos/intro_720p_optimized.mp4';
@@ -144,6 +145,7 @@ const IntroVideoPlayer = memo(function IntroVideoPlayer({
 export default function Level1Surveyor5Page() {
   const navigate = useNavigate();
   const canvasContainerRef = useRef(null);
+  const touchControlsRef = useRef(null);
   const introVideoRef = useRef(null);
   const introFadeStartedRef = useRef(false);
   const introCompletedRef = useRef(false);
@@ -419,7 +421,8 @@ export default function Level1Surveyor5Page() {
       domElement: container,
       groundY: 0,
       getGroundHeight: (x, z) => getTerrainHeight(x, z),
-      onFootstep: () => gameAudio.playFootstep()
+      onFootstep: () => gameAudio.playFootstep(),
+      controlsRef: touchControlsRef
     });
 
     // ===========================================================
@@ -977,7 +980,19 @@ export default function Level1Surveyor5Page() {
     <>
     <div className={`relative w-screen h-screen overflow-hidden bg-slate-950 font-sans text-slate-100 select-none${USE_OLD_LUNAR_MAP && gamePhase === 'phase4_open_world' ? ' hidden' : ''}`}>
       {/* Master 3D Viewport */}
-      <div ref={canvasContainerRef} className="w-full h-full cursor-crosshair" />
+      <div ref={canvasContainerRef} className="w-full h-full cursor-crosshair touch-none" />
+
+      {/* MOBILE WASD TOUCH CONTROLS (PHONES IN LANDSCAPE) */}
+      {gamePhase === 'phase4_open_world' && !USE_OLD_LUNAR_MAP && (
+        <MobileGameControls
+          onMoveChange={(direction, pressed) => touchControlsRef.current?.setMove(direction, pressed)}
+          onJump={() => touchControlsRef.current?.jump()}
+          onInteract={() => interactionPrompt?.action?.()}
+          showScan={false}
+          showInteract={Boolean(interactionPrompt)}
+          interactLabel="Use"
+        />
+      )}
 
       {/* ----------------------------------------------------------- */}
       {/* TOP HUD BAR: Mission Status, Radar, Inventory, Skip Controls */}

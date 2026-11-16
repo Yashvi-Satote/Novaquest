@@ -41,9 +41,10 @@ export default function NovaMapOnboardingTutorial({
   const [actionDetected, setActionDetected] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
-  // Check viewport size
+  // Check viewport size. A phone held in landscape can be wider than the
+  // tablet breakpoint, so also treat a short viewport as mobile.
   useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    const checkMobile = () => setIsMobile(window.innerWidth < 768 || window.innerHeight < 500);
     checkMobile();
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
@@ -404,7 +405,7 @@ export default function NovaMapOnboardingTutorial({
         aria-labelledby="novamap-welcome-title"
       >
         {/* Deep space cosmic card */}
-        <div className="relative w-full max-w-xl overflow-hidden rounded-3xl border border-cyan-500/40 bg-gradient-to-br from-[#0c0827]/95 via-[#060417]/95 to-[#0e1635]/95 p-6 sm:p-8 text-center shadow-[0_0_80px_rgba(34,211,238,0.25)] backdrop-blur-2xl">
+        <div className="relative max-h-[calc(100dvh-1.5rem)] w-full max-w-xl overflow-y-auto overscroll-contain rounded-3xl border border-cyan-500/40 bg-gradient-to-br from-[#0c0827]/95 via-[#060417]/95 to-[#0e1635]/95 p-6 sm:p-8 text-center shadow-[0_0_80px_rgba(34,211,238,0.25)] backdrop-blur-2xl">
           {/* Subtle cosmic grid background */}
           <div 
             className="pointer-events-none absolute inset-0 opacity-20"
@@ -607,8 +608,8 @@ export default function NovaMapOnboardingTutorial({
       <div
         className={`pointer-events-auto fixed z-50 transition-all duration-300 ${
           isMobile
-            ? 'bottom-0 inset-x-0 w-full rounded-t-3xl border-t border-cyan-500/50 bg-[#070517]/95 p-5 shadow-2xl backdrop-blur-2xl'
-            : 'w-[390px] rounded-2xl border border-cyan-500/40 bg-[#070517]/95 p-5 shadow-[0_0_50px_rgba(34,211,238,0.3)] backdrop-blur-2xl'
+            ? 'bottom-0 inset-x-0 max-h-[78dvh] w-full overflow-y-auto overscroll-contain rounded-t-3xl border-t border-cyan-500/50 bg-[#070517]/95 p-5 shadow-2xl backdrop-blur-2xl'
+            : 'max-h-[calc(100dvh-2rem)] w-[390px] overflow-y-auto overscroll-contain rounded-2xl border border-cyan-500/40 bg-[#070517]/95 p-5 shadow-[0_0_50px_rgba(34,211,238,0.3)] backdrop-blur-2xl'
         }`}
         style={isMobile ? {} : getDesktopTooltipStyle()}
       >

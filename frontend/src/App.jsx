@@ -18,6 +18,7 @@ import SettingsPage from '../NovaUser/settings/SettingsPage';
 import { GuestOnly } from '../NovaUser/components/RouteGuards';
 import { ArrowLeft, AlertCircle } from 'lucide-react';
 import ApiLoadingIndicator from '../Shared/components/layout/ApiLoadingIndicator.jsx';
+import PhoneLandscapeGate from '../Shared/components/mobile/PhoneLandscapeGate';
 
 // const ExplorerPage = lazy(() => import('../NovaBase/pages/ExplorerPage'));
 // const HardwareDetailPage = lazy(() => import('../NovaBase/pages/HardwareDetailPage'));
@@ -108,12 +109,54 @@ export default function App() {
       <Route path="/app" element={<TimeTravelersHomePage />} />
       <Route path="/memoir" element={<MemoirPage />} />
       <Route path="/missions" element={<MissionSelectPage />} />
-      <Route path="/play" element={<Level1Surveyor5Page />} />
-      <Route path="/play/surveyor-5" element={<Level1Surveyor5Page />} />
-      <Route path="/play/level-1" element={<Level1Surveyor5Page />} />
-      <Route path="/play/message-of-earth" element={<Level2MessageOfEarthPage />} />
-      <Route path="/play/voyager-1" element={<Level2MessageOfEarthPage />} />
-      <Route path="/old-lunar-map" element={<OldLunarMapPage />} />
+      <Route
+        path="/play"
+        element={(
+          <PhoneLandscapeGate title="NovaQuest">
+            <Level1Surveyor5Page />
+          </PhoneLandscapeGate>
+        )}
+      />
+      <Route
+        path="/play/surveyor-5"
+        element={(
+          <PhoneLandscapeGate title="NovaQuest">
+            <Level1Surveyor5Page />
+          </PhoneLandscapeGate>
+        )}
+      />
+      <Route
+        path="/play/level-1"
+        element={(
+          <PhoneLandscapeGate title="NovaQuest">
+            <Level1Surveyor5Page />
+          </PhoneLandscapeGate>
+        )}
+      />
+      <Route
+        path="/play/message-of-earth"
+        element={(
+          <PhoneLandscapeGate title="NovaQuest — Level 2">
+            <Level2MessageOfEarthPage />
+          </PhoneLandscapeGate>
+        )}
+      />
+      <Route
+        path="/play/voyager-1"
+        element={(
+          <PhoneLandscapeGate title="NovaQuest — Level 2">
+            <Level2MessageOfEarthPage />
+          </PhoneLandscapeGate>
+        )}
+      />
+      <Route
+        path="/old-lunar-map"
+        element={(
+          <PhoneLandscapeGate title="NovaQuest">
+            <OldLunarMapPage />
+          </PhoneLandscapeGate>
+        )}
+      />
       <Route path="/level/surveyor-5" element={<Navigate to="/play/surveyor-5" replace />} />
       <Route path="/level/message-of-earth" element={<Navigate to="/play/message-of-earth" replace />} />
       <Route path="/level-2" element={<Navigate to="/play/message-of-earth" replace />} />
@@ -121,7 +164,18 @@ export default function App() {
       <Route path="/mission-echo" element={<Navigate to="/play" replace />} />
       <Route path="/stage-5" element={<Navigate to="/play" replace />} />
       <Route path="/novauser/account" element={<Navigate to="/settings#account" replace />} />
-      <Route path="/novamap" element={<SolarSystemPage />} />
+      <Route
+        path="/novamap"
+        element={(
+          <PhoneLandscapeGate
+            title="NovaMap"
+            message="The interactive solar-system map fills the screen in landscape."
+            accent="amber"
+          >
+            <SolarSystemPage />
+          </PhoneLandscapeGate>
+        )}
+      />
       <Route path="/solar-system" element={<Navigate to="/novamap" replace />} />
       <Route path="/novabase" element={<ExplorerPage />} />
       <Route path="/settings" element={<SettingsPage />} />

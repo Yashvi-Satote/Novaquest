@@ -17,7 +17,8 @@ export function createThirdPersonController({
   domElement,
   groundY = 0,
   getGroundHeight = null,
-  onFootstep = null
+  onFootstep = null,
+  controlsRef = null
 }) {
   // Player state
   const initialY = getGroundHeight ? getGroundHeight(0, 23) : groundY;
@@ -118,6 +119,16 @@ export function createThirdPersonController({
     camPitch = Math.max(minPitch, Math.min(maxPitch, camPitch + deltaY * TRACKPAD_LOOK_SENSITIVITY));
   };
 
+  const triggerJump = () => {
+    if (!isGrounded) return;
+    keys.space = true;
+    verticalVelocity = jumpImpulse;
+    isGrounded = false;
+    if (characterMesh.userData.anim) {
+      characterMesh.userData.anim.state = 'jump';
+    }
+  };
+
   // --- WASD + Arrow Keys Keyboard Event Handlers ---
   const handleKeyDown = (e) => {
     const k = e.key.toLowerCase();
@@ -129,14 +140,7 @@ export function createThirdPersonController({
     if (k === 's' || k === 'arrowdown') keys.s = true;
     if (k === 'd' || k === 'arrowright') keys.d = true;
     if (k === 'shift') keys.shift = true;
-    if (k === ' ' && isGrounded) {
-      keys.space = true;
-      verticalVelocity = jumpImpulse;
-      isGrounded = false;
-      if (characterMesh.userData.anim) {
-        characterMesh.userData.anim.state = 'jump';
-      }
-    }
+    if (k === ' ') triggerJump();
   };
 
   const handleKeyUp = (e) => {
@@ -186,6 +190,17 @@ export function createThirdPersonController({
   };
   domElement.addEventListener('touchstart', handleTouchStart, { passive: true });
   domElement.addEventListener('touchmove', handleTouchMove, { passive: true });
+
+  // Expose the same input state to the on-screen mobile controls.
+  if (controlsRef) {
+    controlsRef.current = {
+      setMove: (direction, pressed) => {
+        if (!(direction in keys)) return;
+        keys[direction] = pressed;
+      },
+      jump: triggerJump,
+    };
+  }
 
   // Update routine executed each frame
   const update = (delta, timeSeconds) => {
@@ -286,6 +301,9 @@ export function createThirdPersonController({
   };
 
   const dispose = () => {
+    if (controlsRef) {
+      controlsRef.current = null;
+    }
     window.removeEventListener('keydown', handleKeyDown);
     window.removeEventListener('keyup', handleKeyUp);
     domElement.removeEventListener('pointerdown', handlePointerDown);
