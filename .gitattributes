@@ -1,1 +1,8 @@
 *.mp4 filter=lfs diff=lfs merge=lfs -text
+
+# Keep the videos used by the deployed app as regular Git blobs.
+# Vercel does not fetch Git LFS objects, so LFS-tracked videos deploy as pointer files.
+frontend/public/assets/memoir/surveyor3_5min_master_documentary.mp4 -filter -diff -merge -text
+frontend/public/videos/intro_480p_light.mp4 -filter -diff -merge -text
+frontend/public/videos/intro_720p_optimized.mp4 -filter -diff -merge -text
+frontend/public/videos/milky-way-intro.mp4 -filter -diff -merge -text
