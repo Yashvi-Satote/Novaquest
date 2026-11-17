@@ -90,3 +90,5 @@ frontend/public/models/spacecraft-models/
 backend/NovaUser/.pg/
 .tmp/
 frontend/NovaUser/tests/screenshots/
+.vercel
+.env*
