@@ -113,13 +113,10 @@ def _maintenance_connection(url):
 
 
 def ensure_database() -> None:
-    """Ensure the target PostgreSQL database is accessible or created.
+    """Create the configured database if it does not exist yet.
 
-    On managed cloud platforms like Railway, the database is already provisioned
-    (e.g. 'railway') and user accounts typically lack CREATEDB privileges.
-    We first attempt a direct connection to the target database. If it already
-    exists and connects, we return immediately without touching maintenance databases
-    or attempting CREATE DATABASE.
+    PostgreSQL database names are identifiers, so the configured name (for
+    example ``users.db``) is quoted safely with psycopg2's Identifier helper.
     """
 
     settings = get_settings()
@@ -128,46 +125,12 @@ def ensure_database() -> None:
     if not database_name:
         raise DatabaseUnavailable("The NovaUser database URL has no database name.")
 
-    # 1. First attempt to connect directly to the target database.
-    # On Railway and cloud providers, the database already exists.
-    try:
-        test_conn = psycopg2.connect(
-            host=url.host or "localhost",
-            port=url.port or 5432,
-            user=url.username,
-            password=url.password,
-            dbname=database_name,
-            connect_timeout=10,
-            application_name="novauser-init-check",
-        )
-        test_conn.close()
-        logger.info("Target PostgreSQL database %r is reachable and ready.", database_name)
-        return
-    except psycopg2.OperationalError as exc:
-        err_str = str(exc).lower()
-        # PostgreSQL error code 3D000 = invalid_catalog_name (database does not exist)
-        pgcode = getattr(exc, "pgcode", None)
-        is_missing_db = (
-            pgcode == "3D000"
-            or f'database "{database_name.lower()}" does not exist' in err_str
-            or f"database '{database_name.lower()}' does not exist" in err_str
-        )
-        if not is_missing_db:
-            # If the database exists but there is an authentication or network error, raise immediately
-            raise DatabaseUnavailable(
-                f"Cannot connect to PostgreSQL database {database_name!r}: {exc}. "
-                "Check network connectivity, host, user, and credentials."
-            ) from exc
-        logger.info("Database %r does not exist yet; attempting creation via maintenance connection...", database_name)
-
-    # 2. Database does not exist: attempt creation via maintenance connection (local development)
     try:
         connection = _maintenance_connection(url)
     except psycopg2.Error as exc:
         raise DatabaseUnavailable(
-            f"The PostgreSQL database {database_name!r} does not exist and cannot be created automatically: "
-            f"maintenance connection failed ({exc}). On Railway or managed PostgreSQL, ensure the target database "
-            "is provisioned and your connection URL points to it."
+            "Cannot connect to PostgreSQL. Start the database server and verify "
+            "NOVAUSER_DATABASE_URL."
         ) from exc
 
     try:
@@ -185,9 +148,7 @@ def ensure_database() -> None:
                 logger.info("Created PostgreSQL database %s", database_name)
     except psycopg2.Error as exc:
         raise DatabaseUnavailable(
-            f"Could not create PostgreSQL database {database_name!r}: {exc}. "
-            "Your database user may lack CREATEDB privileges. "
-            "Please ensure the database is pre-created in your hosting dashboard."
+            f"Could not create the PostgreSQL database {database_name!r}: {exc}"
         ) from exc
     finally:
         connection.close()

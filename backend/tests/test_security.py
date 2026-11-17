@@ -279,7 +279,7 @@ def test_flask_debug_defaults_to_false():
     # In test/production default without FLASK_DEBUG=1, debug must be False
     if "FLASK_DEBUG" not in os.environ:
         assert debug is False
-    assert app.config.get("DEBUG") is False or os.getenv("FLASK_DEBUG") in {"1", "true", "True", "yes"}
+    assert app.config.get("DEBUG") is False or os.getenv("FLASK_DEBUG") == "1"
 
 
 # ============================================================================
